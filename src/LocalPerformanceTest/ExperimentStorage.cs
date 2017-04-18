@@ -9,6 +9,8 @@ using Angara.Data.DelimitedFile;
 using System.Diagnostics;
 using Microsoft.FSharp.Core;
 using Measurement;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace PerformanceTest
 {
@@ -80,6 +82,21 @@ namespace PerformanceTest
         public ExperimentsTableRow[] GetExperiments()
         {
             return experimentsTable.Rows.ToArray();
+        }
+
+        public void SaveReferenceExperiment(ReferenceExperiment reference)
+        {
+            string json = JsonConvert.SerializeObject(reference);
+            File.WriteAllText(Path.Combine(dir.FullName, "reference.json"), json);
+        }
+
+        public ReferenceExperiment GetReferenceExperiment()
+        {
+            string content = File.ReadAllText(Path.Combine(dir.FullName, "reference.json"));
+            JsonSerializerSettings settings = new JsonSerializerSettings();
+            settings.ContractResolver = new PrivatePropertiesResolver();
+            ReferenceExperiment reference = JsonConvert.DeserializeObject<ReferenceExperiment>(content, settings);
+            return reference;
         }
 
 
@@ -176,6 +193,16 @@ namespace PerformanceTest
             MemoryStream stream = new MemoryStream(byteArray);
             stream.Position = 0;
             return stream;
+        }
+
+        internal class PrivatePropertiesResolver : DefaultContractResolver
+        {
+            protected override JsonProperty CreateProperty(System.Reflection.MemberInfo member, MemberSerialization memberSerialization)
+            {
+                JsonProperty prop = base.CreateProperty(member, memberSerialization);
+                prop.Writable = true;
+                return prop;
+            }
         }
     }
 

@@ -25,9 +25,7 @@ namespace Measure
             Print(String.Format("\nMeasuring performance of {0} {1}...\n", args[0], version));
 
 
-            FileStorage storage = FileStorage.Open("measure");
-            ExperimentManager manager = new LocalExperimentManager(storage);
-                        
+            ExperimentManager manager = LocalExperimentManager.OpenExperiments("measure");                        
             Run(manager, definition).Wait();
             
             return 0;
@@ -41,7 +39,7 @@ namespace Measure
 
             var filter = new ExperimentManager.ExperimentFilter
             {
-                BencmarkContainerEquals = definition.BenchmarkContainer,
+                BenchmarkContainerEquals = definition.BenchmarkContainer,
                 CategoryEquals = definition.Category,
                 ExecutableEquals = definition.Executable,
                 ParametersEquals = definition.Parameters

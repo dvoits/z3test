@@ -67,6 +67,9 @@
     <None Include="benchmarks_2\IdentitySquare\identity50x50.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="reference\50x50.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\LocalPerformanceTest\LocalPerformanceTest.csproj">

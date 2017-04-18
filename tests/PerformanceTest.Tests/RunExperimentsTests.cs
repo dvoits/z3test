@@ -12,16 +12,16 @@ namespace UnitTests
     {
         private static ExperimentManager NewManager()
         {
-            FileStorage storage = FileStorage.Open("measure");
-            storage.Clear();
-            ExperimentManager manager = new LocalExperimentManager(storage);
+            ReferenceExperiment reference = new ReferenceExperiment(
+                    ExperimentDefinition.Create("ReferenceLinearEquationSolverRef.exe", "reference", "csv", "{0} 1000", TimeSpan.FromSeconds(10)),
+                    1);
+            ExperimentManager manager = LocalExperimentManager.NewExperiments("measure", reference);
             return manager;
         }
 
         private static ExperimentManager OpenManager()
         {
-            FileStorage storage = FileStorage.Open("measure");
-            ExperimentManager manager = new LocalExperimentManager(storage);
+            ExperimentManager manager = LocalExperimentManager.OpenExperiments("measure");
             return manager;
         }
 

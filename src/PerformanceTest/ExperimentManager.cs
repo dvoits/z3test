@@ -11,6 +11,14 @@ namespace PerformanceTest
 
     public abstract class ExperimentManager
     {
+        protected readonly ReferenceExperiment reference;
+
+        protected ExperimentManager(ReferenceExperiment reference)
+        {
+            if (reference == null) throw new ArgumentNullException("reference");
+            this.reference = reference;
+        }
+
         /// <summary>
         /// Schedules execution of a new experiment from the given experiment definition.
         /// </summary>
@@ -37,11 +45,12 @@ namespace PerformanceTest
 
 
 
+
         public abstract Task<IEnumerable<ExperimentID>> FindExperiments(ExperimentFilter? filter = null);
 
         public struct ExperimentFilter
         {
-            public string BencmarkContainerEquals { get; set; }
+            public string BenchmarkContainerEquals { get; set; }
 
             public string CategoryEquals { get; set; }
 
@@ -50,5 +59,24 @@ namespace PerformanceTest
             public string ParametersEquals { get; set; }
 
         }
+    }
+
+    public class ReferenceExperiment
+    {
+        public ReferenceExperiment()
+        {
+        }
+
+        public ReferenceExperiment(ExperimentDefinition def, int repetitions)
+        {
+            if (def == null) throw new ArgumentNullException("def");
+            if (repetitions < 1) throw new ArgumentOutOfRangeException("repetitions", "Number of repetitions must be greater than zero");
+            Definition = def;
+            Repetitions = repetitions;
+        }
+
+        public ExperimentDefinition Definition { get; private set; }
+        public int Repetitions { get; private set; }
+
     }
 }

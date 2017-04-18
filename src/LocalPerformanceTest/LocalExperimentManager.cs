@@ -16,13 +16,30 @@ namespace PerformanceTest
 {
     public class LocalExperimentManager : ExperimentManager
     {
+        public static ExperimentManager NewExperiments(string experimentsFolder, ReferenceExperiment reference)
+        {
+            FileStorage storage = FileStorage.Open(experimentsFolder);
+            storage.Clear();
+            storage.SaveReferenceExperiment(reference);
+            ExperimentManager manager = new LocalExperimentManager(storage);
+            return manager;
+        }
+
+        public static ExperimentManager OpenExperiments(string experimentsFolder)
+        {
+            FileStorage storage = FileStorage.Open(experimentsFolder);
+            storage.GetExperiments();
+            ExperimentManager manager = new LocalExperimentManager(storage);
+            return manager;
+        }
+
+
         private readonly ConcurrentDictionary<ExperimentID, ExperimentInstance> runningExperiments;
         private readonly LocalExperimentRunner runner;
         private readonly FileStorage storage;
-
         private int lastId = 0;
 
-        public LocalExperimentManager(FileStorage storage)
+        private LocalExperimentManager(FileStorage storage) : base(storage.GetReferenceExperiment())
         {
             if (storage == null) throw new ArgumentNullException("storage");
             this.storage = storage;
@@ -74,7 +91,7 @@ namespace PerformanceTest
             if (filter.HasValue) {
                 experiments = 
                     experiments
-                    .Where(e => (filter.Value.BencmarkContainerEquals == null || e.BenchmarkContainer == filter.Value.BencmarkContainerEquals) &&
+                    .Where(e => (filter.Value.BenchmarkContainerEquals == null || e.BenchmarkContainer == filter.Value.BenchmarkContainerEquals) &&
                                 (filter.Value.CategoryEquals == null || e.Category == filter.Value.CategoryEquals) &&
                                 (filter.Value.ExecutableEquals == null || e.Executable == filter.Value.ExecutableEquals) &&
                                 (filter.Value.ParametersEquals == null || e.Parameters == filter.Value.ParametersEquals));
