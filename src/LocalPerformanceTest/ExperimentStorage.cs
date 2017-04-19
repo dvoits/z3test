@@ -84,9 +84,16 @@ namespace PerformanceTest
             dirBenchmarks.Create();
         }
 
-        public ExperimentsTableRow[] GetExperiments()
+        public Dictionary<int, ExperimentDefinition> GetExperiments()
         {
-            return experimentsTable.Rows.ToArray();
+            var dict = new Dictionary<int, ExperimentDefinition>();
+            foreach (var row in experimentsTable.Rows) { // todo: all properties
+                dict[row.ID] = ExperimentDefinition.Create(
+                             row.Executable, row.BenchmarkContainer,
+                             row.BenchmarkFileExtension, row.Parameters,
+                             TimeSpan.FromSeconds(row.BenchmarkTimeout), row.Category);
+            }
+            return dict;
         }
 
         public void SaveReferenceExperiment(ReferenceExperiment reference)

@@ -61,19 +61,37 @@ namespace PerformanceTest
             ExperimentID id = Interlocked.Increment(ref lastId);
 
             double normal = await asyncNormal;
+
             var results = runner.Enqueue(id, definition, normal);
-            ExperimentInstance experiment = new ExperimentInstance(id, definition, results);
+
+            int benchmarksLeft = results.Length;
+            BenchmarkResult[] benchmarks = new BenchmarkResult[results.Length];
+
+            var resultsWithSave =
+                results.Select((task, index) =>
+                    task.ContinueWith(benchmark =>
+                    {
+                        int left = Interlocked.Decrement(ref benchmarksLeft);
+                        Trace.WriteLine(String.Format("Benchmark {0} completed, {1} left", index, left));
+                        if (benchmark.IsCompleted)
+                        {
+                            benchmarks[index] = benchmark.Result;
+                            if (left == 0)
+                            {
+                                storage.AddResults(id, benchmarks);
+                            }
+                            ExperimentInstance val;
+                            runningExperiments.TryRemove(id, out val);
+                            return benchmark.Result;
+                        }
+                        else throw benchmark.Exception;
+                    }))
+                .ToArray();
+
+            ExperimentInstance experiment = new ExperimentInstance(id, definition, resultsWithSave);
             runningExperiments[id] = experiment;
 
             storage.AddExperiment(id, definition);
-            var _ = 
-                Task.WhenAll(experiment.Results)
-                .ContinueWith(t =>
-                {
-                    storage.AddResults(id, t.Result);
-                    ExperimentInstance val;
-                    runningExperiments.TryRemove(id, out val);
-                });
 
             return id;
         }
@@ -81,7 +99,17 @@ namespace PerformanceTest
 
         public override Task<ExperimentDefinition> GetDefinition(int id)
         {
-            return Task.FromResult(GetInstance(id).Definition);
+            ExperimentInstance experiment;
+            if (runningExperiments.TryGetValue(id, out experiment))
+            {
+                return Task.FromResult(experiment.Definition);
+            }
+            ExperimentDefinition def;
+            if (storage.GetExperiments().TryGetValue(id, out def))
+            {
+                return Task.FromResult(def);
+            }
+            else throw new ArgumentException(string.Format("Experiment {0} not found", id));
         }
 
         public override Task<ExperimentStatus> GetStatus(int id)
@@ -91,34 +119,34 @@ namespace PerformanceTest
 
         public override Task<BenchmarkResult>[] GetResults(int id)
         {
-            return GetInstance(id).Results;
+            ExperimentInstance experiment;
+            if (runningExperiments.TryGetValue(id, out experiment))
+            {
+                return experiment.Results;
+            }
+            return storage.GetResults(id).Select(r => Task.FromResult(r)).ToArray();
         }
 
         public override Task<IEnumerable<int>> FindExperiments(ExperimentFilter? filter = default(ExperimentFilter?))
         {
-            IEnumerable<ExperimentsTableRow> experiments = storage.GetExperiments();
+            IEnumerable<KeyValuePair<int, ExperimentDefinition>> experiments = storage.GetExperiments().ToArray();
 
             if (filter.HasValue)
             {
                 experiments =
                     experiments
-                    .Where(e => (filter.Value.BenchmarkContainerEquals == null || e.BenchmarkContainer == filter.Value.BenchmarkContainerEquals) &&
-                                (filter.Value.CategoryEquals == null || e.Category == filter.Value.CategoryEquals) &&
-                                (filter.Value.ExecutableEquals == null || e.Executable == filter.Value.ExecutableEquals) &&
-                                (filter.Value.ParametersEquals == null || e.Parameters == filter.Value.ParametersEquals));
+                    .Where(q =>
+                    {
+                        var id = q.Key;
+                        var e = q.Value;
+                        return (filter.Value.BenchmarkContainerEquals == null || e.BenchmarkContainer == filter.Value.BenchmarkContainerEquals) &&
+                                    (filter.Value.CategoryEquals == null || e.Category == filter.Value.CategoryEquals) &&
+                                    (filter.Value.ExecutableEquals == null || e.Executable == filter.Value.ExecutableEquals) &&
+                                    (filter.Value.ParametersEquals == null || e.Parameters == filter.Value.ParametersEquals);
+                    });
             }
 
-            return Task.FromResult(experiments.Select(e => e.ID));
-        }
-
-        private ExperimentInstance GetInstance(int id)
-        {
-            ExperimentInstance experiment;
-            if (runningExperiments.TryGetValue(id, out experiment))
-            {
-                return experiment;
-            }
-            else throw new ArgumentException("Experiment not found");
+            return Task.FromResult(experiments.Select(e => e.Key));
         }
 
         private async Task<double> ComputeNormal()
@@ -140,7 +168,7 @@ namespace PerformanceTest
                 m = 0.5 * (results[im] + results[im - 1]);
 
             double n = reference.ReferenceValue / m;
-            Debug.WriteLine(String.Format("Median reference duration: {0}, normal: {1}", m, n));
+            Trace.WriteLine(String.Format("Median reference duration: {0}, normal: {1}", m, n));
             return n;
         }
     }

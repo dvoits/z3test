@@ -12,22 +12,54 @@ namespace Measure
     {
         static int Main(string[] args)
         {
-            if (args.Length != 5)
+            if (args.Length < 5 || args.Length > 9)
             {
-                Console.WriteLine("Use: Measure.exe <executable> <arguments> <benchmarkContainer> <category> <extension>");
+                Console.WriteLine("Setup tests:\n\tMeasure.exe --init <executable> <arguments> <benchmarkContainer> <category> <extension> <repetitions> <referenceValue>");
+                Console.WriteLine("Run tests:\n\tMeasure.exe <executable> <arguments> <benchmarkContainer> <category> <extension>");
                 return 2;
             }
 
+            int k = 0;
+            bool init = false;
+            if (args[k] == "--init")
+            {
+                init = true;
+                k++;
+            }
+
+            string executable = args[k++];
+            string arguments = args[k++];
+            string benchmarkContainer = args[k++];
+            string category = args[k++];
+            string extension = args[k++];
+
+            int repetitions = 1;
+            double referenceValue = 0;
+            if (init) {
+                repetitions = int.Parse(args[k++]);
+                referenceValue = double.Parse(args[k++]);
+            }
+
             TimeSpan timeout = TimeSpan.FromHours(1);
-            ExperimentDefinition definition = ExperimentDefinition.Create(args[0], args[2], args[4], args[1], timeout, category: args[3]);
-            string version = GetVersion(args[0]);
+            ExperimentDefinition definition = ExperimentDefinition.Create(executable, benchmarkContainer, extension, arguments, timeout, category: category);
+            string version = GetVersion(executable);
 
-            Print(String.Format("\nMeasuring performance of {0} {1}...\n", args[0], version));
+            if(init)
+                Print(String.Format("Initializing environment..."));
+            else
+                Print(String.Format("Measuring performance of {0} {1}...\n", executable, version));
 
+            if (init)
+            {
+                var reference = new ReferenceExperiment(definition, repetitions, referenceValue);
+                ExperimentManager manager = LocalExperimentManager.NewExperiments("measure", reference);
+            }
+            else
+            {
+                ExperimentManager manager = LocalExperimentManager.OpenExperiments("measure");
+                Run(manager, definition).Wait();
+            }
 
-            ExperimentManager manager = LocalExperimentManager.OpenExperiments("measure");                        
-            Run(manager, definition).Wait();
-            
             return 0;
         }
 
@@ -44,13 +76,13 @@ namespace Measure
                 ExecutableEquals = definition.Executable,
                 ParametersEquals = definition.Parameters
             };
-            var history = (await manager.FindExperiments(filter)).ToArray();
+            var history = (await manager.FindExperiments(filter)).Where(q => q != id).ToArray();
 
             Dictionary<string, BenchmarkResult> lastBenchmarks = new Dictionary<string, BenchmarkResult>();
             if (history.Length != 0)
             {
                 var lastResults = await Task.WhenAll(manager.GetResults(history.Max()));
-                foreach(var b in lastResults)
+                foreach (var b in lastResults)
                 {
                     lastBenchmarks[b.BenchmarkFileName] = b;
                 }
@@ -58,6 +90,11 @@ namespace Measure
 
             var print = results.Select(task => task.ContinueWith(benchmark =>
                 {
+                    if (benchmark.IsFaulted)
+                    {
+                        PrintError(String.Format("Failed to complete the benchmark {0}", benchmark.Exception.Message));
+                        return;
+                    }
                     BenchmarkResult lastBenchmark = null;
                     lastBenchmarks.TryGetValue(benchmark.Result.BenchmarkFileName, out lastBenchmark);
                     if (lastBenchmark != null && lastBenchmark.Measurements.Status != Measurement.Measure.CompletionStatus.Success)
@@ -83,7 +120,7 @@ namespace Measure
                 speedup = (lastResult.NormalizedRuntime / result.NormalizedRuntime);
                 extraMem = (result.Measurements.PeakMemorySize - lastResult.Measurements.PeakMemorySize) >> 20;
                 info = String.Format("{0:0.0000} ({1:0.00}{2})\t{3:0.00} MB ({4}{5:0.00})\t{6}",
-                        result.NormalizedRuntime, 
+                        result.NormalizedRuntime,
                         speedup,
                         speedup == 1 ? " same" : speedup > 1 ? " faster" : " slower",
                         result.Measurements.PeakMemorySize >> 20,
@@ -96,15 +133,15 @@ namespace Measure
 
             if (result.Measurements.Status == Measurement.Measure.CompletionStatus.Success)
             {
-                if(speedup < 1 - threshold)
-                    PrintWarning("Slower   " + info);                
-                else if(extraMem > 1 + threshold)
+                if (speedup < 1 - threshold)
+                    PrintWarning("Slower   " + info);
+                else if (extraMem > 1 + threshold)
                     PrintWarning("More memory   " + info);
                 else if (speedup > 1 + threshold)
                     PrintNotice("Faster   " + info);
                 else if (extraMem < 1 - threshold)
                     PrintNotice("Less memory   " + info);
-                else 
+                else
                     Print("Passed   " + info);
             }
             else if (result.Measurements.Status == Measurement.Measure.CompletionStatus.OutOfMemory)
