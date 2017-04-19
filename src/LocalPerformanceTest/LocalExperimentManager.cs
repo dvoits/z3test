@@ -37,6 +37,7 @@ namespace PerformanceTest
         private readonly ConcurrentDictionary<ExperimentID, ExperimentInstance> runningExperiments;
         private readonly LocalExperimentRunner runner;
         private readonly FileStorage storage;
+        private readonly AsyncLazy<double> asyncNormal;
         private int lastId = 0;
 
         private LocalExperimentManager(FileStorage storage) : base(storage.GetReferenceExperiment())
@@ -45,19 +46,28 @@ namespace PerformanceTest
             this.storage = storage;
             runningExperiments = new ConcurrentDictionary<ExperimentID, ExperimentInstance>();
             runner = new LocalExperimentRunner();
-            lastId = storage.MaxExperimentId;            
+            lastId = storage.MaxExperimentId;
+
+            asyncNormal = new AsyncLazy<double>(this.ComputeNormal);
         }
 
-        public override Task<ExperimentID> StartExperiment(ExperimentDefinition definition)
+        public string Directory
+        {
+            get { return storage.Location; }
+        }
+
+        public override async Task<ExperimentID> StartExperiment(ExperimentDefinition definition)
         {
             ExperimentID id = Interlocked.Increment(ref lastId);
 
-            var results = runner.Enqueue(id, definition);
+            double normal = await asyncNormal;
+            var results = runner.Enqueue(id, definition, normal);
             ExperimentInstance experiment = new ExperimentInstance(id, definition, results);
             runningExperiments[id] = experiment;
 
             storage.AddExperiment(id, definition);
-            Task.WhenAll(experiment.Results)
+            var _ = 
+                Task.WhenAll(experiment.Results)
                 .ContinueWith(t =>
                 {
                     storage.AddResults(id, t.Result);
@@ -65,7 +75,7 @@ namespace PerformanceTest
                     runningExperiments.TryRemove(id, out val);
                 });
 
-            return Task.FromResult(id);
+            return id;
         }
 
 
@@ -88,8 +98,9 @@ namespace PerformanceTest
         {
             IEnumerable<ExperimentsTableRow> experiments = storage.GetExperiments();
 
-            if (filter.HasValue) {
-                experiments = 
+            if (filter.HasValue)
+            {
+                experiments =
                     experiments
                     .Where(e => (filter.Value.BenchmarkContainerEquals == null || e.BenchmarkContainer == filter.Value.BenchmarkContainerEquals) &&
                                 (filter.Value.CategoryEquals == null || e.Category == filter.Value.CategoryEquals) &&
@@ -109,6 +120,29 @@ namespace PerformanceTest
             }
             else throw new ArgumentException("Experiment not found");
         }
+
+        private async Task<double> ComputeNormal()
+        {
+            double[] results = new double[reference.Repetitions];
+            for (var i = 0; i < reference.Repetitions; i++)
+            {
+                var benchmarks = await Task.WhenAll(runner.Enqueue(-1, reference.Definition, 1.0));
+                results[i] = benchmarks.Sum(b => b.Measurements.TotalProcessorTime.TotalSeconds);
+            }
+
+            // results has 1 or more elements            
+            Array.Sort(results);
+            int im = reference.Repetitions >> 1;
+            double m;
+            if (reference.Repetitions % 2 == 1)
+                m = results[im];
+            else
+                m = 0.5 * (results[im] + results[im - 1]);
+
+            double n = reference.ReferenceValue / m;
+            Debug.WriteLine(String.Format("Median reference duration: {0}, normal: {1}", m, n));
+            return n;
+        }
     }
 
     public class LocalExperimentRunner
@@ -122,13 +156,15 @@ namespace PerformanceTest
             factory = new TaskFactory(scheduler);
         }
 
-        public Task<BenchmarkResult>[] Enqueue(ExperimentID id, ExperimentDefinition experiment)
+        public TaskFactory TaskFactory { get { return factory; } }
+
+        public Task<BenchmarkResult>[] Enqueue(ExperimentID id, ExperimentDefinition experiment, double normal)
         {
             if (experiment == null) throw new ArgumentNullException("experiment");
-            return RunExperiment(id, experiment, factory);
+            return RunExperiment(id, experiment, factory, normal);
         }
 
-        private static Task<BenchmarkResult>[] RunExperiment(ExperimentID id, ExperimentDefinition experiment, TaskFactory factory)
+        private static Task<BenchmarkResult>[] RunExperiment(ExperimentID id, ExperimentDefinition experiment, TaskFactory factory, double normal)
         {
             if (!File.Exists(experiment.Executable)) throw new ArgumentException("Executable not found");
 
@@ -136,7 +172,7 @@ namespace PerformanceTest
             string benchmarkFolder = string.IsNullOrEmpty(experiment.Category) ? experiment.BenchmarkContainer : Path.Combine(experiment.BenchmarkContainer, experiment.Category);
             var benchmarks = Directory.EnumerateFiles(benchmarkFolder, "*." + experiment.BenchmarkFileExtension, SearchOption.AllDirectories).ToArray();
 
-            var results = new Task<BenchmarkResult>[benchmarks.Length]; 
+            var results = new Task<BenchmarkResult>[benchmarks.Length];
             for (int i = 0; i < benchmarks.Length; i++)
             {
                 results[i] =
@@ -155,7 +191,7 @@ namespace PerformanceTest
                         var m = ProcessMeasurer.Measure(experiment.Executable, args, experiment.BenchmarkTimeout, experiment.MemoryLimit == 0 ? null : new Nullable<long>(experiment.MemoryLimit));
                         Trace.WriteLine(String.Format("Done in {0}", m.WallClockTime));
 
-                        var performanceIndex = Normalize(m.TotalProcessorTime);
+                        var performanceIndex = normal * m.TotalProcessorTime.TotalSeconds;
                         return new BenchmarkResult(id, benchmark, workerInfo, performanceIndex, acq, m);
                     }, benchmarks[i], TaskCreationOptions.LongRunning);
             }
@@ -166,11 +202,6 @@ namespace PerformanceTest
         private static string GetWorkerInfo()
         {
             return "";
-        }
-
-        private static double Normalize(TimeSpan totalProcessorTime)
-        {
-            return totalProcessorTime.TotalSeconds;
         }
     }
 
@@ -194,5 +225,5 @@ namespace PerformanceTest
 
         public Task<BenchmarkResult>[] Results { get { return results; } }
     }
-    
+
 }

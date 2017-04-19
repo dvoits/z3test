@@ -67,16 +67,19 @@ namespace PerformanceTest
         {
         }
 
-        public ReferenceExperiment(ExperimentDefinition def, int repetitions)
+        public ReferenceExperiment(ExperimentDefinition def, int repetitions, double referenceValue)
         {
             if (def == null) throw new ArgumentNullException("def");
             if (repetitions < 1) throw new ArgumentOutOfRangeException("repetitions", "Number of repetitions must be greater than zero");
             Definition = def;
             Repetitions = repetitions;
+            ReferenceValue = referenceValue;
         }
 
         public ExperimentDefinition Definition { get; private set; }
         public int Repetitions { get; private set; }
+
+        public double ReferenceValue { get; private set; }
 
     }
 }

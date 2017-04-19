@@ -61,6 +61,11 @@ namespace PerformanceTest
             }
         }
 
+        public string Location
+        {
+            get { return dir.FullName; }
+        }
+
         public int MaxExperimentId
         {
             get

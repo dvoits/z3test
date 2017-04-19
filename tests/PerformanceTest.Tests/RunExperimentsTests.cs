@@ -4,6 +4,8 @@ using PerformanceTest;
 using System.Threading.Tasks;
 using System.Linq;
 using static Measurement.Measure;
+using System.IO;
+using System.Diagnostics;
 
 namespace UnitTests
 {
@@ -13,16 +15,38 @@ namespace UnitTests
         private static ExperimentManager NewManager()
         {
             ReferenceExperiment reference = new ReferenceExperiment(
-                    ExperimentDefinition.Create("ReferenceLinearEquationSolverRef.exe", "reference", "csv", "{0} 1000", TimeSpan.FromSeconds(10)),
-                    1);
-            ExperimentManager manager = LocalExperimentManager.NewExperiments("measure", reference);
+                    ExperimentDefinition.Create("LinearEquationSolver.exe", "reference", "csv", "{0} 10", TimeSpan.FromSeconds(10)),
+                    1, 0.17);
+            ExperimentManager manager = LocalExperimentManager.NewExperiments("measure" + Guid.NewGuid(), reference);
             return manager;
         }
 
-        private static ExperimentManager OpenManager()
+        private static ExperimentManager OpenManager(ExperimentManager old)
         {
-            ExperimentManager manager = LocalExperimentManager.OpenExperiments("measure");
-            return manager;
+            if (old is LocalExperimentManager)
+            {
+                LocalExperimentManager local = (LocalExperimentManager)old;
+                ExperimentManager manager = LocalExperimentManager.OpenExperiments(local.Directory);
+                return manager;
+            }else
+            {
+                throw new ArgumentException("Unsupported type of manager");
+            }
+        }
+
+        [TestCleanup]
+        public void Clear()
+        {
+            foreach (string dir in Directory.GetDirectories(".", "measure*", SearchOption.TopDirectoryOnly)) {
+                try
+                {
+                    Directory.Delete(dir, true);
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine("Failed to clear measure: " + ex.Message);
+                }
+            }
         }
 
         [TestMethod]
@@ -81,7 +105,7 @@ namespace UnitTests
             var loaded = (await manager.FindExperiments()).ToArray();
             Assert.AreEqual(3, loaded.Length, "Number of found experiments (same manager)");
 
-            var manager2 = OpenManager();
+            var manager2 = OpenManager(manager);
             var loaded2 = (await manager2.FindExperiments()).ToArray();
             Assert.AreEqual(3, loaded2.Length, "Number of found experiments (reloaded)");
 
