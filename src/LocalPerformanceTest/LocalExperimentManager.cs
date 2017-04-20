@@ -1,16 +1,15 @@
-﻿using System;
+﻿using Measurement;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
-using System.Collections.Concurrent;
-using System.Threading.Tasks;
-using System.IO;
-
-using ExperimentID = System.Int32;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Threading.Tasks.Schedulers;
-using System.Diagnostics;
-using Measurement;
+using ExperimentID = System.Int32;
 
 namespace PerformanceTest
 {
@@ -151,87 +150,14 @@ namespace PerformanceTest
 
         private async Task<double> ComputeNormal()
         {
-            double[] results = new double[reference.Repetitions];
-            for (var i = 0; i < reference.Repetitions; i++)
-            {
-                var benchmarks = await Task.WhenAll(runner.Enqueue(-1, reference.Definition, 1.0));
-                results[i] = benchmarks.Sum(b => b.Measurements.TotalProcessorTime.TotalSeconds);
-            }
-
-            // results has 1 or more elements            
-            Array.Sort(results);
-            int im = reference.Repetitions >> 1;
-            double m;
-            if (reference.Repetitions % 2 == 1)
-                m = results[im];
-            else
-                m = 0.5 * (results[im] + results[im - 1]);
-
+            var benchmarks = await Task.WhenAll(runner.Enqueue(-1, reference.Definition, 1.0, reference.Repetitions));
+            var m = benchmarks.Sum(b => b.Measurements.TotalProcessorTime.TotalSeconds);
             double n = reference.ReferenceValue / m;
             Trace.WriteLine(String.Format("Median reference duration: {0}, normal: {1}", m, n));
             return n;
         }
     }
-
-    public class LocalExperimentRunner
-    {
-        private readonly LimitedConcurrencyLevelTaskScheduler scheduler;
-        private readonly TaskFactory factory;
-
-        public LocalExperimentRunner()
-        {
-            scheduler = new LimitedConcurrencyLevelTaskScheduler(1);
-            factory = new TaskFactory(scheduler);
-        }
-
-        public TaskFactory TaskFactory { get { return factory; } }
-
-        public Task<BenchmarkResult>[] Enqueue(ExperimentID id, ExperimentDefinition experiment, double normal)
-        {
-            if (experiment == null) throw new ArgumentNullException("experiment");
-            return RunExperiment(id, experiment, factory, normal);
-        }
-
-        private static Task<BenchmarkResult>[] RunExperiment(ExperimentID id, ExperimentDefinition experiment, TaskFactory factory, double normal)
-        {
-            if (!File.Exists(experiment.Executable)) throw new ArgumentException("Executable not found");
-
-            var workerInfo = GetWorkerInfo();
-            string benchmarkFolder = string.IsNullOrEmpty(experiment.Category) ? experiment.BenchmarkContainer : Path.Combine(experiment.BenchmarkContainer, experiment.Category);
-            var benchmarks = Directory.EnumerateFiles(benchmarkFolder, "*." + experiment.BenchmarkFileExtension, SearchOption.AllDirectories).ToArray();
-
-            var results = new Task<BenchmarkResult>[benchmarks.Length];
-            for (int i = 0; i < benchmarks.Length; i++)
-            {
-                results[i] =
-                    factory.StartNew(_benchmark =>
-                    {
-                        string benchmark = (string)_benchmark;
-                        Trace.WriteLine("Running benchmark " + Path.GetFileName(benchmark));
-
-                        string args = experiment.Parameters;
-                        if (args != null)
-                        {
-                            args = args.Replace("{0}", benchmark);
-                        }
-
-                        DateTime acq = DateTime.Now;
-                        var m = ProcessMeasurer.Measure(experiment.Executable, args, experiment.BenchmarkTimeout, experiment.MemoryLimit == 0 ? null : new Nullable<long>(experiment.MemoryLimit));
-                        Trace.WriteLine(String.Format("Done in {0}", m.WallClockTime));
-
-                        var performanceIndex = normal * m.TotalProcessorTime.TotalSeconds;
-                        return new BenchmarkResult(id, benchmark, workerInfo, performanceIndex, acq, m);
-                    }, benchmarks[i], TaskCreationOptions.LongRunning);
-            }
-
-            return results;
-        }
-
-        private static string GetWorkerInfo()
-        {
-            return "";
-        }
-    }
+    
 
     public class ExperimentInstance
     {
