@@ -55,8 +55,8 @@ namespace PerformanceTest
 
                         DateTime acq = DateTime.Now;
 
-                        int maxCount = repetitions == 0 ? 10 : repetitions;
-                        TimeSpan maxTime = TimeSpan.FromSeconds(10);
+                        int maxCount = repetitions == 0 ? 25 : repetitions;
+                        TimeSpan maxTime = TimeSpan.FromSeconds(30);
 
                         int count = 0;
                         List<ProcessRunMeasure> measures = new List<ProcessRunMeasure>();

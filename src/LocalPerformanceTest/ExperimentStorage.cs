@@ -84,14 +84,11 @@ namespace PerformanceTest
             dirBenchmarks.Create();
         }
 
-        public Dictionary<int, ExperimentDefinition> GetExperiments()
+        public Dictionary<int, ExperimentsTableRow> GetExperiments()
         {
-            var dict = new Dictionary<int, ExperimentDefinition>();
+            var dict = new Dictionary<int, ExperimentsTableRow>();
             foreach (var row in experimentsTable.Rows) { // todo: all properties
-                dict[row.ID] = ExperimentDefinition.Create(
-                             row.Executable, row.BenchmarkContainer,
-                             row.BenchmarkFileExtension, row.Parameters,
-                             TimeSpan.FromSeconds(row.BenchmarkTimeout), row.Category);
+                dict[row.ID] = row;
             }
             return dict;
         }
@@ -133,7 +130,7 @@ namespace PerformanceTest
                 ).ToArray();
         }
 
-        public void AddExperiment(int id, ExperimentDefinition experiment)
+        public void AddExperiment(int id, ExperimentDefinition experiment, DateTime submitted)
         {
             experimentsTable = experimentsTable.AddRow(new ExperimentsTableRow
             {
@@ -221,6 +218,7 @@ namespace PerformanceTest
     public class ExperimentsTableRow
     {
         public int ID { get; set; }
+        public DateTime Submitted { get; set; }
         public string Executable { get; set; }
         public string Version { get; set; }
         public string Parameters { get; set; }

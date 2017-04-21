@@ -105,13 +105,20 @@ namespace PerformanceTest
     /// </summary>
     public class ExperimentStatus
     {
-        public ExperimentID ID;
-        
+        public ExperimentStatus(ExperimentID id, string category, DateTime submitted)
+        {
+            ID = id;
+            Category = category;
+            SubmissionTime = submitted;
+        }
+
+        public ExperimentID ID { get; private set; }
+
         public DateTime SubmissionTime;
         public string Creator;
         public string ExecutableVersion;
 
-        public string Category;
+        public string Category { get; private set; }
         public string Note;
         public bool Flag;
 

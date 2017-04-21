@@ -27,7 +27,6 @@ namespace PerformanceTest
         public static ExperimentManager OpenExperiments(string experimentsFolder)
         {
             FileStorage storage = FileStorage.Open(experimentsFolder);
-            storage.GetExperiments();
             ExperimentManager manager = new LocalExperimentManager(storage);
             return manager;
         }
@@ -58,6 +57,7 @@ namespace PerformanceTest
         public override async Task<ExperimentID> StartExperiment(ExperimentDefinition definition)
         {
             ExperimentID id = Interlocked.Increment(ref lastId);
+            DateTime submitted = DateTime.Now;
 
             double normal = await asyncNormal;
 
@@ -90,7 +90,7 @@ namespace PerformanceTest
             ExperimentInstance experiment = new ExperimentInstance(id, definition, resultsWithSave);
             runningExperiments[id] = experiment;
 
-            storage.AddExperiment(id, definition);
+            storage.AddExperiment(id, definition, submitted);
 
             return id;
         }
@@ -103,18 +103,26 @@ namespace PerformanceTest
             {
                 return Task.FromResult(experiment.Definition);
             }
-            ExperimentDefinition def;
-            if (storage.GetExperiments().TryGetValue(id, out def))
+            ExperimentsTableRow row;
+            if (storage.GetExperiments().TryGetValue(id, out row))
             {
-                return Task.FromResult(def);
+                return Task.FromResult(RowToDefinition(row));
             }
             else throw new ArgumentException(string.Format("Experiment {0} not found", id));
         }
 
-        public override Task<ExperimentStatus> GetStatus(int id)
+        public override async Task<IEnumerable<ExperimentStatus>> GetStatus(IEnumerable<int> ids)
         {
-            throw new NotImplementedException();
+            List<ExperimentStatus> status = new List<ExperimentStatus>();
+            foreach (var id in ids)
+            {
+                var def = await GetDefinition(id);
+                var st = new ExperimentStatus(id, def.Category, DateTime.Now);
+                status.Add(st);
+            }
+            return status;
         }
+        
 
         public override Task<BenchmarkResult>[] GetResults(int id)
         {
@@ -126,9 +134,10 @@ namespace PerformanceTest
             return storage.GetResults(id).Select(r => Task.FromResult(r)).ToArray();
         }
 
+
         public override Task<IEnumerable<int>> FindExperiments(ExperimentFilter? filter = default(ExperimentFilter?))
         {
-            IEnumerable<KeyValuePair<int, ExperimentDefinition>> experiments = storage.GetExperiments().ToArray();
+            IEnumerable<KeyValuePair<int, ExperimentsTableRow>> experiments = storage.GetExperiments().ToArray();
 
             if (filter.HasValue)
             {
@@ -155,6 +164,14 @@ namespace PerformanceTest
             double n = reference.ReferenceValue / m;
             Trace.WriteLine(String.Format("Median reference duration: {0}, normal: {1}", m, n));
             return n;
+        }
+
+        private static ExperimentDefinition RowToDefinition(ExperimentsTableRow row)
+        {
+            return ExperimentDefinition.Create(
+                row.Executable, row.BenchmarkContainer,
+                row.BenchmarkFileExtension, row.Parameters,
+                TimeSpan.FromSeconds(row.BenchmarkTimeout), row.Category);
         }
     }
     

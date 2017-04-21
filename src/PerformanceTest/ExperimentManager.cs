@@ -32,9 +32,9 @@ namespace PerformanceTest
         public abstract Task<ExperimentDefinition> GetDefinition(ExperimentID id);
 
         /// <summary>
-        /// Returns current execution status of an existing experiment.
+        /// Returns current execution status of existing experiments.
         /// </summary>
-        public abstract Task<ExperimentStatus> GetStatus(ExperimentID id);
+        public abstract Task<IEnumerable<ExperimentStatus>> GetStatus(IEnumerable<ExperimentID> ids);
 
         /// <summary>
         /// Allows to get a result of each of the experiment's benchmarks.
