@@ -135,6 +135,7 @@ namespace PerformanceTest
             experimentsTable = experimentsTable.AddRow(new ExperimentsTableRow
             {
                 ID = id,
+                Submitted = submitted,
                 Executable = experiment.Executable,
                 Version = GetVersion(experiment.Executable),
                 Parameters = experiment.Parameters,

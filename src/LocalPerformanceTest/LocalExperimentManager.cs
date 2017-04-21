@@ -114,10 +114,11 @@ namespace PerformanceTest
         public override async Task<IEnumerable<ExperimentStatus>> GetStatus(IEnumerable<int> ids)
         {
             List<ExperimentStatus> status = new List<ExperimentStatus>();
+            var experiments = storage.GetExperiments();
             foreach (var id in ids)
             {
-                var def = await GetDefinition(id);
-                var st = new ExperimentStatus(id, def.Category, DateTime.Now);
+                var expRow = experiments[id];
+                var st = new ExperimentStatus(id, expRow.Category, expRow.Submitted);
                 status.Add(st);
             }
             return status;
