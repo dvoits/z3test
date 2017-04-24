@@ -149,9 +149,11 @@ namespace PerformanceTest
                         var id = q.Key;
                         var e = q.Value;
                         return (filter.Value.BenchmarkContainerEquals == null || e.BenchmarkContainer == filter.Value.BenchmarkContainerEquals) &&
-                                    (filter.Value.CategoryEquals == null || e.Category == filter.Value.CategoryEquals) &&
-                                    (filter.Value.ExecutableEquals == null || e.Executable == filter.Value.ExecutableEquals) &&
-                                    (filter.Value.ParametersEquals == null || e.Parameters == filter.Value.ParametersEquals);
+                                    (filter.Value.CategoryEquals == null || e.Category == null || e.Category.Contains(filter.Value.CategoryEquals)) &&
+                                    (filter.Value.ExecutableEquals == null || e.Executable == null || e.Executable == filter.Value.ExecutableEquals) &&
+                                    (filter.Value.ParametersEquals == null || e.Parameters == null || e.Parameters == filter.Value.ParametersEquals) &&
+                                    (filter.Value.NotesEquals == null || e.Note  == null || e.Note.Contains(filter.Value.NotesEquals)); //&&
+                                    //(filter.Value.CreatorEquals == null || e.Creator.Contains(filter.Value.CreatorEquals));
                     });
             }
 

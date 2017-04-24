@@ -58,6 +58,10 @@ namespace PerformanceTest
 
             public string ParametersEquals { get; set; }
 
+            public string NotesEquals { get; set;}
+
+            public string CreatorEquals { get; set;}
+
         }
     }
 

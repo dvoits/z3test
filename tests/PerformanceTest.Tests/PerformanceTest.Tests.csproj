@@ -55,6 +55,7 @@
     <Compile Include="RunExperimentsTests.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="benchmarks_1\identity3x3.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
