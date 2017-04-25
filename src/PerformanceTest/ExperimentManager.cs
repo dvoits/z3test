@@ -43,7 +43,7 @@ namespace PerformanceTest
         /// <returns></returns>
         public abstract Task<BenchmarkResult>[] GetResults(ExperimentID id);
 
-
+        public abstract void DeleteExperiment(ExperimentID id);
 
 
         public abstract Task<IEnumerable<ExperimentID>> FindExperiments(ExperimentFilter? filter = null);

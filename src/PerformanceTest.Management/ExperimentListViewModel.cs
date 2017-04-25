@@ -34,7 +34,7 @@ namespace PerformanceTest.Management
         public void DeleteExperiment (int id)
         {
             var items = Items.Where(st => st.ID != id).ToArray();
-            //manager.DeleteExperiment(id);
+            manager.DeleteExperiment(id);
             Items = items;
         }
         public void UpdateFlag (int id)

@@ -124,6 +124,10 @@ namespace PerformanceTest
             return status;
         }
         
+        public override void DeleteExperiment (int id)
+        {
+            //not implemented
+        }
 
         public override Task<BenchmarkResult>[] GetResults(int id)
         {
