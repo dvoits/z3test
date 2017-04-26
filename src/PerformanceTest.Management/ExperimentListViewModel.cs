@@ -44,7 +44,7 @@ namespace PerformanceTest.Management
                     st.Flag = !st.Flag;
                 return st;
             }).ToArray();
-            //manager.UpdateExperiment(id);
+            manager.UpdateStatusFlag(id);
             Items = items;
         }
         public double GetRuntime (int id)
@@ -77,7 +77,6 @@ namespace PerformanceTest.Management
 
             var ids = await manager.FindExperiments();
             var status = await manager.GetStatus(ids);
-            //var stat = status.OrderByDescending(s => s.ID);
             Items = status.Select(st => new ExperimentStatusViewModel(st)).ToArray();
         }
 
@@ -103,6 +102,8 @@ namespace PerformanceTest.Management
 
         public string Submitted { get { return status.SubmissionTime.ToString(); } }
 
+        public string Note { get { return status.Note; } }
+        public string Creator { get { return status.Creator; } }
         public bool Flag {
             get { return status.Flag; }
             set { status.Flag = value; }

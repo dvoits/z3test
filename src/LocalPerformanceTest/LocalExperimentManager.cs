@@ -128,7 +128,10 @@ namespace PerformanceTest
         {
             //not implemented
         }
-
+        public override void UpdateStatusFlag (int id)
+        {
+            //not implemented
+        }
         public override Task<BenchmarkResult>[] GetResults(int id)
         {
             ExperimentInstance experiment;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -130,8 +131,25 @@ namespace PerformanceTest.Management
 
             if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
+                StreamWriter f = new StreamWriter(dlg.FileName, false);
                 //not implemented 
+
+
+                f.WriteLine();
+                f.Close();
             }
+        }
+        private List<int> computeUnique()
+        {
+            List<int> ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToList();
+            List<int> res = new List<int>();
+            for (int i = 0; i < ids.Count; i++)
+            {
+                //what is a filename
+                List<string> filenames = new List<string>();
+                res.Add(filenames.Count);
+            }
+            return res;
         }
         private void canSaveMetaCSV(object sender, CanExecuteRoutedEventArgs e)
         {
@@ -147,7 +165,41 @@ namespace PerformanceTest.Management
 
             if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                //not implemented 
+                StreamWriter f = new StreamWriter(dlg.FileName, false);
+                f.WriteLine("\"ID\",\"# Total\",\"# SAT\",\"# UNSAT\",\"# UNKNOWN\",\"# Timeout\",\"# Memout\",\"# Bug\",\"# Error\",\"# Unique\",\"Parameters\",\"Note\""); 
+                var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
+                var count = ids.Length;
+                var unique = computeUnique();
+                for (var i = 0; i < count; i++)
+                {
+                    //not implemented 
+
+                    string ps = "";
+                    string note = "";
+                    int total =  0;
+                    int sat = 0;
+                    int unsat = 0;
+                    int unknown = 0;
+                    int timeouts = 0;
+                    int memouts = 0;
+                    int bugs = 0;
+                    int errors = 0;
+
+                    f.WriteLine(ids[i] + "," +
+                                total + "," +
+                                sat + "," +
+                                unsat + "," +
+                                unknown + "," +
+                                timeouts + "," +
+                                memouts + "," +
+                                bugs + "," +
+                                errors + "," +
+                                unique[i] + "," +
+                                "\"'" + ps + "\"," +
+                                "\"" + note + "\"");
+                }
+                f.WriteLine();
+                f.Close();
             }
 
         }
