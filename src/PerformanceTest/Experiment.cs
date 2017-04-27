@@ -45,7 +45,8 @@ namespace PerformanceTest
         }
 
         /// <summary>
-        /// An executable name to measure performance by running for multiple benchmark files.
+        /// A path to a file which is either an executable file or a zip file which contains a main executable and supporting files.
+        /// The executable will run for multiple specified benchmark files to measure its performance.
         /// </summary>
         public string Executable { get; private set; }
 

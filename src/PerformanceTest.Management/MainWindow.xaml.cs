@@ -151,10 +151,12 @@ namespace PerformanceTest.Management
             }
             return res;
         }
+
         private void canSaveMetaCSV(object sender, CanExecuteRoutedEventArgs e)
         {
             e.CanExecute = dataGrid.SelectedItems.Count >= 1;
         }
+
         private void saveMetaCSV(object target, ExecutedRoutedEventArgs e)
         {
             System.Windows.Forms.SaveFileDialog dlg = new System.Windows.Forms.SaveFileDialog();
@@ -203,10 +205,12 @@ namespace PerformanceTest.Management
             }
 
         }
+
         private void canToggleFlag(object sender, CanExecuteRoutedEventArgs e)
         {
             e.CanExecute = dataGrid.SelectedItems.Count >= 1;
         }
+
         private void toggleFlag(object target, ExecutedRoutedEventArgs e)
         {
             var vms = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>();
@@ -215,10 +219,12 @@ namespace PerformanceTest.Management
                 vm.Flag = !vm.Flag;
             }
         }
+
         private void canShowTally(object sender, CanExecuteRoutedEventArgs e)
         {
             e.CanExecute = dataGrid.SelectedItems.Count > 0;
         }
+
         private void showTally(object target, ExecutedRoutedEventArgs e)
         {
             Mouse.OverrideCursor = System.Windows.Input.Cursors.Wait;
@@ -247,6 +253,16 @@ namespace PerformanceTest.Management
         private void MenuItemExit_Click(object sender, RoutedEventArgs e)
         {
             Close();
+        }
+
+        private void btnNewJob_Click(object sender, RoutedEventArgs e)
+        {
+            NewJobDialog dlg = new NewJobDialog();
+            dlg.Owner = this;
+            if (dlg.ShowDialog() == true)
+            {
+
+            }
         }
     }
 }
