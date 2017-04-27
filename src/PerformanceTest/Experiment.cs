@@ -91,11 +91,6 @@ namespace PerformanceTest
         /// </summary>
         public TimeSpan ExperimentTimeout { get; private set; }
 
-        /// <summary>
-        /// A descriptive note, if you like.
-        /// </summary>
-        public string Note { get; private set; }
-
         public string GroupName { get; private set; }
     }
     
@@ -105,11 +100,14 @@ namespace PerformanceTest
     /// </summary>
     public class ExperimentStatus
     {
-        public ExperimentStatus(ExperimentID id, string category, DateTime submitted)
+        public ExperimentStatus(ExperimentID id, string category, DateTime submitted, string creator, string note, bool flag)
         {
             ID = id;
             Category = category;
+            Creator = creator;
             SubmissionTime = submitted;
+            Note = note;
+            Flag = flag;
         }
 
         public ExperimentID ID { get; private set; }
@@ -119,7 +117,11 @@ namespace PerformanceTest
         public string ExecutableVersion;
 
         public string Category { get; private set; }
-        public string Note;
+
+        /// <summary>
+        /// A descriptive note, if you like.
+        /// </summary>
+        public string Note { get; private set; }
         public bool Flag;
 
         public int BenchmarksDone { get; private set; }

@@ -68,7 +68,9 @@
 
         <TabControl Grid.Row="2" Grid.Column="0" TabStripPlacement="Bottom">
             <TabItem Header="Jobs" >
-                <DataGrid AutoGenerateColumns="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,10,10,10" Name="dataGrid" IsReadOnly="True" 
+                <DataGrid AutoGenerateColumns="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,10,10,10" Name="dataGrid" IsReadOnly="False" 
+                          GridLinesVisibility="None" SelectionUnit="FullRow" SelectionMode="Extended" AlternatingRowBackground="AliceBlue" 
+                          RowHeight="20"
                           ItemsSource="{Binding Items}">
                     <DataGrid.Resources>
                         <DataTemplate x:Key="ProgressTemplate" >
@@ -76,17 +78,18 @@
                         </DataTemplate>
                     </DataGrid.Resources>
                     <DataGrid.Columns>
-                        <DataGridTextColumn Binding="{Binding Path=ID}" Header="ID" />
-                        <DataGridTextColumn Binding="{Binding Path=Submitted}" Header="Submitted"/>
-                        <DataGridTextColumn Binding="{Binding Path=Category}" Header="Category" />
-                        <DataGridTextColumn Binding="{Binding Path=Creator}" Header="Creator" />
-                        <DataGridTextColumn Binding="{Binding Path=Note}" Header="Note" />
-                        <DataGridCheckBoxColumn Binding="{Binding Path=Flag}" Header="Flag" IsThreeState="False" />
+                        <DataGridTextColumn Binding="{Binding Path=ID, Mode=OneWay}" Header="ID" />
+                        <DataGridTextColumn Binding="{Binding Path=Submitted, Mode=OneWay}" Header="Submitted"/>
+                        <DataGridTextColumn Binding="{Binding Path=Category, Mode=OneWay}" Header="Category" />
+                        <DataGridTextColumn Binding="{Binding Path=Creator, Mode=OneWay}" Header="Creator" />
+                        <DataGridTextColumn Binding="{Binding Path=Note, Mode=OneWay}" Header="Note" />
+                        <DataGridCheckBoxColumn Binding="{Binding Path=Flag, UpdateSourceTrigger=PropertyChanged}" Header="Flag" IsThreeState="False" />
+                        <DataGridTextColumn Binding="{Binding Path=WorkerInformation, Mode=OneWay}" Header="Machine" />
                         <DataGridTemplateColumn Header="Progress" CellTemplate="{StaticResource ProgressTemplate}" Visibility="Hidden"/>
-                        <DataGridTextColumn Binding="{Binding Path=Done}" Header="Done" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
-                        <DataGridTextColumn Binding="{Binding Path=Queued}" Header="Queued" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
-                        <DataGridTextColumn Binding="{Binding Path=Total}" Header="Total" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
-                        <DataGridTextColumn Binding="{Binding Path=Projection}" Header="Projection" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
+                        <DataGridTextColumn Binding="{Binding Path=Done, Mode=OneWay}" Header="Done" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
+                        <DataGridTextColumn Binding="{Binding Path=Queued, Mode=OneWay}" Header="Queued" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
+                        <DataGridTextColumn Binding="{Binding Path=Total, Mode=OneWay}" Header="Total" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
+                        <DataGridTextColumn Binding="{Binding Path=Projection, Mode=OneWay}" Header="Projection" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
                     </DataGrid.Columns>
                     <DataGrid.CommandBindings>
                         <CommandBinding Command="Delete" Executed="deleteExperiment" CanExecute="canDeleteExperiment" />
@@ -104,7 +107,7 @@
                         <CommandBinding Command="{x:Static custom:MainWindow.ChangePriorityCommand}" Executed="showChangePriority" CanExecute="canChangePriority" />
                         <CommandBinding Command="{x:Static custom:MainWindow.RecoveryCommand}" Executed="showRecovery" CanExecute="canShowRecovery" />
                         <CommandBinding Command="{x:Static custom:MainWindow.DuplicatesCommand}" Executed="showDuplicates" CanExecute="canShowDuplicates" />-->
-                        <CommandBinding Command="{x:Static local:MainWindow.FlagCommand}" Executed="showFlag" CanExecute="canShowFlag" />
+                        <CommandBinding Command="{x:Static local:MainWindow.FlagCommand}" Executed="toggleFlag" CanExecute="canToggleFlag" />
                         <CommandBinding Command="{x:Static local:MainWindow.TallyCommand}" Executed="showTally" CanExecute="canShowTally" />
                         <CommandBinding Command="{x:Static local:MainWindow.SaveMetaCSVCommand}" Executed="saveMetaCSV" CanExecute="canSaveMetaCSV" />
                         <!--<CommandBinding Command="{x:Static custom:MainWindow.SaveMatrixCommand}" Executed="showSaveMatrix" CanExecute="canShowSaveMatrix" />
@@ -141,6 +144,13 @@
                             <MenuItem Name="mnuProperties" Command="Properties" />
                         </ContextMenu>
                     </DataGrid.ContextMenu>
+                    <DataGrid.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="BorderThickness" Value="0"/>
+                            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                        </Style>
+                    </DataGrid.CellStyle>
                 </DataGrid>
             </TabItem>
 

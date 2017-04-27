@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -12,15 +13,18 @@ namespace PerformanceTest.Management
     {
         private IEnumerable<ExperimentStatusViewModel> experiments;
         private readonly ExperimentManager manager;
+        private readonly IMessageService message;
 
 
         public event PropertyChangedEventHandler PropertyChanged;
 
 
-        public ExperimentListViewModel(ExperimentManager manager)
+        public ExperimentListViewModel(ExperimentManager manager, IMessageService message)
         {
             if (manager == null) throw new ArgumentNullException("manager");
+            if (message == null) throw new ArgumentNullException("message");
             this.manager = manager;
+            this.message = message;
 
             RefreshItemsAsync();
         }
@@ -31,28 +35,18 @@ namespace PerformanceTest.Management
             private set { experiments = value; NotifyPropertyChanged(); }
         }
 
-        public void DeleteExperiment (int id)
+        public void DeleteExperiment(int id)
         {
             var items = Items.Where(st => st.ID != id).ToArray();
             manager.DeleteExperiment(id);
             Items = items;
         }
-        public void UpdateFlag (int id)
+
+        public double GetRuntime(int id)
         {
-            var items = Items.Select(st => {
-                if (st.ID == id)
-                    st.Flag = !st.Flag;
-                return st;
-            }).ToArray();
-            manager.UpdateStatusFlag(id);
-            Items = items;
+            return manager.GetResults(id).Sum(res => res.IsCompleted ? res.Result.NormalizedRuntime : 0);
         }
-        public double GetRuntime (int id)
-        {
-            var def = manager.GetResults(id).Select(res => res.Result);
-            return def.Sum(r => r.NormalizedRuntime);
-        }
-        public async void FindExperiments (string filter)
+        public async void FindExperiments(string filter)
         {
             if (filter != "")
             {
@@ -64,7 +58,7 @@ namespace PerformanceTest.Management
                 };
                 var ids = await manager.FindExperiments(filt);
                 var status = await manager.GetStatus(ids);
-                Items = status.Select(st => new ExperimentStatusViewModel(st)).ToArray();
+                Items = status.Select(st => new ExperimentStatusViewModel(st, manager, message)).ToArray();
             }
             else
             {
@@ -77,7 +71,7 @@ namespace PerformanceTest.Management
 
             var ids = await manager.FindExperiments();
             var status = await manager.GetStatus(ids);
-            Items = status.Select(st => new ExperimentStatusViewModel(st)).ToArray();
+            Items = status.Select(st => new ExperimentStatusViewModel(st, manager, message)).ToArray();
         }
 
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
@@ -86,14 +80,25 @@ namespace PerformanceTest.Management
         }
     }
 
-    public class ExperimentStatusViewModel
+    public class ExperimentStatusViewModel : INotifyPropertyChanged
     {
         private readonly ExperimentStatus status;
+        private readonly ExperimentManager manager;
+        private readonly IMessageService message;
 
-        public ExperimentStatusViewModel(ExperimentStatus status)
+        private bool flag;
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public ExperimentStatusViewModel(ExperimentStatus status, ExperimentManager manager, IMessageService message)
         {
             if (status == null) throw new ArgumentNullException("status");
+            if (manager == null) throw new ArgumentNullException("manager");
+            if (message == null) throw new ArgumentNullException("message");
             this.status = status;
+            this.flag = status.Flag;
+            this.manager = manager;
+            this.message = message;
         }
 
         public int ID { get { return status.ID; } }
@@ -103,10 +108,44 @@ namespace PerformanceTest.Management
         public string Submitted { get { return status.SubmissionTime.ToString(); } }
 
         public string Note { get { return status.Note; } }
+
         public string Creator { get { return status.Creator; } }
-        public bool Flag {
-            get { return status.Flag; }
-            set { status.Flag = value; }
+
+        public bool Flag
+        {
+            get { return flag; }
+
+            set {
+                if (status.Flag != value && status.Flag == flag)
+                {
+                    flag = value;
+                    NotifyPropertyChanged();
+
+                    UpdateStatusFlag();
+                }
+            }
+        }
+
+        private async void UpdateStatusFlag()
+        {
+            try
+            {
+                await manager.UpdateStatusFlag(status.ID, flag);
+                status.Flag = flag;
+                Trace.WriteLine("Status flag changed to " + flag + " for " + status.ID);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("Failed to update experiment status flag: " + ex.Message);
+                flag = status.Flag;
+                NotifyPropertyChanged("Flag");
+                message.ShowError("Failed to update experiment status flag: " + ex.Message);
+            }
+        }
+
+        private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

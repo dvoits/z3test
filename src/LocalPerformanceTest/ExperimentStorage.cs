@@ -41,7 +41,7 @@ namespace PerformanceTest
             if (File.Exists(tableFile))
             {
                 experimentsTable =
-                    Table.OfRows( 
+                    Table.OfRows(
                         Table.Load(tableFile, new ReadSettings(Delimiter.Comma, true, true, None,
                             FSharpOption<FSharpFunc<Tuple<int, string>, FSharpOption<Type>>>.Some(FSharpFunc<Tuple<int, string>, FSharpOption<Type>>.FromConverter(tuple =>
                             {
@@ -87,7 +87,8 @@ namespace PerformanceTest
         public Dictionary<int, ExperimentsTableRow> GetExperiments()
         {
             var dict = new Dictionary<int, ExperimentsTableRow>();
-            foreach (var row in experimentsTable.Rows) { // todo: all properties
+            foreach (var row in experimentsTable.Rows)
+            { // todo: all properties
                 dict[row.ID] = row;
             }
             return dict;
@@ -130,7 +131,7 @@ namespace PerformanceTest
                 ).ToArray();
         }
 
-        public void AddExperiment(int id, ExperimentDefinition experiment, DateTime submitted)
+        public void AddExperiment(int id, ExperimentDefinition experiment, DateTime submitted, string creator, string note)
         {
             experimentsTable = experimentsTable.AddRow(new ExperimentsTableRow
             {
@@ -146,14 +147,24 @@ namespace PerformanceTest
                 ExperimentTimeout = experiment.ExperimentTimeout.TotalSeconds,
                 MemoryLimit = (int)(experiment.MemoryLimit >> 20), // bytes to MB
                 GroupName = experiment.GroupName,
-                Note = experiment.Note,
+                Note = note,
+                Creator = creator
             });
-            Table.Save(experimentsTable, Path.Combine(dir.FullName, "experiments.csv"), new WriteSettings(Delimiter.Comma, true, true));
+            SaveTable(experimentsTable, Path.Combine(dir.FullName, "experiments.csv"), new WriteSettings(Delimiter.Comma, true, true));
         }
 
         public void AddResults(int id, BenchmarkResult[] benchmarks)
         {
             SaveBenchmarks(IdToTableName(id), benchmarks);
+        }
+
+        public void ReplaceExperimentRow(ExperimentsTableRow newRow)
+        {
+            experimentsTable = Table.OfRows(experimentsTable.Rows.Select(r =>
+            {
+                return r.ID == newRow.ID ? newRow : r;
+            }));
+            SaveTable(experimentsTable, Path.Combine(dir.FullName, "experiments.csv"), new WriteSettings(Delimiter.Comma, true, true));
         }
 
         private string IdToTableName(int id)
@@ -177,7 +188,15 @@ namespace PerformanceTest
                 Column.Create("StdErr", benchmarks.Select(b => b.Measurements.ErrorToString()), None),
                 Column.Create("WorkerInformation", benchmarks.Select(b => b.WorkerInformation), None),
             });
-            Table.Save(table, fileName, new WriteSettings(Delimiter.Comma, true, true));
+            SaveTable(table, fileName, new WriteSettings(Delimiter.Comma, true, true));
+        }
+
+        private static void SaveTable(Table table, string fileName, WriteSettings settings)
+        {
+            using (TextWriter w = new StreamWriter(fileName, false, new UTF8Encoding(true)))
+            {
+                Table.Save(table, w, settings);
+            }
         }
 
         private static string StatusAsString(Measure.CompletionStatus status)
@@ -239,6 +258,8 @@ namespace PerformanceTest
         /// </summary>
         public double ExperimentTimeout { get; set; }
         public string Note { get; set; }
+        public string Creator { get; set; }
+        public bool Flag { get; set; }
         public string GroupName { get; set; }
     }
 

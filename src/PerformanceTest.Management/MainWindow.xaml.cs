@@ -38,7 +38,7 @@ namespace PerformanceTest.Management
                 {
                     ExperimentManager manager = LocalExperimentManager.OpenExperiments(connectionString.Text);
 
-                    experimentsVm = new ExperimentListViewModel(manager);
+                    experimentsVm = new ExperimentListViewModel(manager, MessageBoxService.Instance);
                     dataGrid.DataContext = experimentsVm;
                     Properties.Settings.Default.ConnectionString = connectionString.Text;
                     Properties.Settings.Default.Save();
@@ -68,7 +68,7 @@ namespace PerformanceTest.Management
         {
             ExperimentManager manager = LocalExperimentManager.OpenExperiments(connectionString.Text);
 
-            experimentsVm = new ExperimentListViewModel(manager);
+            experimentsVm = new ExperimentListViewModel(manager, MessageBoxService.Instance);
             dataGrid.DataContext = experimentsVm;
             //experimentsVm.FindExperiments(txtFilter.Text);
         }
@@ -203,17 +203,16 @@ namespace PerformanceTest.Management
             }
 
         }
-        private void canShowFlag(object sender, CanExecuteRoutedEventArgs e)
+        private void canToggleFlag(object sender, CanExecuteRoutedEventArgs e)
         {
             e.CanExecute = dataGrid.SelectedItems.Count >= 1;
         }
-        private void showFlag(object target, ExecutedRoutedEventArgs e)
+        private void toggleFlag(object target, ExecutedRoutedEventArgs e)
         {
-            var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
-            var count = ids.Length;
-            for (var i = 0; i < count; i++)
+            var vms = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>();
+            foreach (var vm in vms)
             {
-                experimentsVm.UpdateFlag(ids[i]);
+                vm.Flag = !vm.Flag;
             }
         }
         private void canShowTally(object sender, CanExecuteRoutedEventArgs e)

@@ -24,7 +24,7 @@ namespace PerformanceTest
         /// </summary>
         /// <param name="definition">Describes the experiment to be performed.</param>
         /// <returns>Identifier of the new experiment for further reference.</returns>
-        public abstract Task<ExperimentID> StartExperiment(ExperimentDefinition definition);
+        public abstract Task<ExperimentID> StartExperiment(ExperimentDefinition definition, string creator = null, string note = null);
 
         /// <summary>
         /// Returns a definition of an existing experiment.
@@ -45,7 +45,8 @@ namespace PerformanceTest
 
         public abstract void DeleteExperiment(ExperimentID id);
 
-        public abstract void UpdateStatusFlag(ExperimentID id);
+        public abstract Task UpdateStatusFlag(ExperimentID id, bool flag);
+
         public abstract Task<IEnumerable<ExperimentID>> FindExperiments(ExperimentFilter? filter = null);
 
         public struct ExperimentFilter

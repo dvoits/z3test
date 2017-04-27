@@ -54,7 +54,7 @@ namespace PerformanceTest
             get { return storage.Location; }
         }
 
-        public override async Task<ExperimentID> StartExperiment(ExperimentDefinition definition)
+        public override async Task<ExperimentID> StartExperiment(ExperimentDefinition definition, string creator = null, string note = null)
         {
             ExperimentID id = Interlocked.Increment(ref lastId);
             DateTime submitted = DateTime.Now;
@@ -90,7 +90,7 @@ namespace PerformanceTest
             ExperimentInstance experiment = new ExperimentInstance(id, definition, resultsWithSave);
             runningExperiments[id] = experiment;
 
-            storage.AddExperiment(id, definition, submitted);
+            storage.AddExperiment(id, definition, submitted, creator, note);
 
             return id;
         }
@@ -117,8 +117,8 @@ namespace PerformanceTest
             var experiments = storage.GetExperiments();
             foreach (var id in ids)
             {
-                var expRow = experiments[id];
-                var st = new ExperimentStatus(id, expRow.Category, expRow.Submitted);
+                ExperimentsTableRow expRow = experiments[id];
+                var st = new ExperimentStatus(id, expRow.Category, expRow.Submitted, expRow.Creator, expRow.Note, expRow.Flag);
                 status.Add(st);
             }
             return status;
@@ -128,10 +128,14 @@ namespace PerformanceTest
         {
             //not implemented
         }
-        public override void UpdateStatusFlag (int id)
+        public override Task UpdateStatusFlag (int id, bool flag)
         {
-            //not implemented
+            var newRow = storage.GetExperiments()[id];
+            newRow.Flag = flag;
+            storage.ReplaceExperimentRow(newRow);
+            return Task.FromResult(0);
         }
+
         public override Task<BenchmarkResult>[] GetResults(int id)
         {
             ExperimentInstance experiment;
