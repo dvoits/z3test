@@ -24,6 +24,8 @@ namespace PerformanceTest.Management
         public static RoutedCommand SaveMetaCSVCommand = new RoutedCommand();
         public static RoutedCommand FlagCommand = new RoutedCommand();
         public static RoutedCommand TallyCommand = new RoutedCommand();
+        public static RoutedCommand ChangePriorityCommand = new RoutedCommand();
+
         public MainWindow()
         {
             InitializeComponent();
@@ -75,7 +77,7 @@ namespace PerformanceTest.Management
 
             experimentsVm = new ExperimentListViewModel(manager, UIService.Instance);
             dataGrid.DataContext = experimentsVm;
-            //experimentsVm.FindExperiments(txtFilter.Text);
+            experimentsVm.FindExperiments(txtFilter.Text);
         }
         private void OptShowProgress_Checked(object sender, RoutedEventArgs e)
         {
@@ -249,6 +251,32 @@ namespace PerformanceTest.Management
                            MessageBoxImage.Information);
 
             Mouse.OverrideCursor = null;
+        }
+
+        private void canChangePriority(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count > 0;
+        }
+        private void changePriority(object target, ExecutedRoutedEventArgs e)
+        {
+            ChangePriorityDialog dlg = new ChangePriorityDialog();
+            dlg.Owner = this;
+            if (dlg.ShowDialog() == true)
+            {
+                var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
+                double total = ids.Length;
+                for (var i = 0; i < total; i++)
+                {
+                    switch (dlg.cmbPriority.SelectedIndex)
+                    {
+                        case 0: break;
+                        case 1: break;
+                        case 3: break;
+                        case 4: break;
+                        default: break;
+                    }
+                }
+            }
         }
         private void filter_KeyUp(object sender, KeyEventArgs e)
         {
