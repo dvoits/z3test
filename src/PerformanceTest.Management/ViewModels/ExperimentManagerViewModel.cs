@@ -23,6 +23,14 @@ namespace PerformanceTest.Management
         }
 
         public abstract string[] GetAvailableCategories(string benchmarkContainer);
+
+
+        public virtual async Task SubmitExperiment(ExperimentDefinition def, string creator, string note)
+        {
+            var id = await manager.StartExperiment(def, creator, note);
+        }
+
+        public abstract string HandleMultileTargetFiles(string[] files, string mainFile);
     }
 
     public class LocalExperimentManagerViewModel : ExperimentManagerViewModel
@@ -47,6 +55,11 @@ namespace PerformanceTest.Management
                 }).ToArray();
             }
             return new string[0];
+        }
+
+        public override string HandleMultileTargetFiles(string[] files, string mainFile)
+        {
+            return mainFile;
         }
     }
 }

@@ -83,13 +83,13 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Views\ChooseCategoriesWindow.xaml.cs">
-      <DependentUpon>ChooseCategoriesWindow.xaml</DependentUpon>
+    <Compile Include="Views\ChooseOptionsWindow.xaml.cs">
+      <DependentUpon>ChooseOptionsWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="ViewModels\DelegateCommand.cs" />
     <Compile Include="ViewModels\ExperimentManagerViewModel.cs" />
     <Compile Include="ViewModels\NewExperimentViewModel.cs" />
-    <Page Include="Views\ChooseCategoriesWindow.xaml">
+    <Page Include="Views\ChooseOptionsWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -113,6 +113,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="UIService.cs" />
+    <Compile Include="Views\Converters.cs" />
     <Compile Include="Views\NewJobDialog.xaml.cs">
       <DependentUpon>NewJobDialog.xaml</DependentUpon>
     </Compile>
