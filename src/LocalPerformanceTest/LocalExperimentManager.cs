@@ -15,19 +15,19 @@ namespace PerformanceTest
 {
     public class LocalExperimentManager : ExperimentManager
     {
-        public static ExperimentManager NewExperiments(string experimentsFolder, ReferenceExperiment reference)
+        public static LocalExperimentManager NewExperiments(string experimentsFolder, ReferenceExperiment reference)
         {
             FileStorage storage = FileStorage.Open(experimentsFolder);
             storage.Clear();
             storage.SaveReferenceExperiment(reference);
-            ExperimentManager manager = new LocalExperimentManager(storage);
+            LocalExperimentManager manager = new LocalExperimentManager(storage);
             return manager;
         }
 
-        public static ExperimentManager OpenExperiments(string experimentsFolder)
+        public static LocalExperimentManager OpenExperiments(string experimentsFolder)
         {
             FileStorage storage = FileStorage.Open(experimentsFolder);
-            ExperimentManager manager = new LocalExperimentManager(storage);
+            LocalExperimentManager manager = new LocalExperimentManager(storage);
             return manager;
         }
 

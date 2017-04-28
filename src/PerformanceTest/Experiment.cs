@@ -9,21 +9,7 @@ using ExperimentID = System.Int32;
 
 
 namespace PerformanceTest
-{
-    public sealed class Experiment
-    {
-        public ExperimentID ID { get; }
-
-        public Task<ExperimentDefinition> Definition { get; }
-
-        public Task<ExperimentStatus> GetStatus()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<BenchmarkResult>[] Results { get; }
-    }
-
+{    
     public class ExperimentDefinition
     {
         public static ExperimentDefinition Create(string executable, string benchmarkContainer, string benchmarkFileExtension, string parameters, TimeSpan benchmarkTimeout,

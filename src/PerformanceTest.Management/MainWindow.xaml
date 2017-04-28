@@ -70,7 +70,6 @@
             <TabItem Header="Jobs" >
                 <DataGrid AutoGenerateColumns="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,10,10,10" Name="dataGrid" IsReadOnly="False" 
                           GridLinesVisibility="None" SelectionUnit="FullRow" SelectionMode="Extended" AlternatingRowBackground="AliceBlue" 
-                          RowHeight="20"
                           ItemsSource="{Binding Items}">
                     <DataGrid.Resources>
                         <DataTemplate x:Key="ProgressTemplate" >

@@ -83,6 +83,16 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Views\ChooseCategoriesWindow.xaml.cs">
+      <DependentUpon>ChooseCategoriesWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ViewModels\DelegateCommand.cs" />
+    <Compile Include="ViewModels\ExperimentManagerViewModel.cs" />
+    <Compile Include="ViewModels\NewExperimentViewModel.cs" />
+    <Page Include="Views\ChooseCategoriesWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -91,19 +101,19 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="ExperimentListViewModel.cs" />
+    <Compile Include="ViewModels\ExperimentListViewModel.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="NewJobDialog.xaml">
+    <Page Include="Views\NewJobDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MessageService.cs" />
-    <Compile Include="NewJobDialog.xaml.cs">
+    <Compile Include="UIService.cs" />
+    <Compile Include="Views\NewJobDialog.xaml.cs">
       <DependentUpon>NewJobDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -154,6 +164,9 @@
     <Resource Include="Images\Folder_Open.png" />
     <Resource Include="Images\NewFile_6276_24.bmp" />
     <Resource Include="Images\OpenHH.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\taskbrowse.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

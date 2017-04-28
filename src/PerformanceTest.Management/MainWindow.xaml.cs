@@ -18,6 +18,7 @@ namespace PerformanceTest.Management
 {
     public partial class MainWindow : Window
     {
+        private ExperimentManagerViewModel managerVm;
         private ExperimentListViewModel experimentsVm;
 
         public static RoutedCommand SaveMetaCSVCommand = new RoutedCommand();
@@ -36,9 +37,13 @@ namespace PerformanceTest.Management
             {
                 if (experimentsVm == null)
                 {
-                    ExperimentManager manager = LocalExperimentManager.OpenExperiments(connectionString.Text);
+                    LocalExperimentManager manager = LocalExperimentManager.OpenExperiments(connectionString.Text);
 
-                    experimentsVm = new ExperimentListViewModel(manager, MessageBoxService.Instance);
+
+                    managerVm = new LocalExperimentManagerViewModel(manager);
+                    experimentsVm = new ExperimentListViewModel(manager, UIService.Instance);
+
+
                     dataGrid.DataContext = experimentsVm;
                     Properties.Settings.Default.ConnectionString = connectionString.Text;
                     Properties.Settings.Default.Save();
@@ -68,7 +73,7 @@ namespace PerformanceTest.Management
         {
             ExperimentManager manager = LocalExperimentManager.OpenExperiments(connectionString.Text);
 
-            experimentsVm = new ExperimentListViewModel(manager, MessageBoxService.Instance);
+            experimentsVm = new ExperimentListViewModel(manager, UIService.Instance);
             dataGrid.DataContext = experimentsVm;
             //experimentsVm.FindExperiments(txtFilter.Text);
         }
@@ -237,7 +242,7 @@ namespace PerformanceTest.Management
                 int id = ids[i];
                 total += experimentsVm.GetRuntime(id); 
             }
-            TimeSpan ts = TimeSpan.FromHours(total);
+            TimeSpan ts = TimeSpan.FromSeconds(total);
             MessageBox.Show(this,
                            "The total amount of runtime spent computing the selected results is " + ts.ToString() + ".", "Tally",
                            MessageBoxButton.OK,
@@ -258,6 +263,7 @@ namespace PerformanceTest.Management
         private void btnNewJob_Click(object sender, RoutedEventArgs e)
         {
             NewJobDialog dlg = new NewJobDialog();
+            dlg.DataContext = new NewExperimentViewModel(managerVm, UIService.Instance);
             dlg.Owner = this;
             if (dlg.ShowDialog() == true)
             {

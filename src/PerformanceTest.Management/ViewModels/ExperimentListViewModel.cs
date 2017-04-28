@@ -13,13 +13,13 @@ namespace PerformanceTest.Management
     {
         private IEnumerable<ExperimentStatusViewModel> experiments;
         private readonly ExperimentManager manager;
-        private readonly IMessageService message;
+        private readonly IUIService message;
 
 
         public event PropertyChangedEventHandler PropertyChanged;
 
 
-        public ExperimentListViewModel(ExperimentManager manager, IMessageService message)
+        public ExperimentListViewModel(ExperimentManager manager, IUIService message)
         {
             if (manager == null) throw new ArgumentNullException("manager");
             if (message == null) throw new ArgumentNullException("message");
@@ -84,13 +84,13 @@ namespace PerformanceTest.Management
     {
         private readonly ExperimentStatus status;
         private readonly ExperimentManager manager;
-        private readonly IMessageService message;
+        private readonly IUIService message;
 
         private bool flag;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public ExperimentStatusViewModel(ExperimentStatus status, ExperimentManager manager, IMessageService message)
+        public ExperimentStatusViewModel(ExperimentStatus status, ExperimentManager manager, IUIService message)
         {
             if (status == null) throw new ArgumentNullException("status");
             if (manager == null) throw new ArgumentNullException("manager");
