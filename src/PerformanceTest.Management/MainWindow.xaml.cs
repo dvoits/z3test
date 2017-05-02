@@ -25,6 +25,8 @@ namespace PerformanceTest.Management
         public static RoutedCommand FlagCommand = new RoutedCommand();
         public static RoutedCommand TallyCommand = new RoutedCommand();
         public static RoutedCommand ChangePriorityCommand = new RoutedCommand();
+        public static RoutedCommand CopyCommand = new RoutedCommand();
+        public static RoutedCommand MoveCommand = new RoutedCommand();
 
         public MainWindow()
         {
@@ -278,6 +280,59 @@ namespace PerformanceTest.Management
                 }
             }
         }
+        private void canCopy(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count >= 1;
+        }
+        private void Copy(object target, ExecutedRoutedEventArgs e)
+        {
+            CopyDialog dlg = new CopyDialog();
+            dlg.Owner = this;
+            if (dlg.ShowDialog() == true)
+            {
+                string backupDB = dlg.txtDB.Text;
+                if (connectionString.Text == backupDB)
+                {
+                    MessageBox.Show(this, "Refusing to copy to the same database.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+                try { 
+                    LocalExperimentManager managerCopyTo = LocalExperimentManager.OpenExperiments(backupDB);
+                    //not implemented
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Failed to open experiments", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+        private void canMove(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count >= 1;
+        }
+        private void Move(object target, ExecutedRoutedEventArgs e)
+        {
+            CopyDialog dlg = new CopyDialog();
+            dlg.Owner = this;
+            if (dlg.ShowDialog() == true)
+            {
+                string backupDB = dlg.txtDB.Text;
+                if (connectionString.Text == backupDB)
+                {
+                    MessageBox.Show(this, "Refusing to move to the same database.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+                try
+                {
+                    LocalExperimentManager managerMoveTo = LocalExperimentManager.OpenExperiments(backupDB);
+                    //not implemented
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Failed to open experiments", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
         private void filter_KeyUp(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
@@ -292,6 +347,20 @@ namespace PerformanceTest.Management
         {
             NewJobDialog dlg = new NewJobDialog();
             dlg.DataContext = new NewExperimentViewModel(managerVm, UIService.Instance);
+            dlg.Owner = this;
+            if (dlg.ShowDialog() == true)
+            {
+
+            }
+        }
+        private void canShowProperties(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count == 1;
+        }
+        private void showProperties(object target, ExecutedRoutedEventArgs e)
+        {
+            int id = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray()[0];
+            ExperimentProperties dlg = new ExperimentProperties(experimentsVm, id);
             dlg.Owner = this;
             if (dlg.ShowDialog() == true)
             {

@@ -59,6 +59,12 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Views\ExperimentProperties.xaml.cs">
+      <DependentUpon>ExperimentProperties.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\CopyDialog.xaml.cs">
+      <DependentUpon>CopyDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\ChangePriorityDialog.xaml.cs">
       <DependentUpon>ChangePriorityDialog.xaml</DependentUpon>
     </Compile>
@@ -68,6 +74,14 @@
     <Compile Include="ViewModels\DelegateCommand.cs" />
     <Compile Include="ViewModels\ExperimentManagerViewModel.cs" />
     <Compile Include="ViewModels\NewExperimentViewModel.cs" />
+    <Page Include="Views\ExperimentProperties.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\CopyDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\ChangePriorityDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
