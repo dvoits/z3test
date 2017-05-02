@@ -14,13 +14,14 @@ using System.Windows.Shapes;
 
 namespace PerformanceTest.Management
 {
-    public partial class ChooseCategoriesWindow : Window
+    public partial class ChooseOptionsWindow : Window
     {
-        public ChooseCategoriesWindow(string[] categories, string[] selected)
+        public ChooseOptionsWindow(string[] options, string[] selected)
         {
             InitializeComponent();
 
-            foreach (var item in categories)
+            listBox.SelectionMode = SelectionMode.Multiple;
+            foreach (var item in options)
             {
                 listBox.Items.Add(item);
                 if (selected.Contains(item))
@@ -29,7 +30,21 @@ namespace PerformanceTest.Management
             listBox.Focus();
         }
 
-        public string[] SelectedCategories
+        public ChooseOptionsWindow(string[] options, string selected)
+        {
+            InitializeComponent();
+
+            listBox.SelectionMode = SelectionMode.Single;
+            foreach (var item in options)
+            {
+                listBox.Items.Add(item);
+            }
+            listBox.SelectedItem = selected;
+            listBox.Focus();
+        }
+
+
+        public string[] SelectedOptions
         {
             get {
                 int n = listBox.SelectedItems.Count;
@@ -44,8 +59,11 @@ namespace PerformanceTest.Management
 
         private void okButton_Click(object sender, RoutedEventArgs e)
         {
-            this.DialogResult = true;
-            Close();
+            if (listBox.SelectedItems.Count != 0)
+            {
+                this.DialogResult = true;
+                Close();
+            }
         }
 
         private void cancelButton_Click(object sender, RoutedEventArgs e)

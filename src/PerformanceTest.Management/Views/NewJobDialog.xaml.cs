@@ -26,7 +26,16 @@ namespace PerformanceTest.Management
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+        }
 
+        private void okButton_Click(object sender, RoutedEventArgs e)
+        {
+            DialogResult = true;
+        }
+
+        private void cancelButton_Click(object sender, RoutedEventArgs e)
+        {
+            DialogResult = false;
         }
     }
 }

@@ -16,7 +16,8 @@ namespace PerformanceTest.Management
 
         private string benchmarkLibrary;
         private string categories;
-
+        private bool useMostRecentExecutable;
+        private string executable;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -28,8 +29,11 @@ namespace PerformanceTest.Management
             this.manager = manager;
             this.service = service;
 
+            UseMostRecentExecutable = true;
+
             ChooseContainerCommand = new DelegateCommand(ChooseBenchmarkContainer);
             ChooseCategoriesCommand = new DelegateCommand(ChooseCategories);
+            ChooseExecutableCommand = new DelegateCommand(ChooseExecutable);
         }
 
         public string BenchmarkLibaryDescription
@@ -56,6 +60,63 @@ namespace PerformanceTest.Management
             }
         }
 
+        public string Executable
+        {
+            get { return executable; }
+            set
+            {
+                if (executable == value) return;
+                executable = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+        public bool UseMostRecentExecutable
+        {
+            get { return useMostRecentExecutable; }
+            set
+            {
+                if (useMostRecentExecutable == value) return;
+                useMostRecentExecutable = value;
+                NotifyPropertyChanged("UseMostRecentExecutable");
+                NotifyPropertyChanged("UseNewExecutable");
+            }
+        }
+
+        public bool UseNewExecutable
+        {
+            get { return !useMostRecentExecutable; }
+            set
+            {
+                if (useMostRecentExecutable == !value) return;
+                useMostRecentExecutable = !value;
+                NotifyPropertyChanged("UseMostRecentExecutable");
+                NotifyPropertyChanged("UseNewExecutable");
+            }
+        }
+
+        public string Parameters
+        {
+            get; set;
+        }
+
+        public double BenchmarkTimeoutSec
+        {
+            get; set;
+        }
+
+        public int BenchmarkMemoryLimitMb
+        {
+            get; set;
+        }
+
+        public string Extension { get; set; }
+
+        public string Note
+        {
+            get; set;
+        }
+
 
         public ICommand ChooseContainerCommand
         {
@@ -67,6 +128,42 @@ namespace PerformanceTest.Management
             get; private set;
         }
 
+        public ICommand ChooseExecutableCommand
+        {
+            get; private set;
+        }
+
+
+        private void ChooseExecutable()
+        {
+            string[] files = service.ChooseFiles(Executable, "Executable files (*.exe;*.dll)|*.exe;*.dll|All Files (*.*)|*.*", "exe");
+            if (files == null || files.Length == 0) return;
+
+            if(files.Length == 1)
+            {
+                Executable = files[0];
+            }else
+            {
+                string[] exeFiles = files.Where(f => f.EndsWith(".exe")).ToArray();
+                if(exeFiles.Length == 0)
+                {
+                    service.ShowError("No executable files have been chosen.", "New job");
+                    return;
+                }
+                string mainFile = null;
+                if (exeFiles.Length == 1)
+                    mainFile = exeFiles[0];
+                else
+                {
+                    mainFile = service.ChooseOption("Select main executable", exeFiles, exeFiles[0]);
+                    if (mainFile == null) return;
+
+                    mainFile = manager.HandleMultileTargetFiles(files, mainFile);
+                }
+                Executable = mainFile;
+            }
+            UseMostRecentExecutable = false;
+        }
 
         private void ChooseBenchmarkContainer()
         {
@@ -82,7 +179,7 @@ namespace PerformanceTest.Management
             string[] allCategories = manager.GetAvailableCategories(BenchmarkLibrary);
             string[] selected = Categories == null ? new string[0] : Categories.Split(',').Select(s => s.Trim()).ToArray();
 
-            selected = service.ChooseCategories(allCategories, selected);
+            selected = service.ChooseOptions("Choose Categories", allCategories, selected);
             if (selected != null)
             {
                 Categories = String.Join(",", selected);

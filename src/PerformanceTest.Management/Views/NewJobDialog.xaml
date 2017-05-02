@@ -6,7 +6,11 @@
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:local="clr-namespace:PerformanceTest.Management"
         mc:Ignorable="d"
-        Title="New Job..." Height="500" Width="510" Loaded="Window_Loaded" WindowStartupLocation="CenterOwner" ShowInTaskbar="False" ResizeMode="NoResize">
+        Title="New Job..." Height="531" Width="510" Loaded="Window_Loaded" WindowStartupLocation="CenterOwner" ShowInTaskbar="False" ResizeMode="NoResize">
+
+    <Window.Resources>
+        <local:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+    </Window.Resources>
 
     <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="5,5,5,5">
         <Grid.RowDefinitions>
@@ -51,7 +55,8 @@
                     </Button>
 
                     <Label Content="Benchmark extension:" Height="28" HorizontalAlignment="Left" Name="label14" VerticalAlignment="Center" Grid.Row="1" Grid.Column="0"/>
-                    <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtExtension" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1" TabIndex="3" ToolTip="The extension of benchmark files, e.g., smt2 for SMT-Lib version 2 files." Margin="0,2" />
+                    <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtExtension" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1" TabIndex="3" ToolTip="The extension of benchmark files, e.g., smt2 for SMT-Lib version 2 files." Margin="0,2"
+                             Text="{Binding Extension}"/>
 
                     <Label Content="Categories:" Height="28" HorizontalAlignment="Left" Name="label8" VerticalAlignment="Center" Grid.Row="2" Grid.Column="0"/>
                     <TextBox Height="23" HorizontalAlignment="Stretch" Name="txtCategories" 
@@ -72,16 +77,29 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <RadioButton GroupName="WhichBinary" Content="Use most recent" Name="chkMostRecentBinary" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" />
-                        <RadioButton GroupName="WhichBinary" Content="New:" Name="chkNewBinary" Grid.Row="1" Grid.Column="0" Margin="0,5,10,-5" />
-                        <TextBox Height="23" HorizontalAlignment="Stretch" Name="txtExecutable" VerticalAlignment="Center" TabIndex="11" Grid.Row="1" Grid.Column="1" ToolTip="The Z3 executable." />
+                        <RadioButton Content="Use most recent" Name="chkMostRecentBinary" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" 
+                                     IsChecked="{Binding UseMostRecentExecutable}" />
+                        <RadioButton Content="New:" Name="chkNewBinary" Grid.Row="1" Grid.Column="0" Margin="0,5,10,-5" 
+                                     IsChecked="{Binding UseNewExecutable}"  />
+                        <TextBox Height="23" HorizontalAlignment="Stretch" Name="txtExecutable" VerticalAlignment="Center" TabIndex="11" Grid.Row="1" Grid.Column="1" ToolTip="The target executable." 
+                                 IsEnabled="{Binding UseNewExecutable}"
+                                 Text="{Binding Executable}"/>
                     </Grid>
-                    <Button Height="23" HorizontalAlignment="Stretch" Name="btnSelectExecutable" VerticalAlignment="Stretch" TabIndex="12" Grid.Row="3" Grid.Column="2"  Margin="0,16,0,0">
+                    <Button Height="23" HorizontalAlignment="Stretch" Name="btnSelectExecutable" VerticalAlignment="Stretch" TabIndex="12" Grid.Row="3" Grid.Column="2"  Margin="0,16,0,0"
+                            Command="{Binding ChooseExecutableCommand}">
                         <Image Source="/PerformanceTest.Management;component/Images/taskbrowse.ico" />
                     </Button>
 
                     <Label Content="Parameters:" Height="28" HorizontalAlignment="Left" Name="labelParameters" VerticalAlignment="Center" Grid.Row="4" Grid.Column="0" />
-                    <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtParameters" VerticalAlignment="Center" TabIndex="14" Grid.Row="4" Grid.Column="1" ToolTip="Parameters for Z3." Margin="0,2" />
+                    <StackPanel Orientation="Vertical" VerticalAlignment="Center"  Grid.Row="4" Grid.Column="1">
+                        <TextBox Height="24" Margin="0,5,0,0" HorizontalAlignment="Stretch" Name="txtParameters" TabIndex="14" ToolTip="Parameters for the executable." 
+                                 Text="{Binding Parameters}"/>
+                        <TextBlock Margin="0,5,10,10">
+                            Use {file} a placeholder for an input file name.<LineBreak />
+                            Use {0} a placeholder for the numeric parameter.
+                        </TextBlock>
+                    </StackPanel>
+                    
 
                     <Label Content="Replace (check-sat):" Height="28" HorizontalAlignment="Left" Name="labelReplaceCheckSat" VerticalAlignment="Center" Grid.Row="5" Grid.Column="0" Grid.RowSpan="2" />
                     <GroupBox Grid.RowSpan="2" Grid.Row="5" Grid.Column="1">
@@ -116,11 +134,13 @@
                     </GroupBox>
 
                     <Label Content="Memory limit:" Height="28" HorizontalAlignment="Left" Name="labelMemout" VerticalAlignment="Center" Grid.Row="8" Grid.Column="0"/>
-                    <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtMemout" VerticalAlignment="Center" TabIndex="15" Grid.Row="8" Grid.Column="1" ToolTip="The memory limit (per benchmark)." Margin="0,2" />
-                    <Label Content="b" HorizontalAlignment="Left" Grid.Row="8" Grid.Column="2"/>
+                    <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtMemout" VerticalAlignment="Center" TabIndex="15" Grid.Row="8" Grid.Column="1" ToolTip="The memory limit (per benchmark)." Margin="0,2" 
+                             Text="{Binding BenchmarkMemoryLimitMb}"/>
+                    <Label Content="MB" HorizontalAlignment="Left" Grid.Row="8" Grid.Column="2"/>
 
                     <Label Content="Timeout:" Height="28" HorizontalAlignment="Left" Name="label12" VerticalAlignment="Center" Grid.Row="9" Grid.Column="0"/>
-                    <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtTimeout" VerticalAlignment="Center" TabIndex="15" Grid.Row="9" Grid.Column="1" ToolTip="The time limit (per benchmark)." Margin="0,2" />
+                    <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtTimeout" VerticalAlignment="Center" TabIndex="15" Grid.Row="9" Grid.Column="1" ToolTip="The time limit (per benchmark)." Margin="0,2"
+                             Text="{Binding BenchmarkTimeoutSec}"/>
                     <Label Content="sec" HorizontalAlignment="Left" Grid.Row="9" Grid.Column="2"/>
                 </Grid>
             </TabItem>
@@ -142,8 +162,8 @@
         </TabControl>
 
         <StackPanel Grid.Column="1" Grid.Row="2" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
-            <Button Name="okButton" IsDefault="True" Width="80"  TabIndex="16">OK</Button>
-            <Button Name="cancelButton" IsCancel="True" Width="80" Margin="10,0,10,0" TabIndex="17">Cancel</Button>
+            <Button Name="okButton" IsDefault="True" Width="80" Click="okButton_Click" TabIndex="16">OK</Button>
+            <Button Name="cancelButton" IsCancel="True" Width="80" Click="cancelButton_Click" Margin="10,0,10,0" TabIndex="17">Cancel</Button>
         </StackPanel>
     </Grid>
 </Window>

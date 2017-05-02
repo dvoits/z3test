@@ -343,14 +343,19 @@ namespace PerformanceTest.Management
             Close();
         }
 
-        private void btnNewJob_Click(object sender, RoutedEventArgs e)
+        private async void btnNewJob_Click(object sender, RoutedEventArgs e)
         {
             NewJobDialog dlg = new NewJobDialog();
-            dlg.DataContext = new NewExperimentViewModel(managerVm, UIService.Instance);
+            var vm = new NewExperimentViewModel(managerVm, UIService.Instance);
+            dlg.DataContext = vm;
             dlg.Owner = this;
             if (dlg.ShowDialog() == true)
             {
-
+                ExperimentDefinition def = 
+                    ExperimentDefinition.Create(
+                        vm.Executable, vm.BenchmarkLibrary, vm.Extension, vm.Parameters, 
+                        TimeSpan.FromSeconds(vm.BenchmarkTimeoutSec), vm.Categories, vm.BenchmarkMemoryLimitMb >> 20);
+                await managerVm.SubmitExperiment(def, System.Security.Principal.WindowsIdentity.GetCurrent().Name, vm.Note);
             }
         }
         private void canShowProperties(object sender, CanExecuteRoutedEventArgs e)

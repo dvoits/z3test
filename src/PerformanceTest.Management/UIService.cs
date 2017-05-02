@@ -16,8 +16,13 @@ namespace PerformanceTest.Management
         /// <summary>Prompts a user to select a folder.</summary>
         /// <returns>Returns a selected folder path or null, if the user has cancelled selection.</returns>
         string ChooseFolder(string initialFolder, string description = null);
+                
+        string[] ChooseFiles(string initialPath, string filter, string defaultExtension);
 
-        string[] ChooseCategories(string[] availableCategories, string[] initialCategories);
+        string[] ChooseOptions(string title, string[] options, string[] selectedOptions);
+
+        string ChooseOption(string title, string[] options, string selectedOption);
+
     }
 
     public class UIService : IUIService
@@ -45,15 +50,48 @@ namespace PerformanceTest.Management
             return null;
         }
 
-
-        public string[] ChooseCategories(string[] availableCategories, string[] initialCategories)
+        public string[] ChooseFiles(string initialPath, string filter, string defaultExtension)
         {
-            var dlg = new ChooseCategoriesWindow(availableCategories, initialCategories);
-            if(dlg.ShowDialog() == true)
+            var dlg = new Microsoft.Win32.OpenFileDialog();
+            dlg.Filter = filter;
+            dlg.CheckFileExists = true;
+            dlg.InitialDirectory = initialPath != null ? Path.GetDirectoryName(initialPath) : null;
+            dlg.Multiselect = true;
+            dlg.DefaultExt = defaultExtension;
+            if (initialPath != null && File.Exists(initialPath))
+                dlg.FileName = initialPath;
+
+            if (dlg.ShowDialog() == true)
             {
-                return dlg.SelectedCategories;
+                return dlg.FileNames;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+
+        public string[] ChooseOptions(string title, string[] options, string[] selectedOptions)
+        {
+            var dlg = new ChooseOptionsWindow(options, selectedOptions);
+            dlg.Title = title;
+            if (dlg.ShowDialog() == true)
+            {
+                return dlg.SelectedOptions;
             }
             return null;
-        }        
+        }
+
+        public string ChooseOption(string title, string[] options, string selectedOption)
+        {
+            var dlg = new ChooseOptionsWindow(options, selectedOption);
+            dlg.Title = title;
+            if (dlg.ShowDialog() == true)
+            {
+                return dlg.SelectedOptions.Length > 0 ? dlg.SelectedOptions[0] : null;
+            }
+            return null;
+        }
     }
 }
