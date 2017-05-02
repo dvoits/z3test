@@ -36,7 +36,7 @@ namespace PerformanceTest
 
             var workerInfo = GetWorkerInfo();
             string benchmarkFolder = string.IsNullOrEmpty(experiment.Category) ? experiment.BenchmarkContainer : Path.Combine(experiment.BenchmarkContainer, experiment.Category);
-            var benchmarks = Directory.EnumerateFiles(benchmarkFolder, "*." + experiment.BenchmarkFileExtension, SearchOption.AllDirectories).ToArray();
+            var benchmarks = Directory.EnumerateFiles(benchmarkFolder, "*." + experiment.BenchmarkFileExtension, SearchOption.AllDirectories).Select(p => Path.GetFullPath(p)).ToArray();
 
             var results = new Task<BenchmarkResult>[benchmarks.Length];
             for (int i = 0; i < benchmarks.Length; i++)

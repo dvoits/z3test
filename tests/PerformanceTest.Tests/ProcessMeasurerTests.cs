@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Measurement;
 using System.Diagnostics;
 using System.IO;
+using Ionic.Zip;
 
 namespace UnitTests
 {
@@ -33,6 +34,111 @@ namespace UnitTests
             reader = new StreamReader(m.StdErr);
             string error = reader.ReadToEnd();
             Assert.IsTrue(error.Contains("Sample error text."), "Error output must contain certain text.");
+        }
+
+        [TestMethod]
+        public void MeasureProcessRunFromZip()
+        {
+            var zipname = Path.GetTempFileName();
+            using (var zip = new ZipFile())
+            {
+                zip.AddFiles(new string[] { "Delay.exe" });
+                zip.Save(zipname);
+            }
+            try
+            {
+                Measurement.ProcessRunMeasure m = ProcessMeasurer.Measure(zipname, "100", TimeSpan.FromMilliseconds(1000));
+
+                Assert.AreEqual(0, m.ExitCode, "Exit code");
+                Assert.AreEqual(Measure.CompletionStatus.Success, m.Status);
+                Assert.IsTrue(m.PeakMemorySize > 1024 * 1024, "Memory size seems too low");
+
+
+                var ptime = m.TotalProcessorTime.TotalMilliseconds;
+                var wctime = m.WallClockTime.TotalMilliseconds;
+                Assert.IsTrue(ptime <= 1000 && wctime >= ptime, "Total processor time must be very small because Delay.exe mostly sleeps but it is " + ptime);
+                Assert.IsTrue(wctime >= 100 && wctime <= 200, "Wall-clock time must be greater than given delay");
+
+                StreamReader reader = new StreamReader(m.StdOut);
+                string output = reader.ReadToEnd();
+                Assert.IsTrue(output.Contains("Done."), "Output must contain certain text.");
+
+                reader = new StreamReader(m.StdErr);
+                string error = reader.ReadToEnd();
+                Assert.IsTrue(error.Contains("Sample error text."), "Error output must contain certain text.");
+            }
+            finally
+            {
+                File.Delete(zipname);
+            }
+        }
+
+        [TestMethod]
+        public void MeasureProcessRunFromPackage()
+        {
+            var zipname = Path.GetTempFileName();
+            using (var zip = new ZipFile())
+            {
+                zip.AddFiles(new string[] { "Delay.exe", "FailingTool.exe" });
+                string mainexe = "Delay.exe";
+                string content_types = "<?xml version=\"1.0\" encoding=\"utf-8\"?><Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"exe\" ContentType=\"application/octet-stream\" /><Default Extension=\"dll\" ContentType=\"application/octet-stream\" /><Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\" /></Types>";
+                string rels = "<?xml version=\"1.0\" encoding=\"utf-8\"?><Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Type=\"http://schemas.openxmlformats.org/package/2006/relationships/meta data/thumbnail\" Target=\"/" + mainexe + "\" Id=\"R17bb7f6124fd45fe\" /></Relationships>";
+                zip.AddEntry("[Content_Types].xml", content_types);
+                zip.AddEntry("_rels\\.rels", rels);
+                zip.Save(zipname);
+            }
+            try
+            {
+                Measurement.ProcessRunMeasure m = ProcessMeasurer.Measure(zipname, "100", TimeSpan.FromMilliseconds(1000));
+                
+                Assert.AreEqual(0, m.ExitCode, "Exit code");
+                Assert.AreEqual(Measure.CompletionStatus.Success, m.Status);
+                Assert.IsTrue(m.PeakMemorySize > 1024 * 1024, "Memory size seems too low");
+
+
+                var ptime = m.TotalProcessorTime.TotalMilliseconds;
+                var wctime = m.WallClockTime.TotalMilliseconds;
+                Assert.IsTrue(ptime <= 1000 && wctime >= ptime, "Total processor time must be very small because Delay.exe mostly sleeps but it is " + ptime);
+                Assert.IsTrue(wctime >= 100 && wctime <= 200, "Wall-clock time must be greater than given delay");
+
+                StreamReader reader = new StreamReader(m.StdOut);
+                string output = reader.ReadToEnd();
+                Assert.IsTrue(output.Contains("Done."), "Output must contain certain text.");
+
+                reader = new StreamReader(m.StdErr);
+                string error = reader.ReadToEnd();
+                Assert.IsTrue(error.Contains("Sample error text."), "Error output must contain certain text.");
+            }
+            finally
+            {
+                File.Delete(zipname);
+            }
+        }
+
+        [TestMethod]
+        public void ZipWithMultipleExecutablesWithoutRelationshipFail()
+        {
+            var zipname = Path.GetTempFileName();
+            using (var zip = new ZipFile())
+            {
+                zip.AddFiles(new string[] { "Delay.exe", "FailingTool.exe" });
+                zip.Save(zipname);
+            }
+            bool fail = false;
+            try
+            {
+                Measurement.ProcessRunMeasure m = ProcessMeasurer.Measure(zipname, "100", TimeSpan.FromMilliseconds(1000));
+                
+            }
+            catch
+            {
+                fail = true;
+            }
+            finally
+            {
+                File.Delete(zipname);
+            }
+            Assert.IsTrue(fail, "Zip with multiple executables and no relationships should be considered incorrect.");
         }
 
         [TestMethod]
