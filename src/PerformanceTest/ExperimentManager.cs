@@ -45,8 +45,9 @@ namespace PerformanceTest
 
         public abstract void DeleteExperiment(ExperimentID id);
 
+        public abstract Task UpdatePriority(ExperimentID id, string priority);
         public abstract Task UpdateStatusFlag(ExperimentID id, bool flag);
-
+        public abstract Task UpdateNote(ExperimentID id, string note);
         public abstract Task<IEnumerable<ExperimentID>> FindExperiments(ExperimentFilter? filter = null);
 
         public struct ExperimentFilter

@@ -128,6 +128,14 @@ namespace PerformanceTest
         {
             //not implemented
         }
+        public override Task UpdatePriority(int id, string priority)
+        {
+            //var newRow = storage.GetExperiments()[id];
+            //newRow.Priority = priority;
+            //storage.ReplaceExperimentRow(newRow);
+            //return Task.FromResult(0);
+            throw new NotImplementedException();
+        }
         public override Task UpdateStatusFlag (int id, bool flag)
         {
             var newRow = storage.GetExperiments()[id];
@@ -136,6 +144,13 @@ namespace PerformanceTest
             return Task.FromResult(0);
         }
 
+        public override Task UpdateNote (int id, string note)
+        {
+            var newRow = storage.GetExperiments()[id];
+            newRow.Note = note;
+            storage.ReplaceExperimentRow(newRow);
+            return Task.FromResult(0);
+        }
         public override Task<BenchmarkResult>[] GetResults(int id)
         {
             ExperimentInstance experiment;
@@ -163,8 +178,8 @@ namespace PerformanceTest
                                     (filter.Value.CategoryEquals == null || e.Category == null || e.Category.Contains(filter.Value.CategoryEquals)) &&
                                     (filter.Value.ExecutableEquals == null || e.Executable == null || e.Executable == filter.Value.ExecutableEquals) &&
                                     (filter.Value.ParametersEquals == null || e.Parameters == null || e.Parameters == filter.Value.ParametersEquals) &&
-                                    (filter.Value.NotesEquals == null || e.Note  == null || e.Note.Contains(filter.Value.NotesEquals)); //&&
-                                    //(filter.Value.CreatorEquals == null || e.Creator.Contains(filter.Value.CreatorEquals));
+                                    (filter.Value.NotesEquals == null || e.Note  == null || e.Note.Contains(filter.Value.NotesEquals)) &&
+                                    (filter.Value.CreatorEquals == null || e.Creator.Contains(filter.Value.CreatorEquals));
                     });
             }
 
