@@ -38,30 +38,29 @@ namespace PerformanceTest.Management
             if (changed)
             {
                 statusVm.Note = txtNote.Text;
-                //experimentsVm.UpdateNote(id, txtNote.Text);
             }
         }
         private void update()
         {
-            lblID.Content = "Experiment #" + id.ToString();
+            lblID.Content = this.Title = "Experiment #" + id.ToString();
             txtSubmissionTime.Text = statusVm.Submitted;
             txtCategory.Text = statusVm.Category;
 
-            lblTotal.Content = statusVm.BenchmarksTotal;
-            lblFinished.Content = statusVm.BenchmarksDone;
-            lblRunning.Content = statusVm.BenchmarksQueued;
-            lblRunning.Foreground = (statusVm.BenchmarksQueued == 0) ? Brushes.Green : Brushes.Red;
+            lblTotal.Content = statusVm.Total;
+            lblFinished.Content = statusVm.Done;
+            lblRunning.Content = statusVm.Queued;
+            lblRunning.Foreground = (statusVm.Queued == 0) ? Brushes.Green : Brushes.Red;
 
             lblSAT.Content = 0;
             lblUNSAT.Content = 0;
             lblUnknown.Content = 0;
             lblOver.Content = 0;
             lblUnder.Content = 0;
-
-            int bugs = 0;
-            int errors = 0;
-            int timeout = 0;
-            int memoryout = 0;
+            
+            int bugs = 0; //where result code = 3
+            int errors = 0; //where result code = 4
+            int timeout = 0; //where result code = 5
+            int memoryout = 0; //where result code = 6
 
             lblBug.Content = bugs;
             lblNonzero.Content = errors;

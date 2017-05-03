@@ -298,7 +298,15 @@ namespace PerformanceTest.Management
                 }
                 try { 
                     LocalExperimentManager managerCopyTo = LocalExperimentManager.OpenExperiments(backupDB);
-                    //not implemented
+                    var managerCopyVm = new LocalExperimentManagerViewModel(managerCopyTo);
+                    var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
+                    double total = ids.Length;
+                    for (var i = 0; i < total; i++)
+                    {
+                        ExperimentStatusViewModel exp = experimentsVm.Items.Where(st => st.ID == ids[i]).ToArray()[0];
+                        ExperimentDefinition definition = null; //where I can get definition?
+                        var result = managerCopyVm.SubmitExperiment(definition, exp.Creator, exp.Note);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -324,8 +332,17 @@ namespace PerformanceTest.Management
                 }
                 try
                 {
-                    LocalExperimentManager managerMoveTo = LocalExperimentManager.OpenExperiments(backupDB);
-                    //not implemented
+                    LocalExperimentManager managerCopyTo = LocalExperimentManager.OpenExperiments(backupDB);
+                    var managerCopyVm = new LocalExperimentManagerViewModel(managerCopyTo);
+                    var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
+                    double total = ids.Length;
+                    for (var i = 0; i < total; i++)
+                    {
+                        ExperimentStatusViewModel exp = experimentsVm.Items.Where(st => st.ID == ids[i]).ToArray()[0];
+                        ExperimentDefinition definition = null; //where I can get definition?
+                        var result = managerCopyVm.SubmitExperiment(definition, exp.Creator, exp.Note);
+                        experimentsVm.DeleteExperiment(ids[i]);
+                    }
                 }
                 catch (Exception ex)
                 {

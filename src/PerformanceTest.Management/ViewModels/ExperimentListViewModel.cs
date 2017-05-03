@@ -128,9 +128,9 @@ namespace PerformanceTest.Management
 
         public string Creator { get { return status.Creator; } }
 
-        public int BenchmarksDone { get { return status.BenchmarksDone; } }
-        public int BenchmarksTotal { get { return status.BenchmarksTotal; } }
-        public int BenchmarksQueued { get { return status.BenchmarksQueued; } }
+        public int Done { get { return status.BenchmarksDone; } }
+        public int Total { get { return status.BenchmarksTotal; } }
+        public int Queued { get { return status.BenchmarksQueued; } }
 
         public bool Flag
         {
