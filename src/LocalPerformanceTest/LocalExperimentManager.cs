@@ -43,7 +43,7 @@ namespace PerformanceTest
             if (storage == null) throw new ArgumentNullException("storage");
             this.storage = storage;
             runningExperiments = new ConcurrentDictionary<ExperimentID, ExperimentInstance>();
-            runner = new LocalExperimentRunner();
+            runner = new LocalExperimentRunner(storage.Location);
             lastId = storage.MaxExperimentId;
 
             asyncNormal = new AsyncLazy<double>(this.ComputeNormal);
