@@ -25,7 +25,9 @@ namespace UnitTests
             var ptime = m.TotalProcessorTime.TotalMilliseconds;
             var wctime = m.WallClockTime.TotalMilliseconds;
             Assert.IsTrue(ptime <= 1000 && wctime >= ptime, "Total processor time must be very small because Delay.exe mostly sleeps but it is " + ptime);
-            Assert.IsTrue(wctime >= 100 && wctime <= 200, "Wall-clock time must be greater than given delay");
+            Assert.IsTrue(wctime >= 100, "Wall-clock time must be greater than given delay");
+            Assert.IsTrue(wctime < 1000, "Wall-clock time must be less");
+
 
             StreamReader reader = new StreamReader(m.StdOut);
             string output = reader.ReadToEnd();
@@ -57,7 +59,7 @@ namespace UnitTests
                 var ptime = m.TotalProcessorTime.TotalMilliseconds;
                 var wctime = m.WallClockTime.TotalMilliseconds;
                 Assert.IsTrue(ptime <= 1000 && wctime >= ptime, "Total processor time must be very small because Delay.exe mostly sleeps but it is " + ptime);
-                Assert.IsTrue(wctime >= 100 && wctime <= 200, "Wall-clock time must be greater than given delay");
+                Assert.IsTrue(wctime >= 100 && wctime < 1000, "Wall-clock time must be greater than given delay");
 
                 StreamReader reader = new StreamReader(m.StdOut);
                 string output = reader.ReadToEnd();
@@ -99,7 +101,7 @@ namespace UnitTests
                 var ptime = m.TotalProcessorTime.TotalMilliseconds;
                 var wctime = m.WallClockTime.TotalMilliseconds;
                 Assert.IsTrue(ptime <= 1000 && wctime >= ptime, "Total processor time must be very small because Delay.exe mostly sleeps but it is " + ptime);
-                Assert.IsTrue(wctime >= 100 && wctime <= 200, "Wall-clock time must be greater than given delay");
+                Assert.IsTrue(wctime >= 100 && wctime < 1000, "Wall-clock time must be greater than given delay");
 
                 StreamReader reader = new StreamReader(m.StdOut);
                 string output = reader.ReadToEnd();
@@ -201,7 +203,7 @@ namespace UnitTests
 
             var ptime = m.TotalProcessorTime.TotalMilliseconds;
             var wctime = m.WallClockTime.TotalMilliseconds;
-            Assert.IsTrue(ptime <= 100, "Total processor time");
+            Assert.IsTrue(ptime <= 1000, "Total processor time");
             Assert.IsTrue(wctime <= 10000, "Wall-clock time");
 
             StreamReader reader = new StreamReader(m.StdOut);

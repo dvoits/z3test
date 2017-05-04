@@ -35,7 +35,7 @@ namespace PerformanceTest
         private FileStorage(string storageName)
         {
             dir = Directory.CreateDirectory(storageName);
-            dirBenchmarks = dir.CreateSubdirectory("benchmarks");
+            dirBenchmarks = dir.CreateSubdirectory("data");
 
             string tableFile = Path.Combine(dir.FullName, "experiments.csv");
             if (File.Exists(tableFile))
@@ -88,7 +88,7 @@ namespace PerformanceTest
         {
             var dict = new Dictionary<int, ExperimentsTableRow>();
             foreach (var row in experimentsTable.Rows)
-            { // todo: all properties
+            { 
                 dict[row.ID] = row;
             }
             return dict;
@@ -96,7 +96,7 @@ namespace PerformanceTest
 
         public void SaveReferenceExperiment(ReferenceExperiment reference)
         {
-            string json = JsonConvert.SerializeObject(reference);
+            string json = JsonConvert.SerializeObject(reference, Formatting.Indented);
             File.WriteAllText(Path.Combine(dir.FullName, "reference.json"), json);
         }
 
