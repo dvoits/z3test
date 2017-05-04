@@ -23,12 +23,12 @@
 
         <Menu Grid.Row="0" Grid.ColumnSpan="1"  IsMainMenu="True" Name="mnuMain">
             <MenuItem Header="_File">
-                <MenuItem Header="_New...">
+                <MenuItem Header="_New..." Name="menuNewJob" IsEnabled="False" Click="btnNewJob_Click">
                     <MenuItem.Icon>
                         <Image Source="Images/NewFile_6276_24.bmp" />
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Header="_New catch-all... " />
+                <MenuItem Header="_New catch-all... " Name="menuNewCatchAll" IsEnabled="False"/>
                 <MenuItem Header="Purge orphaned binaries" />
                 <Separator />
                 <MenuItem Header="E_xit" Click="MenuItemExit_Click"/>
@@ -97,12 +97,12 @@
                         <CommandBinding Command="SaveAs" Executed="saveCSV" CanExecute="canSaveCSV" />
                         <CommandBinding Command="{x:Static local:MainWindow.CopyCommand}" Executed="Copy" CanExecute="canCopy" />
                         <CommandBinding Command="{x:Static local:MainWindow.MoveCommand}" Executed="Move" CanExecute="canMove" />
-                        <!--<CommandBinding Command="{x:Static custom:MainWindow.CreateGroupCommand}" Executed="showCreateGroup" CanExecute="canShowCreateGroup" />
-                        <CommandBinding Command="{x:Static custom:MainWindow.SaveBinaryCommand}" Executed="showSaveBinary" CanExecute="canShowSaveBinary" />
+                        <CommandBinding Command="{x:Static local:MainWindow.CreateGroupCommand}" Executed="CreateGroup" CanExecute="canCreateGroup" />
+                        <!--<CommandBinding Command="{x:Static custom:MainWindow.SaveBinaryCommand}" Executed="showSaveBinary" CanExecute="canShowSaveBinary" />
                         <CommandBinding Command="{x:Static custom:MainWindow.UpdateBinaryCommand}" Executed="showUpdateBinaryCommand" CanExecute="canShowUpdateBinaryCommand" />
                         <CommandBinding Command="{x:Static custom:MainWindow.ReinforcementsCommand}" Executed="showReinforcements" CanExecute="canShowReinforcements" />
-                        <CommandBinding Command="{x:Static custom:MainWindow.RequeueIErrorsCommand}" Executed="showRequeueIErrorsCommand" CanExecute="canShowRequeueIErrorsCommand" />
-                        <CommandBinding Command="{x:Static custom:MainWindow.RestartCommand}" Executed="showRestartCommand" CanExecute="canShowRestartCommand" />-->
+                        <CommandBinding Command="{x:Static custom:MainWindow.RequeueIErrorsCommand}" Executed="showRequeueIErrorsCommand" CanExecute="canShowRequeueIErrorsCommand" />-->
+                        <CommandBinding Command="{x:Static local:MainWindow.RestartCommand}" Executed="Restart" CanExecute="canRestartCommand" />
                         <CommandBinding Command="{x:Static local:MainWindow.ChangePriorityCommand}" Executed="changePriority" CanExecute="canChangePriority" />
                         <!--<CommandBinding Command="{x:Static custom:MainWindow.RecoveryCommand}" Executed="showRecovery" CanExecute="canShowRecovery" />
                         <CommandBinding Command="{x:Static custom:MainWindow.DuplicatesCommand}" Executed="showDuplicates" CanExecute="canShowDuplicates" />-->
@@ -123,11 +123,11 @@
                             <MenuItem Name="mnuScatterplot" Header="_Scatterplot" Command="{x:Static custom:MainWindow.ScatterplotCommand}" />-->
                             <MenuItem Name="mnuCopy" Header="Copy _to..." Command="{x:Static local:MainWindow.CopyCommand}" />
                             <MenuItem Name="mnuMove" Header="_Move to..." Command="{x:Static local:MainWindow.MoveCommand}" />
-                            <!--<MenuItem Name="mnuCreateGroup" Header="Create _group..." Command="{x:Static custom:MainWindow.CreateGroupCommand}" />
-                            <MenuItem Name="mnuUpdateBinary" Header="Update binary..." Command="{x:Static custom:MainWindow.UpdateBinaryCommand}" />
+                            <MenuItem Name="mnuCreateGroup" Header="Create _group..." Command="{x:Static local:MainWindow.CreateGroupCommand}" />
+                            <!--<MenuItem Name="mnuUpdateBinary" Header="Update binary..." Command="{x:Static custom:MainWindow.UpdateBinaryCommand}" />
                             <MenuItem Name="mnuReinforcements" Header="Call _reinforcements..." Command="{x:Static custom:MainWindow.ReinforcementsCommand}" />
-                            <MenuItem Name="mnuRecovery" Header="Requeue in. errors..." Command="{x:Static custom:MainWindow.RequeueIErrorsCommand}" />
-                            <MenuItem Name="mnuRestart" Header="Restart" Command="{x:Static custom:MainWindow.RestartCommand}" />-->
+                            <MenuItem Name="mnuRecovery" Header="Requeue in. errors..." Command="{x:Static custom:MainWindow.RequeueIErrorsCommand}" />-->
+                            <MenuItem Name="mnuRestart" Header="Restart" Command="{x:Static local:MainWindow.RestartCommand}" />
                             <MenuItem Name="mnuChangePriority" Header="Change priority..." Command="{x:Static local:MainWindow.ChangePriorityCommand}" />
                             <!--<MenuItem Name="mnuRequeueIE" Header="Start recovery..." Command="{x:Static custom:MainWindow.RecoveryCommand}" />
                             <MenuItem Name="mnuDuplicates" Header="Resolve _duplicates..." Command="{x:Static custom:MainWindow.DuplicatesCommand}" />-->

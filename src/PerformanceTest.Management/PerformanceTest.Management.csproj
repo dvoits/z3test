@@ -59,6 +59,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Views\CreateGroupDialog.xaml.cs">
+      <DependentUpon>CreateGroupDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\ChooseOptionsWindow.xaml.cs">
       <DependentUpon>ChooseOptionsWindow.xaml</DependentUpon>
     </Compile>
@@ -74,6 +77,10 @@
     <Compile Include="ViewModels\DelegateCommand.cs" />
     <Compile Include="ViewModels\ExperimentManagerViewModel.cs" />
     <Compile Include="ViewModels\NewExperimentViewModel.cs" />
+    <Page Include="Views\CreateGroupDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\ChooseOptionsWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

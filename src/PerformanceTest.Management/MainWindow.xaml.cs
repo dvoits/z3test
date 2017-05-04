@@ -27,7 +27,8 @@ namespace PerformanceTest.Management
         public static RoutedCommand ChangePriorityCommand = new RoutedCommand();
         public static RoutedCommand CopyCommand = new RoutedCommand();
         public static RoutedCommand MoveCommand = new RoutedCommand();
-
+        public static RoutedCommand RestartCommand = new RoutedCommand();
+        public static RoutedCommand CreateGroupCommand = new RoutedCommand();
         public MainWindow()
         {
             InitializeComponent();
@@ -56,6 +57,8 @@ namespace PerformanceTest.Management
                     btnConnect.IsEnabled = true;
                     btnNewJob.IsEnabled = true;
                     btnUpdate.IsEnabled = true;
+                    menuNewJob.IsEnabled = true;
+                    menuNewCatchAll.IsEnabled = true;
                 } else
                 {
                     experimentsVm = null;
@@ -65,6 +68,8 @@ namespace PerformanceTest.Management
                     dataGrid.DataContext = null;
                     btnNewJob.IsEnabled = false;
                     btnUpdate.IsEnabled = false;
+                    menuNewJob.IsEnabled = false;
+                    menuNewCatchAll.IsEnabled = false;
                 }
             }
             catch(Exception ex)
@@ -339,8 +344,10 @@ namespace PerformanceTest.Management
                     for (var i = 0; i < total; i++)
                     {
                         ExperimentStatusViewModel exp = experimentsVm.Items.Where(st => st.ID == ids[i]).ToArray()[0];
-                        ExperimentDefinition definition = null; //where I can get definition?
-                        var result = managerCopyVm.SubmitExperiment(definition, exp.Creator, exp.Note);
+                        var vm = new NewExperimentViewModel(managerVm, UIService.Instance);
+                        ExperimentDefinition def = ExperimentDefinition.Create(vm.Executable, vm.BenchmarkLibrary, vm.Extension, vm.Parameters,
+                                                   TimeSpan.FromSeconds(vm.BenchmarkTimeoutSec), vm.Categories, vm.BenchmarkMemoryLimitMb >> 20);
+                        var result = managerCopyVm.SubmitExperiment(def, exp.Creator, exp.Note);
                         experimentsVm.DeleteExperiment(ids[i]);
                     }
                 }
@@ -384,9 +391,53 @@ namespace PerformanceTest.Management
             int id = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray()[0];
             ExperimentProperties dlg = new ExperimentProperties(experimentsVm, id);
             dlg.Owner = this;
-            if (dlg.ShowDialog() == true)
+            dlg.Show();
+        }
+        private void canRestartCommand(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count > 0;
+        }
+        private void Restart(object target, ExecutedRoutedEventArgs e)
+        {
+            try
             {
 
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, "Exception: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        private void canCreateGroup(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count >= 1;
+        }
+        private void CreateGroup(object target, ExecutedRoutedEventArgs e)
+        {
+            bool first = true;
+            string category = "";
+            var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().ToArray();
+            for (var i = 0; i < ids.Length; i++)
+            {
+                if (first)
+                {
+                    category = ids[i].Category;
+                    first = false;
+                }
+                else if (ids[i].Category != category)
+                {
+                    MessageBox.Show(this, "Jobs in a group need to have the same category.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+            }
+
+            CreateGroupDialog dlg = new CreateGroupDialog();
+            dlg.Owner = this;
+            if (dlg.ShowDialog() == true)
+            {
+                string name = dlg.txtGroupName.Text;
+                string note = dlg.txtNote.Text;
+                
             }
         }
     }
