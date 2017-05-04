@@ -79,7 +79,7 @@ namespace PerformanceTest.Management
 
             experimentsVm = new ExperimentListViewModel(manager, UIService.Instance);
             dataGrid.DataContext = experimentsVm;
-            experimentsVm.FindExperiments(txtFilter.Text);
+            experimentsVm.FilterExperiments(txtFilter.Text);
         }
         private void OptShowProgress_Checked(object sender, RoutedEventArgs e)
         {
@@ -353,7 +353,7 @@ namespace PerformanceTest.Management
         private void filter_KeyUp(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
-                experimentsVm.FindExperiments(txtFilter.Text);
+                experimentsVm.FilterExperiments(txtFilter.Text);
         }
         private void MenuItemExit_Click(object sender, RoutedEventArgs e)
         {

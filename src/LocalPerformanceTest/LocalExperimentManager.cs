@@ -179,13 +179,35 @@ namespace PerformanceTest
                                     (filter.Value.CategoryEquals == null || e.Category == null || e.Category.Contains(filter.Value.CategoryEquals)) &&
                                     (filter.Value.ExecutableEquals == null || e.Executable == null || e.Executable == filter.Value.ExecutableEquals) &&
                                     (filter.Value.ParametersEquals == null || e.Parameters == null || e.Parameters == filter.Value.ParametersEquals) &&
-                                    (filter.Value.NotesEquals == null || e.Note  == null || e.Note.Contains(filter.Value.NotesEquals)) &&
-                                    (filter.Value.CreatorEquals == null || e.Creator.Contains(filter.Value.CreatorEquals));
+                                    (filter.Value.NotesEquals == null || e.Note == null || e.Note.Contains(filter.Value.NotesEquals)) &&
+                                    (filter.Value.CreatorEquals == null || e.Creator == null || e.Creator.Contains(filter.Value.CreatorEquals));
                     });
             }
 
             return Task.FromResult(experiments.Select(e => e.Key));
         }
+
+        public override Task<IEnumerable<int>> FilterExperiments(ExperimentFilter? filter = default(ExperimentFilter?))
+        {
+            IEnumerable<KeyValuePair<int, ExperimentsTableRow>> experiments = storage.GetExperiments().ToArray();
+
+            if (filter.HasValue)
+            {
+                experiments =
+                    experiments
+                    .Where(q =>
+                    {
+                        var id = q.Key;
+                        var e = q.Value;
+                        return (filter.Value.CategoryEquals == null || e.Category != null && e.Category.Contains(filter.Value.CategoryEquals)) ||
+                               (filter.Value.NotesEquals == null || e.Note != null && e.Note.Contains(filter.Value.NotesEquals)) ||
+                               (filter.Value.CreatorEquals == null || e.Creator != null && e.Creator.Contains(filter.Value.CreatorEquals));
+                    });
+            }
+
+            return Task.FromResult(experiments.Select(e => e.Key));
+        }
+
 
         private async Task<double> ComputeNormal()
         {

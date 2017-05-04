@@ -49,7 +49,7 @@ namespace PerformanceTest
         public abstract Task UpdateStatusFlag(ExperimentID id, bool flag);
         public abstract Task UpdateNote(ExperimentID id, string note);
         public abstract Task<IEnumerable<ExperimentID>> FindExperiments(ExperimentFilter? filter = null);
-
+        public abstract Task<IEnumerable<ExperimentID>> FilterExperiments(ExperimentFilter? filter = null);
         public struct ExperimentFilter
         {
             public string BenchmarkContainerEquals { get; set; }

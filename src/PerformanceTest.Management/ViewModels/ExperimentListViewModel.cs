@@ -50,7 +50,26 @@ namespace PerformanceTest.Management
         {
             return manager.GetResults(id).Sum(res => res.IsCompleted ? res.Result.NormalizedRuntime : 0);
         }
+        public async void FilterExperiments(string filter)
+        {
+            if (filter != "")
+            {
+                ExperimentManager.ExperimentFilter filt = new ExperimentManager.ExperimentFilter
+                {
+                    NotesEquals = filter,
+                    CategoryEquals = filter,
+                    CreatorEquals = filter
+                };
+                var ids = await manager.FilterExperiments(filt);
 
+                var status = await manager.GetStatus(ids);
+                Items = status.Select(st => new ExperimentStatusViewModel(st, manager, message)).ToArray();
+            }
+            else
+            {
+                RefreshItemsAsync();
+            }
+        }
         public async void FindExperiments(string filter)
         {
             if (filter != "")
@@ -62,6 +81,7 @@ namespace PerformanceTest.Management
                     CreatorEquals = filter
                 };
                 var ids = await manager.FindExperiments(filt);
+                
                 var status = await manager.GetStatus(ids);
                 Items = status.Select(st => new ExperimentStatusViewModel(st, manager, message)).ToArray();
             }
@@ -151,11 +171,13 @@ namespace PerformanceTest.Management
             try
             {
                 await manager.UpdateNote(status.ID, note);
+                status.Note = note;
                 Trace.WriteLine("Note changed to '" + note + "' for " + status.ID);
             }
             catch (Exception ex)
             {
                 Trace.WriteLine("Failed to update experiment note: " + ex.Message);
+                note = status.Note;
                 NotifyPropertyChanged("Note");
                 message.ShowError("Failed to update experiment status flag: " + ex.Message);
             }
