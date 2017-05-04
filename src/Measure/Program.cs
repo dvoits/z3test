@@ -12,19 +12,20 @@ namespace Measure
     {
         static int Main(string[] args)
         {
-            if (args.Length < 5 || args.Length > 9)
-            {
-                Console.WriteLine("Setup tests:\n\tMeasure.exe --init <executable> <arguments> <benchmarkContainer> <category> <extension> <repetitions> <referenceValue>");
-                Console.WriteLine("Run tests:\n\tMeasure.exe <executable> <arguments> <benchmarkContainer> <category> <extension>");
-                return 2;
-            }
+            if (args.Length < 5 || args.Length > 7)
+                return PrintSyntax();
 
             int k = 0;
             bool init = false;
             if (args[k] == "--init")
             {
+                if (args.Length != 7) return PrintSyntax();
                 init = true;
                 k++;
+            }
+            else
+            {
+                if (args.Length != 5) return PrintSyntax();
             }
 
             string executable = args[k++];
@@ -34,10 +35,9 @@ namespace Measure
             string extension = args[k++];
 
             int repetitions = 1;
-            double referenceValue = 0;
+            double referenceValue = 1.0;
             if (init) {
                 repetitions = int.Parse(args[k++]);
-                referenceValue = double.Parse(args[k++]);
             }
 
             TimeSpan timeout = TimeSpan.FromHours(1);
@@ -61,6 +61,13 @@ namespace Measure
             }
 
             return 0;
+        }
+
+        private static int PrintSyntax()
+        {
+            Console.WriteLine("Setup tests:\n\tMeasure.exe --init <executable> <arguments> <benchmarkContainer> <category> <extension> <repetitions>");
+            Console.WriteLine("Run tests:\n\tMeasure.exe <executable> <arguments> <benchmarkContainer> <category> <extension>");
+            return 2;
         }
 
         static async Task Run(ExperimentManager manager, ExperimentDefinition definition)

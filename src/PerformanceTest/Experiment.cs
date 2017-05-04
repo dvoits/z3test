@@ -104,7 +104,6 @@ namespace PerformanceTest
 
         public DateTime SubmissionTime;
         public string Creator;
-        public string ExecutableVersion;
 
         public string Category { get; private set; }
 

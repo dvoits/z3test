@@ -138,7 +138,6 @@ namespace PerformanceTest
                 ID = id,
                 Submitted = submitted,
                 Executable = experiment.Executable,
-                Version = GetVersion(experiment.Executable),
                 Parameters = experiment.Parameters,
                 BenchmarkContainer = experiment.BenchmarkContainer,
                 BenchmarkFileExtension = experiment.BenchmarkFileExtension,
@@ -209,13 +208,6 @@ namespace PerformanceTest
             return (Measure.CompletionStatus)Enum.Parse(typeof(Measure.CompletionStatus), status);
         }
 
-        private static string GetVersion(string pathToExe)
-        {
-            var versionInfo = FileVersionInfo.GetVersionInfo(pathToExe);
-            return versionInfo.ProductVersion;
-        }
-
-
         private static Stream AsStream(string s)
         {
             byte[] byteArray = Encoding.UTF8.GetBytes(s);
@@ -240,7 +232,6 @@ namespace PerformanceTest
         public int ID { get; set; }
         public DateTime Submitted { get; set; }
         public string Executable { get; set; }
-        public string Version { get; set; }
         public string Parameters { get; set; }
         public string BenchmarkContainer { get; set; }
         public string Category { get; set; }
