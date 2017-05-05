@@ -54,13 +54,16 @@ namespace PerformanceTest
 
 
 
-        public static String MakeRelativePath(String fromPath, String toPath)
+        public static String MakeRelativePath(String baseFolder, String toPath)
         {
-            if (String.IsNullOrEmpty(fromPath)) throw new ArgumentNullException("fromPath");
+            if (String.IsNullOrEmpty(baseFolder)) throw new ArgumentNullException("baseFolder");
             if (String.IsNullOrEmpty(toPath)) throw new ArgumentNullException("toPath");
 
-            Uri fromUri = new Uri(fromPath);
-            Uri toUri = new Uri(toPath);
+            if (!baseFolder.EndsWith(Path.DirectorySeparatorChar.ToString()) && !baseFolder.EndsWith(Path.AltDirectorySeparatorChar.ToString()))
+                baseFolder += Path.DirectorySeparatorChar;
+
+            Uri fromUri = new Uri(EnsureAbsolutePath(baseFolder));
+            Uri toUri = new Uri(EnsureAbsolutePath(toPath));
 
             if (fromUri.Scheme != toUri.Scheme) { return toPath; } // path can't be made relative.
 
@@ -73,6 +76,11 @@ namespace PerformanceTest
             }
 
             return relativePath;
+        }
+
+        private static string EnsureAbsolutePath(String path)
+        {
+            return Path.GetFullPath(path);
         }
     }
 }

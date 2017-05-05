@@ -96,7 +96,6 @@ namespace PerformanceTest
 
         public void SaveReferenceExperiment(ReferenceExperiment reference)
         {
-            ReferenceExperiment referenceRel = new ReferenceExperiment()
             string json = JsonConvert.SerializeObject(reference, Formatting.Indented);
             File.WriteAllText(Path.Combine(dir.FullName, "reference.json"), json);
         }
@@ -138,9 +137,9 @@ namespace PerformanceTest
             {
                 ID = id,
                 Submitted = submitted,
-                Executable = Utils.MakeRelativePath(dir.FullName, experiment.Executable),
+                Executable = experiment.Executable,
                 Parameters = experiment.Parameters,
-                BenchmarkContainer = Utils.MakeRelativePath(dir.FullName, experiment.BenchmarkContainer),
+                BenchmarkContainer = experiment.BenchmarkContainer,
                 BenchmarkFileExtension = experiment.BenchmarkFileExtension,
                 Category = experiment.Category,
                 BenchmarkTimeout = experiment.BenchmarkTimeout.TotalSeconds,

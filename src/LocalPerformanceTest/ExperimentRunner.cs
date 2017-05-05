@@ -36,7 +36,10 @@ namespace PerformanceTest
 
         private static Task<BenchmarkResult>[] RunExperiment(ExperimentID id, ExperimentDefinition experiment, TaskFactory factory, string rootFolder, double normal, int repetitions = 0)
         {
-            if (!File.Exists(experiment.Executable)) throw new ArgumentException("Executable not found");
+            string executable;
+            if (Path.IsPathRooted(experiment.Executable)) executable = experiment.Executable;
+            else executable = Path.Combine(rootFolder, experiment.Executable);
+            if (!File.Exists(executable)) throw new ArgumentException("Executable not found");
 
             var workerInfo = GetWorkerInfo();
             string benchmarkFolder = string.IsNullOrEmpty(experiment.Category) ? experiment.BenchmarkContainer : Path.Combine(experiment.BenchmarkContainer, experiment.Category);
@@ -73,7 +76,7 @@ namespace PerformanceTest
 
                         do
                         {
-                            var m = ProcessMeasurer.Measure(experiment.Executable, args, experiment.BenchmarkTimeout, experiment.MemoryLimit == 0 ? null : new Nullable<long>(experiment.MemoryLimit));
+                            var m = ProcessMeasurer.Measure(executable, args, experiment.BenchmarkTimeout, experiment.MemoryLimit == 0 ? null : new Nullable<long>(experiment.MemoryLimit));
                             measures.Add(m);
                             count++;
                             total += m.WallClockTime;
