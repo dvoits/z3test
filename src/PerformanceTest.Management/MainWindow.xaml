@@ -73,7 +73,7 @@
                           ItemsSource="{Binding Items}">
                     <DataGrid.Resources>
                         <DataTemplate x:Key="ProgressTemplate" >
-                            <ProgressBar Minimum="0" Maximum="{Binding Total, Mode=OneWay}" Value="{Binding Done, Mode=OneWay}" Width="75" Height="15" IsEnabled="True" />
+                            <ProgressBar Minimum="0" Maximum="{Binding BenchmarksTotal, Mode=OneWay}" Value="{Binding BenchmarksDone, Mode=OneWay}" Width="75" Height="15" IsEnabled="True" />
                         </DataTemplate>
                     </DataGrid.Resources>
                     <DataGrid.Columns>
@@ -85,9 +85,9 @@
                         <DataGridCheckBoxColumn Binding="{Binding Path=Flag, UpdateSourceTrigger=PropertyChanged}" Header="Flag" IsThreeState="False" />
                         <DataGridTextColumn Binding="{Binding Path=WorkerInformation, Mode=OneWay}" Header="Machine" />
                         <DataGridTemplateColumn Header="Progress" CellTemplate="{StaticResource ProgressTemplate}" Visibility="Hidden"/>
-                        <DataGridTextColumn Binding="{Binding Path=Done, Mode=OneWay}" Header="Done" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
-                        <DataGridTextColumn Binding="{Binding Path=Queued, Mode=OneWay}" Header="Queued" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
-                        <DataGridTextColumn Binding="{Binding Path=Total, Mode=OneWay}" Header="Total" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
+                        <DataGridTextColumn Binding="{Binding Path=BenchmarksDone, Mode=OneWay}" Header="Done" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
+                        <DataGridTextColumn Binding="{Binding Path=BenchmarksQueued, Mode=OneWay}" Header="Queued" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
+                        <DataGridTextColumn Binding="{Binding Path=BenchmarksTotal, Mode=OneWay}" Header="Total" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
                         <DataGridTextColumn Binding="{Binding Path=Projection, Mode=OneWay}" Header="Projection" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
                     </DataGrid.Columns>
                     <DataGrid.CommandBindings>
