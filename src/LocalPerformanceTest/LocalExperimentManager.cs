@@ -17,9 +17,12 @@ namespace PerformanceTest
     {
         public static LocalExperimentManager NewExperiments(string experimentsFolder, ReferenceExperiment reference)
         {
+            ExperimentDefinition def = MakeRelativeDefinition(experimentsFolder, reference.Definition);
+            ReferenceExperiment relRef = new ReferenceExperiment(def, reference.Repetitions, reference.ReferenceValue);
+
             FileStorage storage = FileStorage.Open(experimentsFolder);
             storage.Clear();
-            storage.SaveReferenceExperiment(reference);
+            storage.SaveReferenceExperiment(relRef);
             LocalExperimentManager manager = new LocalExperimentManager(storage);
             return manager;
         }
@@ -29,6 +32,15 @@ namespace PerformanceTest
             FileStorage storage = FileStorage.Open(experimentsFolder);
             LocalExperimentManager manager = new LocalExperimentManager(storage);
             return manager;
+        }
+
+        private static ExperimentDefinition MakeRelativeDefinition(string experimentsFolder, ExperimentDefinition def)
+        {
+            string relExec = Utils.MakeRelativePath(experimentsFolder, def.Executable);
+            string relContainer = Utils.MakeRelativePath(experimentsFolder, def.BenchmarkContainer);
+            return ExperimentDefinition.Create(relExec, relContainer, def.BenchmarkFileExtension,
+                def.Parameters, def.BenchmarkTimeout,
+                def.Category, def.MemoryLimit);
         }
 
 
@@ -43,7 +55,7 @@ namespace PerformanceTest
             if (storage == null) throw new ArgumentNullException("storage");
             this.storage = storage;
             runningExperiments = new ConcurrentDictionary<ExperimentID, ExperimentInstance>();
-            runner = new LocalExperimentRunner();
+            runner = new LocalExperimentRunner(storage.Location);
             lastId = storage.MaxExperimentId;
 
             asyncNormal = new AsyncLazy<double>(this.ComputeNormal);
@@ -56,6 +68,8 @@ namespace PerformanceTest
 
         public override async Task<ExperimentID> StartExperiment(ExperimentDefinition definition, string creator = null, string note = null)
         {
+            definition = MakeRelativeDefinition(storage.Location, definition);
+
             ExperimentID id = Interlocked.Increment(ref lastId);
             DateTime submitted = DateTime.Now;
 

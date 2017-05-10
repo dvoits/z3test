@@ -35,7 +35,7 @@ namespace PerformanceTest
         private FileStorage(string storageName)
         {
             dir = Directory.CreateDirectory(storageName);
-            dirBenchmarks = dir.CreateSubdirectory("benchmarks");
+            dirBenchmarks = dir.CreateSubdirectory("data");
 
             string tableFile = Path.Combine(dir.FullName, "experiments.csv");
             if (File.Exists(tableFile))
@@ -88,7 +88,7 @@ namespace PerformanceTest
         {
             var dict = new Dictionary<int, ExperimentsTableRow>();
             foreach (var row in experimentsTable.Rows)
-            { // todo: all properties
+            { 
                 dict[row.ID] = row;
             }
             return dict;
@@ -96,7 +96,7 @@ namespace PerformanceTest
 
         public void SaveReferenceExperiment(ReferenceExperiment reference)
         {
-            string json = JsonConvert.SerializeObject(reference);
+            string json = JsonConvert.SerializeObject(reference, Formatting.Indented);
             File.WriteAllText(Path.Combine(dir.FullName, "reference.json"), json);
         }
 
@@ -138,7 +138,6 @@ namespace PerformanceTest
                 ID = id,
                 Submitted = submitted,
                 Executable = experiment.Executable,
-                Version = GetVersion(experiment.Executable),
                 Parameters = experiment.Parameters,
                 BenchmarkContainer = experiment.BenchmarkContainer,
                 BenchmarkFileExtension = experiment.BenchmarkFileExtension,
@@ -209,13 +208,6 @@ namespace PerformanceTest
             return (Measure.CompletionStatus)Enum.Parse(typeof(Measure.CompletionStatus), status);
         }
 
-        private static string GetVersion(string pathToExe)
-        {
-            var versionInfo = FileVersionInfo.GetVersionInfo(pathToExe);
-            return versionInfo.ProductVersion;
-        }
-
-
         private static Stream AsStream(string s)
         {
             byte[] byteArray = Encoding.UTF8.GetBytes(s);
@@ -240,7 +232,6 @@ namespace PerformanceTest
         public int ID { get; set; }
         public DateTime Submitted { get; set; }
         public string Executable { get; set; }
-        public string Version { get; set; }
         public string Parameters { get; set; }
         public string BenchmarkContainer { get; set; }
         public string Category { get; set; }

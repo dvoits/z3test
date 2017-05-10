@@ -6,7 +6,7 @@
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:local="clr-namespace:PerformanceTest.Management"
         mc:Ignorable="d"
-        Title="New Job..." Height="531" Width="510" Loaded="Window_Loaded" WindowStartupLocation="CenterOwner" ShowInTaskbar="False" ResizeMode="NoResize">
+        Title="New Experiment..." Height="531" Width="510" Loaded="Window_Loaded" WindowStartupLocation="CenterOwner" ShowInTaskbar="False" ResizeMode="NoResize">
 
     <Window.Resources>
         <local:InverseBooleanConverter x:Key="InverseBooleanConverter" />
@@ -44,7 +44,7 @@
                         <ColumnDefinition Width="30" />
                     </Grid.ColumnDefinitions>
 
-                    <Label Content="Benchmark library:" Height="28" HorizontalAlignment="Left" Name="label3" VerticalAlignment="Center" Grid.Row="0" />
+                    <Label Content="Shared directory:" Height="28" HorizontalAlignment="Left" Name="label3" VerticalAlignment="Center" Grid.Row="0" />
                     <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtSharedDir" VerticalAlignment="Center" Grid.Row="0"  Grid.Column="1" TabIndex="1" 
                              ToolTip="{Binding BenchmarkLibaryDescription}"
                              Text="{Binding BenchmarkLibrary, Mode=TwoWay}"
@@ -95,8 +95,7 @@
                         <TextBox Height="24" Margin="0,5,0,0" HorizontalAlignment="Stretch" Name="txtParameters" TabIndex="14" ToolTip="Parameters for the executable." 
                                  Text="{Binding Parameters}"/>
                         <TextBlock Margin="0,5,10,10">
-                            Use {file} a placeholder for an input file name.<LineBreak />
-                            Use {0} a placeholder for the numeric parameter.
+                            Use {0} a placeholder for an input file name.
                         </TextBlock>
                     </StackPanel>
                     
@@ -107,30 +106,6 @@
                             <CheckBox Name="chkReplaceCheckSat" Content="Enable"  IsChecked="False" />
                         </GroupBox.Header>
                         <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtReplaceCheckSat" VerticalAlignment="Center" TabIndex="14" ToolTip="(check-sat) will be replace by this." IsEnabled="False" Width="250" />
-                    </GroupBox>
-
-                    <Label Content="Parametricity:" Height="28" HorizontalAlignment="Left" Name="labelParametricity" VerticalAlignment="Center" Grid.Row="7" Grid.Column="0" Margin="0,38" />
-                    <GroupBox Name="grpParametricity" Grid.Row="7" Grid.Column="1" Height="Auto">
-                        <GroupBox.Header>
-                            <CheckBox Name="chkParametricity" Content="Enable"  IsChecked="False"/>
-                        </GroupBox.Header>
-                        <StackPanel>
-                            <TextBlock Text="Replace {0} in `Parameters' by numbers"/>
-                            <StackPanel Orientation="Horizontal">
-                                <Label Content="from:"/>
-                                <TextBox Name="txtParametricityFrom" Width="50" IsEnabled="False" />
-                                <Label Content="to:"/>
-                                <TextBox Name="txtParametricityTo" Width="50" IsEnabled="False" />
-                                <Label Content="step:"/>
-                                <TextBox Name="txtParametricityStep" Width="50" IsEnabled="False" />
-                            </StackPanel>
-                            <GroupBox>
-                                <GroupBox.Header>
-                                    <CheckBox Name="chkJobgroup" Content="Create jobgroup"  IsEnabled="False"></CheckBox>
-                                </GroupBox.Header>
-                                <TextBox Name="txtJobgroup" Width="255" IsEnabled="False" />
-                            </GroupBox>
-                        </StackPanel>
                     </GroupBox>
 
                     <Label Content="Memory limit:" Height="28" HorizontalAlignment="Left" Name="labelMemout" VerticalAlignment="Center" Grid.Row="8" Grid.Column="0"/>

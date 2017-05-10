@@ -14,7 +14,7 @@ namespace PerformanceTest
     {
         public static ExperimentDefinition Create(string executable, string benchmarkContainer, string benchmarkFileExtension, string parameters, 
             TimeSpan benchmarkTimeout,
-            string category = null, int benchmarkMemoryLimitBytes = 0)
+            string category = null, long benchmarkMemoryLimitBytes = 0)
         {
             return new ExperimentDefinition()
             {
@@ -104,7 +104,6 @@ namespace PerformanceTest
 
         public DateTime SubmissionTime;
         public string Creator;
-        public string ExecutableVersion;
 
         public string Category { get; private set; }
 

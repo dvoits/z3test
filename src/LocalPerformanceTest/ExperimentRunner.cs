@@ -15,11 +15,15 @@ namespace PerformanceTest
     {
         private readonly LimitedConcurrencyLevelTaskScheduler scheduler;
         private readonly TaskFactory factory;
+        private readonly string rootFolder;
 
-        public LocalExperimentRunner()
+        public LocalExperimentRunner(string rootFolder)
         {
+            if (rootFolder == null) new ArgumentNullException("rootFolder");
+
             scheduler = new LimitedConcurrencyLevelTaskScheduler(1);
             factory = new TaskFactory(scheduler);
+            this.rootFolder = rootFolder;
         }
 
         public TaskFactory TaskFactory { get { return factory; } }
@@ -27,25 +31,33 @@ namespace PerformanceTest
         public Task<BenchmarkResult>[] Enqueue(ExperimentID id, ExperimentDefinition experiment, double normal, int repetitions = 0)
         {
             if (experiment == null) throw new ArgumentNullException("experiment");
-            return RunExperiment(id, experiment, factory, normal, repetitions);
+            return RunExperiment(id, experiment, factory, rootFolder, normal, repetitions);
         }
 
-        private static Task<BenchmarkResult>[] RunExperiment(ExperimentID id, ExperimentDefinition experiment, TaskFactory factory, double normal, int repetitions = 0)
+        private static Task<BenchmarkResult>[] RunExperiment(ExperimentID id, ExperimentDefinition experiment, TaskFactory factory, string rootFolder, double normal, int repetitions = 0)
         {
-            if (!File.Exists(experiment.Executable)) throw new ArgumentException("Executable not found");
+            string executable;
+            if (Path.IsPathRooted(experiment.Executable)) executable = experiment.Executable;
+            else executable = Path.Combine(rootFolder, experiment.Executable);
+            if (!File.Exists(executable)) throw new ArgumentException("Executable not found");
 
             var workerInfo = GetWorkerInfo();
             string benchmarkFolder = string.IsNullOrEmpty(experiment.Category) ? experiment.BenchmarkContainer : Path.Combine(experiment.BenchmarkContainer, experiment.Category);
-            var benchmarks = Directory.EnumerateFiles(benchmarkFolder, "*." + experiment.BenchmarkFileExtension, SearchOption.AllDirectories).Select(p => Path.GetFullPath(p)).ToArray();
-
-            var results = new Task<BenchmarkResult>[benchmarks.Length];
-            for (int i = 0; i < benchmarks.Length; i++)
+            if (!Path.IsPathRooted(benchmarkFolder))
             {
-                results[i] =
+                benchmarkFolder = Path.Combine(rootFolder, benchmarkFolder);
+            }
+            var benchmarks = Directory.GetFiles(benchmarkFolder, "*." + experiment.BenchmarkFileExtension, SearchOption.AllDirectories);
+
+            var results = new List<Task<BenchmarkResult>>(256);
+            foreach (string benchmarkFile in Directory.GetFiles(benchmarkFolder, "*." + experiment.BenchmarkFileExtension, SearchOption.AllDirectories))
+            {
+                var task =
                     factory.StartNew(_benchmark =>
                     {
                         string benchmark = (string)_benchmark;
-                        Trace.WriteLine("Running benchmark " + Path.GetFileName(benchmark));
+                        string fileName = Utils.MakeRelativePath(benchmarkFolder, benchmark);
+                        Trace.WriteLine("Running benchmark " + Path.GetFileName(fileName));
 
                         string args = experiment.Parameters;
                         if (args != null)
@@ -64,7 +76,7 @@ namespace PerformanceTest
 
                         do
                         {
-                            var m = ProcessMeasurer.Measure(experiment.Executable, args, experiment.BenchmarkTimeout, experiment.MemoryLimit == 0 ? null : new Nullable<long>(experiment.MemoryLimit));
+                            var m = ProcessMeasurer.Measure(executable, args, experiment.BenchmarkTimeout, experiment.MemoryLimit == 0 ? null : new Nullable<long>(experiment.MemoryLimit));
                             measures.Add(m);
                             count++;
                             total += m.WallClockTime;
@@ -74,11 +86,12 @@ namespace PerformanceTest
                         Trace.WriteLine(String.Format("Done in {0} (aggregated by {1} runs)", finalMeasure.WallClockTime, count));
 
                         var performanceIndex = normal * finalMeasure.TotalProcessorTime.TotalSeconds;
-                        return new BenchmarkResult(id, benchmark, workerInfo, performanceIndex, acq, finalMeasure);
-                    }, benchmarks[i], TaskCreationOptions.LongRunning);
+                        return new BenchmarkResult(id, fileName, workerInfo, performanceIndex, acq, finalMeasure);
+                    }, benchmarkFile, TaskCreationOptions.LongRunning);
+                results.Add(task);
             }
 
-            return results;
+            return results.ToArray();
         }
 
         private static string GetWorkerInfo()

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace PerformanceTest
 {
@@ -49,6 +50,37 @@ namespace PerformanceTest
                 exitCode,
                 measures[0].StdOut,
                 measures[0].StdErr);
+        }
+
+
+
+        public static String MakeRelativePath(String baseFolder, String toPath)
+        {
+            if (String.IsNullOrEmpty(baseFolder)) throw new ArgumentNullException("baseFolder");
+            if (String.IsNullOrEmpty(toPath)) throw new ArgumentNullException("toPath");
+
+            if (!baseFolder.EndsWith(Path.DirectorySeparatorChar.ToString()) && !baseFolder.EndsWith(Path.AltDirectorySeparatorChar.ToString()))
+                baseFolder += Path.DirectorySeparatorChar;
+
+            Uri fromUri = new Uri(EnsureAbsolutePath(baseFolder));
+            Uri toUri = new Uri(EnsureAbsolutePath(toPath));
+
+            if (fromUri.Scheme != toUri.Scheme) { return toPath; } // path can't be made relative.
+
+            Uri relativeUri = fromUri.MakeRelativeUri(toUri);
+            String relativePath = Uri.UnescapeDataString(relativeUri.ToString());
+
+            if (toUri.Scheme.Equals("file", StringComparison.InvariantCultureIgnoreCase))
+            {
+                relativePath = relativePath.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+            }
+
+            return relativePath;
+        }
+
+        private static string EnsureAbsolutePath(String path)
+        {
+            return Path.GetFullPath(path);
         }
     }
 }
