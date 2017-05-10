@@ -189,9 +189,10 @@ namespace PerformanceTest.Management
                 for (var i = 0; i < count; i++)
                 {
                     //not implemented 
-
-                    string ps = "";
-                    string note = "";
+                    var experiment = experimentsVm.Items.Where(st => st.ID == ids[i]).ToArray()[0];
+                    var def = managerVm.GetDefinition(ids[i]).Result;
+                    string ps = def.Parameters;
+                    string note = experiment.Note;
                     int total =  0;
                     int sat = 0;
                     int unsat = 0;
@@ -211,7 +212,7 @@ namespace PerformanceTest.Management
                                 bugs + "," +
                                 errors + "," +
                                 unique[i] + "," +
-                                "\"'" + ps + "\"," +
+                                "\"" + ps + "\"," +
                                 "\"" + note + "\"");
                 }
                 f.WriteLine();
@@ -289,7 +290,7 @@ namespace PerformanceTest.Management
         {
             e.CanExecute = dataGrid.SelectedItems.Count >= 1;
         }
-        private void Copy(object target, ExecutedRoutedEventArgs e)
+        private async void Copy(object target, ExecutedRoutedEventArgs e)
         {
             CopyDialog dlg = new CopyDialog();
             dlg.Owner = this;
@@ -309,8 +310,8 @@ namespace PerformanceTest.Management
                     for (var i = 0; i < total; i++)
                     {
                         ExperimentStatusViewModel exp = experimentsVm.Items.Where(st => st.ID == ids[i]).ToArray()[0];
-                        ExperimentDefinition definition = null; //where I can get definition?
-                        var result = managerCopyVm.SubmitExperiment(definition, exp.Creator, exp.Note);
+                        ExperimentDefinition def = managerVm.GetDefinition(ids[i]).Result;
+                        await managerCopyVm.SubmitExperiment(def, exp.Creator, exp.Note);
                     }
                 }
                 catch (Exception ex)
@@ -323,7 +324,7 @@ namespace PerformanceTest.Management
         {
             e.CanExecute = dataGrid.SelectedItems.Count >= 1;
         }
-        private void Move(object target, ExecutedRoutedEventArgs e)
+        private async void Move(object target, ExecutedRoutedEventArgs e)
         {
             CopyDialog dlg = new CopyDialog();
             dlg.Owner = this;
@@ -344,10 +345,8 @@ namespace PerformanceTest.Management
                     for (var i = 0; i < total; i++)
                     {
                         ExperimentStatusViewModel exp = experimentsVm.Items.Where(st => st.ID == ids[i]).ToArray()[0];
-                        var vm = new NewExperimentViewModel(managerVm, UIService.Instance);
-                        ExperimentDefinition def = ExperimentDefinition.Create(vm.Executable, vm.BenchmarkLibrary, vm.Extension, vm.Parameters,
-                                                   TimeSpan.FromSeconds(vm.BenchmarkTimeoutSec), vm.Categories, vm.BenchmarkMemoryLimitMb >> 20);
-                        var result = managerCopyVm.SubmitExperiment(def, exp.Creator, exp.Note);
+                        ExperimentDefinition def = managerVm.GetDefinition(ids[i]).Result;
+                        await managerCopyVm.SubmitExperiment(def, exp.Creator, exp.Note);
                         experimentsVm.DeleteExperiment(ids[i]);
                     }
                 }
@@ -399,11 +398,23 @@ namespace PerformanceTest.Management
         {
             e.CanExecute = dataGrid.SelectedItems.Count > 0;
         }
-        private void Restart(object target, ExecutedRoutedEventArgs e)
+        private async void Restart(object target, ExecutedRoutedEventArgs e)
         {
             try
             {
+                var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
+                double total = ids.Length;
+                for (var i = 0; i < total; i++)
+                {
+                    ExperimentStatusViewModel exp = experimentsVm.Items.Where(st => st.ID == ids[i]).ToArray()[0];
+                    var vm = new NewExperimentViewModel(managerVm, UIService.Instance);
 
+                    ExperimentDefinition def = managerVm.GetDefinition(ids[i]).Result;
+                    
+                    experimentsVm.DeleteExperiment(ids[i]);
+                    await managerVm.SubmitExperiment(def, exp.Creator, exp.Note);
+                    //error: Executable is not found.
+                }
             }
             catch (Exception ex)
             {

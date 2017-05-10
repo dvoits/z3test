@@ -147,7 +147,7 @@ namespace PerformanceTest.Management
                 string[] exeFiles = files.Where(f => f.EndsWith(".exe")).ToArray();
                 if(exeFiles.Length == 0)
                 {
-                    service.ShowError("No executable files have been chosen.", "New job");
+                    service.ShowError("No executable files have been chosen.", "New experiment");
                     return;
                 }
                 string mainFile = null;

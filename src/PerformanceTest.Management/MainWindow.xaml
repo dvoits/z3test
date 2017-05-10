@@ -153,7 +153,7 @@
                 </DataGrid>
             </TabItem>
 
-            <!--<TabItem Header="Job Groups">
+            <!--<TabItem Header="Experiment Groups">
                 <DataGrid AutoGenerateColumns="True" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,10,10,10" Name="jobgroupGrid" IsReadOnly="True" MouseDoubleClick="jobgroupGrid_MouseDoubleClick" >
                     <DataGrid.CommandBindings>
                         -->
@@ -170,9 +170,9 @@
                         </ContextMenu>
                     </DataGrid.ContextMenu>
                 </DataGrid>
-            </TabItem>
+            </TabItem>-->
 
-            <TabItem Header="DB Connections" Name="tiHdrDBConnections">
+            <!--<TabItem Header="DB Connections" Name="tiHdrDBConnections">
                 <DataGrid AutoGenerateColumns="True" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,10,10,10" Name="connectionsGrid" IsReadOnly="True" ColumnWidth="100"/>
             </TabItem>-->
 

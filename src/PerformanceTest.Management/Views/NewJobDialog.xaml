@@ -131,7 +131,7 @@
                         <ColumnDefinition Width="30" />
                     </Grid.ColumnDefinitions>
                     <Label Content="Note:" Height="28" HorizontalAlignment="Left" Name="labelNote" VerticalAlignment="Center" Grid.Row="0" Grid.Column="0"/>
-                    <TextBox Height="23" HorizontalAlignment="Stretch" Name="txtNote" VerticalAlignment="Center" TabIndex="15" Grid.Row="0" Grid.Column="1" ToolTip="A descriptive note, if you like." MaxLines="1" MaxLength="256" />
+                    <TextBox Height="23" HorizontalAlignment="Stretch" Name="txtNote" VerticalAlignment="Center" TabIndex="15" Grid.Row="0" Grid.Column="1" ToolTip="A descriptive note, if you like." MaxLines="1" MaxLength="256" Text="{Binding Note}"/>
                 </Grid>
             </TabItem>
         </TabControl>

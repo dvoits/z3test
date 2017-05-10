@@ -31,6 +31,7 @@ namespace PerformanceTest.Management
         }
 
         public abstract string HandleMultileTargetFiles(string[] files, string mainFile);
+        public abstract Task<ExperimentDefinition> GetDefinition(int id);
     }
 
     public class LocalExperimentManagerViewModel : ExperimentManagerViewModel
@@ -60,6 +61,12 @@ namespace PerformanceTest.Management
         public override string HandleMultileTargetFiles(string[] files, string mainFile)
         {
             return mainFile;
+        }
+        public override async Task<ExperimentDefinition> GetDefinition(int id)
+        {
+            var def = await manager.GetDefinition(id);
+            return def;
+
         }
     }
 }

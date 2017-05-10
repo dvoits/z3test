@@ -10,13 +10,13 @@ namespace PerformanceTest.Management
 {
     class ExperimentPropertiesViewModel
     {
-        private ExperimentListViewModel experiments;
+        //private ExperimentListViewModel experiments;
         private ExperimentStatusViewModel statusVm;
         private int id;
         private readonly string[] MachineStatuses = { "OK", "Unable to retrieve status." };
         public ExperimentPropertiesViewModel(ExperimentListViewModel experimentsVm, int id)
         {
-            this.experiments = experimentsVm;
+            //this.experiments = experimentsVm;
             this.id = id;
             this.statusVm = experimentsVm.Items.Where(item => item.ID == id).ToArray()[0];
         }
