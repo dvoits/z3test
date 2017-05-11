@@ -310,7 +310,11 @@ namespace PerformanceTest.Management
                     for (var i = 0; i < total; i++)
                     {
                         ExperimentStatusViewModel exp = experimentsVm.Items.Where(st => st.ID == ids[i]).ToArray()[0];
-                        ExperimentDefinition def = managerVm.GetDefinition(ids[i]).Result;
+                        ExperimentDefinition oldDef = managerVm.GetDefinition(ids[i]).Result;
+                        ExperimentDefinition def =
+                        ExperimentDefinition.Create(
+                            managerVm.GetStorageDirectory + "\\" + oldDef.Executable, managerVm.GetStorageDirectory + "\\" + oldDef.BenchmarkContainer, oldDef.BenchmarkFileExtension, oldDef.Parameters,
+                            oldDef.ExperimentTimeout, oldDef.Category, oldDef.MemoryLimit);
                         await managerCopyVm.SubmitExperiment(def, exp.Creator, exp.Note);
                     }
                 }
@@ -345,7 +349,11 @@ namespace PerformanceTest.Management
                     for (var i = 0; i < total; i++)
                     {
                         ExperimentStatusViewModel exp = experimentsVm.Items.Where(st => st.ID == ids[i]).ToArray()[0];
-                        ExperimentDefinition def = managerVm.GetDefinition(ids[i]).Result;
+                        ExperimentDefinition oldDef = managerVm.GetDefinition(ids[i]).Result;
+                        ExperimentDefinition def =
+                        ExperimentDefinition.Create(
+                            managerVm.GetStorageDirectory + "\\" + oldDef.Executable, managerVm.GetStorageDirectory + "\\" + oldDef.BenchmarkContainer, oldDef.BenchmarkFileExtension, oldDef.Parameters,
+                            oldDef.ExperimentTimeout, oldDef.Category, oldDef.MemoryLimit);
                         await managerCopyVm.SubmitExperiment(def, exp.Creator, exp.Note);
                         experimentsVm.DeleteExperiment(ids[i]);
                     }
@@ -409,11 +417,13 @@ namespace PerformanceTest.Management
                     ExperimentStatusViewModel exp = experimentsVm.Items.Where(st => st.ID == ids[i]).ToArray()[0];
                     var vm = new NewExperimentViewModel(managerVm, UIService.Instance);
 
-                    ExperimentDefinition def = managerVm.GetDefinition(ids[i]).Result;
-                    
+                    ExperimentDefinition oldDef = managerVm.GetDefinition(ids[i]).Result;
+                    ExperimentDefinition def =
+                    ExperimentDefinition.Create(
+                        managerVm.GetStorageDirectory + "\\" + oldDef.Executable, managerVm.GetStorageDirectory + "\\" + oldDef.BenchmarkContainer, oldDef.BenchmarkFileExtension, oldDef.Parameters,
+                        oldDef.ExperimentTimeout, oldDef.Category, oldDef.MemoryLimit);
                     experimentsVm.DeleteExperiment(ids[i]);
                     await managerVm.SubmitExperiment(def, exp.Creator, exp.Note);
-                    //error: Executable is not found.
                 }
             }
             catch (Exception ex)

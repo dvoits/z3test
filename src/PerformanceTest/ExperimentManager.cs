@@ -19,6 +19,9 @@ namespace PerformanceTest
             this.reference = reference;
         }
 
+        public abstract string Directory {
+            get;
+        }
         /// <summary>
         /// Schedules execution of a new experiment from the given experiment definition.
         /// </summary>
@@ -43,7 +46,7 @@ namespace PerformanceTest
         /// <returns></returns>
         public abstract Task<BenchmarkResult>[] GetResults(ExperimentID id);
 
-        public abstract void DeleteExperiment(ExperimentID id);
+        public abstract Task DeleteExperiment(ExperimentID id);
 
         public abstract Task UpdatePriority(ExperimentID id, string priority);
         public abstract Task UpdateStatusFlag(ExperimentID id, bool flag);

@@ -61,7 +61,7 @@ namespace PerformanceTest
             asyncNormal = new AsyncLazy<double>(this.ComputeNormal);
         }
 
-        public string Directory
+        public override string Directory
         {
             get { return storage.Location; }
         }
@@ -138,10 +138,11 @@ namespace PerformanceTest
             return status;
         }
         
-        public override void DeleteExperiment (int id)
+        public override Task DeleteExperiment (int id)
         {
-            
-            //not implemented
+            var deleteRow = storage.GetExperiments()[id];
+            storage.RemoveExperimentRow(deleteRow);
+            return Task.FromResult(0);
         }
         public override Task UpdatePriority(int id, string priority)
         {

@@ -157,6 +157,11 @@ namespace PerformanceTest
             SaveBenchmarks(IdToTableName(id), benchmarks);
         }
 
+        public void RemoveExperimentRow(ExperimentsTableRow deleteRow)
+        {
+            experimentsTable = Table.OfRows(experimentsTable.Rows.Where(r => r.ID != deleteRow.ID));
+            SaveTable(experimentsTable, Path.Combine(dir.FullName, "experiments.csv"), new WriteSettings(Delimiter.Comma, true, true));
+        }
         public void ReplaceExperimentRow(ExperimentsTableRow newRow)
         {
             experimentsTable = Table.OfRows(experimentsTable.Rows.Select(r =>
