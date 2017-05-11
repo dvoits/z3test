@@ -460,7 +460,14 @@ namespace PerformanceTest.Management
             {
                 string name = dlg.txtGroupName.Text;
                 string note = dlg.txtNote.Text;
-                
+                //for (var i = 0; i < ids.Length; i++)
+                //{
+                //    ExperimentDefinition def = managerVm.GetDefinition(ids[i].ID).Result;
+                //    //change groupName
+                //    //change note
+                //}
+                //not implemented
+
             }
         }
     }

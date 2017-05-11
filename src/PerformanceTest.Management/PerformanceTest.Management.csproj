@@ -59,7 +59,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="ProgressWindow.xaml.cs">
+    <Compile Include="Views\ProgressWindow.xaml.cs">
       <DependentUpon>ProgressWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="ViewModels\ExperimentPropertiesViewModel.cs" />
@@ -81,7 +81,7 @@
     <Compile Include="ViewModels\DelegateCommand.cs" />
     <Compile Include="ViewModels\ExperimentManagerViewModel.cs" />
     <Compile Include="ViewModels\NewExperimentViewModel.cs" />
-    <Page Include="ProgressWindow.xaml">
+    <Page Include="Views\ProgressWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
