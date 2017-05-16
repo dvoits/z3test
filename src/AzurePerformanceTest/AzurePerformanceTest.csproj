@@ -67,6 +67,7 @@
     <Compile Include="AzureExperimentManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="AzureDataAccess.cs" />
+    <Compile Include="TableEntities.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PerformanceTest\PerformanceTest.csproj">

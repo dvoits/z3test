@@ -38,7 +38,6 @@
     <Compile Include="Experiment.cs" />
     <Compile Include="ExperimentManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TableEntities.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Measurement\Measurement.csproj">

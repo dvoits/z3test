@@ -1,5 +1,6 @@
 ﻿using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
+using Microsoft.WindowsAzure.Storage.Table.Queryable;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,7 +33,8 @@ namespace PerformanceTest
 
         public override async Task<IEnumerable<int>> FindExperiments(ExperimentFilter? filter = default(ExperimentFilter?))
         {
-            TableQuery<ExperimentEntity> query = new TableQuery<ExperimentEntity>().Select(new[] { "ID", "Submitted" });
+            //TableQuery<ExperimentEntity> query = tableExperiments.CreateQuery<ExperimentEntity>().Select(new[] { "ID", "Submitted" }).AsTableQuery();
+            TableQuery<ExperimentEntity> query = tableExperiments.CreateQuery<ExperimentEntity>().AsTableQuery();
             var entities = await AzureDataAccess.GetEntitiesAsync(query, CancellationToken.None);
             return entities.OrderByDescending(e => e.Submitted).Select(e => e.ID);
         }
