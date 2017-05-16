@@ -272,7 +272,13 @@ namespace PerformanceTest.Management
                     ExperimentDefinition.Create(
                         vm.Executable, vm.BenchmarkLibrary, vm.Extension, vm.Parameters, 
                         TimeSpan.FromSeconds(vm.BenchmarkTimeoutSec), vm.Categories, vm.BenchmarkMemoryLimitMb >> 20);
-                await managerVm.SubmitExperiment(def, System.Security.Principal.WindowsIdentity.GetCurrent().Name, vm.Note);
+                try
+                {
+                    await managerVm.SubmitExperiment(def, System.Security.Principal.WindowsIdentity.GetCurrent().Name, vm.Note);
+                }catch(Exception ex)
+                {
+                    UIService.Instance.ShowError(ex.Message, "Failed to submit an experiment");
+                }
             }
         }
     }
