@@ -31,6 +31,12 @@ namespace PerformanceTest.Management
         }
 
         public abstract string HandleMultileTargetFiles(string[] files, string mainFile);
+        public abstract Task<ExperimentDefinition> GetDefinition(int id);
+
+        public abstract string GetStorageDirectory
+        {
+            get;
+        }
     }
 
     public class LocalExperimentManagerViewModel : ExperimentManagerViewModel
@@ -39,6 +45,10 @@ namespace PerformanceTest.Management
         {
         }
 
+        public override string GetStorageDirectory
+        {
+            get { return manager.Directory; }
+        }
         public override string BenchmarkLibraryDescription
         {
             get { return "A folder that contains benchmark files."; }
@@ -60,6 +70,12 @@ namespace PerformanceTest.Management
         public override string HandleMultileTargetFiles(string[] files, string mainFile)
         {
             return mainFile;
+        }
+        public override async Task<ExperimentDefinition> GetDefinition(int id)
+        {
+            var def = await manager.GetDefinition(id);
+            return def;
+
         }
     }
 }

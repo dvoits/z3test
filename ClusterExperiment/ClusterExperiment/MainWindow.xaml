@@ -55,17 +55,18 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="100" MinWidth="100" />
+                <ColumnDefinition Width="3.045" />
+                <ColumnDefinition Width="96.955"/>
                 <ColumnDefinition MinWidth="100" />
                 <ColumnDefinition Width="80" />
             </Grid.ColumnDefinitions>
 
-            <Label Content="Database:" HorizontalAlignment="Left" Name="label5" VerticalAlignment="Center" Grid.Row="0" Grid.Column="0"/>
-            <TextBox HorizontalAlignment="Stretch" Name="txtDatabase" VerticalAlignment="Center" Grid.Row="0" Grid.Column="1" TabIndex="0"/>
-            <Button Content="Connect" HorizontalAlignment="Right" Name="btnConnect" VerticalAlignment="Center" Width="75" Click="btnConnect_Click" Grid.Row="0" Grid.Column="3" TabIndex="5" />
+            <Label Content="Database:" HorizontalAlignment="Left" Name="label5" VerticalAlignment="Center" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,1"/>
+            <TextBox HorizontalAlignment="Stretch" Name="txtDatabase" VerticalAlignment="Center" Grid.Row="0" Grid.Column="2" TabIndex="0" Margin="0,5,0,4"/>
+            <Button Content="Connect" HorizontalAlignment="Right" Name="btnConnect" VerticalAlignment="Center" Width="75" Click="btnConnect_Click" Grid.Row="0" Grid.Column="3" TabIndex="5" Margin="0,4,0,3" />
 
-            <Label Content="Operations:" HorizontalAlignment="Left" Name="label4" VerticalAlignment="Center" Grid.Row="1" Grid.Column="0"/>
-            <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Stretch">
+            <Label Content="Operations:" HorizontalAlignment="Left" Name="label4" VerticalAlignment="Center" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,1,0,0"/>
+            <StackPanel Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Stretch">
                 <Button Content="Update List" Margin="0,0,50,0" Height="23" HorizontalAlignment="Left" Name="btnUpdate" VerticalAlignment="Center" Width="75" IsEnabled="false" TabIndex="6" Click="btnUpdate_Click" />
                 <Button Content="New Job" Margin="0,0,50,0" Height="23" HorizontalAlignment="Left" Name="btnNewJob" VerticalAlignment="Center" Width="75" IsEnabled="false"  TabIndex="7" Click="btnNewJob_Click" />
                 <Label Content="Filter:" Margin="0,0,10,0" Height="23" HorizontalAlignment="Stretch"/>

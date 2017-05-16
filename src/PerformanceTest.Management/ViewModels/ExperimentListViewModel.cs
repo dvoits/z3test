@@ -42,9 +42,33 @@ namespace PerformanceTest.Management
             Items = items;
         }
 
+        public void UpdatePriority(int id, string priority)
+        {
+            manager.UpdatePriority(id, priority);
+        }
         public double GetRuntime(int id)
         {
             return manager.GetResults(id).Sum(res => res.IsCompleted ? res.Result.NormalizedRuntime : 0);
+        }
+        public async void FilterExperiments(string filter)
+        {
+            if (filter != "")
+            {
+                ExperimentManager.ExperimentFilter filt = new ExperimentManager.ExperimentFilter
+                {
+                    NotesEquals = filter,
+                    CategoryEquals = filter,
+                    CreatorEquals = filter
+                };
+                var ids = await manager.FilterExperiments(filt);
+
+                var status = await manager.GetStatus(ids);
+                Items = status.Select(st => new ExperimentStatusViewModel(st, manager, message)).ToArray();
+            }
+            else
+            {
+                RefreshItemsAsync();
+            }
         }
         public async void FindExperiments(string filter)
         {
@@ -57,6 +81,7 @@ namespace PerformanceTest.Management
                     CreatorEquals = filter
                 };
                 var ids = await manager.FindExperiments(filt);
+                
                 var status = await manager.GetStatus(ids);
                 Items = status.Select(st => new ExperimentStatusViewModel(st, manager, message)).ToArray();
             }
@@ -87,6 +112,7 @@ namespace PerformanceTest.Management
         private readonly IUIService message;
 
         private bool flag;
+        private string note;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -97,6 +123,7 @@ namespace PerformanceTest.Management
             if (message == null) throw new ArgumentNullException("message");
             this.status = status;
             this.flag = status.Flag;
+            this.note = status.Note;
             this.manager = manager;
             this.message = message;
         }
@@ -107,9 +134,23 @@ namespace PerformanceTest.Management
 
         public string Submitted { get { return status.SubmissionTime.ToString(); } }
 
-        public string Note { get { return status.Note; } }
+        public string Note
+        {
+            get { return note; }
+            set
+            {
+                note = value;
+                NotifyPropertyChanged();
+                UpdateNote();
+            }
+
+        }
 
         public string Creator { get { return status.Creator; } }
+
+        public int BenchmarksDone { get { return status.BenchmarksDone; } }
+        public int BenchmarksTotal { get { return status.BenchmarksTotal; } }
+        public int BenchmarksQueued { get { return status.BenchmarksQueued; } }
 
         public bool Flag
         {
@@ -125,7 +166,22 @@ namespace PerformanceTest.Management
                 }
             }
         }
-
+        private async void UpdateNote()
+        {
+            try
+            {
+                await manager.UpdateNote(status.ID, note);
+                status.Note = note;
+                Trace.WriteLine("Note changed to '" + note + "' for " + status.ID);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("Failed to update experiment note: " + ex.Message);
+                note = status.Note;
+                NotifyPropertyChanged("Note");
+                message.ShowError("Failed to update experiment status flag: " + ex.Message);
+            }
+        }
         private async void UpdateStatusFlag()
         {
             try
@@ -138,8 +194,8 @@ namespace PerformanceTest.Management
             {
                 Trace.WriteLine("Failed to update experiment status flag: " + ex.Message);
                 flag = status.Flag;
-                NotifyPropertyChanged("Flag");
-                message.ShowError("Failed to update experiment status flag: " + ex.Message);
+                NotifyPropertyChanged("Note");
+                message.ShowError("Failed to update experiment note: " + ex.Message);
             }
         }
 

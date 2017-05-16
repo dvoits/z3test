@@ -110,7 +110,7 @@ namespace PerformanceTest
         /// <summary>
         /// A descriptive note, if you like.
         /// </summary>
-        public string Note { get; private set; }
+        public string Note { get; set; }
         public bool Flag;
 
         public int BenchmarksDone { get; private set; }

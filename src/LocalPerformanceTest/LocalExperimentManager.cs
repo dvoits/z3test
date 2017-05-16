@@ -61,7 +61,7 @@ namespace PerformanceTest
             asyncNormal = new AsyncLazy<double>(this.ComputeNormal);
         }
 
-        public string Directory
+        public override string Directory
         {
             get { return storage.Location; }
         }
@@ -138,9 +138,19 @@ namespace PerformanceTest
             return status;
         }
         
-        public override void DeleteExperiment (int id)
+        public override Task DeleteExperiment (int id)
         {
-            //not implemented
+            var deleteRow = storage.GetExperiments()[id];
+            storage.RemoveExperimentRow(deleteRow);
+            return Task.FromResult(0);
+        }
+        public override Task UpdatePriority(int id, string priority)
+        {
+            //var newRow = storage.GetExperiments()[id];
+            //newRow.Priority = priority;
+            //storage.ReplaceExperimentRow(newRow);
+            //return Task.FromResult(0);
+            throw new NotImplementedException();
         }
         public override Task UpdateStatusFlag (int id, bool flag)
         {
@@ -150,6 +160,13 @@ namespace PerformanceTest
             return Task.FromResult(0);
         }
 
+        public override Task UpdateNote (int id, string note)
+        {
+            var newRow = storage.GetExperiments()[id];
+            newRow.Note = note;
+            storage.ReplaceExperimentRow(newRow);
+            return Task.FromResult(0);
+        }
         public override Task<BenchmarkResult>[] GetResults(int id)
         {
             ExperimentInstance experiment;
@@ -177,13 +194,35 @@ namespace PerformanceTest
                                     (filter.Value.CategoryEquals == null || e.Category == null || e.Category.Contains(filter.Value.CategoryEquals)) &&
                                     (filter.Value.ExecutableEquals == null || e.Executable == null || e.Executable == filter.Value.ExecutableEquals) &&
                                     (filter.Value.ParametersEquals == null || e.Parameters == null || e.Parameters == filter.Value.ParametersEquals) &&
-                                    (filter.Value.NotesEquals == null || e.Note  == null || e.Note.Contains(filter.Value.NotesEquals)); //&&
-                                    //(filter.Value.CreatorEquals == null || e.Creator.Contains(filter.Value.CreatorEquals));
+                                    (filter.Value.NotesEquals == null || e.Note == null || e.Note.Contains(filter.Value.NotesEquals)) &&
+                                    (filter.Value.CreatorEquals == null || e.Creator == null || e.Creator.Contains(filter.Value.CreatorEquals));
                     });
             }
 
             return Task.FromResult(experiments.Select(e => e.Key));
         }
+
+        public override Task<IEnumerable<int>> FilterExperiments(ExperimentFilter? filter = default(ExperimentFilter?))
+        {
+            IEnumerable<KeyValuePair<int, ExperimentsTableRow>> experiments = storage.GetExperiments().ToArray();
+
+            if (filter.HasValue)
+            {
+                experiments =
+                    experiments
+                    .Where(q =>
+                    {
+                        var id = q.Key;
+                        var e = q.Value;
+                        return (filter.Value.CategoryEquals == null || e.Category != null && e.Category.Contains(filter.Value.CategoryEquals)) ||
+                               (filter.Value.NotesEquals == null || e.Note != null && e.Note.Contains(filter.Value.NotesEquals)) ||
+                               (filter.Value.CreatorEquals == null || e.Creator != null && e.Creator.Contains(filter.Value.CreatorEquals));
+                    });
+            }
+
+            return Task.FromResult(experiments.Select(e => e.Key));
+        }
+
 
         private async Task<double> ComputeNormal()
         {

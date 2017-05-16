@@ -24,6 +24,11 @@ namespace PerformanceTest.Management
         public static RoutedCommand SaveMetaCSVCommand = new RoutedCommand();
         public static RoutedCommand FlagCommand = new RoutedCommand();
         public static RoutedCommand TallyCommand = new RoutedCommand();
+        public static RoutedCommand ChangePriorityCommand = new RoutedCommand();
+        public static RoutedCommand CopyCommand = new RoutedCommand();
+        public static RoutedCommand MoveCommand = new RoutedCommand();
+        public static RoutedCommand RestartCommand = new RoutedCommand();
+        public static RoutedCommand CreateGroupCommand = new RoutedCommand();
         public MainWindow()
         {
             InitializeComponent();
@@ -52,6 +57,8 @@ namespace PerformanceTest.Management
                     btnConnect.IsEnabled = true;
                     btnNewJob.IsEnabled = true;
                     btnUpdate.IsEnabled = true;
+                    menuNewJob.IsEnabled = true;
+                    menuNewCatchAll.IsEnabled = true;
                 } else
                 {
                     experimentsVm = null;
@@ -61,6 +68,8 @@ namespace PerformanceTest.Management
                     dataGrid.DataContext = null;
                     btnNewJob.IsEnabled = false;
                     btnUpdate.IsEnabled = false;
+                    menuNewJob.IsEnabled = false;
+                    menuNewCatchAll.IsEnabled = false;
                 }
             }
             catch(Exception ex)
@@ -75,7 +84,7 @@ namespace PerformanceTest.Management
 
             experimentsVm = new ExperimentListViewModel(manager, UIService.Instance);
             dataGrid.DataContext = experimentsVm;
-            //experimentsVm.FindExperiments(txtFilter.Text);
+            experimentsVm.FilterExperiments(txtFilter.Text);
         }
         private void OptShowProgress_Checked(object sender, RoutedEventArgs e)
         {
@@ -180,9 +189,10 @@ namespace PerformanceTest.Management
                 for (var i = 0; i < count; i++)
                 {
                     //not implemented 
-
-                    string ps = "";
-                    string note = "";
+                    var experiment = experimentsVm.Items.Where(st => st.ID == ids[i]).ToArray()[0];
+                    var def = managerVm.GetDefinition(ids[i]).Result;
+                    string ps = def.Parameters;
+                    string note = experiment.Note;
                     int total =  0;
                     int sat = 0;
                     int unsat = 0;
@@ -202,7 +212,7 @@ namespace PerformanceTest.Management
                                 bugs + "," +
                                 errors + "," +
                                 unique[i] + "," +
-                                "\"'" + ps + "\"," +
+                                "\"" + ps + "\"," +
                                 "\"" + note + "\"");
                 }
                 f.WriteLine();
@@ -250,10 +260,114 @@ namespace PerformanceTest.Management
 
             Mouse.OverrideCursor = null;
         }
+
+        private void canChangePriority(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count > 0;
+        }
+        private void changePriority(object target, ExecutedRoutedEventArgs e)
+        {
+            ChangePriorityDialog dlg = new ChangePriorityDialog();
+            dlg.Owner = this;
+            if (dlg.ShowDialog() == true)
+            {
+                var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
+                double total = ids.Length;
+                for (var i = 0; i < total; i++)
+                {
+                    switch (dlg.cmbPriority.SelectedIndex)
+                    {
+                        case 0: break;
+                        case 1: break;
+                        case 3: break;
+                        case 4: break;
+                        default: break;
+                    }
+                }
+            }
+        }
+        private void canCopy(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count >= 1;
+        }
+        private async void Copy(object target, ExecutedRoutedEventArgs e)
+        {
+            CopyDialog dlg = new CopyDialog();
+            dlg.Owner = this;
+            if (dlg.ShowDialog() == true)
+            {
+                string backupDB = dlg.txtDB.Text;
+                if (connectionString.Text == backupDB)
+                {
+                    MessageBox.Show(this, "Refusing to copy to the same database.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+                try { 
+                    LocalExperimentManager managerCopyTo = LocalExperimentManager.OpenExperiments(backupDB);
+                    var managerCopyVm = new LocalExperimentManagerViewModel(managerCopyTo);
+                    var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
+                    double total = ids.Length;
+                    for (var i = 0; i < total; i++)
+                    {
+                        ExperimentStatusViewModel exp = experimentsVm.Items.Where(st => st.ID == ids[i]).ToArray()[0];
+                        ExperimentDefinition oldDef = managerVm.GetDefinition(ids[i]).Result;
+                        ExperimentDefinition def =
+                        ExperimentDefinition.Create(
+                            managerVm.GetStorageDirectory + "\\" + oldDef.Executable, managerVm.GetStorageDirectory + "\\" + oldDef.BenchmarkContainer, oldDef.BenchmarkFileExtension, oldDef.Parameters,
+                            oldDef.ExperimentTimeout, oldDef.Category, oldDef.MemoryLimit);
+                        await managerCopyVm.SubmitExperiment(def, exp.Creator, exp.Note);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Failed to open experiments", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+        private void canMove(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count >= 1;
+        }
+        private async void Move(object target, ExecutedRoutedEventArgs e)
+        {
+            CopyDialog dlg = new CopyDialog();
+            dlg.Owner = this;
+            if (dlg.ShowDialog() == true)
+            {
+                string backupDB = dlg.txtDB.Text;
+                if (connectionString.Text == backupDB)
+                {
+                    MessageBox.Show(this, "Refusing to move to the same database.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+                try
+                {
+                    LocalExperimentManager managerCopyTo = LocalExperimentManager.OpenExperiments(backupDB);
+                    var managerCopyVm = new LocalExperimentManagerViewModel(managerCopyTo);
+                    var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
+                    double total = ids.Length;
+                    for (var i = 0; i < total; i++)
+                    {
+                        ExperimentStatusViewModel exp = experimentsVm.Items.Where(st => st.ID == ids[i]).ToArray()[0];
+                        ExperimentDefinition oldDef = managerVm.GetDefinition(ids[i]).Result;
+                        ExperimentDefinition def =
+                        ExperimentDefinition.Create(
+                            managerVm.GetStorageDirectory + "\\" + oldDef.Executable, managerVm.GetStorageDirectory + "\\" + oldDef.BenchmarkContainer, oldDef.BenchmarkFileExtension, oldDef.Parameters,
+                            oldDef.ExperimentTimeout, oldDef.Category, oldDef.MemoryLimit);
+                        await managerCopyVm.SubmitExperiment(def, exp.Creator, exp.Note);
+                        experimentsVm.DeleteExperiment(ids[i]);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Failed to open experiments", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
         private void filter_KeyUp(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
-                experimentsVm.FindExperiments(txtFilter.Text);
+                experimentsVm.FilterExperiments(txtFilter.Text);
         }
         private void MenuItemExit_Click(object sender, RoutedEventArgs e)
         {
@@ -279,6 +393,87 @@ namespace PerformanceTest.Management
                 {
                     UIService.Instance.ShowError(ex.Message, "Failed to submit an experiment");
                 }
+            }
+        }
+        private void canShowProperties(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count == 1;
+        }
+        private void showProperties(object target, ExecutedRoutedEventArgs e)
+        {
+            int id = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray()[0];
+            ExperimentProperties dlg = new ExperimentProperties();
+            var vm = new ExperimentPropertiesViewModel(experimentsVm, id);
+            dlg.DataContext = vm;
+            dlg.Owner = this;
+            dlg.Show();
+        }
+        private void canRestartCommand(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count > 0;
+        }
+        private async void Restart(object target, ExecutedRoutedEventArgs e)
+        {
+            try
+            {
+                var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
+                double total = ids.Length;
+                for (var i = 0; i < total; i++)
+                {
+                    ExperimentStatusViewModel exp = experimentsVm.Items.Where(st => st.ID == ids[i]).ToArray()[0];
+                    var vm = new NewExperimentViewModel(managerVm, UIService.Instance);
+
+                    ExperimentDefinition oldDef = managerVm.GetDefinition(ids[i]).Result;
+                    ExperimentDefinition def =
+                    ExperimentDefinition.Create(
+                        managerVm.GetStorageDirectory + "\\" + oldDef.Executable, managerVm.GetStorageDirectory + "\\" + oldDef.BenchmarkContainer, oldDef.BenchmarkFileExtension, oldDef.Parameters,
+                        oldDef.ExperimentTimeout, oldDef.Category, oldDef.MemoryLimit);
+                    experimentsVm.DeleteExperiment(ids[i]);
+                    await managerVm.SubmitExperiment(def, exp.Creator, exp.Note);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, "Exception: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        private void canCreateGroup(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count >= 1;
+        }
+        private void CreateGroup(object target, ExecutedRoutedEventArgs e)
+        {
+            bool first = true;
+            string category = "";
+            var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().ToArray();
+            for (var i = 0; i < ids.Length; i++)
+            {
+                if (first)
+                {
+                    category = ids[i].Category;
+                    first = false;
+                }
+                else if (ids[i].Category != category)
+                {
+                    MessageBox.Show(this, "Jobs in a group need to have the same category.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+            }
+
+            CreateGroupDialog dlg = new CreateGroupDialog();
+            dlg.Owner = this;
+            if (dlg.ShowDialog() == true)
+            {
+                string name = dlg.txtGroupName.Text;
+                string note = dlg.txtNote.Text;
+                //for (var i = 0; i < ids.Length; i++)
+                //{
+                //    ExperimentDefinition def = managerVm.GetDefinition(ids[i].ID).Result;
+                //    //change groupName
+                //    //change note
+                //}
+                //not implemented
+
             }
         }
     }
