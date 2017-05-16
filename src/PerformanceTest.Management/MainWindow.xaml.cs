@@ -78,14 +78,12 @@ namespace PerformanceTest.Management
             }
 
         }
+
         private void btnUpdate_Click(object sender, RoutedEventArgs e)
         {
-            ExperimentManager manager = LocalExperimentManager.OpenExperiments(connectionString.Text);
-
-            experimentsVm = new ExperimentListViewModel(manager, UIService.Instance);
-            dataGrid.DataContext = experimentsVm;
-            experimentsVm.FilterExperiments(txtFilter.Text);
+            experimentsVm.Refresh();
         }
+
         private void OptShowProgress_Checked(object sender, RoutedEventArgs e)
         {
             int c = dataGrid.Columns.Count();

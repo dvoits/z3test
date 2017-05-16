@@ -35,6 +35,11 @@ namespace PerformanceTest.Management
             private set { experiments = value; NotifyPropertyChanged(); }
         }
 
+        public void Refresh()
+        {
+            RefreshItemsAsync();
+        }
+
         public void DeleteExperiment(int id)
         {
             var items = Items.Where(st => st.ID != id).ToArray();

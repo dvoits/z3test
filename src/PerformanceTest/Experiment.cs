@@ -90,7 +90,7 @@ namespace PerformanceTest
     /// </summary>
     public class ExperimentStatus
     {
-        public ExperimentStatus(ExperimentID id, string category, DateTime submitted, string creator, string note, bool flag)
+        public ExperimentStatus(ExperimentID id, string category, DateTime submitted, string creator, string note, bool flag, int done, int total)
         {
             ID = id;
             Category = category;
@@ -98,6 +98,8 @@ namespace PerformanceTest
             SubmissionTime = submitted;
             Note = note;
             Flag = flag;
+            BenchmarksDone = done;
+            BenchmarksTotal = total;
         }
 
         public ExperimentID ID { get; private set; }
@@ -115,7 +117,7 @@ namespace PerformanceTest
 
         public int BenchmarksDone { get; private set; }
         public int BenchmarksTotal { get; private set; }
-        public int BenchmarksQueued { get { return this.BenchmarksTotal - this.BenchmarksDone; } }
+        public int BenchmarksQueued { get { return BenchmarksTotal - BenchmarksDone; } }
     }
 
 

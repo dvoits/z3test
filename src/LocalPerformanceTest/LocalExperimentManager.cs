@@ -86,15 +86,15 @@ namespace PerformanceTest
                     {
                         int left = Interlocked.Decrement(ref benchmarksLeft);
                         Trace.WriteLine(String.Format("Benchmark {0} completed, {1} left", index, left));
-                        if (benchmark.IsCompleted)
+                        if (benchmark.IsCompleted && !benchmark.IsFaulted)
                         {
                             benchmarks[index] = benchmark.Result;
                             if (left == 0)
                             {
                                 storage.AddResults(id, benchmarks);
-                            }
-                            ExperimentInstance val;
-                            runningExperiments.TryRemove(id, out val);
+                                ExperimentInstance val;
+                                runningExperiments.TryRemove(id, out val);
+                            }                            
                             return benchmark.Result;
                         }
                         else throw benchmark.Exception;
@@ -132,7 +132,19 @@ namespace PerformanceTest
             foreach (var id in ids)
             {
                 ExperimentsTableRow expRow = experiments[id];
-                var st = new ExperimentStatus(id, expRow.Category, expRow.Submitted, expRow.Creator, expRow.Note, expRow.Flag);
+                int done, total;
+                ExperimentInstance experiment;
+                if (runningExperiments.TryGetValue(id, out experiment))
+                {
+                    total = experiment.Results.Length;
+                    done = experiment.Results.Count(t => t.IsCompleted);
+                }else
+                {
+                    var results = storage.GetResults(id);
+                    done = total = results.Length;                    
+                }
+
+                var st = new ExperimentStatus(id, expRow.Category, expRow.Submitted, expRow.Creator, expRow.Note, expRow.Flag, done, total);
                 status.Add(st);
             }
             return status;
@@ -196,10 +208,11 @@ namespace PerformanceTest
                                     (filter.Value.ParametersEquals == null || e.Parameters == null || e.Parameters == filter.Value.ParametersEquals) &&
                                     (filter.Value.NotesEquals == null || e.Note == null || e.Note.Contains(filter.Value.NotesEquals)) &&
                                     (filter.Value.CreatorEquals == null || e.Creator == null || e.Creator.Contains(filter.Value.CreatorEquals));
-                    });
+                    })
+                    .OrderByDescending(q => q.Value.Submitted);
             }
 
-            return Task.FromResult(experiments.Select(e => e.Key));
+            return Task.FromResult(experiments.OrderByDescending(q => q.Value.Submitted).Select(e => e.Key));
         }
 
         public override Task<IEnumerable<int>> FilterExperiments(ExperimentFilter? filter = default(ExperimentFilter?))
