@@ -13,7 +13,7 @@ using ExperimentID = System.Int32;
 
 namespace PerformanceTest
 {
-    public class LocalExperimentManager : ExperimentManager
+    public sealed class LocalExperimentManager : ExperimentManager
     {
         public static LocalExperimentManager NewExperiments(string experimentsFolder, ReferenceExperiment reference)
         {
@@ -43,6 +43,7 @@ namespace PerformanceTest
                 def.Category, def.MemoryLimit);
         }
 
+        private readonly ReferenceExperiment reference;
 
         private readonly ConcurrentDictionary<ExperimentID, ExperimentInstance> runningExperiments;
         private readonly LocalExperimentRunner runner;
@@ -50,10 +51,13 @@ namespace PerformanceTest
         private readonly AsyncLazy<double> asyncNormal;
         private int lastId = 0;
 
-        private LocalExperimentManager(FileStorage storage) : base(storage.GetReferenceExperiment())
+        private LocalExperimentManager(FileStorage storage) 
         {
             if (storage == null) throw new ArgumentNullException("storage");
             this.storage = storage;
+            if (reference == null) throw new ArgumentNullException("reference");
+            this.reference = storage.GetReferenceExperiment();
+
             runningExperiments = new ConcurrentDictionary<ExperimentID, ExperimentInstance>();
             runner = new LocalExperimentRunner(storage.Location);
             lastId = storage.MaxExperimentId;
@@ -117,7 +121,7 @@ namespace PerformanceTest
             {
                 return Task.FromResult(experiment.Definition);
             }
-            ExperimentsTableRow row;
+            ExperimentEntity row;
             if (storage.GetExperiments().TryGetValue(id, out row))
             {
                 return Task.FromResult(RowToDefinition(row));
@@ -131,7 +135,7 @@ namespace PerformanceTest
             var experiments = storage.GetExperiments();
             foreach (var id in ids)
             {
-                ExperimentsTableRow expRow = experiments[id];
+                ExperimentEntity expRow = experiments[id];
                 int done, total;
                 ExperimentInstance experiment;
                 if (runningExperiments.TryGetValue(id, out experiment))
@@ -192,7 +196,7 @@ namespace PerformanceTest
 
         public override Task<IEnumerable<int>> FindExperiments(ExperimentFilter? filter = default(ExperimentFilter?))
         {
-            IEnumerable<KeyValuePair<int, ExperimentsTableRow>> experiments = storage.GetExperiments().ToArray();
+            IEnumerable<KeyValuePair<int, ExperimentEntity>> experiments = storage.GetExperiments().ToArray();
 
             if (filter.HasValue)
             {
@@ -215,28 +219,6 @@ namespace PerformanceTest
             return Task.FromResult(experiments.OrderByDescending(q => q.Value.Submitted).Select(e => e.Key));
         }
 
-        public override Task<IEnumerable<int>> FilterExperiments(ExperimentFilter? filter = default(ExperimentFilter?))
-        {
-            IEnumerable<KeyValuePair<int, ExperimentsTableRow>> experiments = storage.GetExperiments().ToArray();
-
-            if (filter.HasValue)
-            {
-                experiments =
-                    experiments
-                    .Where(q =>
-                    {
-                        var id = q.Key;
-                        var e = q.Value;
-                        return (filter.Value.CategoryEquals == null || e.Category != null && e.Category.Contains(filter.Value.CategoryEquals)) ||
-                               (filter.Value.NotesEquals == null || e.Note != null && e.Note.Contains(filter.Value.NotesEquals)) ||
-                               (filter.Value.CreatorEquals == null || e.Creator != null && e.Creator.Contains(filter.Value.CreatorEquals));
-                    });
-            }
-
-            return Task.FromResult(experiments.Select(e => e.Key));
-        }
-
-
         private async Task<double> ComputeNormal()
         {
             var benchmarks = await Task.WhenAll(runner.Enqueue(-1, reference.Definition, 1.0, reference.Repetitions));
@@ -246,7 +228,7 @@ namespace PerformanceTest
             return n;
         }
 
-        private static ExperimentDefinition RowToDefinition(ExperimentsTableRow row)
+        private static ExperimentDefinition RowToDefinition(ExperimentEntity row)
         {
             return ExperimentDefinition.Create(
                 row.Executable, row.BenchmarkContainer,

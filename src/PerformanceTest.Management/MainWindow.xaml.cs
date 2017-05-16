@@ -36,18 +36,27 @@ namespace PerformanceTest.Management
             connectionString.Text = Properties.Settings.Default.ConnectionString;
         }
 
+        private ExperimentManagerViewModel Connect(string connectionString)
+        {
+            if (Directory.Exists(connectionString))
+            {
+                LocalExperimentManager manager = LocalExperimentManager.OpenExperiments(connectionString);
+                return new LocalExperimentManagerViewModel(manager, UIService.Instance);
+            }else
+            {
+                AzureExperimentManager azureManager = AzureExperimentManager.Connect(connectionString);
+                return new AzureExperimentManagerViewModel(azureManager, UIService.Instance);
+            }
+        }
+
         private void btnConnect_Click(object sender, RoutedEventArgs e)
         {
             try
             {
                 if (experimentsVm == null)
                 {
-                    LocalExperimentManager manager = LocalExperimentManager.OpenExperiments(connectionString.Text);
-
-
-                    managerVm = new LocalExperimentManagerViewModel(manager);
-                    experimentsVm = new ExperimentListViewModel(manager, UIService.Instance);
-
+                    managerVm = Connect(connectionString.Text);
+                    experimentsVm = managerVm.BuildListView();
 
                     dataGrid.DataContext = experimentsVm;
                     Properties.Settings.Default.ConnectionString = connectionString.Text;
@@ -338,7 +347,7 @@ namespace PerformanceTest.Management
         private void filter_KeyUp(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
-                experimentsVm.FilterExperiments(txtFilter.Text);
+                experimentsVm.FindExperiments(txtFilter.Text);
         }
         private void MenuItemExit_Click(object sender, RoutedEventArgs e)
         {

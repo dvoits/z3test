@@ -59,6 +59,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ViewModels\AzureExperimentManagerViewModel.cs" />
     <Compile Include="ViewModels\ExperimentPropertiesViewModel.cs" />
     <Compile Include="Views\CreateGroupDialog.xaml.cs">
       <DependentUpon>CreateGroupDialog.xaml</DependentUpon>
@@ -150,6 +151,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\AzurePerformanceTest\AzurePerformanceTest.csproj">
+      <Project>{4bd09a14-a7bc-4a5c-8eb2-46e46ae9e509}</Project>
+      <Name>AzurePerformanceTest</Name>
+    </ProjectReference>
     <ProjectReference Include="..\LocalPerformanceTest\LocalPerformanceTest.csproj">
       <Project>{879e906f-d5a6-4332-97a7-6952f3c00abc}</Project>
       <Name>LocalPerformanceTest</Name>

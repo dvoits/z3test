@@ -11,12 +11,8 @@ namespace PerformanceTest
 
     public abstract class ExperimentManager
     {
-        protected readonly ReferenceExperiment reference;
-
-        protected ExperimentManager(ReferenceExperiment reference)
+        protected ExperimentManager()
         {
-            if (reference == null) throw new ArgumentNullException("reference");
-            this.reference = reference;
         }
 
         /// <summary>
@@ -48,8 +44,8 @@ namespace PerformanceTest
         public abstract Task UpdatePriority(ExperimentID id, string priority);
         public abstract Task UpdateStatusFlag(ExperimentID id, bool flag);
         public abstract Task UpdateNote(ExperimentID id, string note);
+
         public abstract Task<IEnumerable<ExperimentID>> FindExperiments(ExperimentFilter? filter = null);
-        public abstract Task<IEnumerable<ExperimentID>> FilterExperiments(ExperimentFilter? filter = null);
 
         public struct ExperimentFilter
         {

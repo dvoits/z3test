@@ -10,11 +10,14 @@ namespace PerformanceTest.Management
     public abstract class ExperimentManagerViewModel
     {
         protected readonly ExperimentManager manager;
+        protected readonly UIService uiService;
 
-        public ExperimentManagerViewModel(ExperimentManager manager)
+        public ExperimentManagerViewModel(ExperimentManager manager, UIService uiService)
         {
             if (manager == null) throw new ArgumentNullException("manager");
             this.manager = manager;
+            if (uiService == null) throw new ArgumentNullException("uiService");
+            this.uiService = uiService;
         }
 
         public virtual string BenchmarkLibraryDescription
@@ -33,11 +36,16 @@ namespace PerformanceTest.Management
         public abstract string HandleMultileTargetFiles(string[] files, string mainFile);
 
         public abstract Task<ExperimentDefinition> GetDefinition(int id);
+
+        public ExperimentListViewModel BuildListView()
+        {
+            return new ExperimentListViewModel(manager, uiService);
+        }
     }
 
     public class LocalExperimentManagerViewModel : ExperimentManagerViewModel
     {
-        public LocalExperimentManagerViewModel(LocalExperimentManager manager) : base(manager)
+        public LocalExperimentManagerViewModel(LocalExperimentManager manager, UIService uiService) : base(manager, uiService)
         {
         }
 

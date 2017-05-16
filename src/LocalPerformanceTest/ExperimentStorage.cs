@@ -29,7 +29,7 @@ namespace PerformanceTest
         private readonly DirectoryInfo dir;
         private readonly DirectoryInfo dirBenchmarks;
 
-        private Table<ExperimentsTableRow> experimentsTable;
+        private Table<ExperimentEntity> experimentsTable;
 
 
         private FileStorage(string storageName)
@@ -53,11 +53,11 @@ namespace PerformanceTest
                                 }
                                 return FSharpOption<Type>.None;
                             }))))
-                        .ToRows<ExperimentsTableRow>());
+                        .ToRows<ExperimentEntity>());
             }
             else
             {
-                experimentsTable = Table.OfRows<ExperimentsTableRow>(new ExperimentsTableRow[0]);
+                experimentsTable = Table.OfRows<ExperimentEntity>(new ExperimentEntity[0]);
             }
         }
 
@@ -78,15 +78,15 @@ namespace PerformanceTest
 
         public void Clear()
         {
-            experimentsTable = Table.OfRows<ExperimentsTableRow>(new ExperimentsTableRow[0]);
+            experimentsTable = Table.OfRows<ExperimentEntity>(new ExperimentEntity[0]);
             dir.Delete(true);
             dir.Create();
             dirBenchmarks.Create();
         }
 
-        public Dictionary<int, ExperimentsTableRow> GetExperiments()
+        public Dictionary<int, ExperimentEntity> GetExperiments()
         {
-            var dict = new Dictionary<int, ExperimentsTableRow>();
+            var dict = new Dictionary<int, ExperimentEntity>();
             foreach (var row in experimentsTable.Rows)
             { 
                 dict[row.ID] = row;
@@ -123,7 +123,7 @@ namespace PerformanceTest
                     }
                     return FSharpOption<Type>.None;
                 }))))
-                .ToRows<BenchmarkTableRow>();
+                .ToRows<BenchmarkResultEntity>();
             return bt.Select(row =>
                 new BenchmarkResult(experimentId, row.BenchmarkFileName, row.WorkerInformation, row.NormalizedRuntime, row.AcquireTime,
                     new ProcessRunMeasure(TimeSpan.FromSeconds(row.TotalProcessorTime), TimeSpan.FromSeconds(row.WallClockTime), row.PeakMemorySize << 20,
@@ -133,7 +133,7 @@ namespace PerformanceTest
 
         public void AddExperiment(int id, ExperimentDefinition experiment, DateTime submitted, string creator, string note)
         {
-            experimentsTable = experimentsTable.AddRow(new ExperimentsTableRow
+            experimentsTable = experimentsTable.AddRow(new ExperimentEntity
             {
                 ID = id,
                 Submitted = submitted,
@@ -157,12 +157,12 @@ namespace PerformanceTest
             SaveBenchmarks(IdToTableName(id), benchmarks);
         }
 
-        public void RemoveExperimentRow(ExperimentsTableRow deleteRow)
+        public void RemoveExperimentRow(ExperimentEntity deleteRow)
         {
             experimentsTable = Table.OfRows(experimentsTable.Rows.Where(r => r.ID != deleteRow.ID));
             SaveTable(experimentsTable, Path.Combine(dir.FullName, "experiments.csv"), new WriteSettings(Delimiter.Comma, true, true));
         }
-        public void ReplaceExperimentRow(ExperimentsTableRow newRow)
+        public void ReplaceExperimentRow(ExperimentEntity newRow)
         {
             experimentsTable = Table.OfRows(experimentsTable.Rows.Select(r =>
             {
@@ -230,49 +230,5 @@ namespace PerformanceTest
                 return prop;
             }
         }
-    }
-
-    public class ExperimentsTableRow
-    {
-        public int ID { get; set; }
-        public DateTime Submitted { get; set; }
-        public string Executable { get; set; }
-        public string Parameters { get; set; }
-        public string BenchmarkContainer { get; set; }
-        public string Category { get; set; }
-        public string BenchmarkFileExtension { get; set; }
-        /// <summary>
-        /// MegaBytes.
-        /// </summary>
-        public int MemoryLimit { get; set; }
-        /// <summary>
-        /// Seconds.
-        /// </summary>
-        public double BenchmarkTimeout { get; set; }
-        /// <summary>
-        /// Seconds.
-        /// </summary>
-        public double ExperimentTimeout { get; set; }
-        public string Note { get; set; }
-        public string Creator { get; set; }
-        public bool Flag { get; set; }
-        public string GroupName { get; set; }
-    }
-
-    public class BenchmarkTableRow
-    {
-        public string BenchmarkFileName { get; set; }
-        public DateTime AcquireTime { get; set; }
-        public double NormalizedRuntime { get; set; }
-        public double TotalProcessorTime { get; set; }
-        public double WallClockTime { get; set; }
-        public int PeakMemorySize { get; set; }
-        public string Status { get; set; }
-        public int ExitCode { get; set; }
-
-        public string StdOut { get; set; }
-        public string StdErr { get; set; }
-        public string WorkerInformation { get; set; }
-
     }
 }

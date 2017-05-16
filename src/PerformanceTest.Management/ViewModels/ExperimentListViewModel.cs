@@ -51,30 +51,12 @@ namespace PerformanceTest.Management
         {
             manager.UpdatePriority(id, priority);
         }
+
         public double GetRuntime(int id)
         {
             return manager.GetResults(id).Sum(res => res.IsCompleted ? res.Result.NormalizedRuntime : 0);
         }
-        public async void FilterExperiments(string filter)
-        {
-            if (filter != "")
-            {
-                ExperimentManager.ExperimentFilter filt = new ExperimentManager.ExperimentFilter
-                {
-                    NotesEquals = filter,
-                    CategoryEquals = filter,
-                    CreatorEquals = filter
-                };
-                var ids = await manager.FilterExperiments(filt);
 
-                var status = await manager.GetStatus(ids);
-                Items = status.Select(st => new ExperimentStatusViewModel(st, manager, message)).ToArray();
-            }
-            else
-            {
-                RefreshItemsAsync();
-            }
-        }
         public async void FindExperiments(string filter)
         {
             if (filter != "")
