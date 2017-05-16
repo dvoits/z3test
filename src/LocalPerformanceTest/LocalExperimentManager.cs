@@ -61,7 +61,7 @@ namespace PerformanceTest
             asyncNormal = new AsyncLazy<double>(this.ComputeNormal);
         }
 
-        public override string Directory
+        public string Directory
         {
             get { return storage.Location; }
         }

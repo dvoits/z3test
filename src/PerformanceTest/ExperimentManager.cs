@@ -19,9 +19,6 @@ namespace PerformanceTest
             this.reference = reference;
         }
 
-        public abstract string Directory {
-            get;
-        }
         /// <summary>
         /// Schedules execution of a new experiment from the given experiment definition.
         /// </summary>
@@ -53,6 +50,7 @@ namespace PerformanceTest
         public abstract Task UpdateNote(ExperimentID id, string note);
         public abstract Task<IEnumerable<ExperimentID>> FindExperiments(ExperimentFilter? filter = null);
         public abstract Task<IEnumerable<ExperimentID>> FilterExperiments(ExperimentFilter? filter = null);
+
         public struct ExperimentFilter
         {
             public string BenchmarkContainerEquals { get; set; }
