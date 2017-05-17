@@ -151,8 +151,12 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\AzurePerformanceTest\AzurePerformanceTest.csproj">
-      <Project>{4bd09a14-a7bc-4a5c-8eb2-46e46ae9e509}</Project>
+    <ProjectReference Include="..\AzurePerformanceTest\AzurePerformanceTestCommons\AzurePerformanceTestCommons.csproj">
+      <Project>{212C3662-8342-43D1-AC51-36AB067B13D7}</Project>
+      <Name>AzurePerformanceTestCommons</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\AzurePerformanceTest\AzurePerformanceTest\AzurePerformanceTest.csproj">
+      <Project>{f7988676-db1b-49e3-8821-edb017290120}</Project>
       <Name>AzurePerformanceTest</Name>
     </ProjectReference>
     <ProjectReference Include="..\LocalPerformanceTest\LocalPerformanceTest.csproj">

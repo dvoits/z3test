@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("AzurePerformanceTest")]
+[assembly: AssemblyTitle("AzureBatchJobStarter")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("AzurePerformanceTest")]
+[assembly: AssemblyProduct("AzureBatchJobStarter")]
 [assembly: AssemblyCopyright("Copyright ©  2017")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("4bd09a14-a7bc-4a5c-8eb2-46e46ae9e509")]
+[assembly: Guid("6d41bc32-fa82-4b8e-aa9b-df906036c2c0")]
 
 // Version information for an assembly consists of the following four values:
 //

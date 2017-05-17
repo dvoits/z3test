@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AzurePerformanceTest;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -44,7 +45,7 @@ namespace PerformanceTest.Management
                 return new LocalExperimentManagerViewModel(manager, UIService.Instance);
             }else
             {
-                AzureExperimentManager azureManager = AzureExperimentManager.Connect(connectionString);
+                AzureExperimentManager azureManager = AzureExperimentManager.Open(new AzureExperimentStorage(connectionString));
                 return new AzureExperimentManagerViewModel(azureManager, UIService.Instance);
             }
         }

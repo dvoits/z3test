@@ -11,10 +11,6 @@ namespace PerformanceTest
 
     public abstract class ExperimentManager
     {
-        protected ExperimentManager()
-        {
-        }
-
         /// <summary>
         /// Schedules execution of a new experiment from the given experiment definition.
         /// </summary>
