@@ -54,7 +54,10 @@ namespace PerformanceTest.Management
 
         public double GetRuntime(int id)
         {
-            return manager.GetResults(id).Sum(res => res.IsCompleted ? res.Result.NormalizedRuntime : 0);
+            var res = manager.GetResults(id);
+            if (!res.IsCompleted)
+                return 0;
+            return res.Result.Sum(r =>  r.NormalizedRuntime);
         }
 
         public async void FindExperiments(string filter)

@@ -32,8 +32,8 @@ namespace PerformanceTest
         /// Allows to get a result of each of the experiment's benchmarks.
         /// </summary>
         /// <param name="id"></param>
-        /// <returns></returns>
-        public abstract Task<BenchmarkResult>[] GetResults(ExperimentID id);
+        /// <returns>List of results of currently completed benchmarks</returns>
+        public abstract Task<BenchmarkResult[]> GetResults(ExperimentID id);
 
         public abstract Task DeleteExperiment(ExperimentID id);
 

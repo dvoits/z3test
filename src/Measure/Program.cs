@@ -88,27 +88,31 @@ namespace Measure
             Dictionary<string, BenchmarkResult> lastBenchmarks = new Dictionary<string, BenchmarkResult>();
             if (history.Length != 0)
             {
-                var lastResults = await Task.WhenAll(manager.GetResults(history.Max()));
+                var lastResults = await manager.GetResults(history.Max());
                 foreach (var b in lastResults)
                 {
                     lastBenchmarks[b.BenchmarkFileName] = b;
                 }
             }
 
-            var print = results.Select(task => task.ContinueWith(benchmark =>
+            var print = results.ContinueWith(task =>
                 {
-                    if (benchmark.IsFaulted)
+                    if (task.IsFaulted)
                     {
-                        PrintError(String.Format("Failed to complete the benchmark {0}", benchmark.Exception.Message));
+                        PrintError(String.Format("Failed to complete benchmarks {0}", task.Exception.Message));
                         return;
                     }
-                    BenchmarkResult lastBenchmark = null;
-                    lastBenchmarks.TryGetValue(benchmark.Result.BenchmarkFileName, out lastBenchmark);
-                    if (lastBenchmark != null && lastBenchmark.Measurements.Status != Measurement.Measure.CompletionStatus.Success)
-                        lastBenchmark = null;
-                    PrintBenchmark(benchmark.Result, lastBenchmark);
-                })).ToArray();
-            await Task.WhenAll(print);
+                    BenchmarkResult[] benchmarks = task.Result;
+                    foreach (var benchmark in benchmarks)
+                    {
+                        BenchmarkResult lastBenchmark = null;
+                        lastBenchmarks.TryGetValue(benchmark.BenchmarkFileName, out lastBenchmark);
+                        if (lastBenchmark != null && lastBenchmark.Measurements.Status != Measurement.Measure.CompletionStatus.Success)
+                            lastBenchmark = null;
+                        PrintBenchmark(benchmark, lastBenchmark);
+                    }
+                });
+            await print;
         }
 
 
