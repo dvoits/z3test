@@ -86,10 +86,35 @@ namespace AzurePerformanceTest
             }
         }
 
-        public async Task<Dictionary<ExperimentID, ExperimentEntity>> GetExperiments()
+        public async Task<Dictionary<ExperimentID, ExperimentEntity>> GetExperiments(ExperimentManager.ExperimentFilter? filter = default(ExperimentManager.ExperimentFilter?))
         {
             var dict = new Dictionary<ExperimentID, ExperimentEntity>();
             TableQuery<ExperimentEntity> query = new TableQuery<ExperimentEntity>();
+            if (filter.HasValue)
+            {
+                List<string> experimentFilters = new List<string>();
+                if (filter.Value.BenchmarkContainerEquals != null)
+                    experimentFilters.Add(TableQuery.GenerateFilterCondition("BenchmarkContainer", QueryComparisons.Equal, filter.Value.BenchmarkContainerEquals));
+                if (filter.Value.CategoryEquals != null)
+                    experimentFilters.Add(TableQuery.GenerateFilterCondition("Category", QueryComparisons.Equal, filter.Value.CategoryEquals));
+                if (filter.Value.ExecutableEquals != null)
+                    experimentFilters.Add(TableQuery.GenerateFilterCondition("Executable", QueryComparisons.Equal, filter.Value.ExecutableEquals));
+                if (filter.Value.ParametersEquals != null)
+                    experimentFilters.Add(TableQuery.GenerateFilterCondition("Parameters", QueryComparisons.Equal, filter.Value.ParametersEquals));
+                if (filter.Value.NotesEquals != null)
+                    experimentFilters.Add(TableQuery.GenerateFilterCondition("Note", QueryComparisons.Equal, filter.Value.NotesEquals));
+                if (filter.Value.CreatorEquals != null)
+                    experimentFilters.Add(TableQuery.GenerateFilterCondition("Creator", QueryComparisons.Equal, filter.Value.CreatorEquals));
+
+                if (experimentFilters.Count > 0)
+                {
+                    string finalFilter = experimentFilters[0];
+                    for (int i = 1; i < experimentFilters.Count; ++i)
+                        finalFilter = TableQuery.CombineFilters(finalFilter, TableOperators.And, experimentFilters[i]);
+
+                    query = query.Where(finalFilter);
+                }
+            }
             TableContinuationToken continuationToken = null;
 
             do
