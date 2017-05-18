@@ -363,7 +363,7 @@ namespace AzurePerformanceTest
     {
         public static string ExperimentIDToString(ExperimentID id)
         {
-            return id.ToString().PadLeft(6, '0');
+            return id.ToString();//.PadLeft(6, '0');
         }
         public static string PartitionKeyDefault = "default";
 
