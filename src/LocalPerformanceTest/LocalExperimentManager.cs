@@ -183,14 +183,15 @@ namespace PerformanceTest
             storage.ReplaceExperimentRow(newRow);
             return Task.FromResult(0);
         }
-        public override Task<BenchmarkResult>[] GetResults(int id)
+        public override async Task<BenchmarkResult[]> GetResults(int id)
         {
             ExperimentInstance experiment;
             if (runningExperiments.TryGetValue(id, out experiment))
             {
-                return experiment.Results;
+                //return experiment.Results;
+                return await Task.WhenAll(experiment.Results);
             }
-            return storage.GetResults(id).Select(r => Task.FromResult(r)).ToArray();
+            return storage.GetResults(id).ToArray();
         }
 
 

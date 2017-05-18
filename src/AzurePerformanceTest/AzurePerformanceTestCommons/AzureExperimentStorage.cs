@@ -156,7 +156,7 @@ namespace AzurePerformanceTest
             {
                 idChanged = false;
 
-                var list = experimentsTable.ExecuteQuery(idEntityQuery).ToList();
+                var list = (await experimentsTable.ExecuteQuerySegmentedAsync(idEntityQuery, null)).ToList();
 
                 NextExperimentIDEntity nextId = null;
                 
@@ -168,7 +168,7 @@ namespace AzurePerformanceTest
 
                     try
                     {
-                        experimentsTable.Execute(TableOperation.Insert(nextId));
+                        await experimentsTable.ExecuteAsync(TableOperation.Insert(nextId));
                     }
                     catch (StorageException ex)
                     {
@@ -191,7 +191,7 @@ namespace AzurePerformanceTest
 
                     try
                     {
-                        TableResult tblr = experimentsTable.Execute(TableOperation.InsertOrReplace(nextId), null, new OperationContext { UserHeaders = new Dictionary<String, String> { { "If-Match", nextId.ETag } } });
+                        TableResult tblr = await experimentsTable.ExecuteAsync(TableOperation.InsertOrReplace(nextId), null, new OperationContext { UserHeaders = new Dictionary<String, String> { { "If-Match", nextId.ETag } } });
                     }
                     catch (StorageException ex)
                     {
@@ -225,6 +225,18 @@ namespace AzurePerformanceTest
             TableOperation insertOperation = TableOperation.Insert(row);
             await experimentsTable.ExecuteAsync(insertOperation);
             return id;
+        }
+
+        public async Task<ExperimentEntity> GetExperiment(ExperimentID id)
+        {
+            TableQuery<ExperimentEntity> query = new TableQuery<ExperimentEntity>().Where(TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, ExperimentEntity.ExperimentIDToString(id)));
+
+            var list = (await experimentsTable.ExecuteQuerySegmentedAsync(query, null)).ToList();
+
+            if (list.Count == 0)
+                throw new ArgumentException("Experiment with given ID not found");
+
+            return list[0];
         }
     }
 

@@ -36,6 +36,7 @@ namespace AzurePerformanceTest
 
         public override async Task<IEnumerable<ExperimentID>> FindExperiments(ExperimentFilter? filter = default(ExperimentFilter?))
         {
+            //TODO: replace with something more effective
             IEnumerable<KeyValuePair<int, ExperimentEntity>> experiments = await storage.GetExperiments();
 
             if (filter.HasValue)
@@ -59,14 +60,23 @@ namespace AzurePerformanceTest
             return experiments.OrderByDescending(q => q.Value.Submitted).Select(e => e.Key);
         }
 
-        public override Task<ExperimentDefinition> GetDefinition(ExperimentID id)
+        public override async Task<ExperimentDefinition> GetDefinition(ExperimentID id)
         {
-            throw new NotImplementedException();
+            var experimentEntity = await storage.GetExperiment(id);
+            return ExperimentDefinition.Create(
+                experimentEntity.Executable,
+                experimentEntity.BenchmarkContainer,
+                experimentEntity.BenchmarkFileExtension,
+                experimentEntity.Parameters,
+                TimeSpan.FromSeconds(experimentEntity.BenchmarkTimeout),
+                experimentEntity.Category,
+                experimentEntity.MemoryLimit << 20
+                );
         }
 
-        public override Task<BenchmarkResult>[] GetResults(ExperimentID id)
+        public override async Task<BenchmarkResult[]> GetResults(ExperimentID id)
         {
-            throw new NotImplementedException();
+            return await storage.GetResults(id);
         }
 
         public override Task<IEnumerable<ExperimentStatus>> GetStatus(IEnumerable<ExperimentID> ids)
