@@ -84,9 +84,11 @@ namespace AzurePerformanceTest
             throw new NotImplementedException();
         }
 
-        public override Task<ExperimentID> StartExperiment(ExperimentDefinition definition, string creator = null, string note = null)
+        public override async Task<ExperimentID> StartExperiment(ExperimentDefinition definition, string creator = null, string note = null)
         {
-            throw new NotImplementedException();
+            var id = await storage.AddExperiment(definition, DateTime.Now, creator, note);
+            //TODO: schedule execution
+            return id;
         }
 
         public override Task UpdateNote(int id, string note)
