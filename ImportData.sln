@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImportTimeline", "src\ImportTimeline\ImportTimeline.csproj", "{F27CBF6A-C227-4CBB-AE02-8C5A6D65FBBC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzurePerformanceTestCommons", "src\AzurePerformanceTest\AzurePerformanceTestCommons\AzurePerformanceTestCommons.csproj", "{212C3662-8342-43D1-AC51-36AB067B13D7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F27CBF6A-C227-4CBB-AE02-8C5A6D65FBBC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F27CBF6A-C227-4CBB-AE02-8C5A6D65FBBC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F27CBF6A-C227-4CBB-AE02-8C5A6D65FBBC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F27CBF6A-C227-4CBB-AE02-8C5A6D65FBBC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{212C3662-8342-43D1-AC51-36AB067B13D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{212C3662-8342-43D1-AC51-36AB067B13D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{212C3662-8342-43D1-AC51-36AB067B13D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{212C3662-8342-43D1-AC51-36AB067B13D7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
