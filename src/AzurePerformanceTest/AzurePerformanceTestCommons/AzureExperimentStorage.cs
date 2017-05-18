@@ -128,6 +128,53 @@ namespace AzurePerformanceTest
                 ).ToArray();
         }
 
+        public async Task PutResult(BenchmarkResult result)
+        {
+            var entity = await PrepareResult(result);
+
+            TableOperation insertOperation = TableOperation.Insert(entity);
+
+            await resultsTable.ExecuteAsync(insertOperation);
+
+        }
+
+        public async Task BatchPutResults(BenchmarkResult[] results)
+        {
+            var entities = await Task.WhenAll(results.Select(r => PrepareResult(r)));
+
+            TableBatchOperation batch = new TableBatchOperation();
+            foreach (var e in entities)
+                batch.Insert(e);
+
+            await resultsTable.ExecuteBatchAsync(batch);
+
+        }
+
+        private async Task<BenchmarkEntity> PrepareResult(BenchmarkResult result)
+        {
+            string stdoutBlobId = "E" + result.ExperimentID.ToString() + "F" + result.BenchmarkFileName + "-stdout";
+            string stderrBlobId = "E" + result.ExperimentID.ToString() + "F" + result.BenchmarkFileName + "-stderr";
+
+            var stdoutBlob = outputContainer.GetBlockBlobReference(stdoutBlobId);
+            var stderrBlob = outputContainer.GetBlockBlobReference(stderrBlobId);
+            await stdoutBlob.UploadFromStreamAsync(result.Measurements.StdOut);
+            await stderrBlob.UploadFromStreamAsync(result.Measurements.StdErr);
+
+            var entity = new BenchmarkEntity(result.ExperimentID, result.BenchmarkFileName);
+            entity.AcquireTime = result.AcquireTime;
+            entity.ExitCode = result.Measurements.ExitCode;
+            entity.NormalizedRuntime = result.NormalizedRuntime;
+            entity.PeakMemorySize = (int)(result.Measurements.PeakMemorySize >> 20);
+            entity.Status = result.Measurements.Status.ToString();
+            entity.StdErr = stderrBlobId;
+            entity.StdOut = stdoutBlobId;
+            entity.TotalProcessorTime = result.Measurements.TotalProcessorTime.TotalSeconds;
+            entity.WallClockTime = result.Measurements.WallClockTime.TotalSeconds;
+            entity.WorkerInformation = result.WorkerInformation;
+
+            return entity;
+        }
+
         private Measure.CompletionStatus StatusFromString(string status)
         {
             return (Measure.CompletionStatus)Enum.Parse(typeof(Measure.CompletionStatus), status);
@@ -162,22 +209,7 @@ namespace AzurePerformanceTest
                     id = 1;
                     nextId.Id = 2;
 
-                    try
-                    {
-                        await experimentsTable.ExecuteAsync(TableOperation.Insert(nextId));
-                    }
-                    catch (StorageException ex)
-                    {
-                        if (ex.RequestInformation.HttpStatusCode == 409) // The specified entity already exists.
-                        {
-                            //Someone created ID entity before us
-                            idChanged = true;
-                        }
-                        else
-                        {
-                            throw;
-                        }
-                    }
+                    idChanged = !(await TryInsertTableEntity(experimentsTable, nextId));
                 }
                 else
                 {
@@ -185,22 +217,7 @@ namespace AzurePerformanceTest
                     id = nextId.Id;
                     nextId.Id = id + 1;
 
-                    try
-                    {
-                        TableResult tblr = await experimentsTable.ExecuteAsync(TableOperation.InsertOrReplace(nextId), null, new OperationContext { UserHeaders = new Dictionary<String, String> { { "If-Match", nextId.ETag } } });
-                    }
-                    catch (StorageException ex)
-                    {
-                        if (ex.RequestInformation.HttpStatusCode == 412) // The update condition specified in the request was not satisfied.
-                        {
-                            //Someone modified ID entity before us
-                            idChanged = true;
-                        }
-                        else
-                        {
-                            throw;
-                        }
-                    }
+                    idChanged = !(await TryUpdateTableEntity(experimentsTable, nextId));
                 }
             } while (idChanged);
 
@@ -235,7 +252,11 @@ namespace AzurePerformanceTest
 
         public async Task<ExperimentEntity> GetExperiment(ExperimentID id)
         {
-            TableQuery<ExperimentEntity> query = new TableQuery<ExperimentEntity>().Where(TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, ExperimentEntity.ExperimentIDToString(id)));
+            string experimentEntityFilter = TableQuery.CombineFilters(
+                   TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, ExperimentEntity.PartitionKeyDefault),
+                   TableOperators.And,
+                   TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, ExperimentEntity.ExperimentIDToString(id)));
+            TableQuery<ExperimentEntity> query = new TableQuery<ExperimentEntity>().Where(experimentEntityFilter);
 
             var list = (await experimentsTable.ExecuteQuerySegmentedAsync(query, null)).ToList();
 
@@ -247,12 +268,90 @@ namespace AzurePerformanceTest
 
         public async Task UpdateNote(int id, string note)
         {
-            throw new NotImplementedException();
+            string experimentEntityFilter = TableQuery.CombineFilters(
+                   TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, ExperimentEntity.PartitionKeyDefault),
+                   TableOperators.And,
+                   TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, ExperimentEntity.ExperimentIDToString(id)));
+            TableQuery<ExperimentEntity> query = new TableQuery<ExperimentEntity>().Where(experimentEntityFilter);
+
+            bool changed = false;
+            do
+            {
+                var list = (await experimentsTable.ExecuteQuerySegmentedAsync(query, null)).ToList();
+
+                if (list.Count == 0)
+                    throw new ArgumentException("Experiment with given ID not found");
+
+                var experiment = list[0];
+                experiment.Note = note;
+
+                changed = !(await TryUpdateTableEntity(experimentsTable, experiment));
+            } while (changed);
         }
 
         public async Task UpdateStatusFlag(ExperimentID id, bool flag)
         {
-            throw new NotImplementedException();
+            string experimentEntityFilter = TableQuery.CombineFilters(
+                   TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, ExperimentEntity.PartitionKeyDefault),
+                   TableOperators.And,
+                   TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, ExperimentEntity.ExperimentIDToString(id)));
+            TableQuery<ExperimentEntity> query = new TableQuery<ExperimentEntity>().Where(experimentEntityFilter);
+
+            bool changed = false;
+            do
+            {
+                var list = (await experimentsTable.ExecuteQuerySegmentedAsync(query, null)).ToList();
+
+                if (list.Count == 0)
+                    throw new ArgumentException("Experiment with given ID not found");
+
+                var experiment = list[0];
+                experiment.Flag = flag;
+
+                changed = !(await TryUpdateTableEntity(experimentsTable, experiment));
+            } while (changed);
+        }
+
+        private static async Task<bool> TryInsertTableEntity(CloudTable table, ITableEntity entity)
+        {
+            try
+            {
+                await table.ExecuteAsync(TableOperation.Insert(entity));
+            }
+            catch (StorageException ex)
+            {
+                if (ex.RequestInformation.HttpStatusCode == 409) // The specified entity already exists.
+                {
+                    //Someone inserted entity before us
+                    return false;
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            return true;
+        }
+
+        private static async Task<bool> TryUpdateTableEntity(CloudTable table, ITableEntity entity)
+        {
+            try
+            {
+                await table.ExecuteAsync(TableOperation.InsertOrReplace(entity), null, new OperationContext { UserHeaders = new Dictionary<string, string> { { "If-Match", entity.ETag } } });
+            }
+            catch (StorageException ex)
+            {
+                if (ex.RequestInformation.HttpStatusCode == 412) // The update condition specified in the request was not satisfied.
+                {
+                    //Someone modified entity before us
+                    return false;
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            return true;
         }
     }
 
