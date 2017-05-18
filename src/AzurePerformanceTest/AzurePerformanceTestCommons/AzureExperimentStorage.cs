@@ -122,7 +122,7 @@ namespace AzurePerformanceTest
             } while (continuationToken != null);
 
             return resultList.Select(row =>
-                new BenchmarkResult(experimentID, row.RowKey, row.WorkerInformation, row.NormalizedRuntime, row.AcquireTime,
+                new BenchmarkResult(experimentID, row.BenchmarkFileName, row.WorkerInformation, row.NormalizedRuntime, row.AcquireTime,
                     new ProcessRunMeasure(TimeSpan.FromSeconds(row.TotalProcessorTime), TimeSpan.FromSeconds(row.WallClockTime), row.PeakMemorySize << 20,
                         StatusFromString(row.Status), row.ExitCode, new LazyBlobStream(outputContainer.GetBlobReference(row.StdOut)), new LazyBlobStream(outputContainer.GetBlobReference(row.StdErr))))
                 ).ToArray();
@@ -244,6 +244,16 @@ namespace AzurePerformanceTest
 
             return list[0];
         }
+
+        public async Task UpdateNote(int id, string note)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task UpdateStatusFlag(ExperimentID id, bool flag)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class LazyBlobStream : Stream
@@ -353,7 +363,7 @@ namespace AzurePerformanceTest
     {
         public static string ExperimentIDToString(ExperimentID id)
         {
-            return id.ToString().PadLeft(6, '0');
+            return id.ToString();//.PadLeft(6, '0');
         }
         public static string PartitionKeyDefault = "default";
 
@@ -406,18 +416,24 @@ namespace AzurePerformanceTest
 
     public class BenchmarkEntity : TableEntity
     {
+        public static string IDFromFileName(string fileName)
+        {
+            return fileName.Replace('\\', '>').Replace('/', '<');
+        }
         public BenchmarkEntity(string experimentID, string benchmarkID)
         {
             this.PartitionKey = experimentID;
-            this.RowKey = benchmarkID;
+            this.RowKey = IDFromFileName(benchmarkID);
+            this.BenchmarkFileName = benchmarkID;
         }
         public BenchmarkEntity(int experimentID, string benchmarkID)
         {
             this.PartitionKey = ExperimentEntity.ExperimentIDToString(experimentID);
-            this.RowKey = benchmarkID;
+            this.RowKey = IDFromFileName(benchmarkID);
+            this.BenchmarkFileName = benchmarkID;
         }
         public BenchmarkEntity() { }
-        //public string BenchmarkFileName { get; set; }
+        public string BenchmarkFileName { get; set; }
         public DateTime AcquireTime { get; set; }
         public double NormalizedRuntime { get; set; }
         public double TotalProcessorTime { get; set; }
