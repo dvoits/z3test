@@ -36,26 +36,7 @@ namespace AzurePerformanceTest
 
         public override async Task<IEnumerable<ExperimentID>> FindExperiments(ExperimentFilter? filter = default(ExperimentFilter?))
         {
-            //TODO: replace with something more effective
-            IEnumerable<KeyValuePair<int, ExperimentEntity>> experiments = await storage.GetExperiments();
-
-            if (filter.HasValue)
-            {
-                experiments =
-                    experiments
-                    .Where(q =>
-                    {
-                        var id = q.Key;
-                        var e = q.Value;
-                        return (filter.Value.BenchmarkContainerEquals == null || e.BenchmarkContainer == filter.Value.BenchmarkContainerEquals) &&
-                                    (filter.Value.CategoryEquals == null || e.Category == null || e.Category.Contains(filter.Value.CategoryEquals)) &&
-                                    (filter.Value.ExecutableEquals == null || e.Executable == null || e.Executable == filter.Value.ExecutableEquals) &&
-                                    (filter.Value.ParametersEquals == null || e.Parameters == null || e.Parameters == filter.Value.ParametersEquals) &&
-                                    (filter.Value.NotesEquals == null || e.Note == null || e.Note.Contains(filter.Value.NotesEquals)) &&
-                                    (filter.Value.CreatorEquals == null || e.Creator == null || e.Creator.Contains(filter.Value.CreatorEquals));
-                    })
-                    .OrderByDescending(q => q.Value.Submitted);
-            }
+            IEnumerable<KeyValuePair<int, ExperimentEntity>> experiments = await storage.GetExperiments(filter);
 
             return experiments.OrderByDescending(q => q.Value.Submitted).Select(e => e.Key);
         }
@@ -91,9 +72,9 @@ namespace AzurePerformanceTest
             return id;
         }
 
-        public override Task UpdateNote(int id, string note)
+        public override async Task UpdateNote(int id, string note)
         {
-            throw new NotImplementedException();
+            await storage.UpdateNote(id, note);
         }
 
         public override Task UpdatePriority(int id, string priority)
@@ -101,9 +82,9 @@ namespace AzurePerformanceTest
             throw new NotImplementedException();
         }
 
-        public override Task UpdateStatusFlag(ExperimentID id, bool flag)
+        public override async Task UpdateStatusFlag(ExperimentID id, bool flag)
         {
-            throw new NotImplementedException();
+            await storage.UpdateStatusFlag(id, flag);
         }
     }
 }
