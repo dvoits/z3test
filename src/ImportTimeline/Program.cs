@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AzurePerformanceTest;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,11 +11,10 @@ namespace ImportTimeline
 {
     class Program
     {
-        const int azureStorageBatchSize = 100;
 
         static void Main(string[] args)
         {
-            if(args.Length != 2)
+            if (args.Length != 2)
             {
                 Console.WriteLine("ImportTimeline.exe <path-to-data> <storage connection string>");
                 return;
@@ -23,42 +23,49 @@ namespace ImportTimeline
             string pathToData = args[0];
             string connectionString = args[1];
 
-            Console.WriteLine("Uploading experiments table from {0}...", pathToData);
-            UploadExperiments(pathToData);
-            
+            AzureExperimentStorage storage = null;
+            try
+            {
+                storage = new AzureExperimentStorage(connectionString);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to connect to the storage: " + ex.Message);
+                return;
+            }
+
+            Console.Write("Uploading experiments table from {0}... ", pathToData);
+            UploadExperiments(pathToData, storage);
         }
 
-        static void UploadExperiments(string pathToData)
+        static void UploadExperiments(string pathToData, AzureExperimentStorage storage)
         {
-            var files = Directory.EnumerateFiles(pathToData, "*_meta.csv");
-            files.AsParallel().ForAll(file =>
-            {
-                var metadata = new MetaData(file);
-                Console.WriteLine(metadata.SubmissionTime);
-
-            });
-            //Group(files, azureStorageBatchSize).AsParallel();
-        }
-
-        static IEnumerable<T[]> Group<T>(IEnumerable<T> seq, int n)
-        {
-            int i = 0;
-            T[] group = null;
-            foreach (T item in seq)
-            {
-                if(i == 0) group = new T[n];
-                group[i++] = item;
-                if(i == n)
+            var experiments =
+                Directory.EnumerateFiles(pathToData, "*_meta.csv")
+                .Select(file =>
                 {
-                    yield return group;
-                    i = 0;
-                }
-            }
-            if(i > 0)
-            {
-                Array.Resize(ref group, i);
-                yield return group;
-            }
+                    var metadata = new MetaData(file);
+                    var exp = new ExperimentEntity((int)metadata.Id);
+                    exp.Submitted = metadata.SubmissionTime;
+                    exp.BenchmarkContainer = metadata.BaseDirectory;
+                    exp.BenchmarkFileExtension = "smt2";
+                    exp.PartitionKey = exp.Category = "smtlib";
+                    exp.Executable = metadata.BinaryId.ToString();
+                    exp.Parameters = metadata.Parameters;
+                    exp.BenchmarkTimeout = metadata.Timeout;
+                    exp.MemoryLimit = (int)(metadata.Memoryout >> 20);
+
+                    exp.Flag = false;
+                    exp.Creator = "";
+                    exp.ExperimentTimeout = 0;
+                    exp.GroupName = "";
+
+                    exp.Note = String.Format("Cluster: {0}, cluster job id: {1}, node group: {2}, locality: {3}, finished: {4}, reference: {5}",
+                        metadata.Cluster, metadata.ClusterJobId, metadata.Nodegroup, metadata.Locality, metadata.isFinished, metadata.Reference);
+                    return exp;
+                });
+            storage.ImportExperiments(experiments).Wait();
+            Console.WriteLine("Done.");
         }
     }
 }

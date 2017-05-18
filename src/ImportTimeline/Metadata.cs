@@ -16,6 +16,8 @@ namespace Z3Data
                 Load();
         }
 
+        public uint Id { get { return _id; } }
+
         public string MetaFilename { get { return _filename; } }
         public DateTime SubmissionTime { get { return _submitTime; } set { _submitTime = value; } }
         public string Cluster { get { return _cluster; } set { _cluster = value; } }

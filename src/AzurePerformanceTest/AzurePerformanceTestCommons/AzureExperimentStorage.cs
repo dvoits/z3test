@@ -16,7 +16,7 @@ using ExperimentID = System.Int32;
 
 namespace AzurePerformanceTest
 {
-    public class AzureExperimentStorage
+    public partial class AzureExperimentStorage
     {
         // Storage account
         private CloudStorageAccount storageAccount;
@@ -143,11 +143,7 @@ namespace AzurePerformanceTest
         /// <returns>ID of newly created entry</returns>
         public async Task<int> AddExperiment(ExperimentDefinition experiment, DateTime submitted, string creator, string note)
         {
-            string idEntityFilter = TableQuery.CombineFilters(
-                TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, NextExperimentIDEntity.NextIDPartition),
-                TableOperators.And,
-                TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, NextExperimentIDEntity.NextIDRow));
-            TableQuery<NextExperimentIDEntity> idEntityQuery = new TableQuery<NextExperimentIDEntity>().Where(idEntityFilter);
+            TableQuery<NextExperimentIDEntity> idEntityQuery = QueryForNextId();
 
             bool idChanged;
             int id = -1;
@@ -159,7 +155,7 @@ namespace AzurePerformanceTest
                 var list = (await experimentsTable.ExecuteQuerySegmentedAsync(idEntityQuery, null)).ToList();
 
                 NextExperimentIDEntity nextId = null;
-                
+
                 if (list.Count == 0)
                 {
                     nextId = new NextExperimentIDEntity();
@@ -225,6 +221,16 @@ namespace AzurePerformanceTest
             TableOperation insertOperation = TableOperation.Insert(row);
             await experimentsTable.ExecuteAsync(insertOperation);
             return id;
+        }
+
+        private static TableQuery<NextExperimentIDEntity> QueryForNextId()
+        {
+            string idEntityFilter = TableQuery.CombineFilters(
+                TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, NextExperimentIDEntity.NextIDPartition),
+                TableOperators.And,
+                TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, NextExperimentIDEntity.NextIDRow));
+            TableQuery<NextExperimentIDEntity> idEntityQuery = new TableQuery<NextExperimentIDEntity>().Where(idEntityFilter);
+            return idEntityQuery;
         }
 
         public async Task<ExperimentEntity> GetExperiment(ExperimentID id)
