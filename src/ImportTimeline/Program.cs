@@ -1,4 +1,6 @@
-﻿using AzurePerformanceTest;
+﻿using Angara.Data;
+using AzurePerformanceTest;
+using Ionic.Zip;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -62,9 +64,33 @@ namespace ImportTimeline
 
                     exp.Note = String.Format("Cluster: {0}, cluster job id: {1}, node group: {2}, locality: {3}, finished: {4}, reference: {5}",
                         metadata.Cluster, metadata.ClusterJobId, metadata.Nodegroup, metadata.Locality, metadata.isFinished, metadata.Reference);
+
                     return exp;
                 });
             storage.ImportExperiments(experiments).Wait();
+            Console.WriteLine("Done.");
+        }
+
+        static void UploadResults(string pathToData)
+        {
+            var benchmarks =
+                Directory.EnumerateFiles(pathToData, "*.zip")
+                .AsParallel()
+                .Select(file =>
+                {
+                    Table t = null;
+                    using (ZipFile zip = ZipFile.Read(file))
+                    {
+                        var tableEntry = zip[Path.GetFileNameWithoutExtension(file) + ".csv"];
+                        var stream = tableEntry.InputStream;
+                        t = Table.Load(new StreamReader(stream));
+                    }
+
+
+                    var benchmark = new BenchmarkEntity();
+                    return benchmark;
+                });
+            //storage.ImportExperiments(experiments).Wait();
             Console.WriteLine("Done.");
         }
     }
