@@ -35,8 +35,8 @@ namespace AzurePerformanceTest
                     }
                     return Tuple.Create(experimentsTable.ExecuteBatchAsync(opsBatch), maxID);
                 })
-				.ToArray();
-			
+                .ToArray();
+
             var nextId = upload.Length > 0 ? upload.Max(t => t.Item2) + 1 : 1;
             var inserts = upload.Select(t => t.Item1);
             await Task.WhenAll(inserts);
@@ -54,7 +54,7 @@ namespace AzurePerformanceTest
             foreach (ExperimentEntity item in seq)
             {
                 List<ExperimentEntity> group;
-				if(lastCat == item.Category)
+                if (lastCat == item.Category)
                 {
                     group = lastGroup;
                 }
@@ -77,9 +77,25 @@ namespace AzurePerformanceTest
             foreach (var group in groupsByCat)
             {
                 var items = group.Value;
-				if(items.Count > 0)
+                if (items.Count > 0)
                     yield return items;
             }
+        }
+
+        private static IEnumerable<IEnumerable<T>> Group<T>(IEnumerable<T> seq, int n)
+        {
+            List<T> group = new List<T>(n);
+            foreach (T item in seq)
+            {
+                group.Add(item);
+                if (group.Count == n)
+                {
+                    yield return group;
+                    group = new List<T>(n);
+                }
+            }
+            if (group.Count > 0)
+                yield return group;
         }
     }
 }

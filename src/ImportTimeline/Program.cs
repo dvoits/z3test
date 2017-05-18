@@ -1,6 +1,7 @@
 ﻿using AzurePerformanceTest;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -34,16 +35,22 @@ namespace ImportTimeline
                 return;
             }
 
+            Stopwatch sw = Stopwatch.StartNew();
+
             Console.Write("Uploading experiments table from {0}... ", pathToData);
-            //UploadExperiments(pathToData, storage);
+            var submitted = UploadExperiments(pathToData, storage);
 
+            Console.WriteLine("Uploading results table...");
+            UploadResults(pathToData, submitted, storage);
 
-            Console.Write("Uploading results table...");
-            UploadResults(pathToData, storage);
+            sw.Stop();
+
+            Console.WriteLine("Done, total time is {0}", sw.Elapsed);
         }
 
-        static void UploadExperiments(string pathToData, AzureExperimentStorage storage)
+        static Dictionary<int, DateTime> UploadExperiments(string pathToData, AzureExperimentStorage storage)
         {
+            Dictionary<int, DateTime> submitted = new Dictionary<int, DateTime>(5000);
             var experiments =
                 Directory.EnumerateFiles(pathToData, "*_meta.csv")
                 .Select(file =>
@@ -67,54 +74,74 @@ namespace ImportTimeline
                     exp.Note = String.Format("Cluster: {0}, cluster job id: {1}, node group: {2}, locality: {3}, finished: {4}, reference: {5}",
                         metadata.Cluster, metadata.ClusterJobId, metadata.Nodegroup, metadata.Locality, metadata.isFinished, metadata.Reference);
 
+                    submitted.Add((int)metadata.Id, exp.Submitted);
+
                     return exp;
                 });
             storage.ImportExperiments(experiments).Wait();
             Console.WriteLine("Done.");
+            return submitted;
         }
 
-        static void UploadResults(string pathToData, AzureExperimentStorage storage)
+        static void UploadResults(string pathToData, Dictionary<int, DateTime> submitted, AzureExperimentStorage storage)
         {
-            var benchmarks =
+            var upload =
                 Directory.EnumerateFiles(pathToData, "*.zip")
                 .AsParallel()
                 .Select(file =>
                 {
                     int expId = int.Parse(Path.GetFileNameWithoutExtension(file));
+                    var submittedTime = submitted[expId];
+
+                    Console.WriteLine("Uploading results for {0}... ", expId);
+
                     CSVData table = new CSVData(file, (uint)expId);
                     var entities =
                         table.Rows
                         .Select(r =>
                         {
-                            var b = new BenchmarkEntity(expId, BenchmarkEntity.IDFromFileName(r.Filename));
-                            b.BenchmarkFileName = r.Filename;
-                            b.ExitCode = r.ReturnValue;
-                            b.NormalizedRuntime = r.Runtime;
-                            b.PeakMemorySize = 0;
-                            b.StdOut = r.StdOut;
-                            b.StdErr = r.StdErr;
-                            b.TotalProcessorTime = r.Runtime;
-                            b.Status = ResultCodeToStatus(r.ResultCode);
+                            var measure = new Measurement.ProcessRunMeasure(TimeSpan.FromSeconds(r.Runtime), TimeSpan.FromSeconds(0), 0, ResultCodeToStatus(r.ResultCode),
+                                r.ReturnValue,
+                                GenerateStreamFromString(r.StdOut),
+                                GenerateStreamFromString(r.StdErr));
+                            var b = new PerformanceTest.BenchmarkResult(expId, r.Filename, "HPC Cluster node", r.Runtime, submittedTime, measure);
                             return b;
                         });
-                    return Tuple.Create(expId, entities);
-                }).ToArray();
-            //storage.ImportExperiments(experiments).Wait();
+                    return storage.PutExperimentResults(entities).ContinueWith(t =>
+                    {
+                        Console.WriteLine("Done uploading results for {0}.", expId);
+                    });
+                });
+
+            Task.WhenAll(upload).Wait();
             Console.WriteLine("Done.");
         }
 
-        private static string ResultCodeToStatus(uint resultCode)
+        private static Measurement.Measure.CompletionStatus ResultCodeToStatus(uint resultCode)
         {
             switch (resultCode)
             {
-                case 0: return "Success";
-                case 3: return "Bugs";
-                case 4: return "Error";
-                case 5: return "Timeout";
-                case 6: return "OutOfMemory";
-                default:
-                    return "Unknown";
+                case 0: return Measurement.Measure.CompletionStatus.Success;
+                case 3: return Measurement.Measure.CompletionStatus.Bug;
+                case 4: return Measurement.Measure.CompletionStatus.Error;
+                case 5: return Measurement.Measure.CompletionStatus.Timeout;
+                case 6: return Measurement.Measure.CompletionStatus.OutOfMemory;
+                default: throw new ArgumentException("Unknown result code: " + resultCode);
             }
+        }
+
+
+        public static Stream GenerateStreamFromString(string s)
+        {
+            MemoryStream stream = new MemoryStream();
+            if (!String.IsNullOrEmpty(s))
+            {
+                StreamWriter writer = new StreamWriter(stream);
+                writer.Write(s);
+                writer.Flush();
+                stream.Position = 0;
+            }
+            return stream;
         }
     }
 }

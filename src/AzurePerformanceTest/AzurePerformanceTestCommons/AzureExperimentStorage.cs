@@ -7,9 +7,11 @@ using Newtonsoft.Json.Serialization;
 using PerformanceTest;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 using ExperimentID = System.Int32;
@@ -34,7 +36,7 @@ namespace AzurePerformanceTest
         const string experimentsTableName = "experiments";
         const string resultsTableName = "data";
 
-        public AzureExperimentStorage(string storageAccountName, string storageAccountKey) : this (String.Format("DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}", storageAccountName, storageAccountKey))
+        public AzureExperimentStorage(string storageAccountName, string storageAccountKey) : this(String.Format("DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}", storageAccountName, storageAccountKey))
         {
         }
 
@@ -122,43 +124,73 @@ namespace AzurePerformanceTest
             } while (continuationToken != null);
 
             return resultList.Select(row =>
-                new BenchmarkResult(experimentID, row.BenchmarkFileName, row.WorkerInformation, row.NormalizedRuntime, row.AcquireTime,
+            {
+                Stream stdOut = String.IsNullOrEmpty(row.StdOut) ? (Stream)new MemoryStream() : new LazyBlobStream(outputContainer.GetBlobReference(row.StdOut));
+                Stream stdErr = String.IsNullOrEmpty(row.StdErr) ? (Stream)new MemoryStream() : new LazyBlobStream(outputContainer.GetBlobReference(row.StdErr));
+
+                return new BenchmarkResult(experimentID, row.BenchmarkFileName, row.WorkerInformation, row.NormalizedRuntime, row.AcquireTime,
                     new ProcessRunMeasure(TimeSpan.FromSeconds(row.TotalProcessorTime), TimeSpan.FromSeconds(row.WallClockTime), row.PeakMemorySize << 20,
-                        StatusFromString(row.Status), row.ExitCode, new LazyBlobStream(outputContainer.GetBlobReference(row.StdOut)), new LazyBlobStream(outputContainer.GetBlobReference(row.StdErr))))
-                ).ToArray();
+                        StatusFromString(row.Status), row.ExitCode, stdOut, stdErr));
+            }).ToArray();
         }
 
         public async Task PutResult(BenchmarkResult result)
         {
             var entity = await PrepareResult(result);
-
             TableOperation insertOperation = TableOperation.Insert(entity);
-
             await resultsTable.ExecuteAsync(insertOperation);
-
         }
 
-        public async Task BatchPutResults(BenchmarkResult[] results)
+        /// <summary>
+        /// All results must have same experiment id.
+        /// </summary>
+        /// <param name="results"></param>
+        /// <returns></returns>
+        public async Task PutExperimentResults(IEnumerable<BenchmarkResult> results)
         {
-            var entities = await Task.WhenAll(results.Select(r => PrepareResult(r)));
-
-            TableBatchOperation batch = new TableBatchOperation();
-            foreach (var e in entities)
-                batch.Insert(e);
-
-            await resultsTable.ExecuteBatchAsync(batch);
-
+            int n = 0;
+            var groups = Group(results, azureStorageBatchSize);
+            var tasks = groups.Select(g => {
+                var task = UploadAsBatch(g);
+                task.ContinueWith(t =>
+                {
+                    int _n = Interlocked.Increment(ref n);
+                    Trace.WriteLine(string.Format("{0} batches uploaded", _n));
+                });
+                return task;
+            });
+            await Task.WhenAll(tasks);
+            Trace.WriteLine("Experiment results uploaded");
         }
+
+        private async Task UploadAsBatch(IEnumerable<BenchmarkResult> batchEntities)
+        {
+            TableBatchOperation batch = new TableBatchOperation();
+            foreach (BenchmarkResult item in batchEntities)
+            {
+                var entity = await PrepareResult(item);
+                batch.Insert(entity);
+            }
+            await resultsTable.ExecuteBatchAsync(batch);
+        }
+
 
         private async Task<BenchmarkEntity> PrepareResult(BenchmarkResult result)
         {
-            string stdoutBlobId = "E" + result.ExperimentID.ToString() + "F" + result.BenchmarkFileName + "-stdout";
-            string stderrBlobId = "E" + result.ExperimentID.ToString() + "F" + result.BenchmarkFileName + "-stderr";
-
-            var stdoutBlob = outputContainer.GetBlockBlobReference(stdoutBlobId);
-            var stderrBlob = outputContainer.GetBlockBlobReference(stderrBlobId);
-            await stdoutBlob.UploadFromStreamAsync(result.Measurements.StdOut);
-            await stderrBlob.UploadFromStreamAsync(result.Measurements.StdErr);
+            string stdoutBlobId = null;
+            string stderrBlobId = null;
+            if (result.Measurements.StdOut.Length > 0)
+            {
+                stdoutBlobId = "E" + result.ExperimentID.ToString() + "F" + result.BenchmarkFileName + "-stdout";
+                var stdoutBlob = outputContainer.GetBlockBlobReference(stdoutBlobId);
+                await stdoutBlob.UploadFromStreamAsync(result.Measurements.StdOut);
+            }
+            if (result.Measurements.StdErr.Length > 0)
+            {
+                stderrBlobId = "E" + result.ExperimentID.ToString() + "F" + result.BenchmarkFileName + "-stderr";
+                var stderrBlob = outputContainer.GetBlockBlobReference(stderrBlobId);
+                await stderrBlob.UploadFromStreamAsync(result.Measurements.StdErr);
+            }
 
             var entity = new BenchmarkEntity(result.ExperimentID, result.BenchmarkFileName);
             entity.AcquireTime = result.AcquireTime;
@@ -466,7 +498,7 @@ namespace AzurePerformanceTest
         }
         public static string PartitionKeyDefault = "default";
 
-        public ExperimentEntity (string id)
+        public ExperimentEntity(string id)
         {
             this.PartitionKey = PartitionKeyDefault;
             this.RowKey = id;
@@ -507,7 +539,8 @@ namespace AzurePerformanceTest
         public static string NextIDPartition = "NextIDPartition";
         public static string NextIDRow = "NextIDRow";
 
-        public NextExperimentIDEntity() {
+        public NextExperimentIDEntity()
+        {
             this.PartitionKey = NextIDPartition;
             this.RowKey = NextIDRow;
         }

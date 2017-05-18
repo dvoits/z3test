@@ -29,7 +29,8 @@ namespace Measurement
             Success,
             OutOfMemory,
             Timeout,
-            Error
+            Error,
+            Bug
         }
     }
 
