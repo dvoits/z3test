@@ -1,6 +1,4 @@
-﻿using Angara.Data;
-using AzurePerformanceTest;
-using Ionic.Zip;
+﻿using AzurePerformanceTest;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -37,7 +35,11 @@ namespace ImportTimeline
             }
 
             Console.Write("Uploading experiments table from {0}... ", pathToData);
-            UploadExperiments(pathToData, storage);
+            //UploadExperiments(pathToData, storage);
+
+
+            Console.Write("Uploading results table...");
+            UploadResults(pathToData, storage);
         }
 
         static void UploadExperiments(string pathToData, AzureExperimentStorage storage)
@@ -71,27 +73,48 @@ namespace ImportTimeline
             Console.WriteLine("Done.");
         }
 
-        static void UploadResults(string pathToData)
+        static void UploadResults(string pathToData, AzureExperimentStorage storage)
         {
             var benchmarks =
                 Directory.EnumerateFiles(pathToData, "*.zip")
                 .AsParallel()
                 .Select(file =>
                 {
-                    Table t = null;
-                    using (ZipFile zip = ZipFile.Read(file))
-                    {
-                        var tableEntry = zip[Path.GetFileNameWithoutExtension(file) + ".csv"];
-                        var stream = tableEntry.InputStream;
-                        t = Table.Load(new StreamReader(stream));
-                    }
-
-
-                    var benchmark = new BenchmarkEntity();
-                    return benchmark;
-                });
+                    int expId = int.Parse(Path.GetFileNameWithoutExtension(file));
+                    CSVData table = new CSVData(file, (uint)expId);
+                    var entities =
+                        table.Rows
+                        .Select(r =>
+                        {
+                            var b = new BenchmarkEntity(expId, BenchmarkEntity.IDFromFileName(r.Filename));
+                            b.BenchmarkFileName = r.Filename;
+                            b.ExitCode = r.ReturnValue;
+                            b.NormalizedRuntime = r.Runtime;
+                            b.PeakMemorySize = 0;
+                            b.StdOut = r.StdOut;
+                            b.StdErr = r.StdErr;
+                            b.TotalProcessorTime = r.Runtime;
+                            b.Status = ResultCodeToStatus(r.ResultCode);
+                            return b;
+                        });
+                    return Tuple.Create(expId, entities);
+                }).ToArray();
             //storage.ImportExperiments(experiments).Wait();
             Console.WriteLine("Done.");
+        }
+
+        private static string ResultCodeToStatus(uint resultCode)
+        {
+            switch (resultCode)
+            {
+                case 0: return "Success";
+                case 3: return "Bugs";
+                case 4: return "Error";
+                case 5: return "Timeout";
+                case 6: return "OutOfMemory";
+                default:
+                    return "Unknown";
+            }
         }
     }
 }
