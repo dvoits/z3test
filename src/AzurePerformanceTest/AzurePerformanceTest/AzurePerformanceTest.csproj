@@ -92,14 +92,6 @@
       <Project>{86056f9d-4f4e-492b-bbc2-7a176043e42c}</Project>
       <Name>PerformanceTest</Name>
     </ProjectReference>
-    <ProjectReference Include="..\AzureBatchJobStarter\AzureBatchJobStarter.csproj">
-      <Project>{6d41bc32-fa82-4b8e-aa9b-df906036c2c0}</Project>
-      <Name>AzureBatchJobStarter</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\AzureMeasure\AzureMeasure.csproj">
-      <Project>{2fb63f14-f467-407b-8f9d-fe04a5db5fce}</Project>
-      <Name>AzureMeasure</Name>
-    </ProjectReference>
     <ProjectReference Include="..\AzurePerformanceTestCommons\AzurePerformanceTestCommons.csproj">
       <Project>{212c3662-8342-43d1-ac51-36ab067b13d7}</Project>
       <Name>AzurePerformanceTestCommons</Name>
