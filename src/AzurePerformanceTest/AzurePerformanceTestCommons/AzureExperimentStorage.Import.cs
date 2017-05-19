@@ -1,7 +1,9 @@
 ﻿using AzurePerformanceTest;
+using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.Table;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -96,6 +98,11 @@ namespace AzurePerformanceTest
             }
             if (group.Count > 0)
                 yield return group;
+        }
+
+        private static async Task UploadBlobAsync(Stream source, CloudBlockBlob blob)
+        {
+            await blob.UploadFromStreamAsync(source);
         }
     }
 }

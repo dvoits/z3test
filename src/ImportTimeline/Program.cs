@@ -107,7 +107,7 @@ namespace ImportTimeline
                             var b = new PerformanceTest.BenchmarkResult(expId, r.Filename, "HPC Cluster node", r.Runtime, submittedTime, measure);
                             return b;
                         });
-                    return storage.PutExperimentResults(entities).ContinueWith(t =>
+                    return storage.PutExperimentResults(expId, entities).ContinueWith(t =>
                     {
                         Console.WriteLine("Done uploading results for {0}.", expId);
                     });

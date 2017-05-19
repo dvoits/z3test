@@ -68,6 +68,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.IO.Compression" />
     <Reference Include="System.Spatial, Version=5.8.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\..\..\packages\System.Spatial.5.8.2\lib\net40\System.Spatial.dll</HintPath>
       <Private>True</Private>
@@ -89,6 +90,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\LocalPerformanceTest\LocalPerformanceTest.csproj">
+      <Project>{879e906f-d5a6-4332-97a7-6952f3c00abc}</Project>
+      <Name>LocalPerformanceTest</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\Measurement\Measurement.csproj">
       <Project>{E315BFAB-D44B-4A75-82A3-1EEAF33B5717}</Project>
       <Name>Measurement</Name>

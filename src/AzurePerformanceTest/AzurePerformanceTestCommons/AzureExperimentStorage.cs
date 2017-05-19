@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -24,12 +25,14 @@ namespace AzurePerformanceTest
         private CloudStorageAccount storageAccount;
         private CloudBlobClient blobClient;
         private CloudBlobContainer binContainer;
+        private CloudBlobContainer resultsContainer;
         private CloudBlobContainer outputContainer;
         private CloudBlobContainer configContainer;
         private CloudTableClient tableClient;
         private CloudTable experimentsTable;
         private CloudTable resultsTable;
 
+        const string resultsContainerName = "results";
         const string binContainerName = "bin";
         const string outputContainerName = "output";
         const string configContainerName = "config";
@@ -47,6 +50,7 @@ namespace AzurePerformanceTest
             binContainer = blobClient.GetContainerReference(binContainerName);
             outputContainer = blobClient.GetContainerReference(outputContainerName);
             configContainer = blobClient.GetContainerReference(configContainerName);
+            resultsContainer = blobClient.GetContainerReference(resultsContainerName);
 
             tableClient = storageAccount.CreateCloudTableClient();
             experimentsTable = tableClient.GetTableReference(experimentsTableName);
@@ -171,20 +175,20 @@ namespace AzurePerformanceTest
         /// </summary>
         /// <param name="results"></param>
         /// <returns></returns>
-        public async Task PutExperimentResults(IEnumerable<BenchmarkResult> results)
+        public async Task PutExperimentResults(ExperimentID expId, IEnumerable<BenchmarkResult> results)
         {
-            int n = 0;
-            var groups = Group(results, azureStorageBatchSize);
-            var tasks = groups.Select(g => {
-                var task = UploadAsBatch(g);
-                task.ContinueWith(t =>
+            using (MemoryStream zipStream = new MemoryStream())
+            {
+                using(var zip = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
                 {
-                    int _n = Interlocked.Increment(ref n);
-                    Trace.WriteLine(string.Format("{0} batches uploaded", _n));
-                });
-                return task;
-            });
-            await Task.WhenAll(tasks);
+                    var entry = zip.CreateEntry(String.Format("{0}.csv", expId));
+                    FileStorage.SaveBenchmarks(results.ToArray(), entry.Open());
+                }
+
+                var blob = resultsContainer.GetBlockBlobReference(String.Format("{0}.csv.zip")); // check name <---
+                zipStream.Position = 0;
+                await UploadBlobAsync(zipStream, blob);
+            }
             Trace.WriteLine("Experiment results uploaded");
         }
 

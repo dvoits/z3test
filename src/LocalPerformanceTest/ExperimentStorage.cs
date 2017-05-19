@@ -88,7 +88,7 @@ namespace PerformanceTest
         {
             var dict = new Dictionary<int, ExperimentEntity>();
             foreach (var row in experimentsTable.Rows)
-            { 
+            {
                 dict[row.ID] = row;
             }
             return dict;
@@ -154,7 +154,7 @@ namespace PerformanceTest
 
         public void AddResults(int id, BenchmarkResult[] benchmarks)
         {
-            SaveBenchmarks(IdToTableName(id), benchmarks);
+            SaveBenchmarks(benchmarks, IdToTableName(id));
         }
 
         public void RemoveExperimentRow(ExperimentEntity deleteRow)
@@ -176,7 +176,15 @@ namespace PerformanceTest
             return Path.Combine(dirBenchmarks.FullName, id.ToString("000000") + ".csv");
         }
 
-        private void SaveBenchmarks(string fileName, BenchmarkResult[] benchmarks)
+        public static void SaveBenchmarks(BenchmarkResult[] benchmarks, string fileName)
+        {
+            using (Stream s = File.Create(fileName))
+            {
+                SaveBenchmarks(benchmarks, s);
+            }
+        }
+
+        public static void SaveBenchmarks(BenchmarkResult[] benchmarks, Stream stream)
         {
             var table = Table.OfColumns(new[]
             {
@@ -192,12 +200,20 @@ namespace PerformanceTest
                 Column.Create("StdErr", benchmarks.Select(b => b.Measurements.ErrorToString()), None),
                 Column.Create("WorkerInformation", benchmarks.Select(b => b.WorkerInformation), None),
             });
-            SaveTable(table, fileName, new WriteSettings(Delimiter.Comma, true, true));
+            SaveTable(table, stream, new WriteSettings(Delimiter.Comma, true, true));
         }
 
         private static void SaveTable(Table table, string fileName, WriteSettings settings)
         {
             using (TextWriter w = new StreamWriter(fileName, false, new UTF8Encoding(true)))
+            {
+                Table.Save(table, w, settings);
+            }
+        }
+
+        private static void SaveTable(Table table, Stream s, WriteSettings settings)
+        {
+            using (TextWriter w = new StreamWriter(s, new UTF8Encoding(true)))
             {
                 Table.Save(table, w, settings);
             }
