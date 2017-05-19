@@ -85,15 +85,32 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Measurement\Measurement.csproj">
       <Project>{e315bfab-d44b-4a75-82a3-1eeaf33b5717}</Project>
       <Name>Measurement</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\PerformanceTest\PerformanceTest.csproj">
+      <Project>{86056f9d-4f4e-492b-bbc2-7a176043e42c}</Project>
+      <Name>PerformanceTest</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\AzurePerformanceTestCommons\AzurePerformanceTestCommons.csproj">
+      <Project>{212c3662-8342-43d1-ac51-36ab067b13d7}</Project>
+      <Name>AzurePerformanceTestCommons</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
