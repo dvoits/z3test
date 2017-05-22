@@ -87,6 +87,7 @@
   <ItemGroup>
     <None Include="app.config" />
     <Compile Include="AzureExperimentStorage.Import.cs" />
+    <Compile Include="AzureExperimentStorage.Results.cs" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

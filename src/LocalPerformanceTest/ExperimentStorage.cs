@@ -84,6 +84,11 @@ namespace PerformanceTest
             dirBenchmarks.Create();
         }
 
+        public static void Clear(string path)
+        {
+            Directory.Delete(path, true);
+        }
+
         public Dictionary<int, ExperimentEntity> GetExperiments()
         {
             var dict = new Dictionary<int, ExperimentEntity>();
@@ -109,10 +114,14 @@ namespace PerformanceTest
             return reference;
         }
 
+        public bool HasResults(int experimentId)
+        {
+            return File.Exists(IdToPath(experimentId));
+        }
 
         public BenchmarkResult[] GetResults(int experimentId)
         {
-            var bt = Table.Load(IdToTableName(experimentId), new ReadSettings(Delimiter.Comma, true, true, None,
+            var bt = Table.Load(IdToPath(experimentId), new ReadSettings(Delimiter.Comma, true, true, None,
                 FSharpOption<FSharpFunc<Tuple<int, string>, FSharpOption<Type>>>.Some(FSharpFunc<Tuple<int, string>, FSharpOption<Type>>.FromConverter(tuple =>
                 {
                     var colName = tuple.Item2;
@@ -154,7 +163,7 @@ namespace PerformanceTest
 
         public void AddResults(int id, BenchmarkResult[] benchmarks)
         {
-            SaveBenchmarks(benchmarks, IdToTableName(id));
+            SaveBenchmarks(benchmarks, IdToPath(id));
         }
 
         public void RemoveExperimentRow(ExperimentEntity deleteRow)
@@ -171,7 +180,13 @@ namespace PerformanceTest
             SaveTable(experimentsTable, Path.Combine(dir.FullName, "experiments.csv"), new WriteSettings(Delimiter.Comma, true, true));
         }
 
-        private string IdToTableName(int id)
+        /// <summary>
+        /// Returns a full path to a file containing results for the given experiment ID.
+        /// Doesn't check existence of the path.
+        /// </summary>
+        /// <param name="id">Experiment ID.</param>
+        /// <returns>Full path.</returns>
+        public string IdToPath(int id)
         {
             return Path.Combine(dirBenchmarks.FullName, id.ToString("000000") + ".csv");
         }

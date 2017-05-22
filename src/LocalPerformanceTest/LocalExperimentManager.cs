@@ -44,7 +44,6 @@ namespace PerformanceTest
         }
 
         private readonly ReferenceExperiment reference;
-
         private readonly ConcurrentDictionary<ExperimentID, ExperimentInstance> runningExperiments;
         private readonly LocalExperimentRunner runner;
         private readonly FileStorage storage;

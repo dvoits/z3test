@@ -54,6 +54,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="AzureExperimentsTests.cs" />
     <Compile Include="ProcessMeasurerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RunExperimentsTests.cs" />
@@ -77,6 +78,14 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\src\AzurePerformanceTest\AzurePerformanceTestCommons\AzurePerformanceTestCommons.csproj">
+      <Project>{212C3662-8342-43D1-AC51-36AB067B13D7}</Project>
+      <Name>AzurePerformanceTestCommons</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\AzurePerformanceTest\AzurePerformanceTest\AzurePerformanceTest.csproj">
+      <Project>{f7988676-db1b-49e3-8821-edb017290120}</Project>
+      <Name>AzurePerformanceTest</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\src\LocalPerformanceTest\LocalPerformanceTest.csproj">
       <Project>{879e906f-d5a6-4332-97a7-6952f3c00abc}</Project>
       <Name>LocalPerformanceTest</Name>
