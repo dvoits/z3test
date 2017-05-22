@@ -22,7 +22,8 @@ configuration:
   - Release
 
 before_build:
-  - nuget restore
+  - nuget restore PerformanceTest.sln
+  - nuget restore ImportData.sln
 
 build:
   parallel: true                  # enable MSBuild parallel builds
