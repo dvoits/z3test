@@ -31,6 +31,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzurePerformanceTest", "src
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzureWorker", "src\AzurePerformanceTest\AzureWorker\AzureWorker.csproj", "{89DBB143-52E0-4C0A-A637-911FE977161A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LaunchExperiment", "src\AzurePerformanceTest\LaunchExperiment\LaunchExperiment.csproj", "{9234FC54-8CC1-4BD8-9DB9-7222D993B0DC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -85,6 +87,10 @@ Global
 		{89DBB143-52E0-4C0A-A637-911FE977161A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{89DBB143-52E0-4C0A-A637-911FE977161A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{89DBB143-52E0-4C0A-A637-911FE977161A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9234FC54-8CC1-4BD8-9DB9-7222D993B0DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9234FC54-8CC1-4BD8-9DB9-7222D993B0DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9234FC54-8CC1-4BD8-9DB9-7222D993B0DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9234FC54-8CC1-4BD8-9DB9-7222D993B0DC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -96,5 +102,6 @@ Global
 		{212C3662-8342-43D1-AC51-36AB067B13D7} = {702B1624-CB1F-40F5-AD78-4B0D52DACEB3}
 		{F7988676-DB1B-49E3-8821-EDB017290120} = {702B1624-CB1F-40F5-AD78-4B0D52DACEB3}
 		{89DBB143-52E0-4C0A-A637-911FE977161A} = {702B1624-CB1F-40F5-AD78-4B0D52DACEB3}
+		{9234FC54-8CC1-4BD8-9DB9-7222D993B0DC} = {702B1624-CB1F-40F5-AD78-4B0D52DACEB3}
 	EndGlobalSection
 EndGlobal

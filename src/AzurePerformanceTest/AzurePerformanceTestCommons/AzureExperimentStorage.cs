@@ -27,10 +27,12 @@ namespace AzurePerformanceTest
         private CloudBlobContainer binContainer;
         private CloudBlobContainer resultsContainer;
         private CloudBlobContainer outputContainer;
-        private CloudBlobContainer configContainer;
         private CloudTableClient tableClient;
         private CloudTable experimentsTable;
         private CloudTable resultsTable;
+
+
+        public CloudBlobContainer configContainer;
 
         const string resultsContainerName = "results";
         const string binContainerName = "bin";
@@ -38,6 +40,7 @@ namespace AzurePerformanceTest
         const string configContainerName = "config";
         const string experimentsTableName = "experiments";
         const string resultsTableName = "data";
+        
 
         public AzureExperimentStorage(string storageAccountName, string storageAccountKey) : this(String.Format("DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}", storageAccountName, storageAccountKey))
         {
