@@ -177,15 +177,16 @@ namespace AzurePerformanceTest
         /// <returns></returns>
         public async Task PutExperimentResults(ExperimentID expId, IEnumerable<BenchmarkResult> results)
         {
+            string fileName = String.Format("{0}.csv", expId);
             using (MemoryStream zipStream = new MemoryStream())
             {
                 using(var zip = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
                 {
-                    var entry = zip.CreateEntry(String.Format("{0}.csv", expId));
+                    var entry = zip.CreateEntry(fileName);
                     FileStorage.SaveBenchmarks(results.ToArray(), entry.Open());
                 }
 
-                var blob = resultsContainer.GetBlockBlobReference(String.Format("{0}.csv.zip")); // check name <---
+                var blob = resultsContainer.GetBlockBlobReference(fileName + ".zip"); // check name <---
                 zipStream.Position = 0;
                 await UploadBlobAsync(zipStream, blob);
             }

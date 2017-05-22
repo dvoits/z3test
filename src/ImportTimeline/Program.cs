@@ -39,6 +39,7 @@ namespace ImportTimeline
 
             Console.Write("Uploading experiments table from {0}... ", pathToData);
             var submitted = UploadExperiments(pathToData, storage);
+            // for debug: Dictionary<int, DateTime> submitted = null;
 
             Console.WriteLine("Uploading results table...");
             UploadResults(pathToData, submitted, storage);
@@ -91,7 +92,7 @@ namespace ImportTimeline
                 .Select(file =>
                 {
                     int expId = int.Parse(Path.GetFileNameWithoutExtension(file));
-                    var submittedTime = submitted[expId];
+                    var submittedTime = submitted != null ? submitted[expId] : DateTime.Now;
 
                     Console.WriteLine("Uploading results for {0}... ", expId);
 
