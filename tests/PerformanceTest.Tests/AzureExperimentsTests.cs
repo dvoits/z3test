@@ -57,5 +57,16 @@ namespace PerformanceTest.Tests
 
             Assert.AreEqual(103814, results2.Length);
         }
+
+        [TestMethod]
+        public async Task GetExperimentsFromCloud()
+        {
+            ValidatesConnectionString();
+            AzureExperimentStorage storage = new AzureExperimentStorage(storageConnectionString);
+            AzureExperimentManager manager = AzureExperimentManager.Open(storage);
+
+            var experiments = (await manager.FindExperiments()).ToArray();
+            Assert.IsTrue(experiments.Length > 0);
+        }
     }
 }

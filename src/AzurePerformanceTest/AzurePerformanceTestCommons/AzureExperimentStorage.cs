@@ -98,9 +98,11 @@ namespace AzurePerformanceTest
         {
             var dict = new Dictionary<ExperimentID, ExperimentEntity>();
             TableQuery<ExperimentEntity> query = new TableQuery<ExperimentEntity>();
+            List<string> experimentFilters = new List<string>();
+            experimentFilters.Add(TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, ExperimentEntity.PartitionKeyDefault));
+
             if (filter.HasValue)
             {
-                List<string> experimentFilters = new List<string>();
                 if (filter.Value.BenchmarkContainerEquals != null)
                     experimentFilters.Add(TableQuery.GenerateFilterCondition("BenchmarkContainer", QueryComparisons.Equal, filter.Value.BenchmarkContainerEquals));
                 if (filter.Value.CategoryEquals != null)
@@ -113,16 +115,17 @@ namespace AzurePerformanceTest
                     experimentFilters.Add(TableQuery.GenerateFilterCondition("Note", QueryComparisons.Equal, filter.Value.NotesEquals));
                 if (filter.Value.CreatorEquals != null)
                     experimentFilters.Add(TableQuery.GenerateFilterCondition("Creator", QueryComparisons.Equal, filter.Value.CreatorEquals));
-
-                if (experimentFilters.Count > 0)
-                {
-                    string finalFilter = experimentFilters[0];
-                    for (int i = 1; i < experimentFilters.Count; ++i)
-                        finalFilter = TableQuery.CombineFilters(finalFilter, TableOperators.And, experimentFilters[i]);
-
-                    query = query.Where(finalFilter);
-                }
             }
+
+            if (experimentFilters.Count > 0)
+            {
+                string finalFilter = experimentFilters[0];
+                for (int i = 1; i < experimentFilters.Count; ++i)
+                    finalFilter = TableQuery.CombineFilters(finalFilter, TableOperators.And, experimentFilters[i]);
+
+                query = query.Where(finalFilter);
+            }
+
             TableContinuationToken continuationToken = null;
 
             do

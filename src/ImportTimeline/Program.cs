@@ -61,7 +61,7 @@ namespace ImportTimeline
                     exp.Submitted = metadata.SubmissionTime;
                     exp.BenchmarkContainer = metadata.BaseDirectory;
                     exp.BenchmarkFileExtension = "smt2";
-                    exp.PartitionKey = exp.Category = "smtlib";
+                    exp.Category = "smtlib";
                     exp.Executable = metadata.BinaryId.ToString();
                     exp.Parameters = metadata.Parameters;
                     exp.BenchmarkTimeout = metadata.Timeout;
