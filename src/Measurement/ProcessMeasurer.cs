@@ -237,10 +237,6 @@ namespace Measurement
                 try
                 {
                     p.Start();
-                    p.BeginOutputReadLine();
-                    p.BeginErrorReadLine();
-                    p.ProcessorAffinity = (IntPtr)1L;
-                    p.PriorityClass = ProcessPriorityClass.RealTime;
                 }
                 catch (System.ComponentModel.Win32Exception ex)
                 {
@@ -253,6 +249,19 @@ namespace Measurement
                     else throw ex;
                 }
             } while (retry);
+
+            try
+            {
+                p.BeginOutputReadLine();
+                p.BeginErrorReadLine();
+                p.ProcessorAffinity = (IntPtr)1L;
+                p.PriorityClass = ProcessPriorityClass.RealTime;
+            }
+            catch (InvalidOperationException ex)
+            {
+                if (!(ex.Message.Contains("Cannot process request because the process") && ex.Message.Contains("has exited")))
+                    throw;
+            }
 
             return p;
         }

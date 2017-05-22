@@ -45,7 +45,7 @@ namespace PerformanceTest.Management
                 return new LocalExperimentManagerViewModel(manager, UIService.Instance);
             }else
             {
-                AzureExperimentManager azureManager = AzureExperimentManager.Open(new AzureExperimentStorage(connectionString));
+                AzureExperimentManager azureManager = AzureExperimentManager.Open(new AzureExperimentStorage(connectionString), "", "", "");
                 return new AzureExperimentManagerViewModel(azureManager, UIService.Instance);
             }
         }
