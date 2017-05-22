@@ -23,6 +23,12 @@ namespace AzurePerformanceTest
             this.batchCreds = new BatchSharedKeyCredentials(batchUrl, batchAccName, batchKey);
         }
 
+        protected AzureExperimentManager(AzureExperimentStorage storage)
+        {
+            this.storage = storage;
+            this.batchCreds = null;
+        }
+
         public static async Task<AzureExperimentManager> New(AzureExperimentStorage storage, ReferenceExperiment reference, string batchUrl, string batchAccName, string batchKey)
         {
             await storage.SaveReferenceExperiment(reference);
@@ -32,6 +38,20 @@ namespace AzurePerformanceTest
         public static AzureExperimentManager Open(AzureExperimentStorage storage, string batchUrl, string batchAccName, string batchKey)
         {
             return new AzureExperimentManager(storage, batchUrl, batchAccName, batchKey);
+        }
+
+
+        /// <summary>
+        /// Creates a manager in a mode when it can open data but not start new experiments.
+        /// </summary>
+        public static AzureExperimentManager Open(AzureExperimentStorage storage)
+        {
+            return new AzureExperimentManager(storage);
+        }
+
+        public bool CanStart
+        {
+            get { return batchCreds != null; }
         }
 
         public override async Task DeleteExperiment(ExperimentID id)
@@ -72,6 +92,8 @@ namespace AzurePerformanceTest
 
         public override async Task<ExperimentID> StartExperiment(ExperimentDefinition definition, string creator = null, string note = null)
         {
+            if (!CanStart) throw new InvalidOperationException("Cannot start experiment since the manager is in read mode");
+
             var id = await storage.AddExperiment(definition, DateTime.Now, creator, note);
             //TODO: schedule execution
 
