@@ -55,7 +55,6 @@ namespace PerformanceTest
         {
             if (storage == null) throw new ArgumentNullException("storage");
             this.storage = storage;
-            if (reference == null) throw new ArgumentNullException("reference");
             this.reference = storage.GetReferenceExperiment();
 
             runningExperiments = new ConcurrentDictionary<ExperimentID, ExperimentInstance>();
