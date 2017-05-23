@@ -64,16 +64,14 @@ namespace PerformanceTest.Management
         {
             if (filter != "")
             {
-                ExperimentManager.ExperimentFilter filt = new ExperimentManager.ExperimentFilter
+                ExperimentManager.ExperimentFilter f = new ExperimentManager.ExperimentFilter
                 {
                     NotesEquals = filter,
                     CategoryEquals = filter,
                     CreatorEquals = filter
                 };
-                var ids = await manager.FindExperiments(filt);
-                
-                var status = await manager.GetStatus(ids);
-                Items = status.Select(st => new ExperimentStatusViewModel(st, manager, message)).ToArray();
+                var experiments = await manager.FindExperiments(f);
+                Items = experiments.Select(e => new ExperimentStatusViewModel(e.Status, manager, message)).ToArray();
             }
             else
             {
@@ -84,9 +82,8 @@ namespace PerformanceTest.Management
         {
             Items = null;
 
-            var ids = await manager.FindExperiments();
-            var status = await manager.GetStatus(ids);
-            Items = status.Select(st => new ExperimentStatusViewModel(st, manager, message)).ToArray();
+            var experiments = await manager.FindExperiments();
+            Items = experiments.Select(e => new ExperimentStatusViewModel(e.Status, manager, message)).ToArray();
         }
 
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")

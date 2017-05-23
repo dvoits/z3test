@@ -45,7 +45,7 @@ namespace PerformanceTest.Management
                 return new LocalExperimentManagerViewModel(manager, UIService.Instance);
             }else
             {
-                AzureExperimentManager azureManager = AzureExperimentManager.Open(new AzureExperimentStorage(connectionString), "", "", "");
+                AzureExperimentManager azureManager = AzureExperimentManager.OpenWithoutStart(new AzureExperimentStorage(connectionString));
                 return new AzureExperimentManagerViewModel(azureManager, UIService.Instance);
             }
         }
@@ -189,42 +189,43 @@ namespace PerformanceTest.Management
 
             if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                StreamWriter f = new StreamWriter(dlg.FileName, false);
-                f.WriteLine("\"ID\",\"# Total\",\"# SAT\",\"# UNSAT\",\"# UNKNOWN\",\"# Timeout\",\"# Memout\",\"# Bug\",\"# Error\",\"# Unique\",\"Parameters\",\"Note\""); 
-                var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
-                var count = ids.Length;
-                var unique = computeUnique();
-                for (var i = 0; i < count; i++)
-                {
-                    //not implemented 
-                    var experiment = experimentsVm.Items.Where(st => st.ID == ids[i]).ToArray()[0];
-                    var def = managerVm.GetDefinition(ids[i]).Result;
-                    string ps = def.Parameters;
-                    string note = experiment.Note;
-                    int total =  0;
-                    int sat = 0;
-                    int unsat = 0;
-                    int unknown = 0;
-                    int timeouts = 0;
-                    int memouts = 0;
-                    int bugs = 0;
-                    int errors = 0;
+                throw new NotImplementedException();
+                //StreamWriter f = new StreamWriter(dlg.FileName, false);
+                //f.WriteLine("\"ID\",\"# Total\",\"# SAT\",\"# UNSAT\",\"# UNKNOWN\",\"# Timeout\",\"# Memout\",\"# Bug\",\"# Error\",\"# Unique\",\"Parameters\",\"Note\""); 
+                //var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
+                //var count = ids.Length;
+                //var unique = computeUnique();
+                //for (var i = 0; i < count; i++)
+                //{
+                //    //not implemented 
+                //    var experiment = experimentsVm.Items.Where(st => st.ID == ids[i]).ToArray()[0];
+                //    var def = managerVm.GetDefinition(ids[i]).Result;
+                //    string ps = def.Parameters;
+                //    string note = experiment.Note;
+                //    int total =  0;
+                //    int sat = 0;
+                //    int unsat = 0;
+                //    int unknown = 0;
+                //    int timeouts = 0;
+                //    int memouts = 0;
+                //    int bugs = 0;
+                //    int errors = 0;
 
-                    f.WriteLine(ids[i] + "," +
-                                total + "," +
-                                sat + "," +
-                                unsat + "," +
-                                unknown + "," +
-                                timeouts + "," +
-                                memouts + "," +
-                                bugs + "," +
-                                errors + "," +
-                                unique[i] + "," +
-                                "\"" + ps + "\"," +
-                                "\"" + note + "\"");
-                }
-                f.WriteLine();
-                f.Close();
+                //    f.WriteLine(ids[i] + "," +
+                //                total + "," +
+                //                sat + "," +
+                //                unsat + "," +
+                //                unknown + "," +
+                //                timeouts + "," +
+                //                memouts + "," +
+                //                bugs + "," +
+                //                errors + "," +
+                //                unique[i] + "," +
+                //                "\"" + ps + "\"," +
+                //                "\"" + note + "\"");
+                //}
+                //f.WriteLine();
+                //f.Close();
             }
 
         }

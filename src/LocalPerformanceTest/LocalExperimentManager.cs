@@ -111,45 +111,16 @@ namespace PerformanceTest
             return id;
         }
 
-
-        public override Task<ExperimentDefinition> GetDefinition(int id)
-        {
-            ExperimentInstance experiment;
-            if (runningExperiments.TryGetValue(id, out experiment))
-            {
-                return Task.FromResult(experiment.Definition);
-            }
-            ExperimentEntity row;
-            if (storage.GetExperiments().TryGetValue(id, out row))
-            {
-                return Task.FromResult(RowToDefinition(row));
-            }
-            else throw new ArgumentException(string.Format("Experiment {0} not found", id));
-        }
-
-        public override async Task<IEnumerable<ExperimentStatus>> GetStatus(IEnumerable<int> ids)
+        public override Task<IEnumerable<ExperimentStatus>> GetStatus(IEnumerable<int> ids)
         {
             List<ExperimentStatus> status = new List<ExperimentStatus>();
             var experiments = storage.GetExperiments();
             foreach (var id in ids)
             {
-                ExperimentEntity expRow = experiments[id];
-                int done, total;
-                ExperimentInstance experiment;
-                if (runningExperiments.TryGetValue(id, out experiment))
-                {
-                    total = experiment.Results.Length;
-                    done = experiment.Results.Count(t => t.IsCompleted);
-                }else
-                {
-                    var results = storage.GetResults(id);
-                    done = total = results.Length;                    
-                }
-
-                var st = new ExperimentStatus(id, expRow.Category, expRow.Submitted, expRow.Creator, expRow.Note, expRow.Flag, done, total);
+                var st = GetStatus(id, experiments[id]);
                 status.Add(st);
             }
-            return status;
+            return Task.FromResult((IEnumerable<ExperimentStatus>)status);
         }
         
         public override Task DeleteExperiment (int id)
@@ -193,9 +164,11 @@ namespace PerformanceTest
         }
 
 
-        public override Task<IEnumerable<int>> FindExperiments(ExperimentFilter? filter = default(ExperimentFilter?))
+        public override Task<IEnumerable<Experiment>> FindExperiments(ExperimentFilter? filter = default(ExperimentFilter?))
         {
-            IEnumerable<KeyValuePair<int, ExperimentEntity>> experiments = storage.GetExperiments().ToArray();
+            IEnumerable<KeyValuePair<int, ExperimentEntity>> experiments =
+                storage.GetExperiments()
+                .ToArray();
 
             if (filter.HasValue)
             {
@@ -215,7 +188,32 @@ namespace PerformanceTest
                     .OrderByDescending(q => q.Value.Submitted);
             }
 
-            return Task.FromResult(experiments.OrderByDescending(q => q.Value.Submitted).Select(e => e.Key));
+            var results = experiments.Select(kvp =>
+                 {
+                     int id = kvp.Key;
+                     ExperimentEntity expRow = kvp.Value;
+                     ExperimentDefinition def = RowToDefinition(expRow);
+                     ExperimentStatus status = GetStatus(id, expRow);
+                     return new Experiment { Definition = def, Status = status };
+                 });
+            return Task.FromResult(results);
+        }
+
+        private ExperimentStatus GetStatus(int id, ExperimentEntity expRow)
+        {
+            int done, total;
+            ExperimentInstance experiment;
+            if (runningExperiments.TryGetValue(id, out experiment))
+            {
+                total = experiment.Results.Length;
+                done = experiment.Results.Count(t => t.IsCompleted);
+            }
+            else
+            {
+                var results = storage.GetResults(id);
+                done = total = results.Length;
+            }
+            return new ExperimentStatus(id, expRow.Category, expRow.Submitted, expRow.Creator, expRow.Note, expRow.Flag, done, total);
         }
 
         private async Task<double> ComputeNormal()

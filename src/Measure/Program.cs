@@ -74,8 +74,6 @@ namespace Measure
         {
             int id = await manager.StartExperiment(definition);
             var results = manager.GetResults(id);
-
-
             var filter = new ExperimentManager.ExperimentFilter
             {
                 BenchmarkContainerEquals = definition.BenchmarkContainer,
@@ -83,12 +81,11 @@ namespace Measure
                 ExecutableEquals = definition.Executable,
                 ParametersEquals = definition.Parameters
             };
-            var history = (await manager.FindExperiments(filter)).Where(q => q != id).ToArray();
-
+            var history = (await manager.FindExperiments(filter)).Where(q => q.ID != id).ToArray();
             Dictionary<string, BenchmarkResult> lastBenchmarks = new Dictionary<string, BenchmarkResult>();
             if (history.Length != 0)
             {
-                var lastResults = await manager.GetResults(history.Max());
+                var lastResults = await manager.GetResults(history.Max(e => e.ID));
                 foreach (var b in lastResults)
                 {
                     lastBenchmarks[b.BenchmarkFileName] = b;

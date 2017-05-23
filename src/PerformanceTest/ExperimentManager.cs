@@ -19,11 +19,6 @@ namespace PerformanceTest
         public abstract Task<ExperimentID> StartExperiment(ExperimentDefinition definition, string creator = null, string note = null);
 
         /// <summary>
-        /// Returns a definition of an existing experiment.
-        /// </summary>
-        public abstract Task<ExperimentDefinition> GetDefinition(ExperimentID id);
-
-        /// <summary>
         /// Returns current execution status of existing experiments.
         /// </summary>
         public abstract Task<IEnumerable<ExperimentStatus>> GetStatus(IEnumerable<ExperimentID> ids);
@@ -41,7 +36,7 @@ namespace PerformanceTest
         public abstract Task UpdateStatusFlag(ExperimentID id, bool flag);
         public abstract Task UpdateNote(ExperimentID id, string note);
 
-        public abstract Task<IEnumerable<ExperimentID>> FindExperiments(ExperimentFilter? filter = null);
+        public abstract Task<IEnumerable<Experiment>> FindExperiments(ExperimentFilter? filter = null);
 
         public struct ExperimentFilter
         {
@@ -56,8 +51,14 @@ namespace PerformanceTest
             public string NotesEquals { get; set;}
 
             public string CreatorEquals { get; set;}
-
         }
+    }
+
+    public class Experiment
+    {
+        public ExperimentID ID { get { return Status.ID; } }
+        public ExperimentDefinition Definition;
+        public ExperimentStatus Status;
     }
 
     public class ReferenceExperiment

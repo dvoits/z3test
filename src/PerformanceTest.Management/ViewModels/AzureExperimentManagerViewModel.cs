@@ -28,9 +28,5 @@ namespace PerformanceTest.Management
         {
             throw new NotImplementedException();
         }
-        public override async Task<ExperimentDefinition> GetDefinition(int id)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

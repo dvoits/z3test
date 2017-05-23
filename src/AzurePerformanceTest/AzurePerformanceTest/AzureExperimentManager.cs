@@ -44,7 +44,7 @@ namespace AzurePerformanceTest
         /// <summary>
         /// Creates a manager in a mode when it can open data but not start new experiments.
         /// </summary>
-        public static AzureExperimentManager Open(AzureExperimentStorage storage)
+        public static AzureExperimentManager OpenWithoutStart(AzureExperimentStorage storage)
         {
             return new AzureExperimentManager(storage);
         }
@@ -59,16 +59,24 @@ namespace AzurePerformanceTest
             throw new NotImplementedException();
         }
 
-        public override async Task<IEnumerable<ExperimentID>> FindExperiments(ExperimentFilter? filter = default(ExperimentFilter?))
+        public override async Task<IEnumerable<Experiment>> FindExperiments(ExperimentFilter? filter = default(ExperimentFilter?))
         {
             IEnumerable<KeyValuePair<int, ExperimentEntity>> experiments = await storage.GetExperiments(filter);
 
-            return experiments.OrderByDescending(q => q.Value.Submitted).Select(e => e.Key);
+            return 
+                experiments
+                .OrderByDescending(q => q.Value.Submitted)
+                .Select(e => {
+                    var id = e.Key;
+                    var expRow = e.Value;
+                    ExperimentDefinition def = RowToDefinition(id, expRow);
+                    ExperimentStatus status = new ExperimentStatus(id, def.Category, expRow.Submitted, expRow.Creator, expRow.Note, expRow.Flag, 0, 0); // to do
+                    return new Experiment { Definition = def, Status = status };
+                });
         }
 
-        public override async Task<ExperimentDefinition> GetDefinition(ExperimentID id)
+        private ExperimentDefinition RowToDefinition(ExperimentID id, ExperimentEntity experimentEntity)
         {
-            var experimentEntity = await storage.GetExperiment(id);
             return ExperimentDefinition.Create(
                 experimentEntity.Executable,
                 experimentEntity.BenchmarkContainer,
@@ -76,8 +84,7 @@ namespace AzurePerformanceTest
                 experimentEntity.Parameters,
                 TimeSpan.FromSeconds(experimentEntity.BenchmarkTimeout),
                 experimentEntity.Category,
-                experimentEntity.MemoryLimit << 20
-                );
+                experimentEntity.MemoryLimit << 20);
         }
 
         public override async Task<BenchmarkResult[]> GetResults(ExperimentID id)

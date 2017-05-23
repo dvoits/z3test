@@ -41,7 +41,7 @@ namespace PerformanceTest.Tests
         {
             ValidatesConnectionString();
             AzureExperimentStorage storage = new AzureExperimentStorage(storageConnectionString);
-            AzureExperimentManager manager = AzureExperimentManager.Open(storage);
+            AzureExperimentManager manager = AzureExperimentManager.OpenWithoutStart(storage);
 
             Stopwatch sw1 = Stopwatch.StartNew();
             var results = await manager.GetResults(TestExperimentId);
@@ -63,7 +63,7 @@ namespace PerformanceTest.Tests
         {
             ValidatesConnectionString();
             AzureExperimentStorage storage = new AzureExperimentStorage(storageConnectionString);
-            AzureExperimentManager manager = AzureExperimentManager.Open(storage);
+            AzureExperimentManager manager = AzureExperimentManager.OpenWithoutStart(storage);
 
             var experiments = (await manager.FindExperiments()).ToArray();
             Assert.IsTrue(experiments.Length > 0);
