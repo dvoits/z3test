@@ -10,11 +10,11 @@ namespace LaunchExperiment
 {
     class Program
     {
-        static string storageName = "";
-        static string storageKey = "";
-        static string batchUri = "";
-        static string batchName = "";
-        static string batchKey = "";
+        static string storageName = "cz3test2";
+        static string storageKey = "3gbt4wTBGpC0uAZpxUJTmsj6aL/fqhsd86edeVvCmSUuuOaS//wQ/SiSWkIejnbvrkLpCQDVRmHZsiAyJfyjJA==";
+        static string batchUri = "https://msrcambatchwe.westeurope.batch.azure.com";
+        static string batchName = "msrcambatchwe";
+        static string batchKey = "ugabK5qw226T0dZFby9621mCwWZj/chWBT5I+Abg808mU6D0WImiwu29Awja3MjFHdfh6NIQU1q4E+lmmHoErQ==";
 
         static void Main(string[] args)
         {
