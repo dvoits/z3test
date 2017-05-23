@@ -60,14 +60,14 @@ namespace AzurePerformanceTest
             tableClient = storageAccount.CreateCloudTableClient();
             experimentsTable = tableClient.GetTableReference(experimentsTableName);
             resultsTable = tableClient.GetTableReference(resultsTableName);
-
             queueClient = storageAccount.CreateCloudQueueClient();
-
-            var cloudEntityCreationTasks = new Task[] { binContainer.CreateIfNotExistsAsync(),
+            var cloudEntityCreationTasks = new Task[] {
+                binContainer.CreateIfNotExistsAsync(),
                 outputContainer.CreateIfNotExistsAsync(),
                 configContainer.CreateIfNotExistsAsync(),
                 resultsTable.CreateIfNotExistsAsync(),
-                experimentsTable.CreateIfNotExistsAsync()
+                experimentsTable.CreateIfNotExistsAsync(),
+                resultsContainer.CreateIfNotExistsAsync()
             };
             Task.WaitAll(cloudEntityCreationTasks);
 
@@ -218,7 +218,6 @@ namespace AzurePerformanceTest
                 zipStream.Position = 0;
                 await UploadBlobAsync(zipStream, blob);
             }
-            Trace.WriteLine("Experiment results uploaded");
         }
 
         private static string GetResultsFileName(int expId)
