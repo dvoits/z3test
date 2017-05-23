@@ -70,7 +70,7 @@
             <TabItem Header="Experiments" >
                 <DataGrid AutoGenerateColumns="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,10,10,10" Name="dataGrid" IsReadOnly="False" 
                           GridLinesVisibility="None" SelectionUnit="FullRow" SelectionMode="Extended" AlternatingRowBackground="AliceBlue" 
-                          ItemsSource="{Binding Items}">
+                          ItemsSource="{Binding Items}" MouseDoubleClick="dataGrid_MouseDoubleClick">
                     <DataGrid.Resources>
                         <DataTemplate x:Key="ProgressTemplate" >
                             <ProgressBar Minimum="0" Maximum="{Binding BenchmarksTotal, Mode=OneWay}" Value="{Binding BenchmarksDone, Mode=OneWay}" Width="75" Height="15" IsEnabled="True" />

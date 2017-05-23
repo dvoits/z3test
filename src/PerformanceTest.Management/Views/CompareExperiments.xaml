@@ -21,6 +21,7 @@
             <DataGrid AutoGenerateColumns="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,0,0" Name="dataGrid" IsReadOnly="True" RowHeight="23" 
                       AlternatingRowBackground="AliceBlue" GridLinesVisibility="None" SelectionUnit="FullRow" SelectionMode="Extended"
                       MouseDoubleClick="dataGrid_MouseDoubleClick"
+                      EnableRowVirtualization="True"
                       ItemsSource="{Binding CompareItems}">
                 <DataGrid.Columns>
                     <DataGridTextColumn Binding="{Binding Path=Filename, Mode=OneWay}" Header="Filename" />
@@ -133,13 +134,13 @@
                     <ColumnDefinition MinWidth="550" Width="*" />
                     <ColumnDefinition MinWidth="300" Width="*"/>
                 </Grid.ColumnDefinitions>
-                <!--<StackPanel Grid.Row="0" Orientation="Horizontal">
+                <StackPanel Grid.Row="0" Orientation="Horizontal">
                     <RadioButton Name="radioAll" GroupName="Option" Padding="5,0,5,0" Click="RadioButton_Click" IsChecked="True" VerticalAlignment="Center">All</RadioButton>
                     <RadioButton Name="radioBOTHSAT" GroupName="Option" Padding="5,0,5,0" Click="RadioButton_Click" VerticalAlignment="Center">Both SAT</RadioButton>
                     <RadioButton Name="radioBOTHUNSAT" GroupName="Option" Padding="5,0,5,0" Click="RadioButton_Click" VerticalAlignment="Center">Both UNSAT</RadioButton>
                     <RadioButton Name="radioBOTHUNKNOWN" GroupName="Option" Padding="5,0,5,0" Click="RadioButton_Click" VerticalAlignment="Center">Both UNKNOWN</RadioButton>
                 </StackPanel>
-                <StackPanel Grid.Row="1" Orientation="Horizontal">
+                <!--<StackPanel Grid.Row="1" Orientation="Horizontal">
                     <Label Content="Either is: " VerticalAlignment="Center" />
                     <RadioButton Name="radioONESAT" GroupName="Option" Padding="5,0,5,0" Click="RadioButton_Click" VerticalAlignment="Center">SAT</RadioButton>
                     <RadioButton Name="radioONEUNSAT" GroupName="Option" Padding="5,0,5,0" Click="RadioButton_Click" VerticalAlignment="Center">UNSAT</RadioButton>

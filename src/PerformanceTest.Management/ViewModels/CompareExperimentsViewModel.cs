@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace PerformanceTest.Management
 {
-    class CompareExperimentsViewModel
+    public class CompareExperimentsViewModel
     {
-        private IEnumerable<ExperimentsResultsViewModel> experiments;
+        private IEnumerable<ExperimentComparingResultsViewModel> experiments;
         private readonly int id1, id2;
-        private readonly ExperimentManagerViewModel manager;
+        private readonly ExperimentManager manager;
         private readonly IUIService message;
 
-        public CompareExperimentsViewModel(int id1, int id2, ExperimentManagerViewModel manager, IUIService message)
+        public CompareExperimentsViewModel(int id1, int id2, ExperimentManager manager, IUIService message)
         {
             if (manager == null) throw new ArgumentNullException("manager");
             if (message == null) throw new ArgumentNullException("message");
@@ -21,8 +21,27 @@ namespace PerformanceTest.Management
             this.message = message;
             this.id1 = id1;
             this.id2 = id2;
+
+            RefreshItemsAsync();
         }
-        public IEnumerable<ExperimentsResultsViewModel> CompareItems
+        private async void RefreshItemsAsync()
+        {
+            CompareItems = null;
+
+            var res1 = await manager.GetResults(id1);
+            var res2 = await manager.GetResults(id2);
+            List<ExperimentComparingResultsViewModel> resItems = new List<ExperimentComparingResultsViewModel>();
+            for (var i = 0; i < res1.Length; i++)
+            {
+                for (var j = 0; j < res2.Length; j++)
+                {
+                    if (res1[i].BenchmarkFileName == res2[j].BenchmarkFileName)
+                        resItems.Add(new ExperimentComparingResultsViewModel(res1[i].BenchmarkFileName, res1[i], res2[j], manager, message));
+                }
+            }
+            CompareItems = resItems;
+        }
+        public IEnumerable<ExperimentComparingResultsViewModel> CompareItems
         {
             get { return experiments; }
             private set { experiments = value; }
@@ -44,33 +63,36 @@ namespace PerformanceTest.Management
         public string Unknown1Title { get { return "UNKNOWN (" + id1.ToString() + ")"; } }
         public string Unknown2Title { get { return "UNKNOWN (" + id2.ToString() + ")"; } }
     }
-    public class ExperimentsResultsViewModel
+    public class ExperimentComparingResultsViewModel
     {
-        private readonly ExperimentStatus status1;
-        private readonly ExperimentStatus status2;
+        private readonly BenchmarkResult result1;
+        private readonly BenchmarkResult result2;
         private readonly ExperimentManager manager;
+        private readonly string filename;
         private readonly IUIService message;
 
-        public ExperimentsResultsViewModel(ExperimentStatus status1, ExperimentStatus status2, ExperimentManager manager, IUIService message)
+        public ExperimentComparingResultsViewModel(string filename, BenchmarkResult res1, BenchmarkResult res2, ExperimentManager manager, IUIService message)
         {
-            if (status1 == null || status2 == null) throw new ArgumentNullException("status");
+            if (res1 == null || res2 == null) throw new ArgumentNullException("results");
             if (manager == null) throw new ArgumentNullException("manager");
             if (message == null) throw new ArgumentNullException("message");
-            this.status1 = status1;
-            this.status2 = status2;
+            this.result1 = res1;
+            this.result2 = res2;
+            this.filename = filename;
             this.manager = manager;
             this.message = message;
         }
 
-        public int ID1 { get { return status1.ID; } }
-        public int ID2 { get { return status2.ID; } }
-        public double Runtime1 { get { return 0.0; } }
-        public double Runtime2 { get { return 0.0; } }
+        public string Filename { get { return filename; } }
+        public int ID1 { get { return result1.ExperimentID; } }
+        public int ID2 { get { return result2.ExperimentID; } }
+        public double Runtime1 { get { return result1.NormalizedRuntime; } }
+        public double Runtime2 { get { return result2.NormalizedRuntime; } }
         public int ResultCode1 { get { return 0; } }
         public int ResultCode2 { get { return 0; } }
         public int ReturnValue1 { get { return 0; } }
         public int ReturnValue2 { get { return 0; } }
-        public double Diff { get { return 0.0; } }
+        public double Diff { get { return result1.NormalizedRuntime - result2.NormalizedRuntime; } }
         public int Sat1
         {
             get { return 0; }

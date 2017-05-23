@@ -435,7 +435,7 @@ namespace PerformanceTest.Management
             Mouse.OverrideCursor = Cursors.Wait;
             var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
             CompareExperiments dlg = new CompareExperiments();
-            var vm = new CompareExperimentsViewModel(ids[0], ids[1], managerVm, UIService.Instance);
+            var vm = managerVm.BuildComparingResults(ids[0], ids[1]); //new CompareExperimentsViewModel(ids[0], ids[1], managerVm, UIService.Instance);
             dlg.DataContext = vm;
             dlg.Owner = this;
             dlg.Show();
@@ -454,6 +454,22 @@ namespace PerformanceTest.Management
             //sp.DataContext = vm;
             //sp.Owner = this;
             //sp.Show();
+            Mouse.OverrideCursor = null;
+        }
+        private void dataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (dataGrid.SelectedItems.Count != 1)
+                return;
+
+            Mouse.OverrideCursor = Cursors.Wait;
+
+            var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
+            ShowResults dlg = new ShowResults();
+            var vm = managerVm.BuildResultsView(ids[0]);
+            dlg.DataContext = vm;
+            dlg.Owner = this;
+            dlg.Show();
+
             Mouse.OverrideCursor = null;
         }
     }

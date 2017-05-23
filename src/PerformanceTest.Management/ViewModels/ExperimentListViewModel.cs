@@ -185,7 +185,6 @@ namespace PerformanceTest.Management
                 message.ShowError("Failed to update experiment note: " + ex.Message);
             }
         }
-
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

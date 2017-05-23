@@ -31,14 +31,18 @@ namespace PerformanceTest.Management
         }
         private void CopyFilename(object target, ExecutedRoutedEventArgs e)
         {
-            var filename = (dataGrid.SelectedItem);//!!!!!!
-            Clipboard.SetText(filename.ToString());
+            ExperimentComparingResultsViewModel elem = (ExperimentComparingResultsViewModel)dataGrid.SelectedItem;
+            Clipboard.SetText(elem.Filename);
         }
         private void dataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (dataGrid.SelectedItems.Count != 1)
                 return;
             //not implemented
+        }
+        private void RadioButton_Click(object sender, RoutedEventArgs e)
+        {
+            //updateGrid((RadioButton)sender);
         }
     }
 }
