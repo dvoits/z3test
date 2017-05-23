@@ -59,11 +59,13 @@ namespace AzurePerformanceTest
             experimentsTable = tableClient.GetTableReference(experimentsTableName);
             resultsTable = tableClient.GetTableReference(resultsTableName);
 
-            var cloudEntityCreationTasks = new Task[] { binContainer.CreateIfNotExistsAsync(),
+            var cloudEntityCreationTasks = new Task[] {
+                binContainer.CreateIfNotExistsAsync(),
                 outputContainer.CreateIfNotExistsAsync(),
                 configContainer.CreateIfNotExistsAsync(),
                 resultsTable.CreateIfNotExistsAsync(),
-                experimentsTable.CreateIfNotExistsAsync()
+                experimentsTable.CreateIfNotExistsAsync(),
+                resultsContainer.CreateIfNotExistsAsync()
             };
             Task.WaitAll(cloudEntityCreationTasks);
 
