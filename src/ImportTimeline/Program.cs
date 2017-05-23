@@ -86,14 +86,25 @@ namespace ImportTimeline
 
         static void UploadResults(string pathToData, Dictionary<int, DateTime> submitted, AzureExperimentStorage storage)
         {
+            List<int> missingExperiments = new List<int>();
+
             var upload =
-                Directory.EnumerateFiles(pathToData, "*.zip")
+                Directory.EnumerateFiles(pathToData, "*.zip")                
                 .AsParallel()
                 .Select(file =>
                 {
                     int expId = int.Parse(Path.GetFileNameWithoutExtension(file));
-                    var submittedTime = submitted != null ? submitted[expId] : DateTime.Now;
 
+                    DateTime submittedTime;
+                    if (submitted == null) {
+                        submittedTime = DateTime.Now;
+                    }
+                    else if (!submitted.TryGetValue(expId, out submittedTime))
+                    {
+                        missingExperiments.Add(expId);
+                        Console.WriteLine("Experiment {0} has results but not metadata");
+                        return Task.FromResult(0);
+                    }
                     Console.WriteLine("Uploading results for {0}... ", expId);
 
                     CSVData table = new CSVData(file, (uint)expId);
@@ -116,6 +127,15 @@ namespace ImportTimeline
 
             Task.WhenAll(upload).Wait();
             Console.WriteLine("Done.");
+
+            if(missingExperiments.Count > 0)
+            {
+                Console.WriteLine("\nFollowing experiments have results but not metadata:");
+                foreach (var item in missingExperiments)
+                {
+                    Console.WriteLine(item);
+                }
+            }
         }
 
         private static Measurement.Measure.CompletionStatus ResultCodeToStatus(uint resultCode)
