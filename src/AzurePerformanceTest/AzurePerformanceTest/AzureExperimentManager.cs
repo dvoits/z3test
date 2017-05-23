@@ -9,6 +9,7 @@ using Microsoft.Azure.Batch;
 
 using ExperimentID = System.Int32;
 using Microsoft.WindowsAzure.Storage.Blob;
+using Microsoft.Azure.Batch.Common;
 
 namespace AzurePerformanceTest
 {
@@ -108,6 +109,7 @@ namespace AzurePerformanceTest
             {
                 CloudJob job = bc.JobOperations.CreateJob();
                 job.Id = "exp" + id.ToString();
+                job.OnAllTasksComplete = OnAllTasksComplete.TerminateJob;
                 job.PoolInformation = new PoolInformation { PoolId = "testPool" };
                 job.JobPreparationTask = new JobPreparationTask
                 {
@@ -122,7 +124,7 @@ namespace AzurePerformanceTest
                     Permissions = SharedAccessBlobPermissions.Read
                 };
 
-                foreach (CloudBlockBlob blob in storage.configContainer.ListBlobs())
+                foreach (CloudBlockBlob blob in storage.ListAzureWorkerBlobs())
                 {
                     string sasBlobToken = blob.GetSharedAccessSignature(sasConstraints);
                     string blobSasUri = String.Format("{0}{1}", blob.Uri, sasBlobToken);
@@ -133,11 +135,9 @@ namespace AzurePerformanceTest
 
                 string taskId = "taskStarter";
 
-                string taskCommandLine = string.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\AzureWorker.exe --add-tasks {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\"", id, definition.Category, definition.Executable, definition.Parameters, definition.BenchmarkTimeout.Seconds.ToString(), definition.MemoryLimit.ToString());
+                string taskCommandLine = string.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\AzureWorker.exe --add-tasks {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\"", id, "default", definition.Category, definition.Executable, definition.Parameters, definition.BenchmarkTimeout.TotalSeconds.ToString(), definition.MemoryLimit.ToString());
                 CloudTask task = new CloudTask(taskId, taskCommandLine);
-
-                // Add the tasks as a collection opposed to a separate AddTask call for each. Bulk task submission
-                // helps to ensure efficient underlying API calls to the Batch service.
+                
                 await bc.JobOperations.AddTaskAsync(job.Id, task);
             }
 
