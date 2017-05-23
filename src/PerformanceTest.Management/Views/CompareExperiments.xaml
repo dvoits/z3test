@@ -18,9 +18,8 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <DataGrid AutoGenerateColumns="True" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,0,0" Name="dataGrid" Grid.Row="0" Grid.Column="0" IsReadOnly="True" RowHeight="23" 
-                      AlternatingRowBackground="AliceBlue"
-                      SelectionUnit="FullRow" 
+            <DataGrid AutoGenerateColumns="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,0,0" Name="dataGrid" IsReadOnly="True" RowHeight="23" 
+                      AlternatingRowBackground="AliceBlue" GridLinesVisibility="None" SelectionUnit="FullRow" SelectionMode="Extended"
                       MouseDoubleClick="dataGrid_MouseDoubleClick"
                       ItemsSource="{Binding CompareItems}">
                 <DataGrid.Columns>
@@ -123,7 +122,7 @@
                 </DataGrid.ContextMenu>
             </DataGrid>
 
-            <!--<Grid Name="radioGrid" Grid.Row="2" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Bottom">
+            <Grid Name="radioGrid" Grid.Row="2" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Bottom">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
@@ -134,7 +133,7 @@
                     <ColumnDefinition MinWidth="550" Width="*" />
                     <ColumnDefinition MinWidth="300" Width="*"/>
                 </Grid.ColumnDefinitions>
-                <StackPanel Grid.Row="0" Orientation="Horizontal">
+                <!--<StackPanel Grid.Row="0" Orientation="Horizontal">
                     <RadioButton Name="radioAll" GroupName="Option" Padding="5,0,5,0" Click="RadioButton_Click" IsChecked="True" VerticalAlignment="Center">All</RadioButton>
                     <RadioButton Name="radioBOTHSAT" GroupName="Option" Padding="5,0,5,0" Click="RadioButton_Click" VerticalAlignment="Center">Both SAT</RadioButton>
                     <RadioButton Name="radioBOTHUNSAT" GroupName="Option" Padding="5,0,5,0" Click="RadioButton_Click" VerticalAlignment="Center">Both UNSAT</RadioButton>
@@ -175,8 +174,8 @@
                         <Label Name="lblRight" Content=""/>
                         <TextBox Name="txtExtensionRight" MinWidth="75" HorizontalAlignment="Stretch" VerticalAlignment="Center" Text="ABC" IsEnabled="False" KeyUp="txtExtensionRight_KeyUp"/>
                     </StackPanel>
-                </StackPanel>
-            </Grid>-->
+                </StackPanel>-->
+            </Grid>
         </Grid>
     </Grid>
 </Window>
