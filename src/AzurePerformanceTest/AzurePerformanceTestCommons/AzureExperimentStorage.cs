@@ -1,6 +1,7 @@
 ﻿using Measurement;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
+using Microsoft.WindowsAzure.Storage.Queue;
 using Microsoft.WindowsAzure.Storage.Table;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -27,12 +28,13 @@ namespace AzurePerformanceTest
         private CloudBlobContainer binContainer;
         private CloudBlobContainer resultsContainer;
         private CloudBlobContainer outputContainer;
+        private CloudBlobContainer configContainer;
         private CloudTableClient tableClient;
         private CloudTable experimentsTable;
         private CloudTable resultsTable;
+        private CloudQueueClient queueClient;
 
 
-        public CloudBlobContainer configContainer;
 
         const string resultsContainerName = "results";
         const string binContainerName = "bin";
@@ -59,6 +61,8 @@ namespace AzurePerformanceTest
             experimentsTable = tableClient.GetTableReference(experimentsTableName);
             resultsTable = tableClient.GetTableReference(resultsTableName);
 
+            queueClient = storageAccount.CreateCloudQueueClient();
+
             var cloudEntityCreationTasks = new Task[] {
                 binContainer.CreateIfNotExistsAsync(),
                 outputContainer.CreateIfNotExistsAsync(),
@@ -70,6 +74,11 @@ namespace AzurePerformanceTest
             Task.WaitAll(cloudEntityCreationTasks);
 
             InitializeCache();
+        }
+
+        public IEnumerable<CloudBlockBlob> ListAzureWorkerBlobs()
+        {
+            return configContainer.ListBlobs().Select(listItem => listItem as CloudBlockBlob);
         }
 
         public async Task SaveReferenceExperiment(ReferenceExperiment reference)
@@ -149,6 +158,46 @@ namespace AzurePerformanceTest
         public Task PutResult(BenchmarkResult result)
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<CloudQueue> CreateResultsQueue(ExperimentID id)
+        {
+            var reference = queueClient.GetQueueReference(QueueNameForExperiment(id));
+            await reference.CreateIfNotExistsAsync();
+            return reference;
+        }
+
+        public CloudQueue GetResultsQueueReference(ExperimentID id)
+        {
+            return queueClient.GetQueueReference(QueueNameForExperiment(id));
+        }
+
+        public async Task DeleteResultsQueue(ExperimentID id)
+        {
+            var reference = queueClient.GetQueueReference(QueueNameForExperiment(id));
+            await reference.DeleteIfExistsAsync();
+        }
+
+        private string QueueNameForExperiment(ExperimentID id)
+        {
+            return "exp" + id.ToString();
+        }
+
+        public CloudBlockBlob GetExecutableReference(string name)
+        {
+            return binContainer.GetBlockBlobReference(name);
+        }
+
+        public string GetExecutableSasUri(string name)
+        {
+            var blob = binContainer.GetBlobReference(name);
+            SharedAccessBlobPolicy sasConstraints = new SharedAccessBlobPolicy
+            {
+                SharedAccessExpiryTime = DateTime.UtcNow.AddHours(48),
+                Permissions = SharedAccessBlobPermissions.Read
+            };
+            string signature = blob.GetSharedAccessSignature(sasConstraints);
+            return blob.Uri + signature;
         }
 
         /// <summary>
@@ -304,38 +353,62 @@ namespace AzurePerformanceTest
 
         public async Task<ExperimentEntity> GetExperiment(ExperimentID id)
         {
-            string experimentEntityFilter = TableQuery.CombineFilters(
-                   TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, ExperimentEntity.PartitionKeyDefault),
-                   TableOperators.And,
-                   TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, ExperimentEntity.ExperimentIDToString(id)));
-            TableQuery<ExperimentEntity> query = new TableQuery<ExperimentEntity>().Where(experimentEntityFilter);
+            TableQuery<ExperimentEntity> query = ExperimentPointQuery(id);
 
-            var list = (await experimentsTable.ExecuteQuerySegmentedAsync(query, null)).ToList();
-
-            if (list.Count == 0)
-                throw new ArgumentException("Experiment with given ID not found");
-
-            return list[0];
+            return await FirstExperimentInQuery(query);
         }
 
         public async Task UpdateNote(int id, string note)
         {
-            string experimentEntityFilter = TableQuery.CombineFilters(
-                   TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, ExperimentEntity.PartitionKeyDefault),
-                   TableOperators.And,
-                   TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, ExperimentEntity.ExperimentIDToString(id)));
-            TableQuery<ExperimentEntity> query = new TableQuery<ExperimentEntity>().Where(experimentEntityFilter);
+            TableQuery<ExperimentEntity> query = ExperimentPointQuery(id);
 
             bool changed = false;
             do
             {
-                var list = (await experimentsTable.ExecuteQuerySegmentedAsync(query, null)).ToList();
-
-                if (list.Count == 0)
-                    throw new ArgumentException("Experiment with given ID not found");
-
-                var experiment = list[0];
+                ExperimentEntity experiment = await FirstExperimentInQuery(query);
                 experiment.Note = note;
+
+                changed = !(await TryUpdateTableEntity(experimentsTable, experiment));
+            } while (changed);
+        }
+
+        public async Task SetTotalBenchmarks(int id, int totalBenchmarks)
+        {
+            TableQuery<ExperimentEntity> query = ExperimentPointQuery(id);
+
+            bool changed = false;
+            do
+            {
+                ExperimentEntity experiment = await FirstExperimentInQuery(query);
+                experiment.TotalBenchmarks = totalBenchmarks;
+
+                changed = !(await TryUpdateTableEntity(experimentsTable, experiment));
+            } while (changed);
+        }
+
+        public async Task SetCompletedBenchmarks(int id, int completedBenchmarks)
+        {
+            TableQuery<ExperimentEntity> query = ExperimentPointQuery(id);
+
+            bool changed = false;
+            do
+            {
+                ExperimentEntity experiment = await FirstExperimentInQuery(query);
+                experiment.CompletedBenchmarks = completedBenchmarks;
+
+                changed = !(await TryUpdateTableEntity(experimentsTable, experiment));
+            } while (changed);
+        }
+
+        public async Task IncreaseCompletedBenchmarks(int id, int completedBenchmarksRaise)
+        {
+            TableQuery<ExperimentEntity> query = ExperimentPointQuery(id);
+
+            bool changed = false;
+            do
+            {
+                ExperimentEntity experiment = await FirstExperimentInQuery(query);
+                experiment.CompletedBenchmarks += completedBenchmarksRaise;
 
                 changed = !(await TryUpdateTableEntity(experimentsTable, experiment));
             } while (changed);
@@ -343,25 +416,37 @@ namespace AzurePerformanceTest
 
         public async Task UpdateStatusFlag(ExperimentID id, bool flag)
         {
-            string experimentEntityFilter = TableQuery.CombineFilters(
-                   TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, ExperimentEntity.PartitionKeyDefault),
-                   TableOperators.And,
-                   TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, ExperimentEntity.ExperimentIDToString(id)));
-            TableQuery<ExperimentEntity> query = new TableQuery<ExperimentEntity>().Where(experimentEntityFilter);
+            TableQuery<ExperimentEntity> query = ExperimentPointQuery(id);
 
             bool changed = false;
             do
             {
-                var list = (await experimentsTable.ExecuteQuerySegmentedAsync(query, null)).ToList();
-
-                if (list.Count == 0)
-                    throw new ArgumentException("Experiment with given ID not found");
-
-                var experiment = list[0];
+                ExperimentEntity experiment = await FirstExperimentInQuery(query);
                 experiment.Flag = flag;
 
                 changed = !(await TryUpdateTableEntity(experimentsTable, experiment));
             } while (changed);
+        }
+
+        private async Task<ExperimentEntity> FirstExperimentInQuery(TableQuery<ExperimentEntity> query)
+        {
+            var list = (await experimentsTable.ExecuteQuerySegmentedAsync(query, null)).ToList();
+
+            if (list.Count == 0)
+                throw new ArgumentException("Experiment with given ID not found");
+
+            var experiment = list[0];
+            return experiment;
+        }
+
+        private static TableQuery<ExperimentEntity> ExperimentPointQuery(int id)
+        {
+            string experimentEntityFilter = TableQuery.CombineFilters(
+                               TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, ExperimentEntity.PartitionKeyDefault),
+                               TableOperators.And,
+                               TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, ExperimentEntity.ExperimentIDToString(id)));
+            TableQuery<ExperimentEntity> query = new TableQuery<ExperimentEntity>().Where(experimentEntityFilter);
+            return query;
         }
 
         private static async Task<bool> TryInsertTableEntity(CloudTable table, ITableEntity entity)
@@ -516,7 +601,7 @@ namespace AzurePerformanceTest
         {
             return id.ToString();//.PadLeft(6, '0');
         }
-        public static string PartitionKeyDefault = "default";
+        public const string PartitionKeyDefault = "default";
 
         public ExperimentEntity(string id)
         {
@@ -551,13 +636,15 @@ namespace AzurePerformanceTest
         public string Creator { get; set; }
         public bool Flag { get; set; }
         public string GroupName { get; set; }
+        public int TotalBenchmarks { get; set; }
+        public int CompletedBenchmarks { get; set; }
     }
 
     public class NextExperimentIDEntity : TableEntity
     {
         public int Id { get; set; }
-        public static string NextIDPartition = "NextIDPartition";
-        public static string NextIDRow = "NextIDRow";
+        public const string NextIDPartition = "NextIDPartition";
+        public const string NextIDRow = "NextIDRow";
 
         public NextExperimentIDEntity()
         {
