@@ -35,25 +35,53 @@ namespace PerformanceTest.Management
         {
             e.CanExecute = dataGrid.SelectedItems.Count > 0;
         }
+        private void Reclassify(int rc)
+        {
+            try
+            {
+                var elems = dataGrid.SelectedItems.Cast<ExperimentResultViewModel>();
+                foreach (var vm in elems)
+                {
+                    if (rc == 5) vm.Runtime = 0.0; //some new value for runtime
+                    vm.ResultCode = rc;
+                    //update ResultCode
+                }
+                Console.WriteLine();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, "Exception: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
         private void ReclassifyOK(object target, ExecutedRoutedEventArgs e)
         {
-            //not implemented
+            Mouse.OverrideCursor = Cursors.Wait;
+            Reclassify(0);
+            Mouse.OverrideCursor = null;
         }
         private void ReclassifyBug(object target, ExecutedRoutedEventArgs e)
         {
-            //not implemented
+            Mouse.OverrideCursor = Cursors.Wait;
+            Reclassify(3);
+            Mouse.OverrideCursor = null;
         }
         private void ReclassifyError(object target, ExecutedRoutedEventArgs e)
         {
-            //not implemented
+            Mouse.OverrideCursor = Cursors.Wait;
+            Reclassify(4);
+            Mouse.OverrideCursor = null;
         }
         private void ReclassifyTimeout(object target, ExecutedRoutedEventArgs e)
         {
-            //not implemented
+            Mouse.OverrideCursor = Cursors.Wait;
+            Reclassify(5);
+            Mouse.OverrideCursor = null;
         }
         private void ReclassifyMemout(object target, ExecutedRoutedEventArgs e)
         {
-            //not implemented
+            Mouse.OverrideCursor = Cursors.Wait;
+            Reclassify(6);
+            Mouse.OverrideCursor = null;
         }
         private void canRequeue(object sender, CanExecuteRoutedEventArgs e)
         {
@@ -61,7 +89,23 @@ namespace PerformanceTest.Management
         }
         private void Requeue(object target, ExecutedRoutedEventArgs e)
         {
-            //not implemented
+            Mouse.OverrideCursor = Cursors.Wait;
+
+            var elems = dataGrid.SelectedItems.Cast<ExperimentResultViewModel>();
+            try
+            {
+                //foreach (var vm in elems)
+                //{
+                //    //delete selected results
+                //}
+
+                Console.WriteLine();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, "Exception: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            Mouse.OverrideCursor = null;
         }
         private void canCopyFilename(object sender, CanExecuteRoutedEventArgs e)
         {

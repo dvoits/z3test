@@ -118,7 +118,7 @@ namespace PerformanceTest.Management
         public int ResultCode
         {
             get { return 0; }
-            //{set {result.resultCode = value; NotifyPropertyChanged();}}
+            set { }
         }
         public int SAT
         {
@@ -135,7 +135,7 @@ namespace PerformanceTest.Management
         public double Runtime
         {
             get { return result.NormalizedRuntime; }
-            //set {  }
+            set {  }
         }
         public string Worker
         {
