@@ -217,7 +217,7 @@ namespace AzurePerformanceTest
             entity.ExitCode = result.Measurements.ExitCode;
             entity.NormalizedRuntime = result.NormalizedRuntime;
             entity.PeakMemorySize = (int)(result.Measurements.PeakMemorySize >> 20);
-            entity.Status = result.Measurements.Status.ToString();
+            entity.Status = result.Measurements.Limits.ToString();
             entity.StdErr = stderrBlobId;
             entity.StdOut = stdoutBlobId;
             entity.TotalProcessorTime = result.Measurements.TotalProcessorTime.TotalSeconds;
@@ -227,9 +227,9 @@ namespace AzurePerformanceTest
             return entity;
         }
 
-        private Measure.CompletionStatus StatusFromString(string status)
+        private Measure.LimitsStatus StatusFromString(string status)
         {
-            return (Measure.CompletionStatus)Enum.Parse(typeof(Measure.CompletionStatus), status);
+            return (Measure.LimitsStatus)Enum.Parse(typeof(Measure.LimitsStatus), status);
         }
 
         /// <summary>

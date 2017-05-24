@@ -35,7 +35,7 @@ namespace PerformanceTest
             int exitCode = measures[0].ExitCode;
             foreach(ProcessRunMeasure m in measures)
             {
-                if (m.Status != Measure.CompletionStatus.Success || m.ExitCode != exitCode) return m;
+                if (m.Limits != Measure.LimitsStatus.Success || m.ExitCode != exitCode) return m;
             }
 
             TimeSpan totalProcessorTime = Median(measures.Select(m => m.TotalProcessorTime).ToArray(), (t1, t2) => TimeSpan.FromTicks((t1 + t2).Ticks >> 1));
@@ -46,7 +46,7 @@ namespace PerformanceTest
                 totalProcessorTime,
                 wallClockTime,
                 peakMemorySize,
-                measures[0].Status,
+                measures[0].Limits,
                 exitCode,
                 measures[0].StdOut,
                 measures[0].StdErr);

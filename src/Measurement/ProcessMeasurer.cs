@@ -113,10 +113,9 @@ namespace Measurement
                 processorTime,
                 wallClockTime,
                 maxmem,
-                exhausted_time ? Measurement.Measure.CompletionStatus.Timeout : 
-                    exhausted_memory ? Measurement.Measure.CompletionStatus.OutOfMemory :
-                        exitCode != 0 && exitCode != 1 ? Measurement.Measure.CompletionStatus.Error : // For F*, a return value of 1 is still ok.
-                            Measurement.Measure.CompletionStatus.Success,
+                exhausted_time ? Measurement.Measure.LimitsStatus.TimeOut : 
+                    (exhausted_memory || exitCode == -1073741571) ? Measurement.Measure.LimitsStatus.MemoryOut : // .NET StackOverflowException
+                            Measurement.Measure.LimitsStatus.WithinLimits,
                 exitCode,
                 stdOut,
                 stdErr);

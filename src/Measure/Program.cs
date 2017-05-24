@@ -104,7 +104,7 @@ namespace Measure
                     {
                         BenchmarkResult lastBenchmark = null;
                         lastBenchmarks.TryGetValue(benchmark.BenchmarkFileName, out lastBenchmark);
-                        if (lastBenchmark != null && lastBenchmark.Measurements.Status != Measurement.Measure.CompletionStatus.Success)
+                        if (lastBenchmark != null && lastBenchmark.Measurements.Limits != Measurement.Measure.LimitsStatus.Success)
                             lastBenchmark = null;
                         PrintBenchmark(benchmark, lastBenchmark);
                     }
@@ -139,7 +139,7 @@ namespace Measure
             }
 
 
-            if (result.Measurements.Status == Measurement.Measure.CompletionStatus.Success)
+            if (result.Measurements.Limits == Measurement.Measure.LimitsStatus.Success)
             {
                 if (speedup < 1 - threshold)
                     PrintWarning("Slower   " + info);
@@ -152,15 +152,15 @@ namespace Measure
                 else
                     Print("Passed   " + info);
             }
-            else if (result.Measurements.Status == Measurement.Measure.CompletionStatus.OutOfMemory)
+            else if (result.Measurements.Limits == Measurement.Measure.LimitsStatus.OutOfMemory)
             {
                 PrintError("Out of memory    " + info);
             }
-            else if (result.Measurements.Status == Measurement.Measure.CompletionStatus.Error)
+            else if (result.Measurements.Limits == Measurement.Measure.LimitsStatus.Error)
             {
                 PrintError("Error    " + info);
             }
-            else if (result.Measurements.Status == Measurement.Measure.CompletionStatus.Timeout)
+            else if (result.Measurements.Limits == Measurement.Measure.LimitsStatus.Timeout)
             {
                 PrintError("Timeout    " + info);
             }

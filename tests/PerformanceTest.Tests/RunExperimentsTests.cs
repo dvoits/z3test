@@ -62,7 +62,7 @@ namespace UnitTests
 
             var res = results[0];
             Assert.AreEqual(0, res.Measurements.ExitCode, "exit code");
-            Assert.AreEqual(CompletionStatus.Success, res.Measurements.Status, "status");
+            Assert.AreEqual(LimitsStatus.Success, res.Measurements.Limits, "status");
             Assert.IsTrue(res.Measurements.TotalProcessorTime.TotalSeconds < 1, "Total runtime");
         }
 
@@ -81,7 +81,7 @@ namespace UnitTests
             foreach (var res in results)
             {
                 Assert.AreEqual(0, res.Measurements.ExitCode, "exit code");
-                Assert.AreEqual(CompletionStatus.Success, res.Measurements.Status, "status");
+                Assert.AreEqual(LimitsStatus.Success, res.Measurements.Limits, "status");
                 Assert.IsTrue(res.Measurements.TotalProcessorTime.TotalSeconds < 10, "Total runtime");
             }
         }

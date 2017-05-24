@@ -209,7 +209,7 @@ namespace PerformanceTest
                 Column.Create("TotalProcessorTime", benchmarks.Select(b => b.Measurements.TotalProcessorTime.TotalSeconds), None),
                 Column.Create("WallClockTime", benchmarks.Select(b => b.Measurements.WallClockTime.TotalSeconds), None),
                 Column.Create("PeakMemorySize", benchmarks.Select(b => (int)(b.Measurements.PeakMemorySize >> 20)), None),
-                Column.Create("Status", benchmarks.Select(b => StatusAsString(b.Measurements.Status)), None),
+                Column.Create("Status", benchmarks.Select(b => StatusAsString(b.Measurements.Limits)), None),
                 Column.Create("ExitCode", benchmarks.Select(b => b.Measurements.ExitCode), None),
                 Column.Create("StdOut", benchmarks.Select(b => b.Measurements.OutputToString()), None),
                 Column.Create("StdErr", benchmarks.Select(b => b.Measurements.ErrorToString()), None),
@@ -234,14 +234,14 @@ namespace PerformanceTest
             }
         }
 
-        private static string StatusAsString(Measure.CompletionStatus status)
+        private static string StatusAsString(Measure.LimitsStatus status)
         {
             return status.ToString();
         }
 
-        private Measure.CompletionStatus StatusFromString(string status)
+        private Measure.LimitsStatus StatusFromString(string status)
         {
-            return (Measure.CompletionStatus)Enum.Parse(typeof(Measure.CompletionStatus), status);
+            return (Measure.LimitsStatus)Enum.Parse(typeof(Measure.LimitsStatus), status);
         }
 
         private static Stream AsStream(string s)

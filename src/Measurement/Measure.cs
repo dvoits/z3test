@@ -6,12 +6,12 @@ namespace Measurement
 {    
     public class Measure
     {
-        public Measure(TimeSpan totalProcessorTime, TimeSpan wallClockTime, long peakMemorySize, CompletionStatus status)
+        public Measure(TimeSpan totalProcessorTime, TimeSpan wallClockTime, long peakMemorySize, LimitsStatus limits)
         {
             TotalProcessorTime = totalProcessorTime;
             WallClockTime = wallClockTime;
             PeakMemorySize = peakMemorySize;
-            Status = status;
+            Limits = limits;
         }
 
         public TimeSpan TotalProcessorTime { get; private set; }
@@ -22,21 +22,22 @@ namespace Measurement
         /// </summary>
         public long PeakMemorySize { get; private set; }
 
-        public CompletionStatus Status { get; private set; }
+        public LimitsStatus Limits { get; private set; }
 
-        public enum CompletionStatus
+        public enum LimitsStatus
         {
-            Success,
-            OutOfMemory,
-            Timeout,
-            Error,
-            Bug
+            /// <summary>Process exited without exceeding memory or time limit.</summary>
+            WithinLimits,
+            /// <summary>Process exceed memory limit.</summary>
+            MemoryOut,
+            /// <summary>Process exceed time limit.</summary>
+            TimeOut
         }
     }
 
     public class ProcessRunMeasure : Measure
     {
-        public ProcessRunMeasure(TimeSpan totalProcessorTime, TimeSpan wallClockTime, long peakMemorySize, CompletionStatus status, int exitCode, Stream stdOut, Stream stdErr) :
+        public ProcessRunMeasure(TimeSpan totalProcessorTime, TimeSpan wallClockTime, long peakMemorySize, LimitsStatus status, int exitCode, Stream stdOut, Stream stdErr) :
             base(totalProcessorTime, wallClockTime, peakMemorySize, status)
         {
             ExitCode = exitCode;
@@ -63,4 +64,5 @@ namespace Measurement
             return s;
         }
     }
+
 }
