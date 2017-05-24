@@ -146,6 +146,21 @@ namespace PerformanceTest.Management
                 radioOutputContains.IsChecked = true;
             }
         }
+        private void dataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (dataGrid.SelectedItems.Count != 1)
+                return;
 
+            Mouse.OverrideCursor = System.Windows.Input.Cursors.Wait;
+
+            ExperimentResultViewModel elem = (ExperimentResultViewModel)dataGrid.SelectedItem;
+            ShowOutputViewModel vm = new ShowOutputViewModel(elem.ID, elem.Filename, elem.StdOut, elem.StdErr);
+            ShowOutput w = new ShowOutput();
+            w.DataContext = vm;
+            w.Owner = this;
+
+            w.Show();
+            Mouse.OverrideCursor = null;
+        }
     }
 }

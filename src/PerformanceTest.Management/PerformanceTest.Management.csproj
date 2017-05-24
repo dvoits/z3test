@@ -59,6 +59,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Views\ShowOutput.xaml.cs">
+      <DependentUpon>ShowOutput.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ViewModels\ShowOutputViewModel.cs" />
     <Compile Include="Views\ShowResults.xaml.cs">
       <DependentUpon>ShowResults.xaml</DependentUpon>
     </Compile>
@@ -84,6 +88,10 @@
     <Compile Include="ViewModels\DelegateCommand.cs" />
     <Compile Include="ViewModels\ExperimentManagerViewModel.cs" />
     <Compile Include="ViewModels\NewExperimentViewModel.cs" />
+    <Page Include="Views\ShowOutput.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\ShowResults.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

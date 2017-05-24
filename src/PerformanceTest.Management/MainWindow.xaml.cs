@@ -256,7 +256,7 @@ namespace PerformanceTest.Management
 
         private void showTally(object target, ExecutedRoutedEventArgs e)
         {
-            Mouse.OverrideCursor = System.Windows.Input.Cursors.Wait;
+            Mouse.OverrideCursor = Cursors.Wait;
 
             double total = 0.0;
             var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
@@ -435,7 +435,7 @@ namespace PerformanceTest.Management
             Mouse.OverrideCursor = Cursors.Wait;
             var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
             CompareExperiments dlg = new CompareExperiments();
-            var vm = managerVm.BuildComparingResults(ids[0], ids[1]); //new CompareExperimentsViewModel(ids[0], ids[1], managerVm, UIService.Instance);
+            var vm = managerVm.BuildComparingResults(ids[0], ids[1]);
             dlg.DataContext = vm;
             dlg.Owner = this;
             dlg.Show();
@@ -463,9 +463,9 @@ namespace PerformanceTest.Management
 
             Mouse.OverrideCursor = Cursors.Wait;
 
-            var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
+            var st = (ExperimentStatusViewModel)dataGrid.SelectedItem;
             ShowResults dlg = new ShowResults();
-            var vm = managerVm.BuildResultsView(ids[0]);
+            var vm = managerVm.BuildResultsView(st.ID, st.Category);
             dlg.DataContext = vm;
             dlg.Owner = this;
             dlg.Show();

@@ -1,18 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Text;
 using System.Threading.Tasks;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace PerformanceTest.Management
 {
-    public class CompareExperimentsViewModel
+    public class CompareExperimentsViewModel: INotifyPropertyChanged
     {
+        private IEnumerable<ExperimentComparingResultsViewModel> allResults;
         private IEnumerable<ExperimentComparingResultsViewModel> experiments;
         private readonly int id1, id2;
         private readonly ExperimentManager manager;
         private readonly IUIService message;
-
+        private bool checkIgnorePostfix, checkIgnoreCategory, checkIgnorePrefix;
+        private string extension1, extension2;
+        public event PropertyChangedEventHandler PropertyChanged;
         public CompareExperimentsViewModel(int id1, int id2, ExperimentManager manager, IUIService message)
         {
             if (manager == null) throw new ArgumentNullException("manager");
@@ -21,35 +27,113 @@ namespace PerformanceTest.Management
             this.message = message;
             this.id1 = id1;
             this.id2 = id2;
+            this.checkIgnoreCategory = false;
+            this.checkIgnorePostfix = false;
+            this.checkIgnorePrefix = false;
+            this.extension1 = ".ext1";
+            this.extension2 = ".ext1";
+            //this.category1 = category1;
+            //this.category2 = category2;
 
             RefreshItemsAsync();
         }
         private async void RefreshItemsAsync()
         {
-            CompareItems = null;
+            allResults = CompareItems = null;
 
             var res1 = await manager.GetResults(id1);
             var res2 = await manager.GetResults(id2);
-            List<ExperimentComparingResultsViewModel> resItems = new List<ExperimentComparingResultsViewModel>();
-            for (var i = 0; i < res1.Length; i++)
-            {
-                for (var j = 0; j < res2.Length; j++)
-                {
-                    if (res1[i].BenchmarkFileName == res2[j].BenchmarkFileName)
-                        resItems.Add(new ExperimentComparingResultsViewModel(res1[i].BenchmarkFileName, res1[i], res2[j], manager, message));
-                }
-            }
-            CompareItems = resItems;
+            List<ExperimentComparingResultsViewModel> resItems = res1.Join(res2, elem => elem.BenchmarkFileName, elem2 => elem2.BenchmarkFileName,
+                (f, s) => new ExperimentComparingResultsViewModel(f.BenchmarkFileName, f, s, manager, message)).ToList();
+            
+            allResults = CompareItems = resItems.OrderByDescending(q => Math.Abs(q.Diff));
         }
         public IEnumerable<ExperimentComparingResultsViewModel> CompareItems
         {
             get { return experiments; }
-            private set { experiments = value; }
+            private set { experiments = value; NotifyPropertyChanged(); }
         }
         public string Title
         {
             get { return "Comparison: " + id1.ToString() + " vs. " + id2.ToString(); }
         }
+        public bool CheckIgnorePostfix
+        {
+            get { return checkIgnorePostfix; }
+            set
+            {
+                checkIgnorePostfix = !checkIgnorePostfix;
+                NotifyPropertyChanged("EnableFirstExtension");
+                NotifyPropertyChanged("EnableSecondExtension");
+            }
+        }
+        public bool CheckIgnorePrefix
+        {
+            get { return checkIgnorePrefix; }
+            set
+            {
+                checkIgnorePrefix = !checkIgnorePrefix;
+            }
+        }
+        public bool CheckIgnoreCategory
+        {
+            get { return checkIgnoreCategory; }
+            set
+            {
+                checkIgnoreCategory = !checkIgnoreCategory;
+                NotifyPropertyChanged();
+            }
+        }
+        public bool EnableFirstExtension
+        {
+            get { return checkIgnorePostfix; }
+        }
+        public bool EnableSecondExtension
+        {
+            get { return checkIgnorePostfix; }
+        }
+        public string Extension1
+        {
+            get { return extension1; }
+            set { extension1 = value; NotifyPropertyChanged(); }
+        }
+        public string Extension2
+        {
+            get { return extension2; }
+            set { extension2 = value; NotifyPropertyChanged(); }
+        }
+        public async void FilterResultsByError(int code)
+        {
+            if (code == 0) CompareItems = allResults.Where(e => e.Sat1 > 0 && e.Sat2 > 0).ToArray(); //both sat
+            else if (code == 1) CompareItems = allResults.Where(e => e.Unsat1 > 0 && e.Unsat2 > 0).ToArray(); //both unsat
+            else if (code == 2) CompareItems = allResults.Where(e => e.Unknown1 > 0 && e.Unknown2 > 0).ToArray(); //both unknown
+            else if (code == 3) CompareItems = allResults.Where(e => e.Sat1 > 0 || e.Sat2 > 0).ToArray(); //one sat
+            else if (code == 4) CompareItems = allResults.Where(e => e.Unsat1 > 0 || e.Unsat2 > 0).ToArray(); //one unsat
+            else if (code == 5) CompareItems = allResults.Where(e => e.Unknown1 > 0 || e.Unknown2 > 0).ToArray(); //one unknown
+            else if (code == 6) CompareItems = allResults.Where(e => e.ResultCode1 == 3 || e.ResultCode2 == 3).ToArray(); //bugs
+            else if (code == 7) CompareItems = allResults.Where(e => e.ResultCode1 == 4 || e.ResultCode2 == 4).ToArray(); //errors
+            else if (code == 8) CompareItems = allResults.Where(e => e.ResultCode1 == 5 || e.ResultCode2 == 5).ToArray(); //timeout
+            else if (code == 9) CompareItems = allResults.Where(e => e.ResultCode1 == 6 || e.ResultCode2 == 6).ToArray(); //memout
+            else if (code == 10) CompareItems = allResults.Where(e => e.Sat1 > 0 && e.Sat2 == 0 || e.Sat1 == 0 && e.Sat2 > 0).ToArray(); //sat star
+            else if (code == 11) CompareItems = allResults.Where(e => e.Unsat1 > 0 && e.Unsat2 == 0 || e.Unsat1 == 0 && e.Unsat2 > 0).ToArray(); //unsat star
+            else if (code == 12) CompareItems = allResults.Where(e => e.Sat1 > 0 && e.Sat2 == 0 || e.Sat1 == 0 && e.Sat2 > 0 || e.Unsat1 > 0 && e.Unsat2 == 0 || e.Unsat1 == 0 && e.Unsat2 > 0).ToArray(); //ok star
+            else if (code == 13) CompareItems = allResults.Where(e => e.Sat1 > 0 && e.Unsat2 > 0 || e.Unsat1 > 0 && e.Sat2 > 0).ToArray(); //sat/unsat
+            else CompareItems = allResults;
+        }
+        public async void FilterResultsByText(string filter)
+        {
+            if (filter != "")
+            {
+                var resVm = allResults;
+                if (filter == "sat")
+                {
+                    resVm = resVm.Where(e => Regex.IsMatch(e.Filename, "/^(?:(?!unsat).)*$/")).ToList();
+                }
+                CompareItems = resVm.Where(e => e.Filename.Contains(filter)).ToArray();
+            }
+            else CompareItems = allResults;
+        }
+
         public string Runtime1Title { get { return "Runtime (" + id1.ToString() + ")"; } }
         public string Runtime2Title { get { return "Runtime (" + id2.ToString() + ")"; } }
         public string ResultCode1Title { get { return "ResultCode (" + id1.ToString() + ")"; } }
@@ -62,6 +146,10 @@ namespace PerformanceTest.Management
         public string Unsat2Title { get { return "UNSAT (" + id2.ToString() + ")"; } }
         public string Unknown1Title { get { return "UNKNOWN (" + id1.ToString() + ")"; } }
         public string Unknown2Title { get { return "UNKNOWN (" + id2.ToString() + ")"; } }
+        private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
     public class ExperimentComparingResultsViewModel
     {
@@ -116,6 +204,22 @@ namespace PerformanceTest.Management
         public int Unknown2
         {
             get { return 0; }
+        }
+        public string StdOut1
+        {
+            get { return "*** NO OUTPUT SAVED ***"; }
+        }
+        public string StdErr1
+        {
+            get { return "*** NO OUTPUT SAVED ***"; }
+        }
+        public string StdOut2
+        {
+            get { return "*** NO OUTPUT SAVED ***"; }
+        }
+        public string StdErr2
+        {
+            get { return "*** NO OUTPUT SAVED ***"; }
         }
     }
 }

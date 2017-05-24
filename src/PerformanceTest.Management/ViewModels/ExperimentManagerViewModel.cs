@@ -38,7 +38,7 @@ namespace PerformanceTest.Management
         {
             return new ExperimentListViewModel(manager, uiService);
         }
-        public ShowResultsViewModel BuildResultsView(int id)
+        public ShowResultsViewModel BuildResultsView(int id, string directory)
         {
             return new ShowResultsViewModel(id, this.BenchmarkLibraryDescription, manager, uiService);
         }

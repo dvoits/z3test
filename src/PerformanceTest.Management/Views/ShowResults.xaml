@@ -43,7 +43,7 @@
                 <DataGrid AutoGenerateColumns="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                           Margin="0,0,0,0" Name="dataGrid" Grid.Row="1" Grid.Column="0" IsReadOnly="True" RowHeight="23" SelectionUnit="FullRow" 
                           SelectionMode="Extended" GridLinesVisibility="None" AlternatingRowBackground="AliceBlue" EnableRowVirtualization="True"
-                          ItemsSource="{Binding Results}">
+                          ItemsSource="{Binding Results}" MouseDoubleClick="dataGrid_MouseDoubleClick">
                     <DataGrid.Columns>
                         <DataGridTextColumn Binding="{Binding Path=ID, Mode=OneWay}" Header="ID" />
                         <DataGridTextColumn Binding="{Binding Path=Filename, Mode=OneWay}" Header="Filename"/>

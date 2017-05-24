@@ -11,7 +11,6 @@ namespace PerformanceTest.Management
 {
     public class ShowResultsViewModel : INotifyPropertyChanged
     {
-
         private IEnumerable<ExperimentResultViewModel> results;
         private readonly int id;
         private readonly ExperimentManager manager;
@@ -31,11 +30,9 @@ namespace PerformanceTest.Management
         private async void RefreshResultsAsync()
         {
             Results = null;
-
             var res = await manager.GetResults(id);
             Results = res.Select(e => new ExperimentResultViewModel(e)).ToArray();
         }
-
         public IEnumerable<ExperimentResultViewModel> Results
         {
             get { return results; }
@@ -53,43 +50,45 @@ namespace PerformanceTest.Management
         public async void FilterResultsByError(int code)
         {
             var res = await manager.GetResults(id);
-            var resVm = res.Select(e => new ExperimentResultViewModel(e)).ToArray();
-            if (code == 0) Results = resVm.Where(e => e.ResultCode == 0 && e.SAT > 0).ToArray();
-            else if (code == 1) Results = resVm.Where(e => e.ResultCode == 0 && e.UNSAT > 0).ToArray();
-            else if (code == 2) Results = resVm.Where(e => e.ResultCode == 0 && e.UNKNOWN > 0).ToArray();
-            else if (code == 3) Results = resVm.Where(e => e.ResultCode == 3).ToArray();
-            else if (code == 4) Results = resVm.Where(e => e.ResultCode == 4).ToArray();
-            else if (code == 5) Results = resVm.Where(e => e.ResultCode == 5).ToArray();
-            else if (code == 6) Results = resVm.Where(e => e.ResultCode == 6).ToArray();
-            else RefreshResultsAsync();
+            var allResults = res.Select(e => new ExperimentResultViewModel(e)).ToArray();
+            if (code == 0) Results = allResults.Where(e => e.ResultCode == 0 && e.SAT > 0).ToArray();
+            else if (code == 1) Results = allResults.Where(e => e.ResultCode == 0 && e.UNSAT > 0).ToArray();
+            else if (code == 2) Results = allResults.Where(e => e.ResultCode == 0 && e.UNKNOWN > 0).ToArray();
+            else if (code == 3) Results = allResults.Where(e => e.ResultCode == 3).ToArray();
+            else if (code == 4) Results = allResults.Where(e => e.ResultCode == 4).ToArray();
+            else if (code == 5) Results = allResults.Where(e => e.ResultCode == 5).ToArray();
+            else if (code == 6) Results = allResults.Where(e => e.ResultCode == 6).ToArray();
+            else Results = allResults;
         }
         public async void FilterResultsByText(string filter, int code)
         {
             //code == 0 - only filename
             //code == 1 - output
-            var res = await manager.GetResults(id);
-            var resVm = res.Select(e => new ExperimentResultViewModel(e)).ToArray();
-            if (filter != "") {
+            if (filter != "")
+            {
+                var res = await manager.GetResults(id);
+                var allResults = res.Select(e => new ExperimentResultViewModel(e)).ToArray();
                 if (code == 0)
                 {
+                    var resVm = allResults;
                     if (filter == "sat")
                     {
-                        resVm = resVm.Where(e => Regex.IsMatch(e.Filename, "/^(?:(?!unsat).)*$/")).ToArray();
+                        resVm = allResults.Where(e => Regex.IsMatch(e.Filename, "/^(?:(?!unsat).)*$/")).ToArray();
                     }
                     Results = resVm.Where(e => e.Filename.Contains(filter)).ToArray();
                 }
                 if (code == 1)
                 {
-                    Results = resVm.Where(e => e.StdOut.Contains(filter) || e.StdErr.Contains(filter)).ToArray();
+                    Results = allResults.Where(e => e.StdOut.Contains(filter) || e.StdErr.Contains(filter)).ToArray();
                 }
-            } 
+            }
             else RefreshResultsAsync();
         }
         public async void FilterResultsByRuntime(int limit)
         {
             var res = await manager.GetResults(id);
-            var resVm = res.Select(e => new ExperimentResultViewModel(e)).ToArray();
-            Results = resVm.Where(e => e.Runtime >= limit).ToArray();
+            var allResults = res.Select(e => new ExperimentResultViewModel(e)).ToArray();
+            Results = allResults.Where(e => e.Runtime >= limit).ToArray();
         }
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
         {
@@ -119,6 +118,7 @@ namespace PerformanceTest.Management
         public int ResultCode
         {
             get { return 0; }
+            //{set {result.resultCode = value; NotifyPropertyChanged();}}
         }
         public int SAT
         {
@@ -135,6 +135,7 @@ namespace PerformanceTest.Management
         public double Runtime
         {
             get { return result.NormalizedRuntime; }
+            //set {  }
         }
         public string Worker
         {
@@ -142,11 +143,11 @@ namespace PerformanceTest.Management
         }
         public string StdOut
         {
-            get { return "standard output on double click"; }
+            get { return "*** NO OUTPUT SAVED ***"; }
         }
         public string StdErr
         {
-            get { return "error output on double click"; }
+            get { return "*** NO OUTPUT SAVED ***"; }
         }
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
         {

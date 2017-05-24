@@ -140,7 +140,7 @@
                     <RadioButton Name="radioBOTHUNSAT" GroupName="Option" Padding="5,0,5,0" Click="RadioButton_Click" VerticalAlignment="Center">Both UNSAT</RadioButton>
                     <RadioButton Name="radioBOTHUNKNOWN" GroupName="Option" Padding="5,0,5,0" Click="RadioButton_Click" VerticalAlignment="Center">Both UNKNOWN</RadioButton>
                 </StackPanel>
-                <!--<StackPanel Grid.Row="1" Orientation="Horizontal">
+                <StackPanel Grid.Row="1" Orientation="Horizontal">
                     <Label Content="Either is: " VerticalAlignment="Center" />
                     <RadioButton Name="radioONESAT" GroupName="Option" Padding="5,0,5,0" Click="RadioButton_Click" VerticalAlignment="Center">SAT</RadioButton>
                     <RadioButton Name="radioONEUNSAT" GroupName="Option" Padding="5,0,5,0" Click="RadioButton_Click" VerticalAlignment="Center">UNSAT</RadioButton>
@@ -166,16 +166,16 @@
                 </StackPanel>
                 <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Vertical"  Grid.RowSpan="4">
                     <Label Content="Ignore:"/>
-                    <CheckBox Name="chkIgnoreFNPrefix" Content="Prefix (shared directory)" Margin="10,0,0,0" Width="150" Height="20" HorizontalAlignment="Left" VerticalAlignment="Center" IsChecked="False" Checked="chkIgnoreFNPrefix_Checked" Unchecked="chkIgnoreFNPrefix_Unchecked"/>
-                    <CheckBox Name="chkIgnoreFNCategory" Content="Category" Margin="10,0,0,0" Width="150" Height="20" HorizontalAlignment="Left" VerticalAlignment="Center" IsChecked="False" Checked="chkIgnoreFNCategory_Checked" Unchecked="chkIgnoreFNCategory_Unchecked"/>
-                    <CheckBox Name="chkIgnoreFNPostfix" Content="Postfix (extensions):" Margin="10,0,0,0" Width="150" Height="20" HorizontalAlignment="Left" VerticalAlignment="Center" IsChecked="False" Unchecked="chkIgnoreFNPostfix_Unchecked" Checked="chkIgnoreFNPostfix_Checked"/>
+                    <CheckBox Name="chkIgnoreFNPrefix" Content="Prefix (shared directory)" Margin="10,0,0,0" Width="150" Height="20" HorizontalAlignment="Left" VerticalAlignment="Center" IsChecked="{Binding CheckIgnorePrefix, Mode=TwoWay}"/>
+                    <CheckBox Name="chkIgnoreFNCategory" Content="Category" Margin="10,0,0,0" Width="150" Height="20" HorizontalAlignment="Left" VerticalAlignment="Center" IsChecked="{Binding CheckIgnoreCategory, Mode=TwoWay}"/>
+                    <CheckBox Name="chkIgnoreFNPostfix" Content="Postfix (extensions):" Margin="10,0,0,0" Width="150" Height="20" HorizontalAlignment="Left" VerticalAlignment="Center" IsChecked="{Binding CheckIgnorePostfix, Mode=TwoWay}"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch" Margin="10,0,0,0">
                         <Label Name="lblLeft" Content=""/>
-                        <TextBox Name="txtExtensionLeft" MinWidth="75" HorizontalAlignment="Stretch" VerticalAlignment="Center" Text="ABC" IsEnabled="False" KeyUp="txtExtensionLeft_KeyUp"/>
+                        <TextBox Name="txtExtensionLeft" MinWidth="75" HorizontalAlignment="Stretch" VerticalAlignment="Center" Text="{Binding Extension1}" IsEnabled="{Binding EnableFirstExtension}" KeyUp="txtExtensionLeft_KeyUp"/>
                         <Label Name="lblRight" Content=""/>
-                        <TextBox Name="txtExtensionRight" MinWidth="75" HorizontalAlignment="Stretch" VerticalAlignment="Center" Text="ABC" IsEnabled="False" KeyUp="txtExtensionRight_KeyUp"/>
+                        <TextBox Name="txtExtensionRight" MinWidth="75" HorizontalAlignment="Stretch" VerticalAlignment="Center" Text="{Binding Extension2}" IsEnabled="{Binding EnableSecondExtension}" KeyUp="txtExtensionRight_KeyUp"/>
                     </StackPanel>
-                </StackPanel>-->
+                </StackPanel>
             </Grid>
         </Grid>
     </Grid>

@@ -47,11 +47,6 @@ namespace PerformanceTest.Management
             Items = items;
         }
 
-        public void UpdatePriority(int id, string priority)
-        {
-            manager.UpdatePriority(id, priority);
-        }
-
         public double GetRuntime(int id)
         {
             var res = manager.GetResults(id);
