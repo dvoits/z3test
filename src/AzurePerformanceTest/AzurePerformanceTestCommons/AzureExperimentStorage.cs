@@ -225,7 +225,7 @@ namespace AzurePerformanceTest
         private string SerializeBenchmarkResultToCsvString(BenchmarkResult result, string stdoutBlobId, string stderrBlobId)
         {
             // BenchmarkFileName,AcquireTime,NormalizedRuntime,TotalProcessorTime,WallClockTime,PeakMemorySize,Status,ExitCode,StdOut,StdErr,WorkerInformation
-            return string.Format("{0},{1},{2},{3},{4},{5},{6},{7},\"{8}\",\"{9}\",\"10\"",
+            return string.Format("{0},{1},{2},{3},{4},{5},{6},{7},\"{8}\",\"{9}\",\"{10}\"",
                 result.BenchmarkFileName,
                 result.AcquireTime.ToString(System.Globalization.CultureInfo.InvariantCulture),
                 result.NormalizedRuntime,

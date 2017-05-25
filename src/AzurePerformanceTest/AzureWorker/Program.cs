@@ -79,7 +79,7 @@ namespace AzureWorker
                     }
                 }
                 await storage.PutSerializedExperimentResults(experimentId, results);
-                await storage.IncreaseCompletedBenchmarks(experimentId, messages.Count());
+                await storage.SetCompletedBenchmarks(experimentId, processedBenchmarks);
                 foreach (CloudQueueMessage message in messages)
                 {
                     queue.DeleteMessage(message);
