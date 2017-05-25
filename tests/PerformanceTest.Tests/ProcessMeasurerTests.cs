@@ -18,8 +18,8 @@ namespace UnitTests
             Measurement.ProcessRunMeasure m = ProcessMeasurer.Measure("Delay.exe", "100", TimeSpan.FromMilliseconds(1000));
 
             Assert.AreEqual(0, m.ExitCode, "Exit code");
-            Assert.AreEqual(Measure.LimitsStatus.Success, m.Limits);
-            Assert.IsTrue(m.PeakMemorySize > 1024 * 1024, "Memory size seems too low");
+            Assert.AreEqual(Measure.LimitsStatus.WithinLimits, m.Limits);
+            Assert.IsTrue(m.PeakMemorySizeMB > 1, "Memory size seems too low");
 
 
             var ptime = m.TotalProcessorTime.TotalMilliseconds;
@@ -52,8 +52,8 @@ namespace UnitTests
                 Measurement.ProcessRunMeasure m = ProcessMeasurer.Measure(zipname, "100", TimeSpan.FromMilliseconds(1000));
 
                 Assert.AreEqual(0, m.ExitCode, "Exit code");
-                Assert.AreEqual(Measure.LimitsStatus.Success, m.Limits);
-                Assert.IsTrue(m.PeakMemorySize > 1024 * 1024, "Memory size seems too low");
+                Assert.AreEqual(Measure.LimitsStatus.WithinLimits, m.Limits);
+                Assert.IsTrue(m.PeakMemorySizeMB > 1, "Memory size seems too low");
 
 
                 var ptime = m.TotalProcessorTime.TotalMilliseconds;
@@ -94,8 +94,8 @@ namespace UnitTests
                 Measurement.ProcessRunMeasure m = ProcessMeasurer.Measure(zipname, "100", TimeSpan.FromMilliseconds(1000));
                 
                 Assert.AreEqual(0, m.ExitCode, "Exit code");
-                Assert.AreEqual(Measure.LimitsStatus.Success, m.Limits);
-                Assert.IsTrue(m.PeakMemorySize > 1024 * 1024, "Memory size seems too low");
+                Assert.AreEqual(Measure.LimitsStatus.WithinLimits, m.Limits);
+                Assert.IsTrue(m.PeakMemorySizeMB > 1, "Memory size seems too low");
 
 
                 var ptime = m.TotalProcessorTime.TotalMilliseconds;
@@ -148,9 +148,9 @@ namespace UnitTests
         {
             Measurement.ProcessRunMeasure m = ProcessMeasurer.Measure("Delay.exe", "10000", TimeSpan.FromMilliseconds(100));
 
-            Assert.AreEqual(Measure.LimitsStatus.Timeout, m.Limits);
+            Assert.AreEqual(Measure.LimitsStatus.TimeOut, m.Limits);
             Assert.AreEqual(-1, m.ExitCode, "Exit code");
-            Assert.IsTrue(m.PeakMemorySize > 1024 * 1024, "Memory size seems too low");
+            Assert.IsTrue(m.PeakMemorySizeMB > 1, "Memory size seems too low");
 
 
             var ptime = m.TotalProcessorTime.TotalMilliseconds;
@@ -172,9 +172,9 @@ namespace UnitTests
         {
             Measurement.ProcessRunMeasure m = ProcessMeasurer.Measure("Delay.exe", "10000 extraArgument", TimeSpan.FromMilliseconds(10000));
 
-            Assert.AreEqual(Measure.LimitsStatus.Error, m.Limits);
+            Assert.AreEqual(Measure.LimitsStatus.WithinLimits, m.Limits);
             Assert.AreEqual(42, m.ExitCode, "Exit code");
-            Assert.IsTrue(m.PeakMemorySize > 1024 * 1024, "Memory size seems too low");
+            Assert.IsTrue(m.PeakMemorySizeMB > 1, "Memory size seems too low");
 
 
             var ptime = m.TotalProcessorTime.TotalMilliseconds;
@@ -196,9 +196,9 @@ namespace UnitTests
         {
             Measurement.ProcessRunMeasure m = ProcessMeasurer.Measure("FailingTool.exe", "arg1 arg2", TimeSpan.FromMilliseconds(10000));
 
-            Assert.AreEqual(Measure.LimitsStatus.Error, m.Limits);
+            Assert.AreEqual(Measure.LimitsStatus.WithinLimits, m.Limits);
             Assert.IsTrue(m.ExitCode < 0, "Exit code");
-            Assert.IsTrue(m.PeakMemorySize > 1024 * 1024, "Memory size seems too low");
+            Assert.IsTrue(m.PeakMemorySizeMB > 1, "Memory size seems too low");
 
 
             var ptime = m.TotalProcessorTime.TotalMilliseconds;
@@ -220,9 +220,9 @@ namespace UnitTests
         {
             Measurement.ProcessRunMeasure m = ProcessMeasurer.Measure("FailingTool.exe", "out-of-memory", TimeSpan.FromMinutes(10));
 
-            Assert.AreEqual(Measure.LimitsStatus.Error, m.Limits);
+            Assert.AreEqual(Measure.LimitsStatus.WithinLimits, m.Limits);
             Assert.IsTrue(m.ExitCode < 0, "Exit code");
-            Assert.IsTrue(m.PeakMemorySize > 1 << 20, "Memory size seems too low");
+            Assert.IsTrue(m.PeakMemorySizeMB > 1, "Memory size seems too low");
 
 
             var ptime = m.TotalProcessorTime.TotalMilliseconds;
@@ -237,6 +237,27 @@ namespace UnitTests
 
             Assert.IsTrue(output.Contains("i = 0"), "Output");
             Assert.IsTrue(error.Contains("OutOfMemoryException"), "Error must contain certain text.");
+        }
+
+        [TestMethod]
+        public void MeasureProcessMemoryLimit()
+        {
+            Measurement.ProcessRunMeasure m = ProcessMeasurer.Measure("FailingTool.exe", "out-of-memory", TimeSpan.FromMinutes(10), memoryLimit: 1);
+
+            Assert.AreEqual(Measure.LimitsStatus.MemoryOut, m.Limits);
+            Assert.IsTrue(m.ExitCode < 0, "Exit code");
+            Assert.IsTrue(m.PeakMemorySizeMB > 1, "Memory size seems too low");
+
+
+            var ptime = m.TotalProcessorTime.TotalMilliseconds;
+            var wctime = m.WallClockTime.TotalMilliseconds;
+            Assert.IsTrue(ptime <= 100000, "Total processor time");
+            Assert.IsTrue(wctime <= 100000, "Wall-clock time");
+
+            StreamReader reader = new StreamReader(m.StdOut);
+            string output = reader.ReadToEnd();
+            reader = new StreamReader(m.StdErr);
+            string error = reader.ReadToEnd();
         }
     }
 }

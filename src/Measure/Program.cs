@@ -104,7 +104,7 @@ namespace Measure
                     {
                         BenchmarkResult lastBenchmark = null;
                         lastBenchmarks.TryGetValue(benchmark.BenchmarkFileName, out lastBenchmark);
-                        if (lastBenchmark != null && lastBenchmark.Measurements.Limits != Measurement.Measure.LimitsStatus.Success)
+                        if (lastBenchmark != null && lastBenchmark.Status != Measurement.ResultStatus.Success)
                             lastBenchmark = null;
                         PrintBenchmark(benchmark, lastBenchmark);
                     }
@@ -121,25 +121,25 @@ namespace Measure
             double threshold = 0.15;
 
             if (lastResult == null)
-                info = String.Format("{1:0.0000}\t{2:0.00} MB\t{0}",
-                    result.BenchmarkFileName, result.NormalizedRuntime, result.Measurements.PeakMemorySize >> 20);
+                info = String.Format("{1:0.0000}\t{2:0.00} MB\t{0.0}",
+                    result.BenchmarkFileName, result.NormalizedRuntime, result.PeakMemorySizeMB);
             else
             {
                 speedup = (lastResult.NormalizedRuntime / result.NormalizedRuntime);
-                extraMem = (result.Measurements.PeakMemorySize - lastResult.Measurements.PeakMemorySize) >> 20;
+                extraMem = result.PeakMemorySizeMB - lastResult.PeakMemorySizeMB;
                 info = String.Format("{0:0.0000} ({1:0.00}{2})\t{3:0.00} MB ({4}{5:0.00})\t{6}",
                         result.NormalizedRuntime,
                         speedup,
                         speedup == 1 ? " same" : speedup > 1 ? " faster" : " slower",
-                        result.Measurements.PeakMemorySize >> 20,
+                        result.PeakMemorySizeMB,
                         extraMem >= 0 ? "+" : "",
                         extraMem,
                         result.BenchmarkFileName);
-                extraMem = ((double)result.Measurements.PeakMemorySize) / lastResult.Measurements.PeakMemorySize;
+                extraMem = result.PeakMemorySizeMB / lastResult.PeakMemorySizeMB;
             }
 
 
-            if (result.Measurements.Limits == Measurement.Measure.LimitsStatus.Success)
+            if (result.Status == Measurement.ResultStatus.Success)
             {
                 if (speedup < 1 - threshold)
                     PrintWarning("Slower   " + info);
@@ -152,17 +152,21 @@ namespace Measure
                 else
                     Print("Passed   " + info);
             }
-            else if (result.Measurements.Limits == Measurement.Measure.LimitsStatus.OutOfMemory)
+            else if (result.Status == Measurement.ResultStatus.OutOfMemory)
             {
                 PrintError("Out of memory    " + info);
             }
-            else if (result.Measurements.Limits == Measurement.Measure.LimitsStatus.Error)
+            else if (result.Status ==  Measurement.ResultStatus.Timeout)
+            {
+                PrintError("Timeout    " + info);
+            }
+            else if (result.Status == Measurement.ResultStatus.Error)
             {
                 PrintError("Error    " + info);
             }
-            else if (result.Measurements.Limits == Measurement.Measure.LimitsStatus.Timeout)
+            else if (result.Status == Measurement.ResultStatus.Bug)
             {
-                PrintError("Timeout    " + info);
+                PrintError("Bug    " + info);
             }
         }
 

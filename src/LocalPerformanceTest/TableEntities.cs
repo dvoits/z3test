@@ -33,21 +33,4 @@ namespace PerformanceTest
         public bool Flag { get; set; }
         public string GroupName { get; set; }
     }
-
-    public class BenchmarkResultEntity
-    {
-        public string BenchmarkFileName { get; set; }
-        public DateTime AcquireTime { get; set; }
-        public double NormalizedRuntime { get; set; }
-        public double TotalProcessorTime { get; set; }
-        public double WallClockTime { get; set; }
-        public int PeakMemorySize { get; set; }
-        public string Status { get; set; }
-        public int ExitCode { get; set; }
-
-        public string StdOut { get; set; }
-        public string StdErr { get; set; }
-        public string WorkerInformation { get; set; }
-
-    }
 }

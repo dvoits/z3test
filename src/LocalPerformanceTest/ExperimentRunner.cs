@@ -34,8 +34,13 @@ namespace PerformanceTest
             return RunExperiment(id, experiment, factory, rootFolder, normal, repetitions);
         }
 
-        private static Task<BenchmarkResult>[] RunExperiment(ExperimentID id, ExperimentDefinition experiment, TaskFactory factory, string rootFolder, double normal, int repetitions = 0)
+        private static Task<BenchmarkResult>[] RunExperiment(ExperimentID id, ExperimentDefinition experiment, TaskFactory factory, string rootFolder, double normal, int repetitions = 0, Domain domain = null)
         {
+            if (experiment == null) throw new ArgumentNullException("experiment");
+            if (factory == null) throw new ArgumentNullException("factory");
+
+            if (domain == null) domain = Domain.Default;
+
             string executable;
             if (Path.IsPathRooted(experiment.Executable)) executable = experiment.Executable;
             else executable = Path.Combine(rootFolder, experiment.Executable);
@@ -73,20 +78,33 @@ namespace PerformanceTest
                         int count = 0;
                         List<ProcessRunMeasure> measures = new List<ProcessRunMeasure>();
                         TimeSpan total = TimeSpan.FromSeconds(0);
+                        ProcessRunMeasure m;
+                        ProcessRunAnalysis analysis = null;
 
                         do
                         {
-                            var m = ProcessMeasurer.Measure(executable, args, experiment.BenchmarkTimeout, experiment.MemoryLimit == 0 ? null : new Nullable<long>(experiment.MemoryLimit));
+                            m = ProcessMeasurer.Measure(executable, args, experiment.BenchmarkTimeout, experiment.MemoryLimit == 0 ? null : new Nullable<long>(experiment.MemoryLimit));
                             measures.Add(m);
                             count++;
                             total += m.WallClockTime;
-                        } while ((repetitions != 0 || total < maxTime) && count < maxCount);
+
+                            if(analysis == null) // analyzed only once, repetitions are for more confident run time
+                            {
+                                analysis = domain.Analyze(fileName, m);                                
+                            }
+                        } while ((repetitions != 0 || total < maxTime) && count < maxCount && m.Limits == Measure.LimitsStatus.WithinLimits);
 
                         ProcessRunMeasure finalMeasure = Utils.AggregateMeasures(measures.ToArray());
                         Trace.WriteLine(String.Format("Done in {0} (aggregated by {1} runs)", finalMeasure.WallClockTime, count));
 
                         var performanceIndex = normal * finalMeasure.TotalProcessorTime.TotalSeconds;
-                        return new BenchmarkResult(id, fileName, workerInfo, performanceIndex, acq, finalMeasure);
+                        return new BenchmarkResult(
+                            id, fileName, workerInfo, 
+                            acq, performanceIndex,  
+                            finalMeasure.TotalProcessorTime, finalMeasure.WallClockTime,
+                            analysis.Status,
+                            finalMeasure.ExitCode, finalMeasure.OutputToString(), finalMeasure.ErrorToString(),
+                            analysis.OutputProperties);
                     }, benchmarkFile, TaskCreationOptions.LongRunning);
                 results.Add(task);
             }

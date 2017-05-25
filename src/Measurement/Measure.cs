@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.IO;
 
 namespace Measurement
-{    
+{
     public class Measure
     {
-        public Measure(TimeSpan totalProcessorTime, TimeSpan wallClockTime, long peakMemorySize, LimitsStatus limits)
+        public Measure(TimeSpan totalProcessorTime, TimeSpan wallClockTime, double peakMemorySizeMB, LimitsStatus limits)
         {
             TotalProcessorTime = totalProcessorTime;
             WallClockTime = wallClockTime;
-            PeakMemorySize = peakMemorySize;
+            PeakMemorySizeMB = peakMemorySizeMB;
             Limits = limits;
         }
 
@@ -18,9 +18,9 @@ namespace Measurement
         public TimeSpan WallClockTime { get; private set; }
 
         /// <summary>
-        /// Gets the maximum amount of virtual memory, in bytes, allocated for the process.
+        /// Gets the maximum amount of virtual memory, in Mega Bytes, allocated for the process.
         /// </summary>
-        public long PeakMemorySize { get; private set; }
+        public double PeakMemorySizeMB { get; private set; }
 
         public LimitsStatus Limits { get; private set; }
 
@@ -37,8 +37,8 @@ namespace Measurement
 
     public class ProcessRunMeasure : Measure
     {
-        public ProcessRunMeasure(TimeSpan totalProcessorTime, TimeSpan wallClockTime, long peakMemorySize, LimitsStatus status, int exitCode, Stream stdOut, Stream stdErr) :
-            base(totalProcessorTime, wallClockTime, peakMemorySize, status)
+        public ProcessRunMeasure(TimeSpan totalProcessorTime, TimeSpan wallClockTime, double peakMemorySizeMB, LimitsStatus status, int exitCode, Stream stdOut, Stream stdErr) :
+            base(totalProcessorTime, wallClockTime, peakMemorySizeMB, status)
         {
             ExitCode = exitCode;
             StdOut = stdOut;

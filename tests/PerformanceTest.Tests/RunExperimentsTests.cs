@@ -6,6 +6,7 @@ using System.Linq;
 using static Measurement.Measure;
 using System.IO;
 using System.Diagnostics;
+using Measurement;
 
 namespace UnitTests
 {
@@ -61,9 +62,9 @@ namespace UnitTests
             Assert.AreEqual(1, results.Length, "Number of completed benchmarks");
 
             var res = results[0];
-            Assert.AreEqual(0, res.Measurements.ExitCode, "exit code");
-            Assert.AreEqual(LimitsStatus.Success, res.Measurements.Limits, "status");
-            Assert.IsTrue(res.Measurements.TotalProcessorTime.TotalSeconds < 1, "Total runtime");
+            Assert.AreEqual(0, res.ExitCode, "exit code");
+            Assert.AreEqual(ResultStatus.Success, res.Status, "status");
+            Assert.IsTrue(res.TotalProcessorTime.TotalSeconds < 1, "Total runtime");
         }
 
         [TestMethod]
@@ -80,9 +81,9 @@ namespace UnitTests
 
             foreach (var res in results)
             {
-                Assert.AreEqual(0, res.Measurements.ExitCode, "exit code");
-                Assert.AreEqual(LimitsStatus.Success, res.Measurements.Limits, "status");
-                Assert.IsTrue(res.Measurements.TotalProcessorTime.TotalSeconds < 10, "Total runtime");
+                Assert.AreEqual(0, res.ExitCode, "exit code");
+                Assert.AreEqual(ResultStatus.Success, res.Status, "status");
+                Assert.IsTrue(res.TotalProcessorTime.TotalSeconds < 10, "Total runtime");
             }
         }
 

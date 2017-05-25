@@ -35,12 +35,12 @@ namespace PerformanceTest
             int exitCode = measures[0].ExitCode;
             foreach(ProcessRunMeasure m in measures)
             {
-                if (m.Limits != Measure.LimitsStatus.Success || m.ExitCode != exitCode) return m;
+                if (m.Limits != Measure.LimitsStatus.WithinLimits || m.ExitCode != exitCode) return m;
             }
 
             TimeSpan totalProcessorTime = Median(measures.Select(m => m.TotalProcessorTime).ToArray(), (t1, t2) => TimeSpan.FromTicks((t1 + t2).Ticks >> 1));
             TimeSpan wallClockTime = Median(measures.Select(m => m.WallClockTime).ToArray(), (t1, t2) => TimeSpan.FromTicks((t1 + t2).Ticks >> 1));
-            long peakMemorySize = measures.Select(m => m.PeakMemorySize).Max();
+            double peakMemorySize = measures.Select(m => m.PeakMemorySizeMB).Max();
 
             return new ProcessRunMeasure(
                 totalProcessorTime,

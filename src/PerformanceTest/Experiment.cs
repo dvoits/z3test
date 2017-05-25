@@ -9,10 +9,10 @@ using ExperimentID = System.Int32;
 
 
 namespace PerformanceTest
-{    
+{
     public class ExperimentDefinition
     {
-        public static ExperimentDefinition Create(string executable, string benchmarkContainer, string benchmarkFileExtension, string parameters, 
+        public static ExperimentDefinition Create(string executable, string benchmarkContainer, string benchmarkFileExtension, string parameters,
             TimeSpan benchmarkTimeout,
             string category = null, long benchmarkMemoryLimitBytes = 0)
         {
@@ -45,7 +45,7 @@ namespace PerformanceTest
         /// </summary>
         public string Parameters { get; private set; }
 
-        
+
         /// <summary>
         /// A shared container with the benchmark files.
         /// </summary>
@@ -83,7 +83,7 @@ namespace PerformanceTest
         public string GroupName { get; private set; }
 
     }
-    
+
     /// <summary>
     /// Represents the experiment that runs multiple performance measurements jobs.
     /// Aka "TitleScreen"; used in ClusterExperiments for the main table.
@@ -126,29 +126,25 @@ namespace PerformanceTest
     /// </summary>
     public class BenchmarkResult
     {
-        public BenchmarkResult(int experimentId, string benchmarkFileName, string workerInformation, double normalizedRuntime, DateTime acquireTime, ProcessRunMeasure measure)
+        public BenchmarkResult(int experimentId, string benchmarkFileName, string workerInformation, DateTime acquireTime, double normalizedRuntime,
+            TimeSpan totalProcessorTime, TimeSpan wallClockTime, ResultStatus status, int exitCode, string stdout, string stderr, 
+            IReadOnlyDictionary<string, string> props)
         {
+            if (props == null) throw new ArgumentNullException("props");
+
             this.ExperimentID = experimentId;
             this.BenchmarkFileName = benchmarkFileName;
             this.WorkerInformation = workerInformation;
             this.NormalizedRuntime = normalizedRuntime;
-            this.Measurements = measure;
             this.AcquireTime = acquireTime;
+            this.Status = status;
+            this.Properties = props;
         }
 
         /// <summary>
         /// An experiment this benchmark is part of.
         /// </summary>
         public int ExperimentID { get; private set; }
-
-        public ProcessRunMeasure Measurements { get; private set; }
-
-        /// <summary>
-        /// A normalized total processor time that indicates the amount of time that the associated process has spent utilizing the CPU.
-        /// </summary>
-        public double NormalizedRuntime { get; private set; }
-        public string WorkerInformation { get; private set; }
-
 
         /// <summary>
         /// Name of a file that is passed as an argument to the target executable.
@@ -157,6 +153,33 @@ namespace PerformanceTest
         public string BenchmarkFileName { get; private set; }
 
         public DateTime AcquireTime { get; private set; }
+
+        public ResultStatus Status { get; private set; }
+
+        /// <summary>
+        /// A normalized total processor time that indicates the amount of time that the associated process has spent utilizing the CPU.
+        /// </summary>
+        public double NormalizedRuntime { get; private set; }
+
+        public TimeSpan TotalProcessorTime { get; private set; }
+        public TimeSpan WallClockTime { get; private set; }
+
+        /// <summary>
+        /// Gets the maximum amount of virtual memory, in Mega Bytes, allocated for the process.
+        /// </summary>
+        public double PeakMemorySizeMB { get; private set; }
+
+        public int ExitCode { get; private set; }
+        public string StdOut { get; private set; }
+        public string StdErr { get; private set; }
+
+        public string WorkerInformation { get; private set; }
+
+        /// <summary>
+        /// Domain-specific properties of the result.
+        /// </summary>
+        public IReadOnlyDictionary<string, string> Properties { get; private set; }
+
     }
 
 }

@@ -219,7 +219,7 @@ namespace PerformanceTest
         private async Task<double> ComputeNormal()
         {
             var benchmarks = await Task.WhenAll(runner.Enqueue(-1, reference.Definition, 1.0, reference.Repetitions));
-            var m = benchmarks.Sum(b => b.Measurements.TotalProcessorTime.TotalSeconds);
+            var m = benchmarks.Sum(b => b.TotalProcessorTime.TotalSeconds);
             double n = reference.ReferenceValue / m;
             Trace.WriteLine(String.Format("Median reference duration: {0}, normal: {1}", m, n));
             return n;
