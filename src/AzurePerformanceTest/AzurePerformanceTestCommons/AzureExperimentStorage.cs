@@ -164,7 +164,7 @@ namespace AzurePerformanceTest
                 using (var zip = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
                 {
                     var entry = zip.CreateEntry(fileName);
-                    FileStorage.SaveBenchmarks(results.ToArray(), entry.Open());
+                    BenchmarkResultsStorage.SaveBenchmarks(results.ToArray(), entry.Open());
                 }
 
                 var blob = resultsContainer.GetBlockBlobReference(GetResultBlobName(expId));
@@ -199,11 +199,11 @@ namespace AzurePerformanceTest
         {
             string stdoutBlobId = null;
             string stderrBlobId = null;
-            if (result.Measurements.StdOut.Length > 0)
+            if (result.StdOut.Length > 0)
             {
                 stdoutBlobId = "E" + result.ExperimentID.ToString() + "F" + result.BenchmarkFileName + "-stdout";
                 var stdoutBlob = outputContainer.GetBlockBlobReference(stdoutBlobId);
-                await stdoutBlob.UploadFromStreamAsync(result.Measurements.StdOut);
+                await stdoutBlob.UploadFromStreamAsync(result.StdOut);
             }
             if (result.Measurements.StdErr.Length > 0)
             {

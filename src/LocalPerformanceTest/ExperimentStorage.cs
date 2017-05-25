@@ -178,7 +178,7 @@ namespace PerformanceTest
             return Path.Combine(dirBenchmarks.FullName, id.ToString("000000") + ".csv");
         }
 
-        public static void SaveBenchmarks(BenchmarkResult[] benchmarks, string fileName)
+        private void SaveBenchmarks(BenchmarkResult[] benchmarks, string fileName)
         {
             using (Stream s = File.Create(fileName))
             {
