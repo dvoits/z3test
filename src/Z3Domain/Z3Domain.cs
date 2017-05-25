@@ -11,7 +11,7 @@ namespace Measurement
 {
     public class Z3Domain : Domain
     {
-        public Z3Domain()
+        public Z3Domain() : base("Z3")
         {
         }
 

@@ -41,7 +41,7 @@ namespace Measure
             }
 
             TimeSpan timeout = TimeSpan.FromHours(1);
-            ExperimentDefinition definition = ExperimentDefinition.Create(executable, benchmarkContainer, extension, arguments, timeout, category: category);
+            ExperimentDefinition definition = ExperimentDefinition.Create(executable, benchmarkContainer, extension, arguments, timeout, Measurement.Domain.Default.Name, category: category);
             string version = GetVersion(executable);
 
             if(init)
@@ -49,14 +49,16 @@ namespace Measure
             else
                 Print(String.Format("Measuring performance of {0} {1}...\n", executable, version));
 
+            IDomainResolver domainResolver = new DomainResolver(new[] { Measurement.Domain.Default });
+
             if (init)
             {
                 var reference = new ReferenceExperiment(definition, repetitions, referenceValue);
-                ExperimentManager manager = LocalExperimentManager.NewExperiments("measure", reference);
+                ExperimentManager manager = LocalExperimentManager.NewExperiments("measure", reference, domainResolver);
             }
             else
             {
-                ExperimentManager manager = LocalExperimentManager.OpenExperiments("measure");
+                ExperimentManager manager = LocalExperimentManager.OpenExperiments("measure", domainResolver);
                 Run(manager, definition).Wait();
             }
 

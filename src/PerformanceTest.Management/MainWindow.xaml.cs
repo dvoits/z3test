@@ -19,6 +19,8 @@ namespace PerformanceTest.Management
 {
     public partial class MainWindow : Window
     {
+        private readonly IDomainResolver domainResolver;
+
         private ExperimentManagerViewModel managerVm;
         private ExperimentListViewModel experimentsVm;
 
@@ -35,13 +37,15 @@ namespace PerformanceTest.Management
             InitializeComponent();
 
             connectionString.Text = Properties.Settings.Default.ConnectionString;
+
+            domainResolver = new DomainResolver(new[] { Measurement.Domain.Default, new Measurement.Z3Domain() });
         }
 
         private ExperimentManagerViewModel Connect(string connectionString)
         {
             if (Directory.Exists(connectionString))
             {
-                LocalExperimentManager manager = LocalExperimentManager.OpenExperiments(connectionString);
+                LocalExperimentManager manager = LocalExperimentManager.OpenExperiments(connectionString, domainResolver);
                 return new LocalExperimentManagerViewModel(manager, UIService.Instance);
             }else
             {
@@ -367,7 +371,8 @@ namespace PerformanceTest.Management
                 ExperimentDefinition def = 
                     ExperimentDefinition.Create(
                         vm.Executable, vm.BenchmarkLibrary, vm.Extension, vm.Parameters, 
-                        TimeSpan.FromSeconds(vm.BenchmarkTimeoutSec), vm.Categories, vm.BenchmarkMemoryLimitMb >> 20);
+                        TimeSpan.FromSeconds(vm.BenchmarkTimeoutSec), vm.Domain, 
+                        vm.Categories, vm.BenchmarkMemoryLimitMb);
                 try
                 {
                     await managerVm.SubmitExperiment(def, System.Security.Principal.WindowsIdentity.GetCurrent().Name, vm.Note);

@@ -10,9 +10,17 @@ namespace Measurement
     public abstract class Domain
     {
         private static Domain defaultDomain = new DefaultDomain();
-
         public static Domain Default { get { return defaultDomain; } }
 
+        private readonly string name;
+
+        protected Domain(string name)
+        {
+            if (String.IsNullOrEmpty(name)) throw new ArgumentException("name is null or empty", "name");
+            this.name = name;
+        }
+
+        public string Name { get { return name; } }
 
 
         public abstract ProcessRunAnalysis Analyze(string inputFile, ProcessRunMeasure measure);
@@ -20,6 +28,11 @@ namespace Measurement
 
     public sealed class DefaultDomain : Domain
     {
+        public DefaultDomain() : base("default")
+        {
+
+        }
+
         public override ProcessRunAnalysis Analyze(string inputFile, ProcessRunMeasure measure)
         {
             ResultStatus status;

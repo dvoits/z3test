@@ -19,7 +19,7 @@ namespace PerformanceTest
             List<Column> columns = new List<Column>()
             {
                 Column.Create("BenchmarkFileName", benchmarks.Select(b => b.BenchmarkFileName), length),
-                Column.Create("AcquireTime", benchmarks.Select(b => b.AcquireTime), length),
+                Column.Create("AcquireTime", benchmarks.Select(b => b.AcquireTime.ToString(System.Globalization.CultureInfo.InvariantCulture)), length),
                 Column.Create("NormalizedRuntime", benchmarks.Select(b => b.NormalizedRuntime), length),
                 Column.Create("TotalProcessorTime", benchmarks.Select(b => b.TotalProcessorTime.TotalSeconds), length),
                 Column.Create("WallClockTime", benchmarks.Select(b => b.WallClockTime.TotalSeconds), length),
@@ -96,8 +96,8 @@ namespace PerformanceTest
                 }
 
                 results[i] = new BenchmarkResult(
-                    expId, fileName[i], worker[i], DateTime.Parse(acq[i]),
-                    double.Parse(norm[i]), TimeSpan.FromSeconds(double.Parse(runtime[i])), TimeSpan.FromSeconds(double.Parse(wctime[i])),
+                    expId, fileName[i], worker[i], DateTime.Parse(acq[i], System.Globalization.CultureInfo.InvariantCulture),
+                    double.Parse(norm[i]), TimeSpan.FromSeconds(double.Parse(runtime[i])), TimeSpan.FromSeconds(double.Parse(wctime[i])), double.Parse(mem[i]),
                     StatusFromString(stat[i]), int.Parse(exitcode[i]), stdout[i], stderr[i],
                     props);
             }

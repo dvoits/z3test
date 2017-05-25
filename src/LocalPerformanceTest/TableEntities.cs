@@ -12,6 +12,7 @@ namespace PerformanceTest
         public int ID { get; set; }
         public DateTime Submitted { get; set; }
         public string Executable { get; set; }
+        public string DomainName { get; set; }
         public string Parameters { get; set; }
         public string BenchmarkContainer { get; set; }
         public string Category { get; set; }

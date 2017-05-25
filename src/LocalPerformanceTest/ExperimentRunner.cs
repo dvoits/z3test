@@ -16,14 +16,17 @@ namespace PerformanceTest
         private readonly LimitedConcurrencyLevelTaskScheduler scheduler;
         private readonly TaskFactory factory;
         private readonly string rootFolder;
+        private readonly IDomainResolver domainResolver;
 
-        public LocalExperimentRunner(string rootFolder)
+        public LocalExperimentRunner(string rootFolder, IDomainResolver domainResolver)
         {
             if (rootFolder == null) new ArgumentNullException("rootFolder");
+            if (domainResolver == null) new ArgumentNullException("domainResolver");
 
             scheduler = new LimitedConcurrencyLevelTaskScheduler(1);
             factory = new TaskFactory(scheduler);
             this.rootFolder = rootFolder;
+            this.domainResolver = domainResolver;
         }
 
         public TaskFactory TaskFactory { get { return factory; } }
@@ -31,15 +34,15 @@ namespace PerformanceTest
         public Task<BenchmarkResult>[] Enqueue(ExperimentID id, ExperimentDefinition experiment, double normal, int repetitions = 0)
         {
             if (experiment == null) throw new ArgumentNullException("experiment");
-            return RunExperiment(id, experiment, factory, rootFolder, normal, repetitions);
+            return RunExperiment(id, experiment, normal, repetitions);
         }
 
-        private static Task<BenchmarkResult>[] RunExperiment(ExperimentID id, ExperimentDefinition experiment, TaskFactory factory, string rootFolder, double normal, int repetitions = 0, Domain domain = null)
+        private Task<BenchmarkResult>[] RunExperiment(ExperimentID id, ExperimentDefinition experiment, double normal, int repetitions = 0)
         {
             if (experiment == null) throw new ArgumentNullException("experiment");
             if (factory == null) throw new ArgumentNullException("factory");
 
-            if (domain == null) domain = Domain.Default;
+            Domain domain = domainResolver.GetDomain(experiment.DomainName);
 
             string executable;
             if (Path.IsPathRooted(experiment.Executable)) executable = experiment.Executable;
@@ -98,13 +101,14 @@ namespace PerformanceTest
                         Trace.WriteLine(String.Format("Done in {0} (aggregated by {1} runs)", finalMeasure.WallClockTime, count));
 
                         var performanceIndex = normal * finalMeasure.TotalProcessorTime.TotalSeconds;
-                        return new BenchmarkResult(
+                        var result = new BenchmarkResult(
                             id, fileName, workerInfo, 
                             acq, performanceIndex,  
-                            finalMeasure.TotalProcessorTime, finalMeasure.WallClockTime,
+                            finalMeasure.TotalProcessorTime, finalMeasure.WallClockTime, finalMeasure.PeakMemorySizeMB,
                             analysis.Status,
                             finalMeasure.ExitCode, finalMeasure.OutputToString(), finalMeasure.ErrorToString(),
                             analysis.OutputProperties);
+                        return result;
                     }, benchmarkFile, TaskCreationOptions.LongRunning);
                 results.Add(task);
             }

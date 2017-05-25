@@ -14,6 +14,7 @@ namespace PerformanceTest
     {
         public static ExperimentDefinition Create(string executable, string benchmarkContainer, string benchmarkFileExtension, string parameters,
             TimeSpan benchmarkTimeout,
+            string domainName,
             string category = null, long benchmarkMemoryLimitBytes = 0)
         {
             return new ExperimentDefinition()
@@ -24,7 +25,8 @@ namespace PerformanceTest
                 Parameters = parameters,
                 BenchmarkTimeout = benchmarkTimeout,
                 Category = category,
-                MemoryLimit = benchmarkMemoryLimitBytes
+                MemoryLimit = benchmarkMemoryLimitBytes,
+                DomainName = domainName
             };
         }
 
@@ -37,6 +39,11 @@ namespace PerformanceTest
         /// The executable will run for multiple specified benchmark files to measure its performance.
         /// </summary>
         public string Executable { get; private set; }
+
+        /// <summary>
+        /// Name of a domain which determines an additional analysis and process results interpretation.
+        /// </summary>
+        public string DomainName { get; private set; }
 
         /// <summary>
         /// Command-line parameters for the executable.
@@ -127,7 +134,7 @@ namespace PerformanceTest
     public class BenchmarkResult
     {
         public BenchmarkResult(int experimentId, string benchmarkFileName, string workerInformation, DateTime acquireTime, double normalizedRuntime,
-            TimeSpan totalProcessorTime, TimeSpan wallClockTime, ResultStatus status, int exitCode, string stdout, string stderr, 
+            TimeSpan totalProcessorTime, TimeSpan wallClockTime, double memorySizeMB, ResultStatus status, int exitCode, string stdout, string stderr, 
             IReadOnlyDictionary<string, string> props)
         {
             if (props == null) throw new ArgumentNullException("props");
@@ -136,9 +143,15 @@ namespace PerformanceTest
             this.BenchmarkFileName = benchmarkFileName;
             this.WorkerInformation = workerInformation;
             this.NormalizedRuntime = normalizedRuntime;
+            this.TotalProcessorTime = totalProcessorTime;
+            this.WallClockTime = wallClockTime;
+            this.PeakMemorySizeMB = memorySizeMB;
+            this.ExitCode = exitCode;
             this.AcquireTime = acquireTime;
             this.Status = status;
             this.Properties = props;
+            this.StdOut = stdout;
+            this.StdErr = stderr;
         }
 
         /// <summary>
