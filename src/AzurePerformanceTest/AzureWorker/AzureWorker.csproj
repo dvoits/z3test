@@ -100,6 +100,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\LocalPerformanceTest\LocalPerformanceTest.csproj">
+      <Project>{879e906f-d5a6-4332-97a7-6952f3c00abc}</Project>
+      <Name>LocalPerformanceTest</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\Measurement\Measurement.csproj">
       <Project>{e315bfab-d44b-4a75-82a3-1eeaf33b5717}</Project>
       <Name>Measurement</Name>
@@ -107,6 +111,10 @@
     <ProjectReference Include="..\..\PerformanceTest\PerformanceTest.csproj">
       <Project>{86056f9d-4f4e-492b-bbc2-7a176043e42c}</Project>
       <Name>PerformanceTest</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Z3Domain\Z3Domain.csproj">
+      <Project>{cfa940ba-7127-4118-a9a5-97452c3897e1}</Project>
+      <Name>Z3Domain</Name>
     </ProjectReference>
     <ProjectReference Include="..\AzurePerformanceTestCommons\AzurePerformanceTestCommons.csproj">
       <Project>{212c3662-8342-43d1-ac51-36ab067b13d7}</Project>

@@ -158,21 +158,28 @@ namespace AzurePerformanceTest
         public async Task PutResult(ExperimentID expId, BenchmarkResult result)
         {
             var queue = GetResultsQueueReference(expId);
+            var stdBlobs = await PutStdOutput(result);
+            throw new NotImplementedException("Needs serialization of benchmark result");
+            //await queue.AddMessageAsync(new CloudQueueMessage(SerializeBenchmarkResultToCsvString(result, stdoutBlobId, stderrBlobId)));
+        }
+
+        private async Task<Tuple<string,string>> PutStdOutput(BenchmarkResult result)
+        {
             string stdoutBlobId = "";
             string stderrBlobId = "";
-            if (result.Measurements.StdOut.Length > 0)
+            if (result.StdOut.Length > 0)
             {
                 stdoutBlobId = "E" + result.ExperimentID.ToString() + "F" + result.BenchmarkFileName + "-stdout";
                 var stdoutBlob = outputContainer.GetBlockBlobReference(stdoutBlobId);
-                await stdoutBlob.UploadFromStreamAsync(result.Measurements.StdOut);
+                await stdoutBlob.UploadFromStreamAsync(result.StdOut);
             }
-            if (result.Measurements.StdErr.Length > 0)
+            if (result.StdErr.Length > 0)
             {
                 stderrBlobId = "E" + result.ExperimentID.ToString() + "F" + result.BenchmarkFileName + "-stderr";
                 var stderrBlob = outputContainer.GetBlockBlobReference(stderrBlobId);
-                await stderrBlob.UploadFromStreamAsync(result.Measurements.StdErr);
+                await stderrBlob.UploadFromStreamAsync(result.StdErr);
             }
-            await queue.AddMessageAsync(new CloudQueueMessage(SerializeBenchmarkResultToCsvString(result, stdoutBlobId, stderrBlobId)));
+            return Tuple.Create(stdoutBlobId, stderrBlobId);
         }
 
         public async Task PutSerializedExperimentResults(ExperimentID expId, IEnumerable<string> results)
@@ -222,23 +229,6 @@ namespace AzurePerformanceTest
             return "exp" + id.ToString();
         }
 
-        private string SerializeBenchmarkResultToCsvString(BenchmarkResult result, string stdoutBlobId, string stderrBlobId)
-        {
-            // BenchmarkFileName,AcquireTime,NormalizedRuntime,TotalProcessorTime,WallClockTime,PeakMemorySize,Status,ExitCode,StdOut,StdErr,WorkerInformation
-            return string.Format("{0},{1},{2},{3},{4},{5},{6},{7},\"{8}\",\"{9}\",\"{10}\"",
-                result.BenchmarkFileName,
-                result.AcquireTime.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                result.NormalizedRuntime,
-                result.Measurements.TotalProcessorTime,
-                result.Measurements.WallClockTime,
-                result.Measurements.PeakMemorySize,
-                result.Measurements.Status,
-                result.Measurements.ExitCode,
-                stdoutBlobId,
-                stderrBlobId,
-                result.WorkerInformation);
-        }
-
         public CloudBlockBlob GetExecutableReference(string name)
         {
             return binContainer.GetBlockBlobReference(name);
@@ -256,28 +246,6 @@ namespace AzurePerformanceTest
             return blob.Uri + signature;
         }
 
-        /// <summary>
-        /// All results must have same experiment id.
-        /// </summary>
-        /// <param name="results"></param>
-        /// <returns></returns>
-        public async Task PutExperimentResults(ExperimentID expId, IEnumerable<BenchmarkResult> results)
-        {
-            string fileName = GetResultsFileName(expId);
-            using (MemoryStream zipStream = new MemoryStream())
-            {
-                using (var zip = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
-                {
-                    var entry = zip.CreateEntry(fileName);
-                    BenchmarkResultsStorage.SaveBenchmarks(results.ToArray(), entry.Open());
-                }
-
-                var blob = resultsContainer.GetBlockBlobReference(GetResultBlobName(expId));
-                zipStream.Position = 0;
-                await UploadBlobAsync(zipStream, blob);
-            }
-        }
-
         private static string GetResultsFileName(int expId)
         {
             return String.Format("{0}.csv", expId);
@@ -286,50 +254,6 @@ namespace AzurePerformanceTest
         private static string GetResultBlobName(ExperimentID expId)
         {
             return String.Format("{0}.csv.zip", expId);
-        }
-
-        private async Task UploadAsBatch(IEnumerable<BenchmarkResult> batchEntities)
-        {
-            TableBatchOperation batch = new TableBatchOperation();
-            foreach (BenchmarkResult item in batchEntities)
-            {
-                var entity = await PrepareResult(item);
-                batch.Insert(entity);
-            }
-            await resultsTable.ExecuteBatchAsync(batch);
-        }
-
-
-        private async Task<BenchmarkEntity> PrepareResult(BenchmarkResult result)
-        {
-            string stdoutBlobId = null;
-            string stderrBlobId = null;
-            if (result.StdOut.Length > 0)
-            {
-                stdoutBlobId = "E" + result.ExperimentID.ToString() + "F" + result.BenchmarkFileName + "-stdout";
-                var stdoutBlob = outputContainer.GetBlockBlobReference(stdoutBlobId);
-                await stdoutBlob.UploadFromStreamAsync(result.StdOut);
-            }
-            if (result.Measurements.StdErr.Length > 0)
-            {
-                stderrBlobId = "E" + result.ExperimentID.ToString() + "F" + result.BenchmarkFileName + "-stderr";
-                var stderrBlob = outputContainer.GetBlockBlobReference(stderrBlobId);
-                await stderrBlob.UploadFromStreamAsync(result.Measurements.StdErr);
-            }
-
-            var entity = new BenchmarkEntity(result.ExperimentID, result.BenchmarkFileName);
-            entity.AcquireTime = result.AcquireTime;
-            entity.ExitCode = result.Measurements.ExitCode;
-            entity.NormalizedRuntime = result.NormalizedRuntime;
-            entity.PeakMemorySize = (int)(result.Measurements.PeakMemorySize >> 20);
-            entity.Status = result.Measurements.Limits.ToString();
-            entity.StdErr = stderrBlobId;
-            entity.StdOut = stdoutBlobId;
-            entity.TotalProcessorTime = result.Measurements.TotalProcessorTime.TotalSeconds;
-            entity.WallClockTime = result.Measurements.WallClockTime.TotalSeconds;
-            entity.WorkerInformation = result.WorkerInformation;
-
-            return entity;
         }
 
         private Measure.LimitsStatus StatusFromString(string status)
@@ -381,13 +305,14 @@ namespace AzurePerformanceTest
             var row = new ExperimentEntity(id);
             row.Submitted = submitted;
             row.Executable = experiment.Executable;
+            row.DomainName = experiment.DomainName;
             row.Parameters = experiment.Parameters;
             row.BenchmarkContainer = experiment.BenchmarkContainer;
             row.BenchmarkFileExtension = experiment.BenchmarkFileExtension;
             row.Category = experiment.Category;
             row.BenchmarkTimeout = experiment.BenchmarkTimeout.TotalSeconds;
             row.ExperimentTimeout = experiment.ExperimentTimeout.TotalSeconds;
-            row.MemoryLimit = (int)(experiment.MemoryLimit >> 20); // bytes to MB
+            row.MemoryLimitMB = experiment.MemoryLimitMB;
             row.GroupName = experiment.GroupName;
             row.Note = note;
             row.Creator = creator;
@@ -672,6 +597,7 @@ namespace AzurePerformanceTest
         public ExperimentEntity() { }
         public DateTime Submitted { get; set; }
         public string Executable { get; set; }
+        public string DomainName { get; set; }
         public string Parameters { get; set; }
         public string BenchmarkContainer { get; set; }
         public string Category { get; set; }
@@ -679,7 +605,7 @@ namespace AzurePerformanceTest
         /// <summary>
         /// MegaBytes.
         /// </summary>
-        public int MemoryLimit { get; set; }
+        public double MemoryLimitMB { get; set; }
         /// <summary>
         /// Seconds.
         /// </summary>
@@ -707,39 +633,5 @@ namespace AzurePerformanceTest
             this.PartitionKey = NextIDPartition;
             this.RowKey = NextIDRow;
         }
-    }
-
-    public class BenchmarkEntity : TableEntity
-    {
-        public static string IDFromFileName(string fileName)
-        {
-            return fileName.Replace('\\', '>').Replace('/', '<');
-        }
-        public BenchmarkEntity(string experimentID, string benchmarkID)
-        {
-            this.PartitionKey = experimentID;
-            this.RowKey = IDFromFileName(benchmarkID);
-            this.BenchmarkFileName = benchmarkID;
-        }
-        public BenchmarkEntity(int experimentID, string benchmarkID)
-        {
-            this.PartitionKey = ExperimentEntity.ExperimentIDToString(experimentID);
-            this.RowKey = IDFromFileName(benchmarkID);
-            this.BenchmarkFileName = benchmarkID;
-        }
-        public BenchmarkEntity() { }
-        public string BenchmarkFileName { get; set; }
-        public DateTime AcquireTime { get; set; }
-        public double NormalizedRuntime { get; set; }
-        public double TotalProcessorTime { get; set; }
-        public double WallClockTime { get; set; }
-        public int PeakMemorySize { get; set; }
-        public string Status { get; set; }
-        public int ExitCode { get; set; }
-
-        public string StdOut { get; set; }
-        public string StdErr { get; set; }
-        public string WorkerInformation { get; set; }
-
     }
 }

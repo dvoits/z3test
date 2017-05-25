@@ -201,14 +201,12 @@ namespace AzureWorker
             string arguments = args[3];
             string targetFile = args[4];
             TimeSpan timeout = TimeSpan.FromSeconds(double.Parse(args[5]));
-            long? memoryLimit = null;
+            double memoryLimit = 0; // no limit
             long? outputLimit = null;
             long? errorLimit = null;
             if (args.Length > 6)
             {
-                memoryLimit = args[6] == "null" ? null : (long?)long.Parse(args[6]);
-                if (memoryLimit.HasValue && memoryLimit.Value == 0)
-                    memoryLimit = null;
+                memoryLimit = double.Parse(args[6]);
                 if (args.Length > 7)
                 {
                     outputLimit = args[7] == "null" ? null : (long?)long.Parse(args[7]);
@@ -218,10 +216,22 @@ namespace AzureWorker
                     }
                 }
             }
-            arguments = arguments.Replace("{0}", Path.GetFullPath(targetFile));
-            var acquireTime = DateTime.Now;
-            var measure = ProcessMeasurer.Measure(executable, arguments, timeout, memoryLimit, outputLimit, errorLimit);
-            var result = new BenchmarkResult(experimentId, benchmarkId, "", measure.TotalProcessorTime.TotalSeconds, acquireTime, measure);
+
+            Domain domain = new Z3Domain(); // todo: take custom domain name from `args`
+            BenchmarkResult result = LocalExperimentRunner.RunBenchmark(
+                experimentId,
+                executable,
+                arguments,
+                benchmarkId,
+                Path.GetFullPath(targetFile),
+                10,
+                timeout,
+                memoryLimit,
+                outputLimit,
+                errorLimit,
+                domain,
+                1.0,
+                "");
 
             var storage = new AzureExperimentStorage(Settings.Default.StorageAccountName, Settings.Default.StorageAccountKey);
             await storage.PutResult(experimentId, result);
@@ -233,10 +243,13 @@ namespace AzureWorker
             var exp = await storage.GetReferenceExperiment();
             var execBlob = storage.GetExecutableReference(exp.Definition.Executable);
             await execBlob.DownloadToFileAsync(exp.Definition.Executable, FileMode.Create);
+
+            // todo: use LocalExperimentRunner.RunBenchmark
+
             List<Measure> measurements = new List<Measure>(exp.Repetitions);
             for (int i = 0; i < exp.Repetitions; ++i)
             {
-                measurements.Add(ProcessMeasurer.Measure(exp.Definition.Executable, exp.Definition.Parameters, exp.Definition.BenchmarkTimeout, exp.Definition.MemoryLimit));
+                measurements.Add(ProcessMeasurer.Measure(exp.Definition.Executable, exp.Definition.Parameters, exp.Definition.BenchmarkTimeout, exp.Definition.MemoryLimitMB));
             }
         }
     }

@@ -10,6 +10,24 @@ namespace PerformanceTest
 {
     public static class Utils
     {
+        public static Stream StringToStream(string s)
+        {
+            byte[] byteArray = Encoding.UTF8.GetBytes(s);
+            MemoryStream stream = new MemoryStream(byteArray);
+            stream.Position = 0;
+            return stream;
+        }
+
+        public static string StreamToString(Stream s, bool resetPosition)
+        {
+            long pos = s.Position;
+            StreamReader r = new StreamReader(s, Encoding.UTF8);
+            string str = r.ReadToEnd();
+            if (resetPosition)
+                s.Position = pos;
+            return str;
+        }
+
         public static T Median<T>(T[] data, Func<T,T,T> mean)
         {
             int len = data.Length;

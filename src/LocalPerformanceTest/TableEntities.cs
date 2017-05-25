@@ -20,7 +20,7 @@ namespace PerformanceTest
         /// <summary>
         /// MegaBytes.
         /// </summary>
-        public int MemoryLimit { get; set; }
+        public double MemoryLimitMB { get; set; }
         /// <summary>
         /// Seconds.
         /// </summary>

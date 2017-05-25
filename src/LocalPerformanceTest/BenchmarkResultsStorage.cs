@@ -26,8 +26,8 @@ namespace PerformanceTest
                 Column.Create("PeakMemorySizeMB", benchmarks.Select(b => b.PeakMemorySizeMB), length),
                 Column.Create("Status", benchmarks.Select(b => StatusToString(b.Status)), length),
                 Column.Create("ExitCode", benchmarks.Select(b => b.ExitCode), length),
-                Column.Create("StdOut", benchmarks.Select(b => b.StdOut), length),
-                Column.Create("StdErr", benchmarks.Select(b => b.StdErr), length),
+                Column.Create("StdOut", benchmarks.Select(b => Utils.StreamToString(b.StdOut, true)), length),
+                Column.Create("StdErr", benchmarks.Select(b => Utils.StreamToString(b.StdErr, true)), length),
                 Column.Create("WorkerInformation", benchmarks.Select(b => b.WorkerInformation), length),
             };
 
@@ -98,7 +98,7 @@ namespace PerformanceTest
                 results[i] = new BenchmarkResult(
                     expId, fileName[i], worker[i], DateTime.Parse(acq[i], System.Globalization.CultureInfo.InvariantCulture),
                     double.Parse(norm[i]), TimeSpan.FromSeconds(double.Parse(runtime[i])), TimeSpan.FromSeconds(double.Parse(wctime[i])), double.Parse(mem[i]),
-                    StatusFromString(stat[i]), int.Parse(exitcode[i]), stdout[i], stderr[i],
+                    StatusFromString(stat[i]), int.Parse(exitcode[i]), Utils.StringToStream(stdout[i]), Utils.StringToStream(stderr[i]),
                     props);
             }
             return results;
@@ -113,5 +113,6 @@ namespace PerformanceTest
         {
             return (ResultStatus)Enum.Parse(typeof(ResultStatus), status);
         }
+
     }
 }

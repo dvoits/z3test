@@ -1,10 +1,4 @@
-﻿using Measurement;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Blob;
-using Microsoft.WindowsAzure.Storage.Table;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
-using PerformanceTest;
+﻿using PerformanceTest;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -54,7 +48,7 @@ namespace AzurePerformanceTest
             }
         }
 
-		public void ClearCache()
+        public void ClearCache()
         {
             cache.Clear();
         }
@@ -84,6 +78,63 @@ namespace AzurePerformanceTest
                 }
             }
             return cache.GetResults(experimentID);
+        }
+
+
+        /// <summary>
+        /// Puts the benchmark results of the given experiment to the storage.
+        /// </summary>
+        /// <param name="results">All results must have same experiment id.</param>
+        public async Task PutExperimentResults(ExperimentID expId, IEnumerable<BenchmarkResult> results)
+        {
+            // Uploading stdout and stderr to the blob storage.
+            var results2 = results.ToArray();
+            var uploadOutputs = results2
+                .Select(async (r, i) =>
+                {
+                    var _blobs = await PutStdOutput(r);
+                    return Tuple.Create(i, _blobs.Item1, _blobs.Item2);
+                });
+
+            var blobs = await Task.WhenAll(uploadOutputs);
+            foreach (var blob in blobs)
+            {
+                int i = blob.Item1;
+                string stdoutBlobId = blob.Item2;
+                string stderrBlobId = blob.Item3;
+                if(!String.IsNullOrEmpty(stderrBlobId) || !String.IsNullOrEmpty(stdoutBlobId))
+                {
+                    var res = results2[i];
+                    results2[i] = new BenchmarkResult(res.ExperimentID,
+                        res.BenchmarkFileName,
+                        res.WorkerInformation,
+                        res.AcquireTime,
+                        res.NormalizedRuntime,
+                        res.TotalProcessorTime,
+                        res.WallClockTime,
+                        res.PeakMemorySizeMB,
+                        res.Status,
+                        res.ExitCode,
+                        string.IsNullOrEmpty(stdoutBlobId) ? new MemoryStream() : Utils.StringToStream(stdoutBlobId),
+                        string.IsNullOrEmpty(stderrBlobId) ? new MemoryStream() : Utils.StringToStream(stderrBlobId),
+                        res.Properties);
+                }
+            }
+
+            // Uploading results table.
+            string fileName = GetResultsFileName(expId);
+            using (MemoryStream zipStream = new MemoryStream())
+            {
+                using (var zip = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
+                {
+                    var entry = zip.CreateEntry(fileName);
+                    BenchmarkResultsStorage.SaveBenchmarks(results2.ToArray(), entry.Open());
+                }
+
+                var blob = resultsContainer.GetBlockBlobReference(GetResultBlobName(expId));
+                zipStream.Position = 0;
+                await UploadBlobAsync(zipStream, blob);
+            }
         }
     }
 }

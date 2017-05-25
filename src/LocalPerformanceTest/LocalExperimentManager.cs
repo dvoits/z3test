@@ -40,7 +40,7 @@ namespace PerformanceTest
             string relContainer = Utils.MakeRelativePath(experimentsFolder, def.BenchmarkContainer);
             return ExperimentDefinition.Create(relExec, relContainer, def.BenchmarkFileExtension,
                 def.Parameters, def.BenchmarkTimeout, def.DomainName,
-                def.Category, def.MemoryLimit);
+                def.Category, def.MemoryLimitMB);
         }
 
         private readonly ReferenceExperiment reference;
@@ -230,7 +230,8 @@ namespace PerformanceTest
             return ExperimentDefinition.Create(
                 row.Executable, row.BenchmarkContainer,
                 row.BenchmarkFileExtension, row.Parameters,
-                TimeSpan.FromSeconds(row.BenchmarkTimeout), row.Category);
+                TimeSpan.FromSeconds(row.BenchmarkTimeout),
+                row.DomainName, row.Category, row.MemoryLimitMB);
         }
     }
     

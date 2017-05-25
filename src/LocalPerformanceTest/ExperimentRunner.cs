@@ -63,57 +63,64 @@ namespace PerformanceTest
                 var task =
                     factory.StartNew(_benchmark =>
                     {
-                        string benchmark = (string)_benchmark;
-                        string fileName = Utils.MakeRelativePath(benchmarkFolder, benchmark);
-                        Trace.WriteLine("Running benchmark " + Path.GetFileName(fileName));
+                        string inputFullPath = (string)_benchmark;
+                        string inputRelativePath = Utils.MakeRelativePath(benchmarkFolder, inputFullPath);
+                        Trace.WriteLine("Running benchmark " + Path.GetFileName(inputRelativePath));
 
                         string args = experiment.Parameters;
-                        if (args != null)
-                        {
-                            args = args.Replace("{0}", benchmark);
-                        }
-
-                        DateTime acq = DateTime.Now;
-
-                        int maxCount = repetitions == 0 ? 25 : repetitions;
-                        TimeSpan maxTime = TimeSpan.FromSeconds(30);
-
-                        int count = 0;
-                        List<ProcessRunMeasure> measures = new List<ProcessRunMeasure>();
-                        TimeSpan total = TimeSpan.FromSeconds(0);
-                        ProcessRunMeasure m;
-                        ProcessRunAnalysis analysis = null;
-
-                        do
-                        {
-                            m = ProcessMeasurer.Measure(executable, args, experiment.BenchmarkTimeout, experiment.MemoryLimit == 0 ? null : new Nullable<long>(experiment.MemoryLimit));
-                            measures.Add(m);
-                            count++;
-                            total += m.WallClockTime;
-
-                            if(analysis == null) // analyzed only once, repetitions are for more confident run time
-                            {
-                                analysis = domain.Analyze(fileName, m);                                
-                            }
-                        } while ((repetitions != 0 || total < maxTime) && count < maxCount && m.Limits == Measure.LimitsStatus.WithinLimits);
-
-                        ProcessRunMeasure finalMeasure = Utils.AggregateMeasures(measures.ToArray());
-                        Trace.WriteLine(String.Format("Done in {0} (aggregated by {1} runs)", finalMeasure.WallClockTime, count));
-
-                        var performanceIndex = normal * finalMeasure.TotalProcessorTime.TotalSeconds;
-                        var result = new BenchmarkResult(
-                            id, fileName, workerInfo, 
-                            acq, performanceIndex,  
-                            finalMeasure.TotalProcessorTime, finalMeasure.WallClockTime, finalMeasure.PeakMemorySizeMB,
-                            analysis.Status,
-                            finalMeasure.ExitCode, finalMeasure.OutputToString(), finalMeasure.ErrorToString(),
-                            analysis.OutputProperties);
-                        return result;
+                        return RunBenchmark(id, executable, experiment.Parameters, inputRelativePath, inputFullPath, 
+                            repetitions, experiment.BenchmarkTimeout, experiment.MemoryLimitMB, null, null, domain, 
+                            normal, workerInfo);
                     }, benchmarkFile, TaskCreationOptions.LongRunning);
                 results.Add(task);
             }
 
             return results.ToArray();
+        }
+
+        public static BenchmarkResult RunBenchmark(int experimentId, string executable, string args, string inputDisplayName, string inputFullPath, int repetitions, TimeSpan timeOut, double memLimitMB, long? ouputLimit, long? errorLimit, Domain domain, double normal, string workerInfo)
+        {
+            if (domain == null) throw new ArgumentNullException("domain");
+            if (args != null)
+                args = args.Replace("{0}", inputFullPath);
+            else
+                args = "";
+
+            DateTime acq = DateTime.Now;
+            int maxCount = repetitions == 0 ? 10 : repetitions;
+            TimeSpan maxTime = TimeSpan.FromSeconds(10);
+
+            int count = 0;
+            List<ProcessRunMeasure> measures = new List<ProcessRunMeasure>();
+            TimeSpan total = TimeSpan.FromSeconds(0);
+            ProcessRunAnalysis analysis = null;
+            ProcessRunMeasure m;
+
+            do
+            {
+                m = ProcessMeasurer.Measure(executable, args, timeOut, memLimitMB, ouputLimit, errorLimit);
+                measures.Add(m);
+                count++;
+                total += m.WallClockTime;
+
+                if (analysis == null) // analyzed only once, repetitions are for more confident run time
+                {
+                    analysis = domain.Analyze(inputDisplayName, m);
+                }
+            } while ((repetitions != 0 || total < maxTime) && count < maxCount && m.Limits == Measure.LimitsStatus.WithinLimits);
+
+            ProcessRunMeasure finalMeasure = Utils.AggregateMeasures(measures.ToArray());
+            Trace.WriteLine(String.Format("Done in {0} (aggregated by {1} runs)", finalMeasure.WallClockTime, count));
+
+            var performanceIndex = normal * finalMeasure.TotalProcessorTime.TotalSeconds;
+            var result = new BenchmarkResult(
+                experimentId, inputDisplayName, workerInfo,
+                acq, performanceIndex,
+                finalMeasure.TotalProcessorTime, finalMeasure.WallClockTime, finalMeasure.PeakMemorySizeMB,
+                analysis.Status,
+                finalMeasure.ExitCode, finalMeasure.StdOut, finalMeasure.StdErr,
+                analysis.OutputProperties);
+            return result;
         }
 
         private static string GetWorkerInfo()

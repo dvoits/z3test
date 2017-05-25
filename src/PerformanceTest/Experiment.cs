@@ -1,6 +1,7 @@
 ﻿using Measurement;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,7 +16,7 @@ namespace PerformanceTest
         public static ExperimentDefinition Create(string executable, string benchmarkContainer, string benchmarkFileExtension, string parameters,
             TimeSpan benchmarkTimeout,
             string domainName,
-            string category = null, long benchmarkMemoryLimitBytes = 0)
+            string category = null, double memoryLimitMB = 0)
         {
             return new ExperimentDefinition()
             {
@@ -25,7 +26,7 @@ namespace PerformanceTest
                 Parameters = parameters,
                 BenchmarkTimeout = benchmarkTimeout,
                 Category = category,
-                MemoryLimit = benchmarkMemoryLimitBytes,
+                MemoryLimitMB = memoryLimitMB,
                 DomainName = domainName
             };
         }
@@ -72,10 +73,10 @@ namespace PerformanceTest
 
 
         /// <summary>
-        /// The memory limit per benchmark (bytes).
+        /// The memory limit per benchmark (megabytes).
         /// Zero means no limit.
         /// </summary>
-        public long MemoryLimit { get; private set; }
+        public double MemoryLimitMB { get; private set; }
 
         /// <summary>
         /// The time limit per benchmark.
@@ -134,7 +135,7 @@ namespace PerformanceTest
     public class BenchmarkResult
     {
         public BenchmarkResult(int experimentId, string benchmarkFileName, string workerInformation, DateTime acquireTime, double normalizedRuntime,
-            TimeSpan totalProcessorTime, TimeSpan wallClockTime, double memorySizeMB, ResultStatus status, int exitCode, string stdout, string stderr, 
+            TimeSpan totalProcessorTime, TimeSpan wallClockTime, double memorySizeMB, ResultStatus status, int exitCode, Stream stdout, Stream stderr, 
             IReadOnlyDictionary<string, string> props)
         {
             if (props == null) throw new ArgumentNullException("props");
@@ -175,6 +176,7 @@ namespace PerformanceTest
         public double NormalizedRuntime { get; private set; }
 
         public TimeSpan TotalProcessorTime { get; private set; }
+
         public TimeSpan WallClockTime { get; private set; }
 
         /// <summary>
@@ -183,8 +185,10 @@ namespace PerformanceTest
         public double PeakMemorySizeMB { get; private set; }
 
         public int ExitCode { get; private set; }
-        public string StdOut { get; private set; }
-        public string StdErr { get; private set; }
+
+        public Stream StdOut { get; private set; }
+
+        public Stream StdErr { get; private set; }
 
         public string WorkerInformation { get; private set; }
 

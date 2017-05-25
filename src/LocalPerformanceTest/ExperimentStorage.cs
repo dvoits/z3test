@@ -140,7 +140,7 @@ namespace PerformanceTest
                 Category = experiment.Category,
                 BenchmarkTimeout = experiment.BenchmarkTimeout.TotalSeconds,
                 ExperimentTimeout = experiment.ExperimentTimeout.TotalSeconds,
-                MemoryLimit = (int)(experiment.MemoryLimit >> 20), // bytes to MB
+                MemoryLimitMB = experiment.MemoryLimitMB,
                 GroupName = experiment.GroupName,
                 Note = note,
                 Creator = creator
@@ -184,14 +184,6 @@ namespace PerformanceTest
             {
                 BenchmarkResultsStorage.SaveBenchmarks(benchmarks, s);
             }
-        }
-
-        private static Stream AsStream(string s)
-        {
-            byte[] byteArray = Encoding.UTF8.GetBytes(s);
-            MemoryStream stream = new MemoryStream(byteArray);
-            stream.Position = 0;
-            return stream;
         }
 
         internal class PrivatePropertiesResolver : DefaultContractResolver
