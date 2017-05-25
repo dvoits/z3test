@@ -13,12 +13,14 @@ using Microsoft.Azure.Batch;
 using Microsoft.WindowsAzure.Storage.Blob;
 using System.Diagnostics;
 using AzurePerformanceTest;
+using Microsoft.WindowsAzure.Storage.Queue;
 
 namespace AzureWorker
 {
     class Program
     {
         const string defaultContainerUri = "default";
+        const string totalBenchmarksPrefix = "Total benchmarks: ";
 
         static int Main(string[] args)
         {
@@ -50,9 +52,41 @@ namespace AzureWorker
             }
         }
 
-        static async Task CollectResults(string[] subArgs)
+        static async Task CollectResults(string[] args)
         {
-            throw new NotImplementedException();
+            int experimentId = int.Parse(args[0]);
+
+            var storage = new AzureExperimentStorage(Settings.Default.StorageAccountName, Settings.Default.StorageAccountKey);
+            var queue = storage.GetResultsQueueReference(experimentId);
+            List<string> results = new List<string>();
+            int totalBenchmarks = -1;
+            int processedBenchmarks = 0;
+            do
+            {
+                var messages = queue.GetMessages(32, TimeSpan.FromMinutes(5));
+                foreach (CloudQueueMessage message in messages)
+                {
+                    var content = message.AsString;
+                    if (totalBenchmarks == -1 && content.StartsWith(totalBenchmarksPrefix))
+                    {
+                        totalBenchmarks = int.Parse(content.Substring(totalBenchmarksPrefix.Length));
+                        await storage.SetTotalBenchmarks(experimentId, totalBenchmarks);
+                    }
+                    else
+                    {
+                        results.Add(content);
+                        ++processedBenchmarks;
+                    }
+                }
+                await storage.PutSerializedExperimentResults(experimentId, results);
+                await storage.IncreaseCompletedBenchmarks(experimentId, messages.Count());
+                foreach (CloudQueueMessage message in messages)
+                {
+                    queue.DeleteMessage(message);
+                }
+            }
+            while (totalBenchmarks == -1 || processedBenchmarks < totalBenchmarks);
+            await storage.DeleteResultsQueue(experimentId);
         }
 
         static async Task AddTasks(string[] args)
@@ -69,6 +103,8 @@ namespace AzureWorker
             if (args.Length > 6)
             {
                 memoryLimit = args[6] == "null" ? null : (long?)long.Parse(args[6]);
+                if (memoryLimit.HasValue && memoryLimit.Value == 0)
+                    memoryLimit = null;
                 if (args.Length > 7)
                 {
                     outputLimit = args[7] == "null" ? null : (long?)long.Parse(args[7]);
@@ -97,13 +133,22 @@ namespace AzureWorker
             var execResourceFile = new ResourceFile(storage.GetExecutableSasUri(executable), executable);
             Trace.WriteLine("Resourced executable");
 
+            var queue = await storage.CreateResultsQueue(experimentId);
+            Trace.Write("Created queue");
+
             using (BatchClient batchClient = BatchClient.Open(batchCred))
             {
+                //starting results collection
+                string taskCommandLine = string.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\AzureWorker.exe --collect-results {0}", experimentId);
+                CloudTask task = new CloudTask("resultCollection", taskCommandLine);
+                await batchClient.JobOperations.AddTaskAsync(jobId, task);
+
                 BlobContinuationToken continuationToken = null;
                 BlobResultSegment resultSegment = null;
                 
                 List<Task> starterTasks = new List<Task>();
                 int batchNo = 0;
+                int totalBenchmarks = 0;
                 do
                 {
                     resultSegment = await benchmarkStorage.ListBlobsSegmentedAsync(benchmarksPath, continuationToken);
@@ -112,8 +157,11 @@ namespace AzureWorker
                     
                     continuationToken = resultSegment.ContinuationToken;
                     ++batchNo;
+                    totalBenchmarks += resultSegment.Results.Count();
                 }
                 while (continuationToken != null);
+
+                await queue.AddMessageAsync(new CloudQueueMessage(totalBenchmarksPrefix + totalBenchmarks.ToString()));
 
                 await Task.WhenAll(starterTasks.ToArray());
             }
@@ -159,6 +207,8 @@ namespace AzureWorker
             if (args.Length > 6)
             {
                 memoryLimit = args[6] == "null" ? null : (long?)long.Parse(args[6]);
+                if (memoryLimit.HasValue && memoryLimit.Value == 0)
+                    memoryLimit = null;
                 if (args.Length > 7)
                 {
                     outputLimit = args[7] == "null" ? null : (long?)long.Parse(args[7]);
@@ -172,11 +222,22 @@ namespace AzureWorker
             var acquireTime = DateTime.Now;
             var measure = ProcessMeasurer.Measure(executable, arguments, timeout, memoryLimit, outputLimit, errorLimit);
             var result = new BenchmarkResult(experimentId, benchmarkId, "", measure.TotalProcessorTime.TotalSeconds, acquireTime, measure);
+
+            var storage = new AzureExperimentStorage(Settings.Default.StorageAccountName, Settings.Default.StorageAccountKey);
+            await storage.PutResult(experimentId, result);
         }
 
         static async Task RunReference(string[] args)
         {
-
+            var storage = new AzureExperimentStorage(Settings.Default.StorageAccountName, Settings.Default.StorageAccountKey);
+            var exp = await storage.GetReferenceExperiment();
+            var execBlob = storage.GetExecutableReference(exp.Definition.Executable);
+            await execBlob.DownloadToFileAsync(exp.Definition.Executable, FileMode.Create);
+            List<Measure> measurements = new List<Measure>(exp.Repetitions);
+            for (int i = 0; i < exp.Repetitions; ++i)
+            {
+                measurements.Add(ProcessMeasurer.Measure(exp.Definition.Executable, exp.Definition.Parameters, exp.Definition.BenchmarkTimeout, exp.Definition.MemoryLimit));
+            }
         }
     }
 }

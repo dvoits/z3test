@@ -155,9 +155,48 @@ namespace AzurePerformanceTest
             return dict;
         }
 
-        public Task PutResult(BenchmarkResult result)
+        public async Task PutResult(ExperimentID expId, BenchmarkResult result)
         {
-            throw new NotImplementedException();
+            var queue = GetResultsQueueReference(expId);
+            string stdoutBlobId = "";
+            string stderrBlobId = "";
+            if (result.Measurements.StdOut.Length > 0)
+            {
+                stdoutBlobId = "E" + result.ExperimentID.ToString() + "F" + result.BenchmarkFileName + "-stdout";
+                var stdoutBlob = outputContainer.GetBlockBlobReference(stdoutBlobId);
+                await stdoutBlob.UploadFromStreamAsync(result.Measurements.StdOut);
+            }
+            if (result.Measurements.StdErr.Length > 0)
+            {
+                stderrBlobId = "E" + result.ExperimentID.ToString() + "F" + result.BenchmarkFileName + "-stderr";
+                var stderrBlob = outputContainer.GetBlockBlobReference(stderrBlobId);
+                await stderrBlob.UploadFromStreamAsync(result.Measurements.StdErr);
+            }
+            await queue.AddMessageAsync(new CloudQueueMessage(SerializeBenchmarkResultToCsvString(result, stdoutBlobId, stderrBlobId)));
+        }
+
+        public async Task PutSerializedExperimentResults(ExperimentID expId, IEnumerable<string> results)
+        {
+            string fileName = GetResultsFileName(expId);
+            string header = "BenchmarkFileName,AcquireTime,NormalizedRuntime,TotalProcessorTime,WallClockTime,PeakMemorySize,Status,ExitCode,StdOut,StdErr,WorkerInformation";
+
+            using (MemoryStream zipStream = new MemoryStream())
+            {
+                using (var zip = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
+                {
+                    var entry = zip.CreateEntry(fileName);
+                    using (var sw = new StreamWriter(entry.Open()))
+                    {
+                        sw.WriteLine(header);
+                        foreach (var s in results)
+                            sw.WriteLine(s);
+                    }
+                }
+
+                var blob = resultsContainer.GetBlockBlobReference(GetResultBlobName(expId));
+                zipStream.Position = 0;
+                await UploadBlobAsync(zipStream, blob);
+            }
         }
 
         public async Task<CloudQueue> CreateResultsQueue(ExperimentID id)
@@ -181,6 +220,23 @@ namespace AzurePerformanceTest
         private string QueueNameForExperiment(ExperimentID id)
         {
             return "exp" + id.ToString();
+        }
+
+        private string SerializeBenchmarkResultToCsvString(BenchmarkResult result, string stdoutBlobId, string stderrBlobId)
+        {
+            // BenchmarkFileName,AcquireTime,NormalizedRuntime,TotalProcessorTime,WallClockTime,PeakMemorySize,Status,ExitCode,StdOut,StdErr,WorkerInformation
+            return string.Format("{0},{1},{2},{3},{4},{5},{6},{7},\"{8}\",\"{9}\",\"10\"",
+                result.BenchmarkFileName,
+                result.AcquireTime.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                result.NormalizedRuntime,
+                result.Measurements.TotalProcessorTime,
+                result.Measurements.WallClockTime,
+                result.Measurements.PeakMemorySize,
+                result.Measurements.Status,
+                result.Measurements.ExitCode,
+                stdoutBlobId,
+                stderrBlobId,
+                result.WorkerInformation);
         }
 
         public CloudBlockBlob GetExecutableReference(string name)
