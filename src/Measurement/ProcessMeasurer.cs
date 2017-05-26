@@ -47,6 +47,9 @@ namespace Measurement
                 error => WriteToStream(error, err_writer, ref err_lim));
 
             long maxmem = 0L;
+            if (!memoryLimit.HasValue)
+                memoryLimit = 0;
+            long memLimitBytes = (long)Math.Floor(memoryLimit.Value * 1024 * 1024);
             bool exhausted_time = false, exhausted_memory = false;
 
             try
@@ -66,7 +69,7 @@ namespace Measurement
                             exhausted_time = true;
                             Kill(p);
                         }
-                        else if (memoryLimit > 0 && m > memoryLimit)
+                        else if (memLimitBytes > 0 && m > memLimitBytes)
                         {
                             Trace.WriteLine("Process uses too much memory; killing.");
                             exhausted_memory = true;
