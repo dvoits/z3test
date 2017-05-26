@@ -12,6 +12,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -159,8 +160,13 @@ namespace AzurePerformanceTest
         {
             var queue = GetResultsQueueReference(expId);
             var stdBlobs = await PutStdOutput(result);
-            throw new NotImplementedException("Needs serialization of benchmark result");
-            //await queue.AddMessageAsync(new CloudQueueMessage(SerializeBenchmarkResultToCsvString(result, stdoutBlobId, stderrBlobId)));
+            var result2 = ReplaceStreamsWithBlobNames(result, stdBlobs.Item1, stdBlobs.Item2);
+            using (MemoryStream ms = new MemoryStream())
+            {
+                ms.WriteByte(1);//signalling that this message contains a result
+                (new BinaryFormatter()).Serialize(ms, result2);
+                await queue.AddMessageAsync(new CloudQueueMessage(ms.ToArray()));
+            }
         }
 
         private async Task<Tuple<string,string>> PutStdOutput(BenchmarkResult result)

@@ -14,6 +14,7 @@ using Microsoft.WindowsAzure.Storage.Blob;
 using System.Diagnostics;
 using AzurePerformanceTest;
 using Microsoft.WindowsAzure.Storage.Queue;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace AzureWorker
 {
@@ -58,27 +59,31 @@ namespace AzureWorker
 
             var storage = new AzureExperimentStorage(Settings.Default.StorageAccountName, Settings.Default.StorageAccountKey);
             var queue = storage.GetResultsQueueReference(experimentId);
-            List<string> results = new List<string>();
+            List<BenchmarkResult> results = new List<BenchmarkResult>();
             int totalBenchmarks = -1;
             int processedBenchmarks = 0;
+            var formatter = new BinaryFormatter();
             do
             {
                 var messages = queue.GetMessages(32, TimeSpan.FromMinutes(5));
                 foreach (CloudQueueMessage message in messages)
                 {
-                    var content = message.AsString;
-                    if (totalBenchmarks == -1 && content.StartsWith(totalBenchmarksPrefix))
+                    using (var ms = new MemoryStream(message.AsBytes))
                     {
-                        totalBenchmarks = int.Parse(content.Substring(totalBenchmarksPrefix.Length));
-                        await storage.SetTotalBenchmarks(experimentId, totalBenchmarks);
-                    }
-                    else
-                    {
-                        results.Add(content);
-                        ++processedBenchmarks;
+                        var typeByte = ms.ReadByte();
+                        if (totalBenchmarks == -1 && typeByte == 2)
+                        {
+                            totalBenchmarks = (int)formatter.Deserialize(ms);
+                            await storage.SetTotalBenchmarks(experimentId, totalBenchmarks);
+                        }
+                        else
+                        {
+                            results.Add((BenchmarkResult)formatter.Deserialize(ms));
+                            ++processedBenchmarks;
+                        }
                     }
                 }
-                await storage.PutSerializedExperimentResults(experimentId, results);
+                await storage.PutExperimentResultsWithBlobnames(experimentId, results.ToArray());
                 await storage.SetCompletedBenchmarks(experimentId, processedBenchmarks);
                 foreach (CloudQueueMessage message in messages)
                 {
@@ -161,7 +166,13 @@ namespace AzureWorker
                 }
                 while (continuationToken != null);
 
-                await queue.AddMessageAsync(new CloudQueueMessage(totalBenchmarksPrefix + totalBenchmarks.ToString()));
+                using (var ms = new MemoryStream())
+                {
+                    ms.WriteByte(2);//This is number of benchmarks
+                    (new BinaryFormatter()).Serialize(ms, totalBenchmarks);
+                    await queue.AddMessageAsync(new CloudQueueMessage(ms.ToArray()));
+                }
+                    //await queue.AddMessageAsync(new CloudQueueMessage(totalBenchmarksPrefix + totalBenchmarks.ToString()));
 
                 await Task.WhenAll(starterTasks.ToArray());
             }

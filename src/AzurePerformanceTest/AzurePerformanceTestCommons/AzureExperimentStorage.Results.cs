@@ -128,26 +128,31 @@ namespace AzurePerformanceTest
                                 var _blobs = await PutStdOutput(res);
                                 string stdoutBlobId = _blobs.Item1;
                                 string stderrBlobId = _blobs.Item2;
-                                if (!String.IsNullOrEmpty(stderrBlobId) || !String.IsNullOrEmpty(stdoutBlobId))
-                                    return new BenchmarkResult(res.ExperimentID,
-                                        res.BenchmarkFileName,
-                                        res.WorkerInformation,
-                                        res.AcquireTime,
-                                        res.NormalizedRuntime,
-                                        res.TotalProcessorTime,
-                                        res.WallClockTime,
-                                        res.PeakMemorySizeMB,
-                                        res.Status,
-                                        res.ExitCode,
-                                        string.IsNullOrEmpty(_blobs.Item1) ? new MemoryStream() : Utils.StringToStream(_blobs.Item1),
-                                        string.IsNullOrEmpty(_blobs.Item2) ? new MemoryStream() : Utils.StringToStream(_blobs.Item2),
-                                        res.Properties);
-                                else
-                                    return res;
+                                return ReplaceStreamsWithBlobNames(res, stdoutBlobId, stderrBlobId);
                             });
 
             var results2 = await Task.WhenAll(uploadOutputs);
             return results2;
+        }
+
+        private static BenchmarkResult ReplaceStreamsWithBlobNames(BenchmarkResult res, string stdoutBlobId, string stderrBlobId)
+        {
+            if (!String.IsNullOrEmpty(stderrBlobId) || !String.IsNullOrEmpty(stdoutBlobId))
+                return new BenchmarkResult(res.ExperimentID,
+                    res.BenchmarkFileName,
+                    res.WorkerInformation,
+                    res.AcquireTime,
+                    res.NormalizedRuntime,
+                    res.TotalProcessorTime,
+                    res.WallClockTime,
+                    res.PeakMemorySizeMB,
+                    res.Status,
+                    res.ExitCode,
+                    string.IsNullOrEmpty(stdoutBlobId) ? new MemoryStream() : Utils.StringToStream(stdoutBlobId),
+                    string.IsNullOrEmpty(stderrBlobId) ? new MemoryStream() : Utils.StringToStream(stderrBlobId),
+                    res.Properties);
+            else
+                return res;
         }
     }
 }
