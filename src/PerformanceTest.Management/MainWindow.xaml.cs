@@ -366,7 +366,7 @@ namespace PerformanceTest.Management
         {
             int id = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray()[0];
             ExperimentProperties dlg = new ExperimentProperties();
-            var vm = new ExperimentPropertiesViewModel(experimentsVm, id);
+            var vm = managerVm.BuildProperties(experimentsVm, id); 
             dlg.DataContext = vm;
             dlg.Owner = this;
             dlg.Show();

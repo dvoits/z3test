@@ -11,6 +11,7 @@ namespace PerformanceTest.Management
 {
     public class ExperimentListViewModel : INotifyPropertyChanged
     {
+        
         private IEnumerable<ExperimentStatusViewModel> experiments;
         private readonly ExperimentManager manager;
         private readonly IUIService message;

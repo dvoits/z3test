@@ -39,7 +39,7 @@ namespace PerformanceTest.Management
             if (dataGrid.SelectedItems.Count != 1)
                 return;
      
-            Mouse.OverrideCursor = System.Windows.Input.Cursors.Wait;
+            Mouse.OverrideCursor = Cursors.Wait;
 
             ExperimentComparingResultsViewModel elem = (ExperimentComparingResultsViewModel)dataGrid.SelectedItem;
             ShowOutputViewModel vm = null;

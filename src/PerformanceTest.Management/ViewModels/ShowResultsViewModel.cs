@@ -11,7 +11,7 @@ namespace PerformanceTest.Management
 {
     public class ShowResultsViewModel : INotifyPropertyChanged
     {
-        private IEnumerable<ExperimentResultViewModel> results;
+        private IEnumerable<BenchmarkResultViewModel> results;
         private readonly int id;
         private readonly ExperimentManager manager;
         private readonly IUIService message;
@@ -31,9 +31,9 @@ namespace PerformanceTest.Management
         {
             Results = null;
             var res = await manager.GetResults(id);
-            Results = res.Select(e => new ExperimentResultViewModel(e)).ToArray();
+            Results = res.Select(e => new BenchmarkResultViewModel(e)).ToArray();
         }
-        public IEnumerable<ExperimentResultViewModel> Results
+        public IEnumerable<BenchmarkResultViewModel> Results
         {
             get { return results; }
             set { results = value; NotifyPropertyChanged(); }
@@ -50,14 +50,16 @@ namespace PerformanceTest.Management
         public async void FilterResultsByError(int code)
         {
             var res = await manager.GetResults(id);
-            var allResults = res.Select(e => new ExperimentResultViewModel(e)).ToArray();
-            if (code == 0) Results = allResults.Where(e => e.ResultCode == 0 && e.SAT > 0).ToArray();
-            else if (code == 1) Results = allResults.Where(e => e.ResultCode == 0 && e.UNSAT > 0).ToArray();
-            else if (code == 2) Results = allResults.Where(e => e.ResultCode == 0 && e.UNKNOWN > 0).ToArray();
-            else if (code == 3) Results = allResults.Where(e => e.ResultCode == 3).ToArray();
-            else if (code == 4) Results = allResults.Where(e => e.ResultCode == 4).ToArray();
-            else if (code == 5) Results = allResults.Where(e => e.ResultCode == 5).ToArray();
-            else if (code == 6) Results = allResults.Where(e => e.ResultCode == 6).ToArray();
+            var allResults = res.Select(e => new BenchmarkResultViewModel(e)).ToArray();
+            if (code == 0) Results = allResults.Where(e => e.Status == "Success" && e.Sat > 0).ToArray();
+            else if (code == 1) Results = allResults.Where(e => e.Status == "Success" && e.Unsat > 0).ToArray();
+            else if (code == 2) Results = allResults.Where(e => e.Status == "Success" && e.Unknown > 0).ToArray();
+            else if (code == 3) Results = allResults.Where(e => e.Status == "Bug").ToArray();
+            else if (code == 4) Results = allResults.Where(e => e.Status == "Error").ToArray();
+            else if (code == 5) Results = allResults.Where(e => e.Status == "Timeout").ToArray();
+            else if (code == 6) Results = allResults.Where(e => e.Status == "OutOfMemory").ToArray();
+            else if (code == 7) Results = allResults.Where(e => e.Status == "Success" && e.Sat + e.Unsat > e.TargetSat + e.TargetUnsat && e.Unknown < e.TargetUnknown).ToArray();
+            else if (code == 8) Results = allResults.Where(e => e.Sat + e.Unsat < e.Sat + e.Unsat || e.Unknown > e.TargetUnknown).ToArray();
             else Results = allResults;
         }
         public async void FilterResultsByText(string filter, int code)
@@ -67,7 +69,7 @@ namespace PerformanceTest.Management
             if (filter != "")
             {
                 var res = await manager.GetResults(id);
-                var allResults = res.Select(e => new ExperimentResultViewModel(e)).ToArray();
+                var allResults = res.Select(e => new BenchmarkResultViewModel(e)).ToArray();
                 if (code == 0)
                 {
                     var resVm = allResults;
@@ -87,7 +89,7 @@ namespace PerformanceTest.Management
         public async void FilterResultsByRuntime(int limit)
         {
             var res = await manager.GetResults(id);
-            var allResults = res.Select(e => new ExperimentResultViewModel(e)).ToArray();
+            var allResults = res.Select(e => new BenchmarkResultViewModel(e)).ToArray();
             Results = allResults.Where(e => e.Runtime >= limit).ToArray();
         }
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
@@ -95,11 +97,11 @@ namespace PerformanceTest.Management
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
-    public class ExperimentResultViewModel
+    public class BenchmarkResultViewModel
     {
         private BenchmarkResult result;
         public event PropertyChangedEventHandler PropertyChanged;
-        public ExperimentResultViewModel (BenchmarkResult res)
+        public BenchmarkResultViewModel (BenchmarkResult res)
         {
             this.result = res;
         }
@@ -111,31 +113,58 @@ namespace PerformanceTest.Management
         {
             get { return result.BenchmarkFileName; }
         }
-        public int Returnvalue
+        public int Exitcode
         {
-            get { return 0; }
+            get { return result.ExitCode; }
         }
-        public int ResultCode
+        public string Status
         {
-            get { return 0; }
-            set { }
+            get { return result.Status.ToString(); }
+            set {
+                result.updateStatus(value);
+                NotifyPropertyChanged("Results");
+            }
         }
-        public int SAT
+        private int GetProperty (string prop)
         {
-            get { return 0; }
+            int res = result.Properties.ContainsKey(prop) ? Int32.Parse(result.Properties[prop]) : 0;
+            return res;
         }
-        public int UNSAT
+        public int Sat
         {
-            get { return 0; }
+            get { return GetProperty("SAT"); }
         }
-        public int UNKNOWN
+        public int Unsat
         {
-            get { return 0; }
+            get { return GetProperty("UNSAT"); }
+        }
+        public int Unknown
+        {
+            get { return GetProperty("UNKNOWN"); }
+        }
+        public int TargetSat
+        {
+            get { return GetProperty("TargetSAT"); }
+        }
+        public int TargetUnsat
+        {
+            get { return GetProperty("TargetUNSAT"); }
+        }
+        public int TargetUnknown
+        {
+            get { return GetProperty("TargetUNKNOWN"); }
         }
         public double Runtime
         {
             get { return result.NormalizedRuntime; }
-            set {  }
+            set {
+                result.updateRuntime(value);
+                NotifyPropertyChanged();
+            }
+        }
+        public double MemorySizeMB
+        {
+            get { return result.PeakMemorySizeMB; }
         }
         public string Worker
         {
@@ -143,11 +172,11 @@ namespace PerformanceTest.Management
         }
         public string StdOut
         {
-            get { return "*** NO OUTPUT SAVED ***"; }
+            get { return result.StdOut.ToString() != "" ? result.StdOut.ToString() : "*** NO OUTPUT SAVED ***"; }
         }
         public string StdErr
         {
-            get { return "*** NO OUTPUT SAVED ***"; }
+            get { return result.StdErr.ToString() != "" ? result.StdErr.ToString() : "*** NO OUTPUT SAVED ***"; }
         }
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
         {

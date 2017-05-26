@@ -11,8 +11,8 @@ namespace PerformanceTest.Management
 {
     public class CompareExperimentsViewModel: INotifyPropertyChanged
     {
-        private IEnumerable<ExperimentComparingResultsViewModel> allResults;
-        private IEnumerable<ExperimentComparingResultsViewModel> experiments;
+        private IEnumerable<BenchmarkResult> allResults1, allResults2;
+        private IEnumerable<ExperimentComparingResultsViewModel> experiments, allResults;
         private readonly int id1, id2;
         private readonly ExperimentManager manager;
         private readonly IUIService message;
@@ -37,16 +37,55 @@ namespace PerformanceTest.Management
 
             RefreshItemsAsync();
         }
+        private string modifyFilename (string filename, int n)
+        {
+            //EnableExtensions PostFix and prefix
+            string result = filename;
+            if (n == 1)
+            {
+                if (checkIgnorePostfix && result.EndsWith(extension1))
+                {
+                    result = result.Substring(0, result.Length - extension1.Length);
+                }
+                if (checkIgnoreCategory)
+                {
+
+                }
+                if (checkIgnorePrefix)
+                {
+
+                }
+            }
+            else
+            {
+                if (checkIgnorePostfix && result.EndsWith(extension2))
+                {
+                    result = result.Substring(0, result.Length - extension2.Length);
+                }
+                if (checkIgnoreCategory)
+                {
+
+                }
+                if (checkIgnorePrefix)
+                {
+
+                }
+            }
+            return result;
+        }
+        private void UpdateCompared () //на случай другого сравнения
+        {
+            List<ExperimentComparingResultsViewModel> resItems = allResults1.Join(allResults2, elem => modifyFilename(elem.BenchmarkFileName, 1), elem2 => modifyFilename(elem2.BenchmarkFileName, 2),
+                (f, s) => new ExperimentComparingResultsViewModel(f.BenchmarkFileName, f, s, manager, message)).ToList();
+            CompareItems = allResults = resItems.OrderByDescending(q => Math.Abs(q.Diff));
+        }
         private async void RefreshItemsAsync()
         {
             allResults = CompareItems = null;
 
-            var res1 = await manager.GetResults(id1);
-            var res2 = await manager.GetResults(id2);
-            List<ExperimentComparingResultsViewModel> resItems = res1.Join(res2, elem => elem.BenchmarkFileName, elem2 => elem2.BenchmarkFileName,
-                (f, s) => new ExperimentComparingResultsViewModel(f.BenchmarkFileName, f, s, manager, message)).ToList();
-            
-            allResults = CompareItems = resItems.OrderByDescending(q => Math.Abs(q.Diff));
+            allResults1 = await manager.GetResults(id1);
+            allResults2 = await manager.GetResults(id2);
+            UpdateCompared();
         }
         public IEnumerable<ExperimentComparingResultsViewModel> CompareItems
         {
@@ -63,6 +102,7 @@ namespace PerformanceTest.Management
             set
             {
                 checkIgnorePostfix = !checkIgnorePostfix;
+                UpdateCompared();
                 NotifyPropertyChanged("EnableFirstExtension");
                 NotifyPropertyChanged("EnableSecondExtension");
             }
@@ -73,6 +113,7 @@ namespace PerformanceTest.Management
             set
             {
                 checkIgnorePrefix = !checkIgnorePrefix;
+                UpdateCompared();
             }
         }
         public bool CheckIgnoreCategory
@@ -81,7 +122,7 @@ namespace PerformanceTest.Management
             set
             {
                 checkIgnoreCategory = !checkIgnoreCategory;
-                NotifyPropertyChanged();
+                UpdateCompared();
             }
         }
         public bool EnableFirstExtension
@@ -110,10 +151,10 @@ namespace PerformanceTest.Management
             else if (code == 3) CompareItems = allResults.Where(e => e.Sat1 > 0 || e.Sat2 > 0).ToArray(); //one sat
             else if (code == 4) CompareItems = allResults.Where(e => e.Unsat1 > 0 || e.Unsat2 > 0).ToArray(); //one unsat
             else if (code == 5) CompareItems = allResults.Where(e => e.Unknown1 > 0 || e.Unknown2 > 0).ToArray(); //one unknown
-            else if (code == 6) CompareItems = allResults.Where(e => e.ResultCode1 == 3 || e.ResultCode2 == 3).ToArray(); //bugs
-            else if (code == 7) CompareItems = allResults.Where(e => e.ResultCode1 == 4 || e.ResultCode2 == 4).ToArray(); //errors
-            else if (code == 8) CompareItems = allResults.Where(e => e.ResultCode1 == 5 || e.ResultCode2 == 5).ToArray(); //timeout
-            else if (code == 9) CompareItems = allResults.Where(e => e.ResultCode1 == 6 || e.ResultCode2 == 6).ToArray(); //memout
+            else if (code == 6) CompareItems = allResults.Where(e => e.Status1 == "Bug" || e.Status2 == "Bug").ToArray(); //bugs
+            else if (code == 7) CompareItems = allResults.Where(e => e.Status1 == "Error" || e.Status2 == "Error").ToArray(); //errors
+            else if (code == 8) CompareItems = allResults.Where(e => e.Status1 == "Timeout" || e.Status2 == "Timeout").ToArray(); //timeout
+            else if (code == 9) CompareItems = allResults.Where(e => e.Status1 == "OutOfMemory" || e.Status2 == "OutOfMemory").ToArray(); //memout
             else if (code == 10) CompareItems = allResults.Where(e => e.Sat1 > 0 && e.Sat2 == 0 || e.Sat1 == 0 && e.Sat2 > 0).ToArray(); //sat star
             else if (code == 11) CompareItems = allResults.Where(e => e.Unsat1 > 0 && e.Unsat2 == 0 || e.Unsat1 == 0 && e.Unsat2 > 0).ToArray(); //unsat star
             else if (code == 12) CompareItems = allResults.Where(e => e.Sat1 > 0 && e.Sat2 == 0 || e.Sat1 == 0 && e.Sat2 > 0 || e.Unsat1 > 0 && e.Unsat2 == 0 || e.Unsat1 == 0 && e.Unsat2 > 0).ToArray(); //ok star
@@ -136,10 +177,10 @@ namespace PerformanceTest.Management
 
         public string Runtime1Title { get { return "Runtime (" + id1.ToString() + ")"; } }
         public string Runtime2Title { get { return "Runtime (" + id2.ToString() + ")"; } }
-        public string ResultCode1Title { get { return "ResultCode (" + id1.ToString() + ")"; } }
-        public string ResultCode2Title { get { return "ResultCode (" + id2.ToString() + ")"; } }
-        public string ReturnValue1Title { get { return "Returnvalue (" + id1.ToString() + ")"; } }
-        public string ReturnValue2Title { get { return "Returnvalue (" + id2.ToString() + ")"; } }
+        public string Status1Title { get { return "Status (" + id1.ToString() + ")"; } }
+        public string Status2Title { get { return "Status (" + id2.ToString() + ")"; } }
+        public string Exitcode1Title { get { return "ExitCode (" + id1.ToString() + ")"; } }
+        public string Exitcode2Title { get { return "ExitCode (" + id2.ToString() + ")"; } }
         public string Sat1Title { get { return "SAT (" + id1.ToString() + ")"; } }
         public string Sat2Title { get { return "SAT (" + id2.ToString() + ")"; } }
         public string Unsat1Title { get { return "UNSAT (" + id1.ToString() + ")"; } }
@@ -176,50 +217,57 @@ namespace PerformanceTest.Management
         public int ID2 { get { return result2.ExperimentID; } }
         public double Runtime1 { get { return result1.NormalizedRuntime; } }
         public double Runtime2 { get { return result2.NormalizedRuntime; } }
-        public int ResultCode1 { get { return 0; } }
-        public int ResultCode2 { get { return 0; } }
-        public int ReturnValue1 { get { return 0; } }
-        public int ReturnValue2 { get { return 0; } }
+        public string Status1 { get { return result1.Status.ToString(); } }
+        public string Status2 { get { return result2.Status.ToString(); } }
+        public int Exitcode1 { get { return result1.ExitCode; } }
+        public int Exitcode2 { get { return result2.ExitCode; } }
         public double Diff { get { return result1.NormalizedRuntime - result2.NormalizedRuntime; } }
+        private int GetProperty(string prop, int n)
+        {
+            int res = 0;
+            if (n == 1) res = result1.Properties.ContainsKey(prop) ? Int32.Parse(result1.Properties[prop]) : 0;
+            else res = result2.Properties.ContainsKey(prop) ? Int32.Parse(result2.Properties[prop]) : 0;
+            return res;
+        }
         public int Sat1
         {
-            get { return 0; }
+            get { return GetProperty("SAT", 1); }
         }
         public int Unsat1
         {
-            get { return 0; }
+            get { return GetProperty("UNSAT", 1); }
         }
         public int Unknown1
         {
-            get { return 0; }
+            get { return GetProperty("UNKNOWN", 1); }
         }
         public int Sat2
         {
-            get { return 0; }
+            get { return GetProperty("SAT", 2); }
         }
         public int Unsat2
         {
-            get { return 0; }
+            get { return GetProperty("UNSAT", 2); }
         }
         public int Unknown2
         {
-            get { return 0; }
+            get { return GetProperty("UNKNOWN", 2); }
         }
         public string StdOut1
         {
-            get { return "*** NO OUTPUT SAVED ***"; }
+            get { return result1.StdOut.ToString() != "" ? result1.StdOut.ToString() : "*** NO OUTPUT SAVED ***"; }
         }
         public string StdErr1
         {
-            get { return "*** NO OUTPUT SAVED ***"; }
+            get { return result1.StdErr.ToString() != "" ? result1.StdErr.ToString() : "*** NO OUTPUT SAVED ***"; }
         }
         public string StdOut2
         {
-            get { return "*** NO OUTPUT SAVED ***"; }
+            get { return result2.StdOut.ToString() != "" ? result2.StdOut.ToString() : "*** NO OUTPUT SAVED ***"; }
         }
         public string StdErr2
         {
-            get { return "*** NO OUTPUT SAVED ***"; }
+            get { return result2.StdErr.ToString() != "" ? result2.StdErr.ToString() : "*** NO OUTPUT SAVED ***"; }
         }
     }
 }

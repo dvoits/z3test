@@ -47,12 +47,13 @@
                     <DataGrid.Columns>
                         <DataGridTextColumn Binding="{Binding Path=ID, Mode=OneWay}" Header="ID" />
                         <DataGridTextColumn Binding="{Binding Path=Filename, Mode=OneWay}" Header="Filename"/>
-                        <DataGridTextColumn Binding="{Binding Path=Returnvalue, Mode=OneWay}" Header="Returnvalue" />
-                        <DataGridTextColumn Binding="{Binding Path=ResultCode, Mode=OneWay}" Header="ResultCode"/>
-                        <DataGridTextColumn Binding="{Binding Path=SAT, Mode=OneWay}" Header="SAT" />
-                        <DataGridTextColumn Binding="{Binding Path=UNSAT, Mode=OneWay}" Header="UNSAT"/>
-                        <DataGridTextColumn Binding="{Binding Path=UNKNOWN, Mode=OneWay}" Header="UNKNOWN" />
+                        <DataGridTextColumn Binding="{Binding Path=ExitCode, Mode=OneWay}" Header="Exitcode" />
+                        <DataGridTextColumn Binding="{Binding Path=Status, Mode=OneWay}" Header="Status"/>
+                        <DataGridTextColumn Binding="{Binding Path=Sat, Mode=OneWay}" Header="SAT" />
+                        <DataGridTextColumn Binding="{Binding Path=Unsat, Mode=OneWay}" Header="UNSAT"/>
+                        <DataGridTextColumn Binding="{Binding Path=Unknown, Mode=OneWay}" Header="UNKNOWN" />
                         <DataGridTextColumn Binding="{Binding Path=Runtime, Mode=OneWay}" Header="Runtime"/>
+                        <DataGridTextColumn Binding="{Binding Path=MemorySizeMB, Mode=OneWay}" Header="Memory size (MB)" />
                         <DataGridTextColumn Binding="{Binding Path=Worker, Mode=OneWay}" Header="Worker"/>
                     </DataGrid.Columns>
                     <DataGrid.CommandBindings>
@@ -67,11 +68,11 @@
                     <DataGrid.ContextMenu>
                         <ContextMenu>
                             <MenuItem Name="mnuReclassify" Header="_Reclassify">
-                                <MenuItem Name="mnuReclassifyOK" Header="_OK" Command="{x:Static local:ShowResults.ReclassifyOKCommand}" />
+                                <MenuItem Name="mnuReclassifyOK" Header="_Success" Command="{x:Static local:ShowResults.ReclassifyOKCommand}" />
                                 <MenuItem Name="mnuReclassifyBug" Header="_Bug" Command="{x:Static local:ShowResults.ReclassifyBugCommand}" />
                                 <MenuItem Name="mnuReclassifyError" Header="_Error" Command="{x:Static local:ShowResults.ReclassifyErrorCommand}" />
                                 <MenuItem Name="mnuReclassifyTimeout" Header="_Timeout" Command="{x:Static local:ShowResults.ReclassifyTimeoutCommand}" />
-                                <MenuItem Name="mnuReclassifyMemout" Header="_Memout" Command="{x:Static local:ShowResults.ReclassifyMemoutCommand}" />
+                                <MenuItem Name="mnuReclassifyMemout" Header="_OutOfMemory" Command="{x:Static local:ShowResults.ReclassifyMemoutCommand}" />
                             </MenuItem>
                             <MenuItem Name="mnuRequeue" Header="Re_queue" Command="{x:Static local:ShowResults.RequeueCommand}" />
                             <MenuItem Name="mnuCopyFilename" Header="Copy _filename" Command="{x:Static local:ShowResults.CopyFilenameCommand}" />

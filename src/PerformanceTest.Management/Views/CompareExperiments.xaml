@@ -39,31 +39,31 @@
                             </DataTemplate>
                         </DataGridTextColumn.HeaderTemplate>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Binding="{Binding Path=ResultCode1, Mode=OneWay}" >
+                    <DataGridTextColumn Binding="{Binding Path=Status1, Mode=OneWay}" >
                         <DataGridTextColumn.HeaderTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding DataContext.ResultCode1Title, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                <TextBlock Text="{Binding DataContext.Status1Title, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
                             </DataTemplate>
                         </DataGridTextColumn.HeaderTemplate>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Binding="{Binding Path=ResultCode2, Mode=OneWay}" >
+                    <DataGridTextColumn Binding="{Binding Path=Status2, Mode=OneWay}" >
                         <DataGridTextColumn.HeaderTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding DataContext.ResultCode2Title, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                <TextBlock Text="{Binding DataContext.Status2Title, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
                             </DataTemplate>
                         </DataGridTextColumn.HeaderTemplate>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Binding="{Binding Path=ReturnValue1, Mode=OneWay}" >
+                    <DataGridTextColumn Binding="{Binding Path=Exitcode1, Mode=OneWay}" >
                         <DataGridTextColumn.HeaderTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding DataContext.ReturnValue1Title, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                <TextBlock Text="{Binding DataContext.Exitcode1Title, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
                             </DataTemplate>
                         </DataGridTextColumn.HeaderTemplate>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Binding="{Binding Path=ReturnValue2, Mode=OneWay}" >
+                    <DataGridTextColumn Binding="{Binding Path=Exitcode2, Mode=OneWay}" >
                         <DataGridTextColumn.HeaderTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding DataContext.ReturnValue2Title, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                <TextBlock Text="{Binding DataContext.Exitcode2Title, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
                             </DataTemplate>
                         </DataGridTextColumn.HeaderTemplate>
                     </DataGridTextColumn>

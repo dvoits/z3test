@@ -35,16 +35,15 @@ namespace PerformanceTest.Management
         {
             e.CanExecute = dataGrid.SelectedItems.Count > 0;
         }
-        private void Reclassify(int rc)
+        private void Reclassify(string rc)
         {
             try
             {
-                var elems = dataGrid.SelectedItems.Cast<ExperimentResultViewModel>();
+                var elems = dataGrid.SelectedItems.Cast<BenchmarkResultViewModel>();
                 foreach (var vm in elems)
                 {
-                    if (rc == 5) vm.Runtime = 0.0; //some new value for runtime
-                    vm.ResultCode = rc;
-                    //update ResultCode
+                    if (rc == "Timeout") vm.Runtime = 0.0; //some new value for runtime
+                    vm.Status = rc;
                 }
                 Console.WriteLine();
             }
@@ -56,31 +55,31 @@ namespace PerformanceTest.Management
         private void ReclassifyOK(object target, ExecutedRoutedEventArgs e)
         {
             Mouse.OverrideCursor = Cursors.Wait;
-            Reclassify(0);
+            Reclassify("Success");
             Mouse.OverrideCursor = null;
         }
         private void ReclassifyBug(object target, ExecutedRoutedEventArgs e)
         {
             Mouse.OverrideCursor = Cursors.Wait;
-            Reclassify(3);
+            Reclassify("Bug");
             Mouse.OverrideCursor = null;
         }
         private void ReclassifyError(object target, ExecutedRoutedEventArgs e)
         {
             Mouse.OverrideCursor = Cursors.Wait;
-            Reclassify(4);
+            Reclassify("Error");
             Mouse.OverrideCursor = null;
         }
         private void ReclassifyTimeout(object target, ExecutedRoutedEventArgs e)
         {
             Mouse.OverrideCursor = Cursors.Wait;
-            Reclassify(5);
+            Reclassify("Timeout");
             Mouse.OverrideCursor = null;
         }
         private void ReclassifyMemout(object target, ExecutedRoutedEventArgs e)
         {
             Mouse.OverrideCursor = Cursors.Wait;
-            Reclassify(6);
+            Reclassify("OutOfMemory");
             Mouse.OverrideCursor = null;
         }
         private void canRequeue(object sender, CanExecuteRoutedEventArgs e)
@@ -91,7 +90,7 @@ namespace PerformanceTest.Management
         {
             Mouse.OverrideCursor = Cursors.Wait;
 
-            var elems = dataGrid.SelectedItems.Cast<ExperimentResultViewModel>();
+            var elems = dataGrid.SelectedItems.Cast<BenchmarkResultViewModel>();
             try
             {
                 //foreach (var vm in elems)
@@ -114,7 +113,7 @@ namespace PerformanceTest.Management
         private void CopyFilename(object target, ExecutedRoutedEventArgs e)
         {
             Mouse.OverrideCursor = Cursors.Wait;
-            ExperimentResultViewModel elem = (ExperimentResultViewModel)dataGrid.SelectedItem;
+            BenchmarkResultViewModel elem = (BenchmarkResultViewModel)dataGrid.SelectedItem;
             Clipboard.SetText(elem.Filename);
             Mouse.OverrideCursor = null;
         }
@@ -129,8 +128,8 @@ namespace PerformanceTest.Management
             else if ((RadioButton)sender == radioERROR) vm.FilterResultsByError(4);
             else if ((RadioButton)sender == radioTimeouts) vm.FilterResultsByError(5);
             else if ((RadioButton)sender == radioMemouts) vm.FilterResultsByError(6);
-            //else if ((RadioButton)sender == radioOver) vm.FindResults()
-            //else if ((RadioButton)sender == radioUnder)
+            else if ((RadioButton)sender == radioOver) vm.FilterResultsByError(7);
+            else if ((RadioButton)sender == radioUnder) vm.FilterResultsByError(8);
             else if ((RadioButton)sender == radioMoreThan)
             {
                 int limit;
@@ -195,9 +194,9 @@ namespace PerformanceTest.Management
             if (dataGrid.SelectedItems.Count != 1)
                 return;
 
-            Mouse.OverrideCursor = System.Windows.Input.Cursors.Wait;
+            Mouse.OverrideCursor = Cursors.Wait;
 
-            ExperimentResultViewModel elem = (ExperimentResultViewModel)dataGrid.SelectedItem;
+            BenchmarkResultViewModel elem = (BenchmarkResultViewModel)dataGrid.SelectedItem;
             ShowOutputViewModel vm = new ShowOutputViewModel(elem.ID, elem.Filename, elem.StdOut, elem.StdErr);
             ShowOutput w = new ShowOutput();
             w.DataContext = vm;
