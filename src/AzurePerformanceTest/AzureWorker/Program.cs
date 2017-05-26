@@ -224,7 +224,7 @@ namespace AzureWorker
                 arguments,
                 benchmarkId,
                 Path.GetFullPath(targetFile),
-                10,
+                0,
                 timeout,
                 memoryLimit,
                 outputLimit,

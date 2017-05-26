@@ -185,7 +185,7 @@ namespace PerformanceTest
         public double PeakMemorySizeMB { get; private set; }
 
         public int ExitCode { get; private set; }
-
+        
         public Stream StdOut { get; private set; }
 
         public Stream StdErr { get; private set; }

@@ -105,7 +105,7 @@ namespace PerformanceTest
 
                 if (analysis == null) // analyzed only once, repetitions are for more confident run time
                 {
-                    analysis = domain.Analyze(inputDisplayName, m);
+                    analysis = domain.Analyze(inputFullPath, m);
                 }
             } while ((repetitions != 0 || total < maxTime) && count < maxCount && m.Limits == Measure.LimitsStatus.WithinLimits);
 
