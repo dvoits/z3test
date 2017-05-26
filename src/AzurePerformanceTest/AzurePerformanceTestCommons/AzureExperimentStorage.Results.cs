@@ -109,20 +109,6 @@ namespace AzurePerformanceTest
             return results;
         }
 
-
-        /// <summary>
-        /// Puts the benchmark results of the given experiment to the storage.
-        /// </summary>
-        /// <param name="results">All results must have same experiment id. Streams should contain contents of respective stdouts/errs</param>
-        public async Task PutExperimentResults(ExperimentID expId, IEnumerable<BenchmarkResult> results)
-        {
-            // Uploading stdout and stderr to the blob storage.
-            BenchmarkResult[] results2 = await UploadStreams(results);
-
-            // Uploading results table.
-            await PutExperimentResultsWithBlobnames(expId, results2);
-        }
-
         /// <summary>
         /// Puts the benchmark results of the given experiment to the storage.
         /// </summary>

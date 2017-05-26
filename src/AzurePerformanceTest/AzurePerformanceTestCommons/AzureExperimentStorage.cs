@@ -180,6 +180,7 @@ namespace AzurePerformanceTest
 
                 // todo: add try/catch for StorageException: https://docs.microsoft.com/en-us/dotnet/api/microsoft.windowsazure.storage.blob.cloudblockblob.uploadfromstreamasync?redirectedfrom=MSDN&view=azure-dotnet#overloads
                 await stdoutBlob.UploadFromStreamAsync(result.StdOut);
+                Trace.WriteLine(string.Format("Uploaded stdout for experiment {0}", result.ExperimentID));
             }
             if (result.StdErr.Length > 0)
             {
@@ -187,8 +188,17 @@ namespace AzurePerformanceTest
                 var stderrBlob = outputContainer.GetBlockBlobReference(stderrBlobId);
 
                 await stderrBlob.UploadFromStreamAsync(result.StdErr);
+                Trace.WriteLine(string.Format("Uploaded stderr for experiment {0}", result.ExperimentID));
             }
             return Tuple.Create(stdoutBlobId, stderrBlobId);
+        }
+
+        public async Task UploadOutput(string blobName, string content)
+        {
+            var stdoutBlob = outputContainer.GetBlockBlobReference(blobName);
+
+            // todo: add try/catch for StorageException: https://docs.microsoft.com/en-us/dotnet/api/microsoft.windowsazure.storage.blob.cloudblockblob.uploadfromstreamasync?redirectedfrom=MSDN&view=azure-dotnet#overloads
+            await stdoutBlob.UploadTextAsync(content);
         }
 
         public async Task PutSerializedExperimentResults(ExperimentID expId, IEnumerable<string> results)

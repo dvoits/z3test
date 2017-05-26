@@ -1,6 +1,7 @@
 ﻿using AzurePerformanceTest;
 using Measurement;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -40,9 +41,9 @@ namespace ImportTimeline
             Stopwatch sw = Stopwatch.StartNew();
 
             Console.Write("Uploading experiments table from {0}... ", pathToData);
-            //var submitted = UploadExperiments(pathToData, storage);
+            var submitted = UploadExperiments(pathToData, storage);
             // for debug: 
-            Dictionary<int, DateTime> submitted = null;
+            //Dictionary<int, DateTime> submitted = null;
 
             Console.WriteLine("Uploading results table...");
             UploadResults(pathToData, submitted, storage);
@@ -90,11 +91,11 @@ namespace ImportTimeline
         static void UploadResults(string pathToData, Dictionary<int, DateTime> submitted, AzureExperimentStorage storage)
         {
             List<int> missingExperiments = new List<int>();
+            ConcurrentDictionary<string, string> uploadedOutputs = new ConcurrentDictionary<string, string>();
 
             var upload =
                 Directory.EnumerateFiles(pathToData, "*.zip")
-                .AsParallel()
-                .Select(file =>
+                .Select(async file =>
                 {
                     int expId = int.Parse(Path.GetFileNameWithoutExtension(file));
 
@@ -107,33 +108,34 @@ namespace ImportTimeline
                     {
                         missingExperiments.Add(expId);
                         Console.WriteLine("Experiment {0} has results but not metadata");
-                        return Task.FromResult(0);
+                        return 0;
                     }
                     Console.WriteLine("Uploading results for {0}... ", expId);
 
                     CSVData table = new CSVData(file, (uint)expId);
-                    var entities =
+                    var buildResults =
                         table.Rows
-                        .Select(r =>
+                        .Select(async r =>
                         {
-
-
+                            string stdout = await UploadOutput(r.StdOut, uploadedOutputs, storage, String.Format("imported-stdout-{0}-{1}", expId, r.Filename));
+                            string stderr = await UploadOutput(r.StdErr, uploadedOutputs, storage, String.Format("imported-stderr-{0}-{1}", expId, r.Filename));
 
                             var b = new PerformanceTest.BenchmarkResult(
                                 expId, r.Filename, "HPC Cluster node",
                                 submittedTime, r.Runtime, TimeSpan.FromSeconds(r.Runtime), TimeSpan.FromSeconds(0), 0,
                                 ResultCodeToStatus(r.ResultCode), r.ReturnValue,
-                                GenerateStreamFromString(r.StdOut), 
-                                GenerateStreamFromString(r.StdErr),
+                                GenerateStreamFromString(stdout), 
+                                GenerateStreamFromString(stderr),
                                 new Dictionary<string, string>() { });
                             return b;
                         });
-                    var task = storage.PutExperimentResults(expId, entities);
-                    task.ContinueWith(t =>
-                    {
-                        Console.WriteLine("Done uploading results for {0}.", expId);
-                    });
-                    return task;
+
+                    var entities = await Task.WhenAll(buildResults);
+                    Console.WriteLine("All outputs uploaded for {0}", expId);
+
+                    await storage.PutExperimentResultsWithBlobnames(expId, entities);
+                    Console.WriteLine("Done uploading results for {0}.", expId);
+                    return 0;
                 });
 
             Task.WhenAll(upload).Wait();
@@ -149,10 +151,26 @@ namespace ImportTimeline
             }
         }
 
-        private string ProcessOutput(string output)
+        private static async Task<string> UploadOutput(string content, ConcurrentDictionary<string, string> uploadedOutputs, AzureExperimentStorage storage, string blobName)
         {
-            if (String.IsNullOrEmpty(output)) return output;
-            Regex.Unescape(output)
+            if (String.IsNullOrEmpty(content))
+            {
+                return String.Empty;
+            }
+
+            string blob = uploadedOutputs.GetOrAdd(content, blobName);
+            if (blob != blobName)
+            {
+                return blob;
+            }
+            else
+            {
+                await storage.UploadOutput(blobName, content);
+                Trace.WriteLine(string.Format("Output blob uploaded {0}", blobName));
+
+                uploadedOutputs[content] = blobName;
+                return blobName;
+            }
         }
 
         private static ResultStatus ResultCodeToStatus(uint resultCode)
