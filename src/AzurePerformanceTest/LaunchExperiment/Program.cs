@@ -17,7 +17,7 @@ namespace LaunchExperiment
             Keys keys = JsonConvert.DeserializeObject<Keys>(File.ReadAllText("..\\..\\keys.json"));
             var manager = AzureExperimentManager.Open(new AzureExperimentStorage(keys.storageName, keys.storageKey), keys.batchUri, keys.batchName, keys.batchKey);
 
-            var id = manager.StartExperiment(ExperimentDefinition.Create("z3.zip", "input", "smt2", "model_validate=true -smt2 -file:{0}", TimeSpan.FromSeconds(1200), ""), "Dmitry K", "test").Result;
+            var id = manager.StartExperiment(ExperimentDefinition.Create("z3.zip", "input", "smt2", "model_validate=true -smt2 -file:{0}", TimeSpan.FromSeconds(1200), "", null, 2048), "Dmitry K", "test").Result;
 
             Console.WriteLine("Experiment id:" + id);
 

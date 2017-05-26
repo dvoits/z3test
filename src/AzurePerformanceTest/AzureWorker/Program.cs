@@ -102,14 +102,12 @@ namespace AzureWorker
             string executable = args[3];
             string arguments = args[4];
             TimeSpan timeout = TimeSpan.FromSeconds(double.Parse(args[5]));
-            long? memoryLimit = null;
+            double memoryLimit = 0; // no limit
             long? outputLimit = null;
             long? errorLimit = null;
             if (args.Length > 6)
             {
-                memoryLimit = args[6] == "null" ? null : (long?)long.Parse(args[6]);
-                if (memoryLimit.HasValue && memoryLimit.Value == 0)
-                    memoryLimit = null;
+                memoryLimit = double.Parse(args[6]);
                 if (args.Length > 7)
                 {
                     outputLimit = args[7] == "null" ? null : (long?)long.Parse(args[7]);
@@ -178,7 +176,7 @@ namespace AzureWorker
             }
         }
 
-        private static async Task StartTasksForSegment(ResourceFile execResourceFile, string timeout, int experimentId, string executable, string arguments, long? memoryLimit, long? outputLimit, long? errorLimit, string jobId, BatchClient batchClient, IEnumerable<IListBlobItem> segmentResults, int idPart, AzureBenchmarkStorage benchmarkStorage)
+        private static async Task StartTasksForSegment(ResourceFile execResourceFile, string timeout, int experimentId, string executable, string arguments, double memoryLimit, long? outputLimit, long? errorLimit, string jobId, BatchClient batchClient, IEnumerable<IListBlobItem> segmentResults, int idPart, AzureBenchmarkStorage benchmarkStorage)
         {
             List<CloudTask> tasks = new List<CloudTask>();
             int blobNo = 0;
@@ -187,7 +185,7 @@ namespace AzureWorker
                 string taskId = idPart.ToString() + "_" + blobNo.ToString();
                 string[] parts = blobItem.Name.Split('/');
                 string shortName = parts[parts.Length - 1];
-                string taskCommandLine = String.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\AzureWorker.exe --measure {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\" \"{7}\" \"{8}\"", experimentId, blobItem.Name, executable, arguments, shortName, timeout, NullableLongToString(memoryLimit), NullableLongToString(outputLimit), NullableLongToString(errorLimit));
+                string taskCommandLine = String.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\AzureWorker.exe --measure {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\" \"{7}\" \"{8}\"", experimentId, blobItem.Name, executable, arguments, shortName, timeout, memoryLimit, NullableLongToString(outputLimit), NullableLongToString(errorLimit));
                 var resourceFile = new ResourceFile(benchmarkStorage.GetBlobSASUri(blobItem), shortName);
                 CloudTask task = new CloudTask(taskId, taskCommandLine);
                 task.ResourceFiles = new List<ResourceFile> { resourceFile, execResourceFile };
