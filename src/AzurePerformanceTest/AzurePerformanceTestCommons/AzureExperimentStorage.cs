@@ -171,12 +171,15 @@ namespace AzurePerformanceTest
             {
                 stdoutBlobId = "E" + result.ExperimentID.ToString() + "F" + result.BenchmarkFileName + "-stdout";
                 var stdoutBlob = outputContainer.GetBlockBlobReference(stdoutBlobId);
+
+                // todo: add try/catch for StorageException: https://docs.microsoft.com/en-us/dotnet/api/microsoft.windowsazure.storage.blob.cloudblockblob.uploadfromstreamasync?redirectedfrom=MSDN&view=azure-dotnet#overloads
                 await stdoutBlob.UploadFromStreamAsync(result.StdOut);
             }
             if (result.StdErr.Length > 0)
             {
                 stderrBlobId = "E" + result.ExperimentID.ToString() + "F" + result.BenchmarkFileName + "-stderr";
                 var stderrBlob = outputContainer.GetBlockBlobReference(stderrBlobId);
+
                 await stderrBlob.UploadFromStreamAsync(result.StdErr);
             }
             return Tuple.Create(stdoutBlobId, stderrBlobId);

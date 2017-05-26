@@ -77,7 +77,36 @@ namespace AzurePerformanceTest
                     }
                 }
             }
-            return cache.GetResults(experimentID);
+            BenchmarkResult[] results =
+                cache.GetResults(experimentID)
+                .Select(r =>
+                {
+                    Stream stdout = null;
+                    if(r.StdOut != null && r.StdOut.Length > 0)
+                    {
+                        string blobName = Utils.StreamToString(r.StdOut, false);
+                        stdout = new LazyBlobStream(outputContainer.GetBlobReference(blobName));
+                    }
+
+                    Stream stderr = null;
+                    if (r.StdErr != null && r.StdErr.Length > 0)
+                    {
+                        string blobName = Utils.StreamToString(r.StdErr, false);
+                        stderr = new LazyBlobStream(outputContainer.GetBlobReference(blobName));
+                    }
+
+                    if (stdout != null || stderr != null)
+                    {
+                        return new BenchmarkResult(r.ExitCode, r.BenchmarkFileName, r.WorkerInformation, r.AcquireTime, r.NormalizedRuntime, r.TotalProcessorTime, r.WallClockTime,
+                            r.PeakMemorySizeMB, r.Status, r.ExitCode,
+                            stdout == null ? r.StdOut : stdout,
+                            stderr == null ? r.StdErr : stderr,
+                            r.Properties);
+                    }
+                    else return r;
+                })
+                .ToArray();
+            return results;
         }
 
 
