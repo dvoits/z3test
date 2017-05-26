@@ -117,8 +117,19 @@ namespace ImportTimeline
                         table.Rows
                         .Select(async r =>
                         {
-                            string stdout = await UploadOutput(r.StdOut, uploadedOutputs, storage, String.Format("imported-stdout-{0}-{1}", expId, r.Filename));
-                            string stderr = await UploadOutput(r.StdErr, uploadedOutputs, storage, String.Format("imported-stderr-{0}-{1}", expId, r.Filename));
+                            string stdout = await UploadOutput(r.StdOut, uploadedOutputs, storage, String.Format(@"imported\stdout\{0}\{1}", expId, r.Filename));
+                            string stderr = await UploadOutput(r.StdErr, uploadedOutputs, storage, String.Format(@"imported\stderr\{0}\{1}", expId, r.Filename));
+
+                            var properties = new Dictionary<string, string>()
+                            {
+                                { "SAT", r.SAT.ToString() },
+                                { "UNSAT", r.UNSAT.ToString() },
+                                { "UNKNOWN", r.UNKNOWN.ToString() },
+                                { "TargetSAT", r.TargetSAT.ToString() },
+                                { "TargetUNSAT", r.TargetUNSAT.ToString() },
+                                { "TargetUNKNOWN", r.TargetUNKNOWN.ToString() },
+                            };
+
 
                             var b = new PerformanceTest.BenchmarkResult(
                                 expId, r.Filename, "HPC Cluster node",
@@ -126,7 +137,7 @@ namespace ImportTimeline
                                 ResultCodeToStatus(r.ResultCode), r.ReturnValue,
                                 GenerateStreamFromString(stdout), 
                                 GenerateStreamFromString(stderr),
-                                new Dictionary<string, string>() { });
+                                properties);
                             return b;
                         });
 
@@ -139,7 +150,7 @@ namespace ImportTimeline
                 });
 
             Task.WhenAll(upload).Wait();
-            Console.WriteLine("Done.");
+            Console.WriteLine("Done (uploaded {0} output & error blobs).", uploadedOutputs.Count);
 
             if(missingExperiments.Count > 0)
             {
