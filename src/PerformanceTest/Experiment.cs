@@ -1,8 +1,10 @@
 ﻿using Measurement;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -132,7 +134,8 @@ namespace PerformanceTest
     /// <summary>
     /// Aka "Data".
     /// </summary>
-    public class BenchmarkResult
+    [Serializable]
+    public class BenchmarkResult : ISerializable
     {
         public BenchmarkResult(int experimentId, string benchmarkFileName, string workerInformation, DateTime acquireTime, double normalizedRuntime,
             TimeSpan totalProcessorTime, TimeSpan wallClockTime, double memorySizeMB, ResultStatus status, int exitCode, Stream stdout, Stream stderr, 
@@ -185,7 +188,7 @@ namespace PerformanceTest
         public double PeakMemorySizeMB { get; private set; }
 
         public int ExitCode { get; private set; }
-
+        
         public Stream StdOut { get; private set; }
 
         public Stream StdErr { get; private set; }
@@ -197,6 +200,66 @@ namespace PerformanceTest
         /// </summary>
         public IReadOnlyDictionary<string, string> Properties { get; private set; }
 
+        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            if (!this.StdOut.CanSeek || this.StdErr.CanSeek)
+                throw new InvalidOperationException("Can't serialize BenchmarkResult with non-seekable stream(s).");
+
+            info.AddValue("ExperimentID", this.ExperimentID);
+            info.AddValue("BenchmarkFileName", this.BenchmarkFileName, typeof(string));
+            info.AddValue("WorkerInformation", this.WorkerInformation, typeof(string));
+            info.AddValue("NormalizedRuntime", this.NormalizedRuntime);
+            info.AddValue("TotalProcessorTime", this.TotalProcessorTime, typeof(TimeSpan));
+            info.AddValue("WallClockTime", this.WallClockTime, typeof(TimeSpan));
+            info.AddValue("PeakMemorySizeMB", this.PeakMemorySizeMB);
+            info.AddValue("ExitCode", this.ExitCode);
+            info.AddValue("AcquireTime", this.AcquireTime);
+            info.AddValue("Status", (int)this.Status);
+            var props = new Dictionary<string, string>(this.Properties.Count);
+            foreach (var prop in this.Properties)
+                props.Add(prop.Key, prop.Value);
+            info.AddValue("Properties", props, typeof(Dictionary<string, string>));
+            info.AddValue("StdOut", StreamToByteArray(this.StdOut), typeof(byte[]));
+            info.AddValue("StdErr", StreamToByteArray(this.StdErr), typeof(byte[]));
+        }
+
+        private static byte[] StreamToByteArray(Stream stream)
+        {
+            if (stream is MemoryStream)
+            {
+                return ((MemoryStream)stream).ToArray();
+            }
+            else
+            {
+                if (!stream.CanSeek)
+                    throw new ArgumentException("Non-seekable stream");
+                var pos = stream.Position;
+                stream.Seek(0, SeekOrigin.Begin);
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    stream.CopyTo(ms);
+                    stream.Seek(pos, SeekOrigin.Begin);
+                    return ms.ToArray();
+                }
+            }
+        }
+
+        public BenchmarkResult(SerializationInfo info, StreamingContext context)
+        {
+            this.ExperimentID = info.GetInt32("ExperimentID");
+            this.BenchmarkFileName = info.GetString("BenchmarkFileName");
+            this.WorkerInformation = info.GetString("WorkerInformation");
+            this.NormalizedRuntime = info.GetDouble("NormalizedRuntime");
+            this.TotalProcessorTime = (TimeSpan)info.GetValue("TotalProcessorTime", typeof(TimeSpan));
+            this.WallClockTime = (TimeSpan)info.GetValue("WallClockTime", typeof(TimeSpan));
+            this.PeakMemorySizeMB = info.GetDouble("PeakMemorySizeMB");
+            this.ExitCode = info.GetInt32("ExitCode");
+            this.AcquireTime = info.GetDateTime("AcquireTime");
+            this.Status = (ResultStatus)info.GetInt32("Status");
+            this.Properties = new ReadOnlyDictionary<string, string>((Dictionary<string, string>)info.GetValue("Properties", typeof(Dictionary<string, string>)));
+            this.StdOut = new MemoryStream((byte[])info.GetValue("StdOut", typeof(byte[])));
+            this.StdErr = new MemoryStream((byte[])info.GetValue("StdErr", typeof(byte[])));
+        }
     }
 
 }

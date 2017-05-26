@@ -113,57 +113,75 @@ namespace AzurePerformanceTest
         /// <summary>
         /// Puts the benchmark results of the given experiment to the storage.
         /// </summary>
-        /// <param name="results">All results must have same experiment id.</param>
+        /// <param name="results">All results must have same experiment id. Streams should contain contents of respective stdouts/errs</param>
         public async Task PutExperimentResults(ExperimentID expId, IEnumerable<BenchmarkResult> results)
         {
             // Uploading stdout and stderr to the blob storage.
-            var results2 = results.ToArray();
-            var uploadOutputs = results2
-                .Select(async (r, i) =>
-                {
-                    var _blobs = await PutStdOutput(r);
-                    return Tuple.Create(i, _blobs.Item1, _blobs.Item2);
-                });
-
-            var blobs = await Task.WhenAll(uploadOutputs);
-            foreach (var blob in blobs)
-            {
-                int i = blob.Item1;
-                string stdoutBlobId = blob.Item2;
-                string stderrBlobId = blob.Item3;
-                if(!String.IsNullOrEmpty(stderrBlobId) || !String.IsNullOrEmpty(stdoutBlobId))
-                {
-                    var res = results2[i];
-                    results2[i] = new BenchmarkResult(res.ExperimentID,
-                        res.BenchmarkFileName,
-                        res.WorkerInformation,
-                        res.AcquireTime,
-                        res.NormalizedRuntime,
-                        res.TotalProcessorTime,
-                        res.WallClockTime,
-                        res.PeakMemorySizeMB,
-                        res.Status,
-                        res.ExitCode,
-                        string.IsNullOrEmpty(stdoutBlobId) ? new MemoryStream() : Utils.StringToStream(stdoutBlobId),
-                        string.IsNullOrEmpty(stderrBlobId) ? new MemoryStream() : Utils.StringToStream(stderrBlobId),
-                        res.Properties);
-                }
-            }
+            BenchmarkResult[] results2 = await UploadStreams(results);
 
             // Uploading results table.
+            await PutExperimentResultsWithBlobnames(expId, results2);
+        }
+
+        /// <summary>
+        /// Puts the benchmark results of the given experiment to the storage.
+        /// </summary>
+        /// <param name="results">All results must have same experiment id. Streams should contain names of blobs containing respective stdouts/errs</param>
+        public async Task PutExperimentResultsWithBlobnames(int expId, BenchmarkResult[] results)
+        {
             string fileName = GetResultsFileName(expId);
             using (MemoryStream zipStream = new MemoryStream())
             {
                 using (var zip = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
                 {
                     var entry = zip.CreateEntry(fileName);
-                    BenchmarkResultsStorage.SaveBenchmarks(results2.ToArray(), entry.Open());
+                    BenchmarkResultsStorage.SaveBenchmarks(results, entry.Open());
                 }
 
                 var blob = resultsContainer.GetBlockBlobReference(GetResultBlobName(expId));
                 zipStream.Position = 0;
                 await UploadBlobAsync(zipStream, blob);
             }
+        }
+
+        /// <summary>
+        /// Uploads contents of stdouts/errs in results into blobs.
+        /// </summary>
+        /// <param name="results">Streams should contain contents of respective stdouts/errs</param>
+        /// <returns>Results with blob names in streams</returns>
+        public async Task<BenchmarkResult[]> UploadStreams(IEnumerable<BenchmarkResult> results)
+        {
+            var uploadOutputs = results
+                            .Select(async (res, i) =>
+                            {
+                                var _blobs = await PutStdOutput(res);
+                                string stdoutBlobId = _blobs.Item1;
+                                string stderrBlobId = _blobs.Item2;
+                                return ReplaceStreamsWithBlobNames(res, stdoutBlobId, stderrBlobId);
+                            });
+
+            var results2 = await Task.WhenAll(uploadOutputs);
+            return results2;
+        }
+
+        private static BenchmarkResult ReplaceStreamsWithBlobNames(BenchmarkResult res, string stdoutBlobId, string stderrBlobId)
+        {
+            if (!String.IsNullOrEmpty(stderrBlobId) || !String.IsNullOrEmpty(stdoutBlobId))
+                return new BenchmarkResult(res.ExperimentID,
+                    res.BenchmarkFileName,
+                    res.WorkerInformation,
+                    res.AcquireTime,
+                    res.NormalizedRuntime,
+                    res.TotalProcessorTime,
+                    res.WallClockTime,
+                    res.PeakMemorySizeMB,
+                    res.Status,
+                    res.ExitCode,
+                    string.IsNullOrEmpty(stdoutBlobId) ? new MemoryStream() : Utils.StringToStream(stdoutBlobId),
+                    string.IsNullOrEmpty(stderrBlobId) ? new MemoryStream() : Utils.StringToStream(stderrBlobId),
+                    res.Properties);
+            else
+                return res;
         }
     }
 }
