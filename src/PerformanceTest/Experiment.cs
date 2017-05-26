@@ -202,7 +202,7 @@ namespace PerformanceTest
 
         public void GetObjectData(SerializationInfo info, StreamingContext context)
         {
-            if (!this.StdOut.CanSeek || this.StdErr.CanSeek)
+            if (!this.StdOut.CanSeek || !this.StdErr.CanSeek)
                 throw new InvalidOperationException("Can't serialize BenchmarkResult with non-seekable stream(s).");
 
             info.AddValue("ExperimentID", this.ExperimentID);

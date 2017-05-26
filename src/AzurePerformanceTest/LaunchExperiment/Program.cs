@@ -20,6 +20,7 @@ namespace LaunchExperiment
             var id = manager.StartExperiment(ExperimentDefinition.Create("z3.zip", "input", "smt2", "model_validate=true -smt2 -file:{0}", TimeSpan.FromSeconds(1200), ""), "Dmitry K", "test").Result;
 
             Console.WriteLine("Experiment id:" + id);
+
             Console.ReadLine();
         }
     }
