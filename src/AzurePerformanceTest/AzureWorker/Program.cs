@@ -95,6 +95,9 @@ namespace AzureWorker
             }
             while (totalBenchmarks == -1 || processedBenchmarks < totalBenchmarks);
             await storage.DeleteResultsQueue(experimentId);
+
+            var totalRuntime = results.Sum(r => r.NormalizedRuntime);
+            await storage.SetTotalRuntime(experimentId, totalRuntime);
         }
 
         static async Task AddTasks(string[] args)
@@ -255,7 +258,7 @@ namespace AzureWorker
             var exp = await storage.GetReferenceExperiment();
             var execBlob = storage.GetExecutableReference(exp.Definition.Executable);
             await execBlob.DownloadToFileAsync(exp.Definition.Executable, FileMode.Create);
-
+            
             // todo: use LocalExperimentRunner.RunBenchmark
 
             List<Measure> measurements = new List<Measure>(exp.Repetitions);

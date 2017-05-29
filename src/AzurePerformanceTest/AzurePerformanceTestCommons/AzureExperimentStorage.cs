@@ -429,6 +429,20 @@ namespace AzurePerformanceTest
             } while (changed);
         }
 
+        public async Task SetTotalRuntime(int id, double totalRuntime)
+        {
+            TableQuery<ExperimentEntity> query = ExperimentPointQuery(id);
+
+            bool changed = false;
+            do
+            {
+                ExperimentEntity experiment = await FirstExperimentInQuery(query);
+                experiment.TotalRuntime = totalRuntime;
+
+                changed = !(await TryUpdateTableEntity(experimentsTable, experiment));
+            } while (changed);
+        }
+
         public async Task IncreaseCompletedBenchmarks(int id, int completedBenchmarksRaise)
         {
             TableQuery<ExperimentEntity> query = ExperimentPointQuery(id);
