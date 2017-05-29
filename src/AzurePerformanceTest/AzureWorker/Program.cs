@@ -59,9 +59,11 @@ namespace AzureWorker
 
             var storage = new AzureExperimentStorage(Settings.Default.StorageAccountName, Settings.Default.StorageAccountKey);
             var queue = storage.GetResultsQueueReference(experimentId);
-            List<BenchmarkResult> results = new List<BenchmarkResult>();
-            int totalBenchmarks = -1;
-            int processedBenchmarks = 0;
+            List<BenchmarkResult> results = (await storage.GetResults(experimentId)).ToList();
+            var expInfo = await storage.GetExperiment(experimentId);
+            int totalBenchmarks = expInfo.TotalBenchmarks > 0 ? expInfo.TotalBenchmarks : -1;
+            int processedBenchmarks = results.Count;
+            
             var formatter = new BinaryFormatter();
             do
             {
@@ -83,6 +85,7 @@ namespace AzureWorker
                         }
                     }
                 }
+                results.Sort((a, b) => string.Compare(a.BenchmarkFileName, b.BenchmarkFileName));
                 await storage.PutExperimentResultsWithBlobnames(experimentId, results.ToArray());
                 await storage.SetCompletedBenchmarks(experimentId, processedBenchmarks);
                 foreach (CloudQueueMessage message in messages)
