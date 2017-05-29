@@ -11,7 +11,7 @@ namespace PerformanceTest.Management
 {
     public class ShowResultsViewModel : INotifyPropertyChanged
     {
-        private IEnumerable<BenchmarkResultViewModel> results;
+        private IEnumerable<BenchmarkResultViewModel> results, allResults;
         private readonly int id;
         private readonly ExperimentManager manager;
         private readonly IUIService message;
@@ -29,9 +29,9 @@ namespace PerformanceTest.Management
         }
         private async void RefreshResultsAsync()
         {
-            Results = null;
+            allResults = Results = null;
             var res = await manager.GetResults(id);
-            Results = res.Select(e => new BenchmarkResultViewModel(e)).ToArray();
+            allResults = Results = res.Select(e => new BenchmarkResultViewModel(e)).ToArray();
         }
         public IEnumerable<BenchmarkResultViewModel> Results
         {
@@ -47,10 +47,8 @@ namespace PerformanceTest.Management
             get { return sharedDirectory; }
         }
 
-        public async void FilterResultsByError(int code)
+        public void FilterResultsByError(int code)
         {
-            var res = await manager.GetResults(id);
-            var allResults = res.Select(e => new BenchmarkResultViewModel(e)).ToArray();
             if (code == 0) Results = allResults.Where(e => e.Status == "Success" && e.Sat > 0).ToArray();
             else if (code == 1) Results = allResults.Where(e => e.Status == "Success" && e.Unsat > 0).ToArray();
             else if (code == 2) Results = allResults.Where(e => e.Status == "Success" && e.Unknown > 0).ToArray();
@@ -62,14 +60,12 @@ namespace PerformanceTest.Management
             else if (code == 8) Results = allResults.Where(e => e.Sat + e.Unsat < e.Sat + e.Unsat || e.Unknown > e.TargetUnknown).ToArray();
             else Results = allResults;
         }
-        public async void FilterResultsByText(string filter, int code)
+        public void FilterResultsByText(string filter, int code)
         {
             //code == 0 - only filename
             //code == 1 - output
             if (filter != "")
             {
-                var res = await manager.GetResults(id);
-                var allResults = res.Select(e => new BenchmarkResultViewModel(e)).ToArray();
                 if (code == 0)
                 {
                     var resVm = allResults;
@@ -84,12 +80,10 @@ namespace PerformanceTest.Management
                     Results = allResults.Where(e => e.StdOut.Contains(filter) || e.StdErr.Contains(filter)).ToArray();
                 }
             }
-            else RefreshResultsAsync();
+            else Results = allResults;
         }
-        public async void FilterResultsByRuntime(int limit)
+        public void FilterResultsByRuntime(int limit)
         {
-            var res = await manager.GetResults(id);
-            var allResults = res.Select(e => new BenchmarkResultViewModel(e)).ToArray();
             Results = allResults.Where(e => e.Runtime >= limit).ToArray();
         }
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")

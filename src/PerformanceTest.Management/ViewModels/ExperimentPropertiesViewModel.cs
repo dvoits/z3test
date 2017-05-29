@@ -10,7 +10,6 @@ namespace PerformanceTest.Management
 {
     public class ExperimentPropertiesViewModel
     {
-        //private ExperimentListViewModel experiments;
         private ExperimentStatusViewModel statusVm;
         private IEnumerable<BenchmarkResultViewModel> result;
         private ExperimentManager manager;
@@ -138,7 +137,7 @@ namespace PerformanceTest.Management
         {
             get
             {
-                return result.Max(e => e.MemorySizeMB);
+                return result.Max(e => Math.Abs(e.MemorySizeMB));
             }
         }
         public string Machine

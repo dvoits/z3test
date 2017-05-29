@@ -143,7 +143,7 @@ namespace PerformanceTest.Management
             get { return extension2; }
             set { extension2 = value; NotifyPropertyChanged(); }
         }
-        public async void FilterResultsByError(int code)
+        public void FilterResultsByError(int code)
         {
             if (code == 0) CompareItems = allResults.Where(e => e.Sat1 > 0 && e.Sat2 > 0).ToArray(); //both sat
             else if (code == 1) CompareItems = allResults.Where(e => e.Unsat1 > 0 && e.Unsat2 > 0).ToArray(); //both unsat
@@ -161,7 +161,7 @@ namespace PerformanceTest.Management
             else if (code == 13) CompareItems = allResults.Where(e => e.Sat1 > 0 && e.Unsat2 > 0 || e.Unsat1 > 0 && e.Sat2 > 0).ToArray(); //sat/unsat
             else CompareItems = allResults;
         }
-        public async void FilterResultsByText(string filter)
+        public void FilterResultsByText(string filter)
         {
             if (filter != "")
             {

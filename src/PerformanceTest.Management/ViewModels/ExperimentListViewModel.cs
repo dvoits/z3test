@@ -127,7 +127,7 @@ namespace PerformanceTest.Management
                 UpdateNote();
             }
 
-        }
+        } 
 
         public string Creator { get { return status.Creator; } }
 
