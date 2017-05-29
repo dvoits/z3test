@@ -31,8 +31,6 @@ namespace PerformanceTest
         public abstract Task<BenchmarkResult[]> GetResults(ExperimentID id);
 
         public abstract Task DeleteExperiment(ExperimentID id);
-
-        public abstract Task UpdatePriority(ExperimentID id, string priority);
         public abstract Task UpdateStatusFlag(ExperimentID id, bool flag);
         public abstract Task UpdateNote(ExperimentID id, string note);
 

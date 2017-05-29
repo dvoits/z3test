@@ -24,7 +24,6 @@ namespace PerformanceTest.Management
         {
             get { return null; }
         }
-
         public abstract string[] GetAvailableCategories(string benchmarkContainer);
 
 
@@ -38,6 +37,18 @@ namespace PerformanceTest.Management
         public ExperimentListViewModel BuildListView()
         {
             return new ExperimentListViewModel(manager, uiService);
+        }
+        public ShowResultsViewModel BuildResultsView(int id, string directory)
+        {
+            return new ShowResultsViewModel(id, this.BenchmarkLibraryDescription, manager, uiService);
+        }
+        public CompareExperimentsViewModel BuildComparingResults(int id1, int id2)
+        {
+            return new CompareExperimentsViewModel(id1, id2, manager, uiService);
+        }
+        public ExperimentPropertiesViewModel BuildProperties(ExperimentListViewModel experimentsVm, int id)
+        {
+            return new ExperimentPropertiesViewModel(experimentsVm, manager, id);
         }
     }
 

@@ -265,6 +265,18 @@ namespace PerformanceTest
             this.StdOut = new MemoryStream((byte[])info.GetValue("StdOut", typeof(byte[])));
             this.StdErr = new MemoryStream((byte[])info.GetValue("StdErr", typeof(byte[])));
         }
+        public void updateStatus (string status)
+        {
+            if (status == "Bug") this.Status = ResultStatus.Bug;
+            else if (status == "Error") this.Status = ResultStatus.Error;
+            else if (status == "Success") this.Status = ResultStatus.Success;
+            else if (status == "OutOfMemory") this.Status = ResultStatus.OutOfMemory;
+            else if (status == "Timeout") this.Status = ResultStatus.Timeout;
+        }
+        public void updateRuntime (double newRuntime)
+        {
+            this.NormalizedRuntime = newRuntime;
+        }
     }
 
 }

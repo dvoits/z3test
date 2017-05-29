@@ -15,21 +15,13 @@ using System.Windows.Shapes;
 namespace PerformanceTest.Management
 {
     /// <summary>
-    /// Interaction logic for ChangePriorityDialog.xaml
+    /// Interaction logic for ShowOutput.xaml
     /// </summary>
-    public partial class ChangePriorityDialog : Window
+    public partial class ShowOutput : Window
     {
-        public ChangePriorityDialog()
+        public ShowOutput()
         {
             InitializeComponent();
-        }
-        private void okButton_Click(object sender, RoutedEventArgs e)
-        {
-            DialogResult = true;
-        }
-        private void cancelButton_Click(object sender, RoutedEventArgs e)
-        {
-            DialogResult = false;
         }
     }
 }

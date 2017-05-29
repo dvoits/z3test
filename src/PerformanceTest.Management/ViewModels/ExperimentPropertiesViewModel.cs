@@ -8,19 +8,25 @@ using System.Windows.Media;
 
 namespace PerformanceTest.Management
 {
-    class ExperimentPropertiesViewModel
+    public class ExperimentPropertiesViewModel
     {
-        //private ExperimentListViewModel experiments;
         private ExperimentStatusViewModel statusVm;
+        private IEnumerable<BenchmarkResultViewModel> result;
+        private ExperimentManager manager;
         private int id;
         private readonly string[] MachineStatuses = { "OK", "Unable to retrieve status." };
-        public ExperimentPropertiesViewModel(ExperimentListViewModel experimentsVm, int id)
+        public ExperimentPropertiesViewModel(ExperimentListViewModel experimentsVm, ExperimentManager manager, int id)
         {
-            //this.experiments = experimentsVm;
             this.id = id;
             this.statusVm = experimentsVm.Items.Where(item => item.ID == id).ToArray()[0];
+            this.manager = manager;
+            GetResultsAsync();
         }
-
+        private async void GetResultsAsync()
+        {
+            var res = await manager.GetResults(id);
+            this.result = res.Select(elem => new BenchmarkResultViewModel(elem));
+        }
         public string SubmissionTime
         {
             get { return statusVm.Submitted; }
@@ -48,66 +54,91 @@ namespace PerformanceTest.Management
                 return (statusVm.BenchmarksQueued == 0) ? Brushes.Green : Brushes.Red;
             }
         }
-
+        
         public int Sat
         {
-            get { return 0; }
+            get
+            {
+                return result.Sum(elem => elem.Sat);
+            }
+
         }
         public int Unsat
         {
-            get { return 0; }
+            get
+            {
+                return result.Sum(elem => elem.Unsat);
+            }
         }
         public int Unknown
         {
-            get { return 0; }
+            get
+            {
+                return result.Sum(elem => elem.Unknown);
+            }
         }
         public int Overperformed
         {
-            get { return 0; }
+            get
+            {
+                return result.Sum(e => (e.Status == "Success" && e.Sat + e.Unsat > e.TargetSat + e.TargetUnsat && e.Unknown < e.TargetUnknown) ? 1 : 0);
+            }
         }
         public int Underperformed
         {
-            get { return 0; }
+            get
+            {
+                return result.Sum(e => (e.Sat + e.Unsat < e.Sat + e.Unsat || e.Unknown > e.TargetUnknown) ? 1 : 0);
+            }
         }
         public int ProblemBug
         {
-            get { return 0; }
+            get
+            {
+                return result.Sum(e => (e.Status == "Bug") ? 1 : 0);
+            }
         }
         public Brush BugForeground
         {
-            get { return Brushes.Black; } //if bugs == 0 return black else red
+            get { return ProblemBug == 0 ? Brushes.Black : Brushes.Red; }
         }
         public int ProblemNonZero
         {
-            get { return 0; }
+            get { return result.Sum(e => (e.Status == "Error") ? 1 : 0); }
         }
         public Brush NonZeroForeground
         {
-            get { return Brushes.Black; } //if bugs == 0 return black else red
+            get { return ProblemNonZero == 0 ? Brushes.Black : Brushes.Red; } 
         }
         public int ProblemTimeout
         {
-            get { return 0; }
+            get { return result.Sum(e => (e.Status == "Timeout") ? 1 : 0); }
         }
         public Brush TimeoutForeground
         {
-            get { return Brushes.Black; } //if bugs == 0 return black else red
+            get { return ProblemTimeout == 0 ? Brushes.Black : Brushes.Red; } 
         }
         public int ProblemMemoryout
         {
-            get { return 0; }
+            get { return result.Sum(e => (e.Status == "OutOfMemory") ? 1 : 0); }
         }
         public Brush MemoryoutForeground
         {
-            get { return Brushes.Black; } //if bugs == 0 return black else red
+            get { return ProblemMemoryout == 0 ? Brushes.Black : Brushes.Red; } 
         }
-        public int TimeOut
+        public double TimeOut
         {
-            get ; 
+            get
+            {
+                return result.Max(e => e.Runtime);
+            } 
         }
-        public int MemoryOut
+        public double MemoryOut
         {
-            get;
+            get
+            {
+                return result.Max(e => Math.Abs(e.MemorySizeMB));
+            }
         }
         public string Machine
         {
@@ -118,10 +149,6 @@ namespace PerformanceTest.Management
             get;
         }
         public string Group
-        {
-            get;
-        }
-        public string Locality
         {
             get;
         }
