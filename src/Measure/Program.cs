@@ -30,7 +30,8 @@ namespace Measure
 
             string executable = args[k++];
             string arguments = args[k++];
-            string benchmarkContainer = args[k++];
+            string benchmarkContainerUri = ExperimentDefinition.LocalDiskContainerUri;
+            string benchmarkDirectory = args[k++];
             string category = args[k++];
             string extension = args[k++];
 
@@ -41,7 +42,7 @@ namespace Measure
             }
 
             TimeSpan timeout = TimeSpan.FromHours(1);
-            ExperimentDefinition definition = ExperimentDefinition.Create(executable, benchmarkContainer, extension, arguments, timeout, Measurement.Domain.Default.Name, category: category);
+            ExperimentDefinition definition = ExperimentDefinition.Create(executable, benchmarkContainerUri, benchmarkDirectory, extension, arguments, timeout, Measurement.Domain.Default.Name, category: category);
             string version = GetVersion(executable);
 
             if(init)
@@ -78,7 +79,7 @@ namespace Measure
             var results = manager.GetResults(id);
             var filter = new ExperimentManager.ExperimentFilter
             {
-                BenchmarkContainerEquals = definition.BenchmarkContainer,
+                BenchmarkContainerEquals = definition.BenchmarkDirectory,
                 CategoryEquals = definition.Category,
                 ExecutableEquals = definition.Executable,
                 ParametersEquals = definition.Parameters

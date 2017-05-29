@@ -50,7 +50,7 @@ namespace PerformanceTest
             if (!File.Exists(executable)) throw new ArgumentException("Executable not found");
 
             var workerInfo = GetWorkerInfo();
-            string benchmarkFolder = string.IsNullOrEmpty(experiment.Category) ? experiment.BenchmarkContainer : Path.Combine(experiment.BenchmarkContainer, experiment.Category);
+            string benchmarkFolder = string.IsNullOrEmpty(experiment.Category) ? experiment.BenchmarkDirectory : Path.Combine(experiment.BenchmarkDirectory, experiment.Category);
             if (!Path.IsPathRooted(benchmarkFolder))
             {
                 benchmarkFolder = Path.Combine(rootFolder, benchmarkFolder);

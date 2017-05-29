@@ -14,6 +14,7 @@ namespace PerformanceTest.Management
         private readonly ExperimentManagerViewModel manager;
         private readonly IUIService service;
 
+        private string benchmarkContainerUri;
         private string benchmarkLibrary;
         private string categories;
         private bool useMostRecentExecutable;
@@ -41,6 +42,16 @@ namespace PerformanceTest.Management
         public string BenchmarkLibaryDescription
         {
             get { return manager.BenchmarkLibraryDescription; }
+        }
+
+        public string BenchmarkContainerUri
+        {
+            get { return benchmarkContainerUri; }
+            set
+            {
+                benchmarkContainerUri = value;
+                NotifyPropertyChanged();
+            }
         }
 
         public string BenchmarkLibrary

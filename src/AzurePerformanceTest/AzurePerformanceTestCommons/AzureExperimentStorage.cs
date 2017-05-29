@@ -355,7 +355,7 @@ namespace AzurePerformanceTest
             row.Executable = experiment.Executable;
             row.DomainName = experiment.DomainName;
             row.Parameters = experiment.Parameters;
-            row.BenchmarkContainer = experiment.BenchmarkContainer;
+            row.BenchmarkDirectory = experiment.BenchmarkDirectory;
             row.BenchmarkFileExtension = experiment.BenchmarkFileExtension;
             row.Category = experiment.Category;
             row.BenchmarkTimeout = experiment.BenchmarkTimeout.TotalSeconds;
@@ -661,7 +661,8 @@ namespace AzurePerformanceTest
         public string Executable { get; set; }
         public string DomainName { get; set; }
         public string Parameters { get; set; }
-        public string BenchmarkContainer { get; set; }
+        public string BenchmarkContainerUri { get; set; }
+        public string BenchmarkDirectory { get; set; }
         public string Category { get; set; }
         public string BenchmarkFileExtension { get; set; }
         /// <summary>

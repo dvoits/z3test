@@ -14,7 +14,8 @@ namespace PerformanceTest
         public string Executable { get; set; }
         public string DomainName { get; set; }
         public string Parameters { get; set; }
-        public string BenchmarkContainer { get; set; }
+        public string BenchmarkContainerUri { get; set; }
+        public string BenchmarkDirectory { get; set; }
         public string Category { get; set; }
         public string BenchmarkFileExtension { get; set; }
         /// <summary>
