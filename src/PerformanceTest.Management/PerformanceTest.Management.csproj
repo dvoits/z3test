@@ -171,6 +171,10 @@
       <Project>{86056f9d-4f4e-492b-bbc2-7a176043e42c}</Project>
       <Name>PerformanceTest</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Z3Domain\Z3Domain.csproj">
+      <Project>{cfa940ba-7127-4118-a9a5-97452c3897e1}</Project>
+      <Name>Z3Domain</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\servers.ico" />

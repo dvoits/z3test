@@ -121,23 +121,10 @@ namespace PerformanceTest
 
         public BenchmarkResult[] GetResults(int experimentId)
         {
-            var bt = Table.Load(IdToPath(experimentId), new ReadSettings(Delimiter.Comma, true, true, None,
-                FSharpOption<FSharpFunc<Tuple<int, string>, FSharpOption<Type>>>.Some(FSharpFunc<Tuple<int, string>, FSharpOption<Type>>.FromConverter(tuple =>
-                {
-                    var colName = tuple.Item2;
-                    switch (colName)
-                    {
-                        case "PeakMemorySize":
-                        case "ExitCode": return FSharpOption<Type>.Some(typeof(int));
-                    }
-                    return FSharpOption<Type>.None;
-                }))))
-                .ToRows<BenchmarkResultEntity>();
-            return bt.Select(row =>
-                new BenchmarkResult(experimentId, row.BenchmarkFileName, row.WorkerInformation, row.NormalizedRuntime, row.AcquireTime,
-                    new ProcessRunMeasure(TimeSpan.FromSeconds(row.TotalProcessorTime), TimeSpan.FromSeconds(row.WallClockTime), row.PeakMemorySize << 20,
-                        StatusFromString(row.Status), row.ExitCode, AsStream(row.StdOut), AsStream(row.StdErr)))
-                ).ToArray();
+            using (Stream stream = new FileStream(IdToPath(experimentId), FileMode.Open, FileAccess.Read))
+            {
+                return BenchmarkResultsStorage.LoadBenchmarks(experimentId, stream);
+            }
         }
 
         public void AddExperiment(int id, ExperimentDefinition experiment, DateTime submitted, string creator, string note)
@@ -153,12 +140,12 @@ namespace PerformanceTest
                 Category = experiment.Category,
                 BenchmarkTimeout = experiment.BenchmarkTimeout.TotalSeconds,
                 ExperimentTimeout = experiment.ExperimentTimeout.TotalSeconds,
-                MemoryLimit = (int)(experiment.MemoryLimit >> 20), // bytes to MB
+                MemoryLimitMB = experiment.MemoryLimitMB,
                 GroupName = experiment.GroupName,
                 Note = note,
                 Creator = creator
             });
-            SaveTable(experimentsTable, Path.Combine(dir.FullName, "experiments.csv"), new WriteSettings(Delimiter.Comma, true, true));
+            experimentsTable.SaveUTF8Bom(Path.Combine(dir.FullName, "experiments.csv"), new WriteSettings(Delimiter.Comma, true, true));
         }
 
         public void AddResults(int id, BenchmarkResult[] benchmarks)
@@ -169,7 +156,7 @@ namespace PerformanceTest
         public void RemoveExperimentRow(ExperimentEntity deleteRow)
         {
             experimentsTable = Table.OfRows(experimentsTable.Rows.Where(r => r.ID != deleteRow.ID));
-            SaveTable(experimentsTable, Path.Combine(dir.FullName, "experiments.csv"), new WriteSettings(Delimiter.Comma, true, true));
+            experimentsTable.SaveUTF8Bom(Path.Combine(dir.FullName, "experiments.csv"), new WriteSettings(Delimiter.Comma, true, true));
         }
         public void ReplaceExperimentRow(ExperimentEntity newRow)
         {
@@ -177,7 +164,7 @@ namespace PerformanceTest
             {
                 return r.ID == newRow.ID ? newRow : r;
             }));
-            SaveTable(experimentsTable, Path.Combine(dir.FullName, "experiments.csv"), new WriteSettings(Delimiter.Comma, true, true));
+            experimentsTable.SaveUTF8Bom(Path.Combine(dir.FullName, "experiments.csv"), new WriteSettings(Delimiter.Comma, true, true));
         }
 
         /// <summary>
@@ -191,65 +178,12 @@ namespace PerformanceTest
             return Path.Combine(dirBenchmarks.FullName, id.ToString("000000") + ".csv");
         }
 
-        public static void SaveBenchmarks(BenchmarkResult[] benchmarks, string fileName)
+        private void SaveBenchmarks(BenchmarkResult[] benchmarks, string fileName)
         {
             using (Stream s = File.Create(fileName))
             {
-                SaveBenchmarks(benchmarks, s);
+                BenchmarkResultsStorage.SaveBenchmarks(benchmarks, s);
             }
-        }
-
-        public static void SaveBenchmarks(BenchmarkResult[] benchmarks, Stream stream)
-        {
-            var table = Table.OfColumns(new[]
-            {
-                Column.Create("BenchmarkFileName", benchmarks.Select(b => b.BenchmarkFileName), None),
-                Column.Create("AcquireTime", benchmarks.Select(b => b.AcquireTime), None),
-                Column.Create("NormalizedRuntime", benchmarks.Select(b => b.NormalizedRuntime), None),
-                Column.Create("TotalProcessorTime", benchmarks.Select(b => b.Measurements.TotalProcessorTime.TotalSeconds), None),
-                Column.Create("WallClockTime", benchmarks.Select(b => b.Measurements.WallClockTime.TotalSeconds), None),
-                Column.Create("PeakMemorySize", benchmarks.Select(b => (int)(b.Measurements.PeakMemorySize >> 20)), None),
-                Column.Create("Status", benchmarks.Select(b => StatusAsString(b.Measurements.Status)), None),
-                Column.Create("ExitCode", benchmarks.Select(b => b.Measurements.ExitCode), None),
-                Column.Create("StdOut", benchmarks.Select(b => b.Measurements.OutputToString()), None),
-                Column.Create("StdErr", benchmarks.Select(b => b.Measurements.ErrorToString()), None),
-                Column.Create("WorkerInformation", benchmarks.Select(b => b.WorkerInformation), None),
-            });
-            SaveTable(table, stream, new WriteSettings(Delimiter.Comma, true, true));
-        }
-
-        private static void SaveTable(Table table, string fileName, WriteSettings settings)
-        {
-            using (TextWriter w = new StreamWriter(fileName, false, new UTF8Encoding(true)))
-            {
-                Table.Save(table, w, settings);
-            }
-        }
-
-        private static void SaveTable(Table table, Stream s, WriteSettings settings)
-        {
-            using (TextWriter w = new StreamWriter(s, new UTF8Encoding(true)))
-            {
-                Table.Save(table, w, settings);
-            }
-        }
-
-        private static string StatusAsString(Measure.CompletionStatus status)
-        {
-            return status.ToString();
-        }
-
-        private Measure.CompletionStatus StatusFromString(string status)
-        {
-            return (Measure.CompletionStatus)Enum.Parse(typeof(Measure.CompletionStatus), status);
-        }
-
-        private static Stream AsStream(string s)
-        {
-            byte[] byteArray = Encoding.UTF8.GetBytes(s);
-            MemoryStream stream = new MemoryStream(byteArray);
-            stream.Position = 0;
-            return stream;
         }
 
         internal class PrivatePropertiesResolver : DefaultContractResolver

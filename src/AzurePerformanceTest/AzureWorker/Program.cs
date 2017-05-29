@@ -13,12 +13,15 @@ using Microsoft.Azure.Batch;
 using Microsoft.WindowsAzure.Storage.Blob;
 using System.Diagnostics;
 using AzurePerformanceTest;
+using Microsoft.WindowsAzure.Storage.Queue;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace AzureWorker
 {
     class Program
     {
         const string defaultContainerUri = "default";
+        const string totalBenchmarksPrefix = "Total benchmarks: ";
 
         static int Main(string[] args)
         {
@@ -50,9 +53,45 @@ namespace AzureWorker
             }
         }
 
-        static async Task CollectResults(string[] subArgs)
+        static async Task CollectResults(string[] args)
         {
-            throw new NotImplementedException();
+            int experimentId = int.Parse(args[0]);
+
+            var storage = new AzureExperimentStorage(Settings.Default.StorageAccountName, Settings.Default.StorageAccountKey);
+            var queue = storage.GetResultsQueueReference(experimentId);
+            List<BenchmarkResult> results = new List<BenchmarkResult>();
+            int totalBenchmarks = -1;
+            int processedBenchmarks = 0;
+            var formatter = new BinaryFormatter();
+            do
+            {
+                var messages = queue.GetMessages(32, TimeSpan.FromMinutes(5));
+                foreach (CloudQueueMessage message in messages)
+                {
+                    using (var ms = new MemoryStream(message.AsBytes))
+                    {
+                        var typeByte = ms.ReadByte();
+                        if (totalBenchmarks == -1 && typeByte == 2)
+                        {
+                            totalBenchmarks = (int)formatter.Deserialize(ms);
+                            await storage.SetTotalBenchmarks(experimentId, totalBenchmarks);
+                        }
+                        else
+                        {
+                            results.Add((BenchmarkResult)formatter.Deserialize(ms));
+                            ++processedBenchmarks;
+                        }
+                    }
+                }
+                await storage.PutExperimentResultsWithBlobnames(experimentId, results.ToArray());
+                await storage.SetCompletedBenchmarks(experimentId, processedBenchmarks);
+                foreach (CloudQueueMessage message in messages)
+                {
+                    queue.DeleteMessage(message);
+                }
+            }
+            while (totalBenchmarks == -1 || processedBenchmarks < totalBenchmarks);
+            await storage.DeleteResultsQueue(experimentId);
         }
 
         static async Task AddTasks(string[] args)
@@ -63,12 +102,12 @@ namespace AzureWorker
             string executable = args[3];
             string arguments = args[4];
             TimeSpan timeout = TimeSpan.FromSeconds(double.Parse(args[5]));
-            long? memoryLimit = null;
+            double memoryLimit = 0; // no limit
             long? outputLimit = null;
             long? errorLimit = null;
             if (args.Length > 6)
             {
-                memoryLimit = args[6] == "null" ? null : (long?)long.Parse(args[6]);
+                memoryLimit = double.Parse(args[6]);
                 if (args.Length > 7)
                 {
                     outputLimit = args[7] == "null" ? null : (long?)long.Parse(args[7]);
@@ -97,13 +136,22 @@ namespace AzureWorker
             var execResourceFile = new ResourceFile(storage.GetExecutableSasUri(executable), executable);
             Trace.WriteLine("Resourced executable");
 
+            var queue = await storage.CreateResultsQueue(experimentId);
+            Trace.Write("Created queue");
+
             using (BatchClient batchClient = BatchClient.Open(batchCred))
             {
+                //starting results collection
+                string taskCommandLine = string.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\AzureWorker.exe --collect-results {0}", experimentId);
+                CloudTask task = new CloudTask("resultCollection", taskCommandLine);
+                await batchClient.JobOperations.AddTaskAsync(jobId, task);
+
                 BlobContinuationToken continuationToken = null;
                 BlobResultSegment resultSegment = null;
                 
                 List<Task> starterTasks = new List<Task>();
                 int batchNo = 0;
+                int totalBenchmarks = 0;
                 do
                 {
                     resultSegment = await benchmarkStorage.ListBlobsSegmentedAsync(benchmarksPath, continuationToken);
@@ -112,14 +160,23 @@ namespace AzureWorker
                     
                     continuationToken = resultSegment.ContinuationToken;
                     ++batchNo;
+                    totalBenchmarks += resultSegment.Results.Count();
                 }
                 while (continuationToken != null);
+
+                using (var ms = new MemoryStream())
+                {
+                    ms.WriteByte(2);//This is number of benchmarks
+                    (new BinaryFormatter()).Serialize(ms, totalBenchmarks);
+                    await queue.AddMessageAsync(new CloudQueueMessage(ms.ToArray()));
+                }
+                    //await queue.AddMessageAsync(new CloudQueueMessage(totalBenchmarksPrefix + totalBenchmarks.ToString()));
 
                 await Task.WhenAll(starterTasks.ToArray());
             }
         }
 
-        private static async Task StartTasksForSegment(ResourceFile execResourceFile, string timeout, int experimentId, string executable, string arguments, long? memoryLimit, long? outputLimit, long? errorLimit, string jobId, BatchClient batchClient, IEnumerable<IListBlobItem> segmentResults, int idPart, AzureBenchmarkStorage benchmarkStorage)
+        private static async Task StartTasksForSegment(ResourceFile execResourceFile, string timeout, int experimentId, string executable, string arguments, double memoryLimit, long? outputLimit, long? errorLimit, string jobId, BatchClient batchClient, IEnumerable<IListBlobItem> segmentResults, int idPart, AzureBenchmarkStorage benchmarkStorage)
         {
             List<CloudTask> tasks = new List<CloudTask>();
             int blobNo = 0;
@@ -128,7 +185,7 @@ namespace AzureWorker
                 string taskId = idPart.ToString() + "_" + blobNo.ToString();
                 string[] parts = blobItem.Name.Split('/');
                 string shortName = parts[parts.Length - 1];
-                string taskCommandLine = String.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\AzureWorker.exe --measure {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\" \"{7}\" \"{8}\"", experimentId, blobItem.Name, executable, arguments, shortName, timeout, NullableLongToString(memoryLimit), NullableLongToString(outputLimit), NullableLongToString(errorLimit));
+                string taskCommandLine = String.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\AzureWorker.exe --measure {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\" \"{7}\" \"{8}\"", experimentId, blobItem.Name, executable, arguments, shortName, timeout, memoryLimit, NullableLongToString(outputLimit), NullableLongToString(errorLimit));
                 var resourceFile = new ResourceFile(benchmarkStorage.GetBlobSASUri(blobItem), shortName);
                 CloudTask task = new CloudTask(taskId, taskCommandLine);
                 task.ResourceFiles = new List<ResourceFile> { resourceFile, execResourceFile };
@@ -153,12 +210,12 @@ namespace AzureWorker
             string arguments = args[3];
             string targetFile = args[4];
             TimeSpan timeout = TimeSpan.FromSeconds(double.Parse(args[5]));
-            long? memoryLimit = null;
+            double memoryLimit = 0; // no limit
             long? outputLimit = null;
             long? errorLimit = null;
             if (args.Length > 6)
             {
-                memoryLimit = args[6] == "null" ? null : (long?)long.Parse(args[6]);
+                memoryLimit = double.Parse(args[6]);
                 if (args.Length > 7)
                 {
                     outputLimit = args[7] == "null" ? null : (long?)long.Parse(args[7]);
@@ -168,15 +225,41 @@ namespace AzureWorker
                     }
                 }
             }
-            arguments = arguments.Replace("{0}", Path.GetFullPath(targetFile));
-            var acquireTime = DateTime.Now;
-            var measure = ProcessMeasurer.Measure(executable, arguments, timeout, memoryLimit, outputLimit, errorLimit);
-            var result = new BenchmarkResult(experimentId, benchmarkId, "", measure.TotalProcessorTime.TotalSeconds, acquireTime, measure);
+
+            Domain domain = new Z3Domain(); // todo: take custom domain name from `args`
+            BenchmarkResult result = LocalExperimentRunner.RunBenchmark(
+                experimentId,
+                executable,
+                arguments,
+                benchmarkId,
+                Path.GetFullPath(targetFile),
+                0,
+                timeout,
+                memoryLimit,
+                outputLimit,
+                errorLimit,
+                domain,
+                1.0,
+                "");
+
+            var storage = new AzureExperimentStorage(Settings.Default.StorageAccountName, Settings.Default.StorageAccountKey);
+            await storage.PutResult(experimentId, result);
         }
 
         static async Task RunReference(string[] args)
         {
+            var storage = new AzureExperimentStorage(Settings.Default.StorageAccountName, Settings.Default.StorageAccountKey);
+            var exp = await storage.GetReferenceExperiment();
+            var execBlob = storage.GetExecutableReference(exp.Definition.Executable);
+            await execBlob.DownloadToFileAsync(exp.Definition.Executable, FileMode.Create);
 
+            // todo: use LocalExperimentRunner.RunBenchmark
+
+            List<Measure> measurements = new List<Measure>(exp.Repetitions);
+            for (int i = 0; i < exp.Repetitions; ++i)
+            {
+                measurements.Add(ProcessMeasurer.Measure(exp.Definition.Executable, exp.Definition.Parameters, exp.Definition.BenchmarkTimeout, exp.Definition.MemoryLimitMB));
+            }
         }
     }
 }

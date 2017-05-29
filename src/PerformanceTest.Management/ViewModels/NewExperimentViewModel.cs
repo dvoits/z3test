@@ -18,6 +18,7 @@ namespace PerformanceTest.Management
         private string categories;
         private bool useMostRecentExecutable;
         private string executable;
+        private string domain;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -29,6 +30,7 @@ namespace PerformanceTest.Management
             this.manager = manager;
             this.service = service;
 
+            domain = "Z3";
             UseMostRecentExecutable = true;
 
             ChooseContainerCommand = new DelegateCommand(ChooseBenchmarkContainer);
@@ -58,6 +60,22 @@ namespace PerformanceTest.Management
                 categories = value;
                 NotifyPropertyChanged();
             }
+        }
+
+        public string Domain
+        {
+            get { return domain; }
+            set
+            {
+                if (domain == value) return;
+                domain = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+        public string[] Domains
+        {
+            get { return new[] { "Z3", "default" }; }
         }
 
         public string Executable

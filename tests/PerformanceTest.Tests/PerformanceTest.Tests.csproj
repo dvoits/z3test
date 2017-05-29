@@ -110,6 +110,10 @@
       <Project>{f47b9c4d-eb12-4968-89c8-31c7fad68b07}</Project>
       <Name>LinearEquationSolver</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\src\Z3Domain\Z3Domain.csproj">
+      <Project>{cfa940ba-7127-4118-a9a5-97452c3897e1}</Project>
+      <Name>Z3Domain</Name>
+    </ProjectReference>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

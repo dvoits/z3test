@@ -1,10 +1,4 @@
-﻿using Measurement;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Blob;
-using Microsoft.WindowsAzure.Storage.Table;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
-using PerformanceTest;
+﻿using PerformanceTest;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -54,7 +48,7 @@ namespace AzurePerformanceTest
             }
         }
 
-		public void ClearCache()
+        public void ClearCache()
         {
             cache.Clear();
         }
@@ -83,7 +77,97 @@ namespace AzurePerformanceTest
                     }
                 }
             }
-            return cache.GetResults(experimentID);
+            BenchmarkResult[] results =
+                cache.GetResults(experimentID)
+                .Select(r =>
+                {
+                    Stream stdout = null;
+                    if(r.StdOut != null && r.StdOut.Length > 0)
+                    {
+                        string blobName = Utils.StreamToString(r.StdOut, false);
+                        stdout = new LazyBlobStream(outputContainer.GetBlobReference(blobName));
+                    }
+
+                    Stream stderr = null;
+                    if (r.StdErr != null && r.StdErr.Length > 0)
+                    {
+                        string blobName = Utils.StreamToString(r.StdErr, false);
+                        stderr = new LazyBlobStream(outputContainer.GetBlobReference(blobName));
+                    }
+
+                    if (stdout != null || stderr != null)
+                    {
+                        return new BenchmarkResult(r.ExitCode, r.BenchmarkFileName, r.WorkerInformation, r.AcquireTime, r.NormalizedRuntime, r.TotalProcessorTime, r.WallClockTime,
+                            r.PeakMemorySizeMB, r.Status, r.ExitCode,
+                            stdout == null ? r.StdOut : stdout,
+                            stderr == null ? r.StdErr : stderr,
+                            r.Properties);
+                    }
+                    else return r;
+                })
+                .ToArray();
+            return results;
+        }
+
+        /// <summary>
+        /// Puts the benchmark results of the given experiment to the storage.
+        /// </summary>
+        /// <param name="results">All results must have same experiment id. Streams should contain names of blobs containing respective stdouts/errs</param>
+        public async Task PutExperimentResultsWithBlobnames(int expId, BenchmarkResult[] results)
+        {
+            string fileName = GetResultsFileName(expId);
+            using (MemoryStream zipStream = new MemoryStream())
+            {
+                using (var zip = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
+                {
+                    var entry = zip.CreateEntry(fileName);
+                    BenchmarkResultsStorage.SaveBenchmarks(results, entry.Open());
+                }
+
+                var blob = resultsContainer.GetBlockBlobReference(GetResultBlobName(expId));
+                zipStream.Position = 0;
+                await UploadBlobAsync(zipStream, blob);
+            }
+        }
+
+        /// <summary>
+        /// Uploads contents of stdouts/errs in results into blobs.
+        /// </summary>
+        /// <param name="results">Streams should contain contents of respective stdouts/errs</param>
+        /// <returns>Results with blob names in streams</returns>
+        public async Task<BenchmarkResult[]> UploadStreams(IEnumerable<BenchmarkResult> results)
+        {
+            var uploadOutputs = results
+                            .Select(async (res, i) =>
+                            {
+                                var _blobs = await PutStdOutput(res);
+                                string stdoutBlobId = _blobs.Item1;
+                                string stderrBlobId = _blobs.Item2;
+                                return ReplaceStreamsWithBlobNames(res, stdoutBlobId, stderrBlobId);
+                            });
+
+            var results2 = await Task.WhenAll(uploadOutputs);
+            return results2;
+        }
+
+        private static BenchmarkResult ReplaceStreamsWithBlobNames(BenchmarkResult res, string stdoutBlobId, string stderrBlobId)
+        {
+            if (!String.IsNullOrEmpty(stderrBlobId) || !String.IsNullOrEmpty(stdoutBlobId))
+                return new BenchmarkResult(res.ExperimentID,
+                    res.BenchmarkFileName,
+                    res.WorkerInformation,
+                    res.AcquireTime,
+                    res.NormalizedRuntime,
+                    res.TotalProcessorTime,
+                    res.WallClockTime,
+                    res.PeakMemorySizeMB,
+                    res.Status,
+                    res.ExitCode,
+                    string.IsNullOrEmpty(stdoutBlobId) ? new MemoryStream() : Utils.StringToStream(stdoutBlobId),
+                    string.IsNullOrEmpty(stderrBlobId) ? new MemoryStream() : Utils.StringToStream(stderrBlobId),
+                    res.Properties);
+            else
+                return res;
         }
     }
 }

@@ -55,7 +55,7 @@ namespace AzurePerformanceTest
             get { return batchCreds != null; }
         }
 
-        public override async Task DeleteExperiment(ExperimentID id)
+        public override Task DeleteExperiment(ExperimentID id)
         {
             throw new NotImplementedException();
         }
@@ -84,8 +84,9 @@ namespace AzurePerformanceTest
                 experimentEntity.BenchmarkFileExtension,
                 experimentEntity.Parameters,
                 TimeSpan.FromSeconds(experimentEntity.BenchmarkTimeout),
+                experimentEntity.DomainName,
                 experimentEntity.Category,
-                experimentEntity.MemoryLimit << 20);
+                experimentEntity.MemoryLimitMB);
         }
 
         public override async Task<BenchmarkResult[]> GetResults(ExperimentID id)
@@ -135,7 +136,8 @@ namespace AzurePerformanceTest
 
                 string taskId = "taskStarter";
 
-                string taskCommandLine = string.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\AzureWorker.exe --add-tasks {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\"", id, "default", definition.Category, definition.Executable, definition.Parameters, definition.BenchmarkTimeout.TotalSeconds.ToString(), definition.MemoryLimit.ToString());
+                string taskCommandLine = string.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\AzureWorker.exe --add-tasks {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\"", id, "default", 
+                    definition.Category, definition.Executable, definition.Parameters, definition.BenchmarkTimeout.TotalSeconds.ToString(), definition.MemoryLimitMB.ToString());
                 CloudTask task = new CloudTask(taskId, taskCommandLine);
                 
                 await bc.JobOperations.AddTaskAsync(job.Id, task);

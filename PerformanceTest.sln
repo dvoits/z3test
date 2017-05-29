@@ -33,6 +33,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzureWorker", "src\AzurePer
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LaunchExperiment", "src\AzurePerformanceTest\LaunchExperiment\LaunchExperiment.csproj", "{9234FC54-8CC1-4BD8-9DB9-7222D993B0DC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Z3Domain", "src\Z3Domain\Z3Domain.csproj", "{CFA940BA-7127-4118-A9A5-97452C3897E1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -91,6 +93,10 @@ Global
 		{9234FC54-8CC1-4BD8-9DB9-7222D993B0DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9234FC54-8CC1-4BD8-9DB9-7222D993B0DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9234FC54-8CC1-4BD8-9DB9-7222D993B0DC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CFA940BA-7127-4118-A9A5-97452C3897E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CFA940BA-7127-4118-A9A5-97452C3897E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CFA940BA-7127-4118-A9A5-97452C3897E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CFA940BA-7127-4118-A9A5-97452C3897E1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

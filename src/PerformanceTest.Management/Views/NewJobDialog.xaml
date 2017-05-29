@@ -98,10 +98,15 @@
                             Use {0} a placeholder for an input file name.
                         </TextBlock>
                     </StackPanel>
-                    
 
-                    <Label Content="Replace (check-sat):" Height="28" HorizontalAlignment="Left" Name="labelReplaceCheckSat" VerticalAlignment="Center" Grid.Row="5" Grid.Column="0" Grid.RowSpan="2" />
-                    <GroupBox Grid.RowSpan="2" Grid.Row="5" Grid.Column="1">
+                    <Label Content="Domain:" Height="28" HorizontalAlignment="Left" Name="labelDomain" VerticalAlignment="Center" Grid.Row="5" Grid.Column="0" />
+                    <ComboBox Height="24" HorizontalAlignment="Stretch" Name="cbSelectDomain" VerticalAlignment="Center" TabIndex="14"  Grid.Row="5" Grid.Column="1"
+                              ToolTip="Determines an additional analysis and process results interpretation." IsEnabled="True"
+                              SelectedItem="{Binding Domain}" ItemsSource="{Binding Domains}">                        
+                    </ComboBox>
+
+                    <Label Content="Replace (check-sat):" Height="28" HorizontalAlignment="Left" Name="labelReplaceCheckSat" VerticalAlignment="Center" Grid.Row="6" Grid.Column="0" Grid.RowSpan="2" />
+                    <GroupBox Grid.RowSpan="2" Grid.Row="6" Grid.Column="1">
                         <GroupBox.Header>
                             <CheckBox Name="chkReplaceCheckSat" Content="Enable"  IsChecked="False" />
                         </GroupBox.Header>

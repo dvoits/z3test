@@ -6,18 +6,21 @@ using System.Linq;
 using static Measurement.Measure;
 using System.IO;
 using System.Diagnostics;
+using Measurement;
 
 namespace UnitTests
 {
     [TestClass]
     public class RunExperimentsTests
     {
+        private static IDomainResolver domainResolver = new DomainResolver(new[] { Domain.Default, new Z3Domain() });
+
         private static ExperimentManager NewManager()
         {
             ReferenceExperiment reference = new ReferenceExperiment(
-                    ExperimentDefinition.Create("LinearEquationSolver.exe", "reference", "csv", "{0} 10", TimeSpan.FromSeconds(10)),
+                    ExperimentDefinition.Create("LinearEquationSolver.exe", "reference", "csv", "{0} 10", TimeSpan.FromSeconds(10), "default"),
                     1, 0.17);
-            ExperimentManager manager = LocalExperimentManager.NewExperiments("measure" + Guid.NewGuid(), reference);
+            ExperimentManager manager = LocalExperimentManager.NewExperiments("measure" + Guid.NewGuid(), reference, domainResolver);
             return manager;
         }
 
@@ -26,7 +29,7 @@ namespace UnitTests
             if (old is LocalExperimentManager)
             {
                 LocalExperimentManager local = (LocalExperimentManager)old;
-                ExperimentManager manager = LocalExperimentManager.OpenExperiments(local.Directory);
+                ExperimentManager manager = LocalExperimentManager.OpenExperiments(local.Directory, domainResolver);
                 return manager;
             }else
             {
@@ -52,7 +55,7 @@ namespace UnitTests
         [TestMethod]
         public async Task RunExperiment()
         {
-            ExperimentDefinition def = ExperimentDefinition.Create("LinearEquationSolver.exe", "benchmarks_1", "csv", "{0}", TimeSpan.FromSeconds(10));
+            ExperimentDefinition def = ExperimentDefinition.Create("LinearEquationSolver.exe", "benchmarks_1", "csv", "{0}", TimeSpan.FromSeconds(10), "default");
 
             ExperimentManager manager = NewManager();
             var expId = await manager.StartExperiment(def);
@@ -61,15 +64,15 @@ namespace UnitTests
             Assert.AreEqual(1, results.Length, "Number of completed benchmarks");
 
             var res = results[0];
-            Assert.AreEqual(0, res.Measurements.ExitCode, "exit code");
-            Assert.AreEqual(CompletionStatus.Success, res.Measurements.Status, "status");
-            Assert.IsTrue(res.Measurements.TotalProcessorTime.TotalSeconds < 1, "Total runtime");
+            Assert.AreEqual(0, res.ExitCode, "exit code");
+            Assert.AreEqual(ResultStatus.Success, res.Status, "status");
+            Assert.IsTrue(res.TotalProcessorTime.TotalSeconds < 1, "Total runtime");
         }
 
         [TestMethod]
         public async Task RunExperimentsWithCategory()
         {
-            ExperimentDefinition def = ExperimentDefinition.Create("LinearEquationSolver.exe", "benchmarks_2", "csv", "{0} 1000", TimeSpan.FromSeconds(10), 
+            ExperimentDefinition def = ExperimentDefinition.Create("LinearEquationSolver.exe", "benchmarks_2", "csv", "{0} 1000", TimeSpan.FromSeconds(10), "default", 
                 category: "IdentitySquare");
 
             ExperimentManager manager = NewManager();
@@ -80,17 +83,17 @@ namespace UnitTests
 
             foreach (var res in results)
             {
-                Assert.AreEqual(0, res.Measurements.ExitCode, "exit code");
-                Assert.AreEqual(CompletionStatus.Success, res.Measurements.Status, "status");
-                Assert.IsTrue(res.Measurements.TotalProcessorTime.TotalSeconds < 10, "Total runtime");
+                Assert.AreEqual(0, res.ExitCode, "exit code");
+                Assert.AreEqual(ResultStatus.Success, res.Status, "status");
+                Assert.IsTrue(res.TotalProcessorTime.TotalSeconds < 10, "Total runtime");
             }
         }
 
         [TestMethod]
         public async Task FindExperiments()
         {
-            ExperimentDefinition def1 = ExperimentDefinition.Create("LinearEquationSolver.exe", "benchmarks_2", "csv", "{0} 1", TimeSpan.FromSeconds(10), category: "IdentitySquare");
-            ExperimentDefinition def2 = ExperimentDefinition.Create("LinearEquationSolver.exe", "benchmarks_2", "csv", "{0} 2", TimeSpan.FromSeconds(10), category: "IdentitySquare");
+            ExperimentDefinition def1 = ExperimentDefinition.Create("LinearEquationSolver.exe", "benchmarks_2", "csv", "{0} 1", TimeSpan.FromSeconds(10), "default", category: "IdentitySquare");
+            ExperimentDefinition def2 = ExperimentDefinition.Create("LinearEquationSolver.exe", "benchmarks_2", "csv", "{0} 2", TimeSpan.FromSeconds(10), "default", category: "IdentitySquare");
 
             ExperimentManager manager = NewManager();
 

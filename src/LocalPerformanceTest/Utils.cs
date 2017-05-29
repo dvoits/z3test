@@ -10,6 +10,24 @@ namespace PerformanceTest
 {
     public static class Utils
     {
+        public static Stream StringToStream(string s)
+        {
+            byte[] byteArray = Encoding.UTF8.GetBytes(s);
+            MemoryStream stream = new MemoryStream(byteArray);
+            stream.Position = 0;
+            return stream;
+        }
+
+        public static string StreamToString(Stream s, bool resetPosition)
+        {
+            long pos = s.Position;
+            StreamReader r = new StreamReader(s, Encoding.UTF8);
+            string str = r.ReadToEnd();
+            if (resetPosition)
+                s.Position = pos;
+            return str;
+        }
+
         public static T Median<T>(T[] data, Func<T,T,T> mean)
         {
             int len = data.Length;
@@ -35,18 +53,18 @@ namespace PerformanceTest
             int exitCode = measures[0].ExitCode;
             foreach(ProcessRunMeasure m in measures)
             {
-                if (m.Status != Measure.CompletionStatus.Success || m.ExitCode != exitCode) return m;
+                if (m.Limits != Measure.LimitsStatus.WithinLimits || m.ExitCode != exitCode) return m;
             }
 
             TimeSpan totalProcessorTime = Median(measures.Select(m => m.TotalProcessorTime).ToArray(), (t1, t2) => TimeSpan.FromTicks((t1 + t2).Ticks >> 1));
             TimeSpan wallClockTime = Median(measures.Select(m => m.WallClockTime).ToArray(), (t1, t2) => TimeSpan.FromTicks((t1 + t2).Ticks >> 1));
-            long peakMemorySize = measures.Select(m => m.PeakMemorySize).Max();
+            double peakMemorySize = measures.Select(m => m.PeakMemorySizeMB).Max();
 
             return new ProcessRunMeasure(
                 totalProcessorTime,
                 wallClockTime,
                 peakMemorySize,
-                measures[0].Status,
+                measures[0].Limits,
                 exitCode,
                 measures[0].StdOut,
                 measures[0].StdErr);

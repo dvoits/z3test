@@ -17,11 +17,11 @@ namespace Measurement
         /// <param name="fileName">An executable file name or cmd file or bat or zip file.</param>
         /// <param name="arguments"></param>
         /// <param name="timeout"></param>
-        /// <param name="memoryLimit">Maximum allowed memory use for the process (bytes).</param>
+        /// <param name="memoryLimit">Maximum allowed memory use for the process (megabytes). Zero means unlimited memory use.</param>
         /// <param name="outputLimit">Maximum length of the process standard output stream (characters).</param>
         /// <param name="errorLimit">Maximum length of the process standard error stream (characters).</param>
         /// <returns></returns>
-        public static ProcessRunMeasure Measure(string fileName, string arguments, TimeSpan timeout, long? memoryLimit = null, long? outputLimit = null, long? errorLimit = null)
+        public static ProcessRunMeasure Measure(string fileName, string arguments, TimeSpan timeout, double? memoryLimit = 0, long? outputLimit = null, long? errorLimit = null)
         {
             var stdOut = new MemoryStream();
             var stdErr = new MemoryStream();
@@ -47,6 +47,9 @@ namespace Measurement
                 error => WriteToStream(error, err_writer, ref err_lim));
 
             long maxmem = 0L;
+            if (!memoryLimit.HasValue)
+                memoryLimit = 0;
+            long memLimitBytes = (long)Math.Floor(memoryLimit.Value * 1024 * 1024);
             bool exhausted_time = false, exhausted_memory = false;
 
             try
@@ -66,7 +69,7 @@ namespace Measurement
                             exhausted_time = true;
                             Kill(p);
                         }
-                        else if (memoryLimit.HasValue && m > memoryLimit.Value)
+                        else if (memLimitBytes > 0 && m > memLimitBytes)
                         {
                             Trace.WriteLine("Process uses too much memory; killing.");
                             exhausted_memory = true;
@@ -112,11 +115,10 @@ namespace Measurement
             return new ProcessRunMeasure(
                 processorTime,
                 wallClockTime,
-                maxmem,
-                exhausted_time ? Measurement.Measure.CompletionStatus.Timeout : 
-                    exhausted_memory ? Measurement.Measure.CompletionStatus.OutOfMemory :
-                        exitCode != 0 && exitCode != 1 ? Measurement.Measure.CompletionStatus.Error : // For F*, a return value of 1 is still ok.
-                            Measurement.Measure.CompletionStatus.Success,
+                (maxmem / 1024.0 / 1024.0),
+                exhausted_time ? Measurement.Measure.LimitsStatus.TimeOut : 
+                    (exhausted_memory || exitCode == -1073741571) ? Measurement.Measure.LimitsStatus.MemoryOut : // .NET StackOverflowException
+                            Measurement.Measure.LimitsStatus.WithinLimits,
                 exitCode,
                 stdOut,
                 stdErr);

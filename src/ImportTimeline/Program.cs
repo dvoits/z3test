@@ -1,10 +1,13 @@
 ﻿using AzurePerformanceTest;
+using Measurement;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Z3Data;
 
@@ -39,7 +42,8 @@ namespace ImportTimeline
 
             Console.Write("Uploading experiments table from {0}... ", pathToData);
             var submitted = UploadExperiments(pathToData, storage);
-            // for debug: Dictionary<int, DateTime> submitted = null;
+            // for debug: 
+            //Dictionary<int, DateTime> submitted = null;
 
             Console.WriteLine("Uploading results table...");
             UploadResults(pathToData, submitted, storage);
@@ -61,11 +65,11 @@ namespace ImportTimeline
                     exp.Submitted = metadata.SubmissionTime;
                     exp.BenchmarkContainer = metadata.BaseDirectory;
                     exp.BenchmarkFileExtension = "smt2";
-                    exp.Category = "smtlib";
+                    exp.Category = "smtlib-latest";
                     exp.Executable = metadata.BinaryId.ToString();
                     exp.Parameters = metadata.Parameters;
                     exp.BenchmarkTimeout = metadata.Timeout;
-                    exp.MemoryLimit = (int)(metadata.Memoryout >> 20);
+                    exp.MemoryLimitMB = metadata.Memoryout / 1024.0 / 1024.0;
 
                     exp.Flag = false;
                     exp.Creator = "";
@@ -87,46 +91,67 @@ namespace ImportTimeline
         static void UploadResults(string pathToData, Dictionary<int, DateTime> submitted, AzureExperimentStorage storage)
         {
             List<int> missingExperiments = new List<int>();
+            ConcurrentDictionary<string, string> uploadedOutputs = new ConcurrentDictionary<string, string>();
 
             var upload =
-                Directory.EnumerateFiles(pathToData, "*.zip")                
-                .AsParallel()
-                .Select(file =>
+                Directory.EnumerateFiles(pathToData, "*.zip")
+                .Select(async file =>
                 {
                     int expId = int.Parse(Path.GetFileNameWithoutExtension(file));
 
                     DateTime submittedTime;
-                    if (submitted == null) {
+                    if (submitted == null)
+                    {
                         submittedTime = DateTime.Now;
                     }
                     else if (!submitted.TryGetValue(expId, out submittedTime))
                     {
                         missingExperiments.Add(expId);
                         Console.WriteLine("Experiment {0} has results but not metadata");
-                        return Task.FromResult(0);
+                        return 0;
                     }
                     Console.WriteLine("Uploading results for {0}... ", expId);
 
                     CSVData table = new CSVData(file, (uint)expId);
-                    var entities =
+                    var buildResults =
                         table.Rows
-                        .Select(r =>
+                        .OrderBy(r => r.Filename)
+                        .Select(async r =>
                         {
-                            var measure = new Measurement.ProcessRunMeasure(TimeSpan.FromSeconds(r.Runtime), TimeSpan.FromSeconds(0), 0, ResultCodeToStatus(r.ResultCode),
-                                r.ReturnValue,
-                                GenerateStreamFromString(r.StdOut),
-                                GenerateStreamFromString(r.StdErr));
-                            var b = new PerformanceTest.BenchmarkResult(expId, r.Filename, "HPC Cluster node", r.Runtime, submittedTime, measure);
+                            string stdout = await UploadOutput(r.StdOut, uploadedOutputs, storage, String.Format(@"imported\stdout\{0}\{1}", expId, r.Filename));
+                            string stderr = await UploadOutput(r.StdErr, uploadedOutputs, storage, String.Format(@"imported\stderr\{0}\{1}", expId, r.Filename));
+
+                            var properties = new Dictionary<string, string>()
+                            {
+                                { "SAT", r.SAT.ToString() },
+                                { "UNSAT", r.UNSAT.ToString() },
+                                { "UNKNOWN", r.UNKNOWN.ToString() },
+                                { "TargetSAT", r.TargetSAT.ToString() },
+                                { "TargetUNSAT", r.TargetUNSAT.ToString() },
+                                { "TargetUNKNOWN", r.TargetUNKNOWN.ToString() },
+                            };
+
+
+                            var b = new PerformanceTest.BenchmarkResult(
+                                expId, r.Filename, "HPC Cluster node",
+                                submittedTime, r.Runtime, TimeSpan.FromSeconds(r.Runtime), TimeSpan.FromSeconds(0), 0,
+                                ResultCodeToStatus(r.ResultCode), r.ReturnValue,
+                                GenerateStreamFromString(stdout), 
+                                GenerateStreamFromString(stderr),
+                                properties);
                             return b;
                         });
-                    return storage.PutExperimentResults(expId, entities).ContinueWith(t =>
-                    {
-                        Console.WriteLine("Done uploading results for {0}.", expId);
-                    });
+
+                    var entities = await Task.WhenAll(buildResults);
+                    Console.WriteLine("All outputs uploaded for {0}", expId);
+
+                    await storage.PutExperimentResultsWithBlobnames(expId, entities);
+                    Console.WriteLine("Done uploading results for {0}.", expId);
+                    return 0;
                 });
 
             Task.WhenAll(upload).Wait();
-            Console.WriteLine("Done.");
+            Console.WriteLine("Done (uploaded {0} output & error blobs).", uploadedOutputs.Count);
 
             if(missingExperiments.Count > 0)
             {
@@ -138,15 +163,37 @@ namespace ImportTimeline
             }
         }
 
-        private static Measurement.Measure.CompletionStatus ResultCodeToStatus(uint resultCode)
+        private static async Task<string> UploadOutput(string content, ConcurrentDictionary<string, string> uploadedOutputs, AzureExperimentStorage storage, string blobName)
+        {
+            if (String.IsNullOrEmpty(content))
+            {
+                return String.Empty;
+            }
+
+            string blob = uploadedOutputs.GetOrAdd(content, blobName);
+            if (blob != blobName)
+            {
+                return blob;
+            }
+            else
+            {
+                await storage.UploadOutput(blobName, content);
+                Trace.WriteLine(string.Format("Output blob uploaded {0}", blobName));
+
+                uploadedOutputs[content] = blobName;
+                return blobName;
+            }
+        }
+
+        private static ResultStatus ResultCodeToStatus(uint resultCode)
         {
             switch (resultCode)
             {
-                case 0: return Measurement.Measure.CompletionStatus.Success;
-                case 3: return Measurement.Measure.CompletionStatus.Bug;
-                case 4: return Measurement.Measure.CompletionStatus.Error;
-                case 5: return Measurement.Measure.CompletionStatus.Timeout;
-                case 6: return Measurement.Measure.CompletionStatus.OutOfMemory;
+                case 0: return ResultStatus.Success;
+                case 3: return ResultStatus.Bug;
+                case 4: return ResultStatus.Error;
+                case 5: return ResultStatus.Timeout;
+                case 6: return ResultStatus.OutOfMemory;
                 default: throw new ArgumentException("Unknown result code: " + resultCode);
             }
         }

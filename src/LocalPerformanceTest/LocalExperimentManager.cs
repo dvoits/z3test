@@ -15,7 +15,7 @@ namespace PerformanceTest
 {
     public sealed class LocalExperimentManager : ExperimentManager
     {
-        public static LocalExperimentManager NewExperiments(string experimentsFolder, ReferenceExperiment reference)
+        public static LocalExperimentManager NewExperiments(string experimentsFolder, ReferenceExperiment reference, IDomainResolver domainResolver)
         {
             ExperimentDefinition def = MakeRelativeDefinition(experimentsFolder, reference.Definition);
             ReferenceExperiment relRef = new ReferenceExperiment(def, reference.Repetitions, reference.ReferenceValue);
@@ -23,14 +23,14 @@ namespace PerformanceTest
             FileStorage storage = FileStorage.Open(experimentsFolder);
             storage.Clear();
             storage.SaveReferenceExperiment(relRef);
-            LocalExperimentManager manager = new LocalExperimentManager(storage);
+            LocalExperimentManager manager = new LocalExperimentManager(storage, domainResolver);
             return manager;
         }
 
-        public static LocalExperimentManager OpenExperiments(string experimentsFolder)
+        public static LocalExperimentManager OpenExperiments(string experimentsFolder, IDomainResolver domainResolver)
         {
             FileStorage storage = FileStorage.Open(experimentsFolder);
-            LocalExperimentManager manager = new LocalExperimentManager(storage);
+            LocalExperimentManager manager = new LocalExperimentManager(storage, domainResolver);
             return manager;
         }
 
@@ -39,8 +39,8 @@ namespace PerformanceTest
             string relExec = Utils.MakeRelativePath(experimentsFolder, def.Executable);
             string relContainer = Utils.MakeRelativePath(experimentsFolder, def.BenchmarkContainer);
             return ExperimentDefinition.Create(relExec, relContainer, def.BenchmarkFileExtension,
-                def.Parameters, def.BenchmarkTimeout,
-                def.Category, def.MemoryLimit);
+                def.Parameters, def.BenchmarkTimeout, def.DomainName,
+                def.Category, def.MemoryLimitMB);
         }
 
         private readonly ReferenceExperiment reference;
@@ -50,14 +50,14 @@ namespace PerformanceTest
         private readonly AsyncLazy<double> asyncNormal;
         private int lastId = 0;
 
-        private LocalExperimentManager(FileStorage storage) 
+        private LocalExperimentManager(FileStorage storage, IDomainResolver domainResolver) 
         {
             if (storage == null) throw new ArgumentNullException("storage");
             this.storage = storage;
             this.reference = storage.GetReferenceExperiment();
 
             runningExperiments = new ConcurrentDictionary<ExperimentID, ExperimentInstance>();
-            runner = new LocalExperimentRunner(storage.Location);
+            runner = new LocalExperimentRunner(storage.Location, domainResolver);
             lastId = storage.MaxExperimentId;
 
             asyncNormal = new AsyncLazy<double>(this.ComputeNormal);
@@ -219,7 +219,7 @@ namespace PerformanceTest
         private async Task<double> ComputeNormal()
         {
             var benchmarks = await Task.WhenAll(runner.Enqueue(-1, reference.Definition, 1.0, reference.Repetitions));
-            var m = benchmarks.Sum(b => b.Measurements.TotalProcessorTime.TotalSeconds);
+            var m = benchmarks.Sum(b => b.TotalProcessorTime.TotalSeconds);
             double n = reference.ReferenceValue / m;
             Trace.WriteLine(String.Format("Median reference duration: {0}, normal: {1}", m, n));
             return n;
@@ -230,7 +230,8 @@ namespace PerformanceTest
             return ExperimentDefinition.Create(
                 row.Executable, row.BenchmarkContainer,
                 row.BenchmarkFileExtension, row.Parameters,
-                TimeSpan.FromSeconds(row.BenchmarkTimeout), row.Category);
+                TimeSpan.FromSeconds(row.BenchmarkTimeout),
+                row.DomainName, row.Category, row.MemoryLimitMB);
         }
     }
     
