@@ -54,7 +54,7 @@ namespace PerformanceTest
         {
             if (storage == null) throw new ArgumentNullException("storage");
             this.storage = storage;
-            this.reference = storage.GetReferenceExperiment();
+            this.reference = reference;
 
             runningExperiments = new ConcurrentDictionary<ExperimentID, ExperimentInstance>();
             runner = new LocalExperimentRunner(storage.Location, domainResolver);
@@ -129,14 +129,6 @@ namespace PerformanceTest
             storage.RemoveExperimentRow(deleteRow);
             return Task.FromResult(0);
         }
-        public override Task UpdatePriority(int id, string priority)
-        {
-            //var newRow = storage.GetExperiments()[id];
-            //newRow.Priority = priority;
-            //storage.ReplaceExperimentRow(newRow);
-            //return Task.FromResult(0);
-            throw new NotImplementedException();
-        }
         public override Task UpdateStatusFlag (int id, bool flag)
         {
             var newRow = storage.GetExperiments()[id];
@@ -203,17 +195,20 @@ namespace PerformanceTest
         {
             int done, total;
             ExperimentInstance experiment;
+            TimeSpan totalRuntime;
             if (runningExperiments.TryGetValue(id, out experiment))
             {
                 total = experiment.Results.Length;
                 done = experiment.Results.Count(t => t.IsCompleted);
+                totalRuntime = done > 0 ? TimeSpan.FromTicks(experiment.Results.Sum(r => r.Result.TotalProcessorTime.Ticks)) : TimeSpan.FromSeconds(0);
             }
             else
             {
                 var results = storage.GetResults(id);
                 done = total = results.Length;
+                totalRuntime = done > 0 ? TimeSpan.FromTicks(results.Sum(r => r.TotalProcessorTime.Ticks)) : TimeSpan.FromSeconds(0);
             }
-            return new ExperimentStatus(id, expRow.Category, expRow.Submitted, expRow.Creator, expRow.Note, expRow.Flag, done, total);
+            return new ExperimentStatus(id, expRow.Category, expRow.Submitted, expRow.Creator, expRow.Note, expRow.Flag, done, total, totalRuntime);
         }
 
         private async Task<double> ComputeNormal()

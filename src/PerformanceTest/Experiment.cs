@@ -100,7 +100,7 @@ namespace PerformanceTest
     /// </summary>
     public class ExperimentStatus
     {
-        public ExperimentStatus(ExperimentID id, string category, DateTime submitted, string creator, string note, bool flag, int done, int total)
+        public ExperimentStatus(ExperimentID id, string category, DateTime submitted, string creator, string note, bool flag, int done, int total, TimeSpan totalRuntime)
         {
             ID = id;
             Category = category;
@@ -110,6 +110,7 @@ namespace PerformanceTest
             Flag = flag;
             BenchmarksDone = done;
             BenchmarksTotal = total;
+            TotalRuntime = totalRuntime;
         }
 
         public ExperimentID ID { get; private set; }
@@ -126,8 +127,12 @@ namespace PerformanceTest
         public bool Flag;
 
         public int BenchmarksDone { get; private set; }
+
         public int BenchmarksTotal { get; private set; }
+
         public int BenchmarksQueued { get { return BenchmarksTotal - BenchmarksDone; } }
+
+        public TimeSpan TotalRuntime { get; private set; }
     }
 
 
@@ -259,6 +264,18 @@ namespace PerformanceTest
             this.Properties = new ReadOnlyDictionary<string, string>((Dictionary<string, string>)info.GetValue("Properties", typeof(Dictionary<string, string>)));
             this.StdOut = new MemoryStream((byte[])info.GetValue("StdOut", typeof(byte[])));
             this.StdErr = new MemoryStream((byte[])info.GetValue("StdErr", typeof(byte[])));
+        }
+        public void updateStatus (string status)
+        {
+            if (status == "Bug") this.Status = ResultStatus.Bug;
+            else if (status == "Error") this.Status = ResultStatus.Error;
+            else if (status == "Success") this.Status = ResultStatus.Success;
+            else if (status == "OutOfMemory") this.Status = ResultStatus.OutOfMemory;
+            else if (status == "Timeout") this.Status = ResultStatus.Timeout;
+        }
+        public void updateRuntime (double newRuntime)
+        {
+            this.NormalizedRuntime = newRuntime;
         }
     }
 

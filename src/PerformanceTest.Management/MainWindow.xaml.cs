@@ -27,11 +27,12 @@ namespace PerformanceTest.Management
         public static RoutedCommand SaveMetaCSVCommand = new RoutedCommand();
         public static RoutedCommand FlagCommand = new RoutedCommand();
         public static RoutedCommand TallyCommand = new RoutedCommand();
-        public static RoutedCommand ChangePriorityCommand = new RoutedCommand();
         public static RoutedCommand CopyCommand = new RoutedCommand();
         public static RoutedCommand MoveCommand = new RoutedCommand();
         public static RoutedCommand RestartCommand = new RoutedCommand();
         public static RoutedCommand CreateGroupCommand = new RoutedCommand();
+        public static RoutedCommand CompareCommand = new RoutedCommand();
+        public static RoutedCommand ScatterplotCommand = new RoutedCommand();
         public MainWindow()
         {
             InitializeComponent();
@@ -255,7 +256,7 @@ namespace PerformanceTest.Management
 
         private void showTally(object target, ExecutedRoutedEventArgs e)
         {
-            Mouse.OverrideCursor = System.Windows.Input.Cursors.Wait;
+            Mouse.OverrideCursor = Cursors.Wait;
 
             double total = 0.0;
             var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
@@ -274,31 +275,6 @@ namespace PerformanceTest.Management
             Mouse.OverrideCursor = null;
         }
 
-        private void canChangePriority(object sender, CanExecuteRoutedEventArgs e)
-        {
-            e.CanExecute = dataGrid.SelectedItems.Count > 0;
-        }
-        private void changePriority(object target, ExecutedRoutedEventArgs e)
-        {
-            ChangePriorityDialog dlg = new ChangePriorityDialog();
-            dlg.Owner = this;
-            if (dlg.ShowDialog() == true)
-            {
-                var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
-                double total = ids.Length;
-                for (var i = 0; i < total; i++)
-                {
-                    switch (dlg.cmbPriority.SelectedIndex)
-                    {
-                        case 0: break;
-                        case 1: break;
-                        case 3: break;
-                        case 4: break;
-                        default: break;
-                    }
-                }
-            }
-        }
         private void canCopy(object sender, CanExecuteRoutedEventArgs e)
         {
             e.CanExecute = dataGrid.SelectedItems.Count >= 1;
@@ -390,7 +366,7 @@ namespace PerformanceTest.Management
         {
             int id = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray()[0];
             ExperimentProperties dlg = new ExperimentProperties();
-            var vm = new ExperimentPropertiesViewModel(experimentsVm, id);
+            var vm = managerVm.BuildProperties(experimentsVm, id); 
             dlg.DataContext = vm;
             dlg.Owner = this;
             dlg.Show();
@@ -448,6 +424,53 @@ namespace PerformanceTest.Management
                 //not implemented
 
             }
+        }
+
+        private void canCompare(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count == 2;
+        }
+        private void Compare(object target, ExecutedRoutedEventArgs e)
+        {
+            Mouse.OverrideCursor = Cursors.Wait;
+            var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
+            CompareExperiments dlg = new CompareExperiments();
+            var vm = managerVm.BuildComparingResults(ids[0], ids[1]);
+            dlg.DataContext = vm;
+            dlg.Owner = this;
+            dlg.Show();
+            Mouse.OverrideCursor = null;
+        }
+        private void canShowScatterplot(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count == 2;
+        }
+        private void showScatterplot(object target, ExecutedRoutedEventArgs e)
+        {
+            Mouse.OverrideCursor = Cursors.Wait;
+            var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
+            //Scatterplot sp = new Scatterplot();
+            //var vm = new NewExperimentViewModel(managerVm,ids[0], ids[1], UIService.Instance);
+            //sp.DataContext = vm;
+            //sp.Owner = this;
+            //sp.Show();
+            Mouse.OverrideCursor = null;
+        }
+        private void dataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (dataGrid.SelectedItems.Count != 1)
+                return;
+
+            Mouse.OverrideCursor = Cursors.Wait;
+
+            var st = (ExperimentStatusViewModel)dataGrid.SelectedItem;
+            ShowResults dlg = new ShowResults();
+            var vm = managerVm.BuildResultsView(st.ID, st.Category);
+            dlg.DataContext = vm;
+            dlg.Owner = this;
+            dlg.Show();
+
+            Mouse.OverrideCursor = null;
         }
     }
 }

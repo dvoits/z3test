@@ -87,21 +87,36 @@ namespace AzurePerformanceTest
                     }
                 }
             }
-            return cache.GetResults(experimentID);
-        }
+            BenchmarkResult[] results =
+                cache.GetResults(experimentID)
+                .Select(r =>
+                {
+                    Stream stdout = null;
+                    if(r.StdOut != null && r.StdOut.Length > 0)
+                    {
+                        string blobName = Utils.StreamToString(r.StdOut, false);
+                        stdout = new LazyBlobStream(outputContainer.GetBlobReference(blobName));
+                    }
 
+                    Stream stderr = null;
+                    if (r.StdErr != null && r.StdErr.Length > 0)
+                    {
+                        string blobName = Utils.StreamToString(r.StdErr, false);
+                        stderr = new LazyBlobStream(outputContainer.GetBlobReference(blobName));
+                    }
 
-        /// <summary>
-        /// Puts the benchmark results of the given experiment to the storage.
-        /// </summary>
-        /// <param name="results">All results must have same experiment id. Streams should contain contents of respective stdouts/errs</param>
-        public async Task PutExperimentResults(ExperimentID expId, IEnumerable<BenchmarkResult> results)
-        {
-            // Uploading stdout and stderr to the blob storage.
-            BenchmarkResult[] results2 = await UploadStreams(results);
-
-            // Uploading results table.
-            await PutExperimentResultsWithBlobnames(expId, results2);
+                    if (stdout != null || stderr != null)
+                    {
+                        return new BenchmarkResult(r.ExitCode, r.BenchmarkFileName, r.WorkerInformation, r.AcquireTime, r.NormalizedRuntime, r.TotalProcessorTime, r.WallClockTime,
+                            r.PeakMemorySizeMB, r.Status, r.ExitCode,
+                            stdout == null ? r.StdOut : stdout,
+                            stderr == null ? r.StdErr : stderr,
+                            r.Properties);
+                    }
+                    else return r;
+                })
+                .ToArray();
+            return results;
         }
 
         /// <summary>

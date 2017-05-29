@@ -70,8 +70,9 @@ namespace AzurePerformanceTest
                 .Select(e => {
                     var id = e.Key;
                     var expRow = e.Value;
+                    var totalRuntime = TimeSpan.FromSeconds(expRow.TotalRuntime);
                     ExperimentDefinition def = RowToDefinition(id, expRow);
-                    ExperimentStatus status = new ExperimentStatus(id, def.Category, expRow.Submitted, expRow.Creator, expRow.Note, expRow.Flag, 0, 0); // to do
+                    ExperimentStatus status = new ExperimentStatus(id, def.Category, expRow.Submitted, expRow.Creator, expRow.Note, expRow.Flag, 0, 0, totalRuntime); 
                     return new Experiment { Definition = def, Status = status };
                 });
         }
@@ -149,11 +150,6 @@ namespace AzurePerformanceTest
         public override async Task UpdateNote(int id, string note)
         {
             await storage.UpdateNote(id, note);
-        }
-
-        public override Task UpdatePriority(int id, string priority)
-        {
-            throw new NotImplementedException();
         }
 
         public override async Task UpdateStatusFlag(ExperimentID id, bool flag)

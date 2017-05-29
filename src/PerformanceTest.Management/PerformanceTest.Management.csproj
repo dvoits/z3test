@@ -40,7 +40,9 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Windows.Forms.DataVisualization" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
@@ -59,6 +61,18 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Views\ShowOutput.xaml.cs">
+      <DependentUpon>ShowOutput.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ViewModels\ShowOutputViewModel.cs" />
+    <Compile Include="Views\ShowResults.xaml.cs">
+      <DependentUpon>ShowResults.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ViewModels\ShowResultsViewModel.cs" />
+    <Compile Include="Views\CompareExperiments.xaml.cs">
+      <DependentUpon>CompareExperiments.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ViewModels\CompareExperimentsViewModel.cs" />
     <Compile Include="ViewModels\AzureExperimentManagerViewModel.cs" />
     <Compile Include="ViewModels\ExperimentPropertiesViewModel.cs" />
     <Compile Include="Views\CreateGroupDialog.xaml.cs">
@@ -73,12 +87,21 @@
     <Compile Include="Views\CopyDialog.xaml.cs">
       <DependentUpon>CopyDialog.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\ChangePriorityDialog.xaml.cs">
-      <DependentUpon>ChangePriorityDialog.xaml</DependentUpon>
-    </Compile>
     <Compile Include="ViewModels\DelegateCommand.cs" />
     <Compile Include="ViewModels\ExperimentManagerViewModel.cs" />
     <Compile Include="ViewModels\NewExperimentViewModel.cs" />
+    <Page Include="Views\ShowOutput.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ShowResults.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\CompareExperiments.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\CreateGroupDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -92,10 +115,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\CopyDialog.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Views\ChangePriorityDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

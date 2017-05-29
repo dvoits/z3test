@@ -46,7 +46,7 @@ namespace Measurement
                 status = ResultStatus.Timeout;
             else if (limits == LimitsStatus.MemoryOut || exitCode == 101)
                 status = ResultStatus.OutOfMemory;
-            else if (exitCode == 0 || exitCode == 10 || exitCode == 20)
+            else if (exitCode == 0)
             {
                 if (countsResults.sat == 0 && countsResults.unsat == 0 && countsResults.other == 0)
                     status = ResultStatus.Error;

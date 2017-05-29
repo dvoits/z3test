@@ -133,7 +133,7 @@
             <Label Content="sec" HorizontalAlignment="Right"/>
             <Label Content="Memory out:" HorizontalAlignment="Right" />
             <TextBox Name="txtMemout" IsReadOnly="True" Width="80" HorizontalContentAlignment="Right" Text="{Binding MemoryOut, Mode=OneWay}"/>
-            <Label Content="b" HorizontalAlignment="Right"/>
+            <Label Content="Mb" HorizontalAlignment="Right"/>
         </StackPanel>
 
         <Label Content="Parameters:" Grid.Row="8" Grid.Column="0" />
@@ -143,8 +143,6 @@
         <TextBox Name="txtMachine" IsReadOnly="True" Grid.Row="9" Grid.Column="1" Text="{Binding Machine, Mode=OneWay}"/>
         <Label Content="Nodegroup:" Grid.Row="10" Grid.Column="0" />
         <TextBox Name="txtNodeGroup" IsReadOnly="True" Grid.Row="10" Grid.Column="1" Text="{Binding Group, Mode=OneWay}"/>
-        <Label Content="Locality:" Grid.Row="11" Grid.Column="0" />
-        <TextBox Name="txtLocality" IsReadOnly="True" Grid.Row="11" Grid.Column="1" Text="{Binding Locality, Mode=OneWay}"/>
         <Label Content="Creator:" Grid.Row="12" Grid.Column="0" />
         <TextBox Name="txtCreator" IsReadOnly="True" Grid.Row="12" Grid.Column="1" Text="{Binding Creator, Mode=OneWay}"/>
         <Label Content="Note:" Grid.Row="13" Grid.Column="0" />
