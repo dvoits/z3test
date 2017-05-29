@@ -176,33 +176,35 @@ namespace AzurePerformanceTest
             if (result.StdOut.Length > 0)
             {
                 stdoutBlobId = "E" + result.ExperimentID.ToString() + "F" + result.BenchmarkFileName + "-stdout";
-                var stdoutBlob = outputContainer.GetBlockBlobReference(stdoutBlobId);
-
-                // todo: add try/catch for StorageException: https://docs.microsoft.com/en-us/dotnet/api/microsoft.windowsazure.storage.blob.cloudblockblob.uploadfromstreamasync?redirectedfrom=MSDN&view=azure-dotnet#overloads
-                await stdoutBlob.UploadFromStreamAsync(result.StdOut);
+                await UploadOutput(stdoutBlobId, result.StdOut, true);
                 Trace.WriteLine(string.Format("Uploaded stdout for experiment {0}", result.ExperimentID));
             }
             if (result.StdErr.Length > 0)
             {
                 stderrBlobId = "E" + result.ExperimentID.ToString() + "F" + result.BenchmarkFileName + "-stderr";
-                var stderrBlob = outputContainer.GetBlockBlobReference(stderrBlobId);
-
-                await stderrBlob.UploadFromStreamAsync(result.StdErr);
+                await UploadOutput(stderrBlobId, result.StdErr, true);
                 Trace.WriteLine(string.Format("Uploaded stderr for experiment {0}", result.ExperimentID));
             }
             return Tuple.Create(stdoutBlobId, stderrBlobId);
         }
 
-        public async Task UploadOutput(string blobName, string content)
+        public async Task UploadOutput(string blobName, Stream content, bool replaceIfExists)
         {
+            long pos = content.Position;
             var stdoutBlob = outputContainer.GetBlockBlobReference(blobName);
+
+            if (!replaceIfExists && await stdoutBlob.ExistsAsync())
+            {
+                Trace.WriteLine(string.Format("Blob {0} already exists", blobName));
+                return;
+            }
 
             int n = 1, m = 10;
             do
             {
                 try
                 {
-                    await stdoutBlob.UploadTextAsync(content);
+                    await stdoutBlob.UploadFromStreamAsync(content);
                     break;
                 }
                 catch (StorageException ex)
@@ -224,8 +226,9 @@ namespace AzurePerformanceTest
 
                     Trace.WriteLine(message + ", details: " + details);
 
-                    if (n++ == m) throw;
+                    if (n++ == m || !content.CanSeek) throw;
                     Trace.WriteLine(string.Format("Attempt {0}/{1}...", n, m));
+                    content.Position = pos;
                 }
             } while (true);
         }
@@ -518,6 +521,19 @@ namespace AzurePerformanceTest
                 }
             }
             return true;
+        }
+
+        private static async Task ReplaceTableEntities(CloudTable table, IEnumerable<ITableEntity> entities)
+        {
+            await Task.WhenAll(
+                Group(entities, azureStorageBatchSize)
+                .Select(batch =>
+                {
+                    TableBatchOperation opsBatch = new TableBatchOperation();
+                    foreach (var item in batch)
+                        opsBatch.Replace(item);
+                    return table.ExecuteBatchAsync(opsBatch);
+                }));
         }
     }
 
