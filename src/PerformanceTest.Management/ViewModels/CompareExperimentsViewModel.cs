@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.IO;
 
 namespace PerformanceTest.Management
 {
@@ -17,8 +18,7 @@ namespace PerformanceTest.Management
         private readonly ExperimentManager manager;
         private readonly IUIService message;
         private bool checkIgnorePostfix, checkIgnoreCategory, checkIgnorePrefix;
-        private string extension1, extension2;
-        //, category1, category2, sharedDirectory1, sharedDirectory2;
+        private string extension1, extension2, category1, category2;//, sharedDirectory1, sharedDirectory2;
         public event PropertyChangedEventHandler PropertyChanged;
         public CompareExperimentsViewModel(int id1, int id2, ExperimentManager manager, IUIService message)
         {
@@ -95,6 +95,14 @@ namespace PerformanceTest.Management
         {
             get { return experiments; }
             private set { experiments = value; NotifyPropertyChanged(); }
+        }
+        public string Category1
+        {
+            get { return category1; }
+        }
+        public string Category2
+        {
+            get { return category2; }
         }
         public string Title
         {
@@ -259,19 +267,39 @@ namespace PerformanceTest.Management
         }
         public string StdOut1
         {
-            get { return result1.StdOut.ToString() != "" ? result1.StdOut.ToString() : "*** NO OUTPUT SAVED ***"; }
+            get
+            {
+                StreamReader reader = new StreamReader(result1.StdOut);
+                string text = reader.ReadToEnd();
+                return text != "" ? text : "*** NO OUTPUT SAVED ***";
+            }
         }
         public string StdErr1
         {
-            get { return result1.StdErr.ToString() != "" ? result1.StdErr.ToString() : "*** NO OUTPUT SAVED ***"; }
+            get
+            {
+                StreamReader reader = new StreamReader(result1.StdErr);
+                string text = reader.ReadToEnd();
+                return text != "" ? text : "*** NO OUTPUT SAVED ***";
+            }
         }
         public string StdOut2
         {
-            get { return result2.StdOut.ToString() != "" ? result2.StdOut.ToString() : "*** NO OUTPUT SAVED ***"; }
+            get
+            {
+                StreamReader reader = new StreamReader(result2.StdOut);
+                string text = reader.ReadToEnd();
+                return text != "" ? text : "*** NO OUTPUT SAVED ***";
+            }
         }
         public string StdErr2
         {
-            get { return result2.StdErr.ToString() != "" ? result2.StdErr.ToString() : "*** NO OUTPUT SAVED ***"; }
+            get
+            {
+                StreamReader reader = new StreamReader(result2.StdErr);
+                string text = reader.ReadToEnd();
+                return text != "" ? text : "*** NO OUTPUT SAVED ***";
+            }
         }
     }
 }

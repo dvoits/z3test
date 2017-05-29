@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace PerformanceTest.Management
 {
@@ -166,11 +167,21 @@ namespace PerformanceTest.Management
         }
         public string StdOut
         {
-            get { return result.StdOut.ToString() != "" ? result.StdOut.ToString() : "*** NO OUTPUT SAVED ***"; }
+            get
+            {
+                StreamReader reader = new StreamReader(result.StdOut);
+                string text = reader.ReadToEnd();
+                return text != "" ? text : "*** NO OUTPUT SAVED ***";
+            }
         }
         public string StdErr
         {
-            get { return result.StdErr.ToString() != "" ? result.StdErr.ToString() : "*** NO OUTPUT SAVED ***"; }
+            get
+            {
+                StreamReader reader = new StreamReader(result.StdErr);
+                string text = reader.ReadToEnd();
+                return text != "" ? text : "*** NO OUTPUT SAVED ***";
+            }
         }
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
         {
