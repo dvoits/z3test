@@ -115,6 +115,7 @@ namespace ImportTimeline
                     CSVData table = new CSVData(file, (uint)expId);
                     var buildResults =
                         table.Rows
+                        .OrderBy(r => r.Filename)
                         .Select(async r =>
                         {
                             string stdout = await UploadOutput(r.StdOut, uploadedOutputs, storage, String.Format(@"imported\stdout\{0}\{1}", expId, r.Filename));

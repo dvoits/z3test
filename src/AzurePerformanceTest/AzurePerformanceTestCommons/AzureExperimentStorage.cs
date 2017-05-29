@@ -202,7 +202,6 @@ namespace AzurePerformanceTest
             {
                 try
                 {
-                    // todo: add try/catch for StorageException: https://docs.microsoft.com/en-us/dotnet/api/microsoft.windowsazure.storage.blob.cloudblockblob.uploadfromstreamasync?redirectedfrom=MSDN&view=azure-dotnet#overloads
                     await stdoutBlob.UploadTextAsync(content);
                     break;
                 }
