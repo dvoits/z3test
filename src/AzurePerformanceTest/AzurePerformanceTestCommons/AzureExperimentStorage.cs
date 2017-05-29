@@ -43,7 +43,7 @@ namespace AzurePerformanceTest
         const string configContainerName = "config";
         const string experimentsTableName = "experiments";
         const string resultsTableName = "data";
-        
+
 
         public AzureExperimentStorage(string storageAccountName, string storageAccountKey) : this(String.Format("DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}", storageAccountName, storageAccountKey))
         {
@@ -169,7 +169,7 @@ namespace AzurePerformanceTest
             }
         }
 
-        private async Task<Tuple<string,string>> PutStdOutput(BenchmarkResult result)
+        private async Task<Tuple<string, string>> PutStdOutput(BenchmarkResult result)
         {
             string stdoutBlobId = "";
             string stderrBlobId = "";
@@ -197,8 +197,38 @@ namespace AzurePerformanceTest
         {
             var stdoutBlob = outputContainer.GetBlockBlobReference(blobName);
 
-            // todo: add try/catch for StorageException: https://docs.microsoft.com/en-us/dotnet/api/microsoft.windowsazure.storage.blob.cloudblockblob.uploadfromstreamasync?redirectedfrom=MSDN&view=azure-dotnet#overloads
-            await stdoutBlob.UploadTextAsync(content);
+            int n = 1, m = 10;
+            do
+            {
+                try
+                {
+                    // todo: add try/catch for StorageException: https://docs.microsoft.com/en-us/dotnet/api/microsoft.windowsazure.storage.blob.cloudblockblob.uploadfromstreamasync?redirectedfrom=MSDN&view=azure-dotnet#overloads
+                    await stdoutBlob.UploadTextAsync(content);
+                    break;
+                }
+                catch (StorageException ex)
+                {
+                    var requestInfo = ex.RequestInformation;
+                    Trace.WriteLine(string.Format("Failed to upload text to the blob: {0}\nRequest information: {1}", ex.Message, requestInfo));
+
+                    var exInfo = requestInfo.ExtendedErrorInformation;
+
+                    var errorCode = exInfo.ErrorCode;
+                    var message = string.Format("({0}) {1}", errorCode, exInfo.ErrorMessage);
+
+                    var details = exInfo
+                        .AdditionalDetails
+                        .Aggregate("", (s, pair) =>
+                        {
+                            return s + string.Format("{0}={1},", pair.Key, pair.Value);
+                        });
+
+                    Trace.WriteLine(message + ", details: " + details);
+
+                    if (n++ == m) throw;
+                    Trace.WriteLine(string.Format("Attempt {0}/{1}...", n, m));
+                }
+            } while (true);
         }
 
         public async Task PutSerializedExperimentResults(ExperimentID expId, IEnumerable<string> results)
