@@ -151,11 +151,6 @@ namespace AzurePerformanceTest
             await storage.UpdateNote(id, note);
         }
 
-        public override Task UpdatePriority(int id, string priority)
-        {
-            throw new NotImplementedException();
-        }
-
         public override async Task UpdateStatusFlag(ExperimentID id, bool flag)
         {
             await storage.UpdateStatusFlag(id, flag);

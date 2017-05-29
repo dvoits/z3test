@@ -11,6 +11,7 @@ namespace PerformanceTest.Management
 {
     public class ExperimentListViewModel : INotifyPropertyChanged
     {
+        
         private IEnumerable<ExperimentStatusViewModel> experiments;
         private readonly ExperimentManager manager;
         private readonly IUIService message;
@@ -45,11 +46,6 @@ namespace PerformanceTest.Management
             var items = Items.Where(st => st.ID != id).ToArray();
             manager.DeleteExperiment(id);
             Items = items;
-        }
-
-        public void UpdatePriority(int id, string priority)
-        {
-            manager.UpdatePriority(id, priority);
         }
 
         public double GetRuntime(int id)
@@ -131,7 +127,7 @@ namespace PerformanceTest.Management
                 UpdateNote();
             }
 
-        }
+        } 
 
         public string Creator { get { return status.Creator; } }
 
@@ -185,7 +181,6 @@ namespace PerformanceTest.Management
                 message.ShowError("Failed to update experiment note: " + ex.Message);
             }
         }
-
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

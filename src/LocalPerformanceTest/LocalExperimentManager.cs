@@ -54,7 +54,7 @@ namespace PerformanceTest
         {
             if (storage == null) throw new ArgumentNullException("storage");
             this.storage = storage;
-            this.reference = storage.GetReferenceExperiment();
+            this.reference = reference;
 
             runningExperiments = new ConcurrentDictionary<ExperimentID, ExperimentInstance>();
             runner = new LocalExperimentRunner(storage.Location, domainResolver);
@@ -128,14 +128,6 @@ namespace PerformanceTest
             var deleteRow = storage.GetExperiments()[id];
             storage.RemoveExperimentRow(deleteRow);
             return Task.FromResult(0);
-        }
-        public override Task UpdatePriority(int id, string priority)
-        {
-            //var newRow = storage.GetExperiments()[id];
-            //newRow.Priority = priority;
-            //storage.ReplaceExperimentRow(newRow);
-            //return Task.FromResult(0);
-            throw new NotImplementedException();
         }
         public override Task UpdateStatusFlag (int id, bool flag)
         {
