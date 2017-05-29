@@ -129,14 +129,6 @@ namespace PerformanceTest
             storage.RemoveExperimentRow(deleteRow);
             return Task.FromResult(0);
         }
-        public override Task UpdatePriority(int id, string priority)
-        {
-            //var newRow = storage.GetExperiments()[id];
-            //newRow.Priority = priority;
-            //storage.ReplaceExperimentRow(newRow);
-            //return Task.FromResult(0);
-            throw new NotImplementedException();
-        }
         public override Task UpdateStatusFlag (int id, bool flag)
         {
             var newRow = storage.GetExperiments()[id];

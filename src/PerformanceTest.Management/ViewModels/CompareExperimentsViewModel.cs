@@ -18,6 +18,7 @@ namespace PerformanceTest.Management
         private readonly IUIService message;
         private bool checkIgnorePostfix, checkIgnoreCategory, checkIgnorePrefix;
         private string extension1, extension2;
+        //, category1, category2, sharedDirectory1, sharedDirectory2;
         public event PropertyChangedEventHandler PropertyChanged;
         public CompareExperimentsViewModel(int id1, int id2, ExperimentManager manager, IUIService message)
         {
@@ -30,10 +31,13 @@ namespace PerformanceTest.Management
             this.checkIgnoreCategory = false;
             this.checkIgnorePostfix = false;
             this.checkIgnorePrefix = false;
-            this.extension1 = ".ext1";
-            this.extension2 = ".ext1";
-            //this.category1 = category1;
-            //this.category2 = category2;
+            this.extension1 = ".smt2";
+            this.extension2 = ".smt2";
+            
+            //this.category1 = "smtlib-latest";
+            //this.category2 = "smtlib-latest";
+            //this.sharedDirectory1 = "";
+            //this.sharedDirectory2 = "";
 
             RefreshItemsAsync();
         }
