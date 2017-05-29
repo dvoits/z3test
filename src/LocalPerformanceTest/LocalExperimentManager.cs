@@ -203,17 +203,20 @@ namespace PerformanceTest
         {
             int done, total;
             ExperimentInstance experiment;
+            TimeSpan totalRuntime;
             if (runningExperiments.TryGetValue(id, out experiment))
             {
                 total = experiment.Results.Length;
                 done = experiment.Results.Count(t => t.IsCompleted);
+                totalRuntime = done > 0 ? TimeSpan.FromTicks(experiment.Results.Sum(r => r.Result.TotalProcessorTime.Ticks)) : TimeSpan.FromSeconds(0);
             }
             else
             {
                 var results = storage.GetResults(id);
                 done = total = results.Length;
+                totalRuntime = done > 0 ? TimeSpan.FromTicks(results.Sum(r => r.TotalProcessorTime.Ticks)) : TimeSpan.FromSeconds(0);
             }
-            return new ExperimentStatus(id, expRow.Category, expRow.Submitted, expRow.Creator, expRow.Note, expRow.Flag, done, total);
+            return new ExperimentStatus(id, expRow.Category, expRow.Submitted, expRow.Creator, expRow.Note, expRow.Flag, done, total, totalRuntime);
         }
 
         private async Task<double> ComputeNormal()

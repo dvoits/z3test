@@ -70,8 +70,9 @@ namespace AzurePerformanceTest
                 .Select(e => {
                     var id = e.Key;
                     var expRow = e.Value;
+                    var totalRuntime = TimeSpan.FromSeconds(expRow.TotalRuntime);
                     ExperimentDefinition def = RowToDefinition(id, expRow);
-                    ExperimentStatus status = new ExperimentStatus(id, def.Category, expRow.Submitted, expRow.Creator, expRow.Note, expRow.Flag, 0, 0); // to do
+                    ExperimentStatus status = new ExperimentStatus(id, def.Category, expRow.Submitted, expRow.Creator, expRow.Note, expRow.Flag, 0, 0, totalRuntime); 
                     return new Experiment { Definition = def, Status = status };
                 });
         }

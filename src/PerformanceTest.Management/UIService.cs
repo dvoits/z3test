@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 using FolderBrowserDialog = System.Windows.Forms.FolderBrowserDialog;
 
 namespace PerformanceTest.Management
@@ -16,13 +18,14 @@ namespace PerformanceTest.Management
         /// <summary>Prompts a user to select a folder.</summary>
         /// <returns>Returns a selected folder path or null, if the user has cancelled selection.</returns>
         string ChooseFolder(string initialFolder, string description = null);
-                
+
         string[] ChooseFiles(string initialPath, string filter, string defaultExtension);
 
         string[] ChooseOptions(string title, string[] options, string[] selectedOptions);
 
         string ChooseOption(string title, string[] options, string selectedOption);
-
+        void StartIndicateLongOperation();
+        void StopIndicateLongOperation();
     }
 
     public class UIService : IUIService
@@ -92,6 +95,26 @@ namespace PerformanceTest.Management
                 return dlg.SelectedOptions.Length > 0 ? dlg.SelectedOptions[0] : null;
             }
             return null;
+        }
+
+        private int longOps = 0;
+
+        public void StartIndicateLongOperation()
+        {
+            longOps++;
+            if (longOps == 1)
+            {
+                Mouse.OverrideCursor = Cursors.Wait;
+            }
+        }
+
+        public void StopIndicateLongOperation()
+        {
+            longOps--;
+            if (longOps == 0)
+            {
+                Mouse.OverrideCursor = null;
+            }
         }
     }
 }

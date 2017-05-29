@@ -13,18 +13,18 @@ namespace PerformanceTest.Management
     {
         private IEnumerable<ExperimentStatusViewModel> experiments;
         private readonly ExperimentManager manager;
-        private readonly IUIService message;
+        private readonly IUIService ui;
 
 
         public event PropertyChangedEventHandler PropertyChanged;
 
 
-        public ExperimentListViewModel(ExperimentManager manager, IUIService message)
+        public ExperimentListViewModel(ExperimentManager manager, IUIService ui)
         {
             if (manager == null) throw new ArgumentNullException("manager");
-            if (message == null) throw new ArgumentNullException("message");
+            if (ui == null) throw new ArgumentNullException("message");
             this.manager = manager;
-            this.message = message;
+            this.ui = ui;
 
             RefreshItemsAsync();
         }
@@ -57,7 +57,7 @@ namespace PerformanceTest.Management
             var res = manager.GetResults(id);
             if (!res.IsCompleted)
                 return 0;
-            return res.Result.Sum(r =>  r.NormalizedRuntime);
+            return res.Result.Sum(r => r.NormalizedRuntime);
         }
 
         public async void FindExperiments(string filter)
@@ -71,7 +71,7 @@ namespace PerformanceTest.Management
                     CreatorEquals = filter
                 };
                 var experiments = await manager.FindExperiments(f);
-                Items = experiments.Select(e => new ExperimentStatusViewModel(e.Status, manager, message)).ToArray();
+                Items = experiments.Select(e => new ExperimentStatusViewModel(e.Status, manager, ui)).ToArray();
             }
             else
             {
@@ -80,10 +80,18 @@ namespace PerformanceTest.Management
         }
         private async void RefreshItemsAsync()
         {
-            Items = null;
+            ui.StartIndicateLongOperation();
+            try
+            {
+                Items = null;
 
-            var experiments = await manager.FindExperiments();
-            Items = experiments.Select(e => new ExperimentStatusViewModel(e.Status, manager, message)).ToArray();
+                var experiments = await manager.FindExperiments();
+                Items = experiments.Select(e => new ExperimentStatusViewModel(e.Status, manager, ui)).ToArray();
+            }
+            finally
+            {
+                ui.StopIndicateLongOperation();
+            }
         }
 
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
@@ -143,7 +151,8 @@ namespace PerformanceTest.Management
         {
             get { return flag; }
 
-            set {
+            set
+            {
                 if (status.Flag != value && status.Flag == flag)
                 {
                     flag = value;

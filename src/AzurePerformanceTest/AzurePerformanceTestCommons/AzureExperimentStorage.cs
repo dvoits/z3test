@@ -668,6 +668,10 @@ namespace AzurePerformanceTest
         public string GroupName { get; set; }
         public int TotalBenchmarks { get; set; }
         public int CompletedBenchmarks { get; set; }
+        /// <summary>
+        /// Seconds.
+        /// </summary>
+        public double TotalRuntime { get; set; }
     }
 
     public class NextExperimentIDEntity : TableEntity
