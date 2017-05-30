@@ -7,6 +7,8 @@ using System.Text.RegularExpressions;
 using System.Text;
 using System.Threading.Tasks;
 using Measurement;
+using System.Diagnostics;
+using System.IO;
 
 namespace PerformanceTest.Management
 {
