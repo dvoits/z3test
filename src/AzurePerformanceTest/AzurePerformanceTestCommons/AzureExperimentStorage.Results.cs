@@ -123,7 +123,7 @@ namespace AzurePerformanceTest
         /// Puts the benchmark results of the given experiment to the storage.
         /// </summary>
         /// <param name="results">All results must have same experiment id. Streams should contain names of blobs containing respective stdouts/errs</param>
-        public async Task PutExperimentResultsWithBlobnames(int expId, BenchmarkResult[] results)
+        public async Task PutExperimentResultsWithBlobnames(int expId, BenchmarkResult[] results, bool replaceIfExists)
         {
             string fileName = GetResultsFileName(expId);
             using (MemoryStream zipStream = new MemoryStream())
@@ -134,9 +134,8 @@ namespace AzurePerformanceTest
                     BenchmarkResultsStorage.SaveBenchmarks(results, entry.Open());
                 }
 
-                var blob = resultsContainer.GetBlockBlobReference(GetResultBlobName(expId));
                 zipStream.Position = 0;
-                await UploadBlobAsync(zipStream, blob);
+                await UploadBlobAsync(resultsContainer, GetResultBlobName(expId), zipStream, replaceIfExists);
             }
         }
 
