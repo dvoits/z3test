@@ -172,6 +172,17 @@ namespace PerformanceTest
             ExperimentStatus status = GetStatus(id, entity);
             return Task.FromResult(new Experiment { Definition = def, Status = status });
         }
+        public override Task<ExperimentDefinition> GetDefinition(int id)
+        {
+            ExperimentInstance experiment;
+            if (runningExperiments.TryGetValue(id, out experiment))
+            {
+                //return experiment.Results;
+                return Task.FromResult(experiment.Definition);
+            }
+            //return storage.GetResults(id).ToArray();
+            throw new NotImplementedException();
+        }
 
         public override Task<IEnumerable<Experiment>> FindExperiments(ExperimentFilter? filter = default(ExperimentFilter?))
         {
@@ -227,7 +238,6 @@ namespace PerformanceTest
             }
             return new ExperimentStatus(id, expRow.Category, expRow.Submitted, expRow.Creator, expRow.Note, expRow.Flag, done, total, totalRuntime);
         }
-
         private async Task<double> ComputeNormal()
         {
             var benchmarks = await Task.WhenAll(runner.Enqueue(-1, reference.Definition, 1.0, reference.Repetitions));

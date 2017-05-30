@@ -30,7 +30,7 @@ namespace PerformanceTest
         /// <param name="id"></param>
         /// <returns>List of results of currently completed benchmarks</returns>
         public abstract Task<BenchmarkResult[]> GetResults(ExperimentID id);
-
+        public abstract Task<ExperimentDefinition> GetDefinition(ExperimentID id);
         public abstract Task DeleteExperiment(ExperimentID id);
         public abstract Task UpdateStatusFlag(ExperimentID id, bool flag);
         public abstract Task UpdateNote(ExperimentID id, string note);

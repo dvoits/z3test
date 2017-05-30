@@ -84,12 +84,21 @@ namespace PerformanceTest.Management
                 (f, s) => new ExperimentComparingResultsViewModel(f.BenchmarkFileName, f, s, manager, message)).ToList();
             CompareItems = allResults = resItems.OrderByDescending(q => Math.Abs(q.Diff));
         }
-        private async void RefreshItemsAsync()
+        private async void getResults1()
+        {
+            allResults1 = await manager.GetResults(id1);
+        }
+        private async void getResults2()
+        {
+            allResults2 = await manager.GetResults(id2);
+        }
+        private void RefreshItemsAsync()
         {
             allResults = CompareItems = null;
 
-            allResults1 = await manager.GetResults(id1);
-            allResults2 = await manager.GetResults(id2);
+            Task t1 = Task.Factory.StartNew(getResults1);
+            Task t2 = Task.Factory.StartNew(getResults2);
+            Task.WaitAll(t1, t2);
             UpdateCompared();
         }
         public IEnumerable<ExperimentComparingResultsViewModel> CompareItems

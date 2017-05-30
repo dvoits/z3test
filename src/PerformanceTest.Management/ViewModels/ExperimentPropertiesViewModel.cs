@@ -211,7 +211,11 @@ namespace PerformanceTest.Management
         }
         public string Parameters
         {
-            get;
+            get { return definition.Parameters; }
+        }
+        public string Group
+        {
+            get { return definition.GroupName; }
         }
         public string Creator
         {

@@ -35,6 +35,8 @@ namespace PerformanceTest.Management
             string category1 = experiment1.Category == null ? "" : experiment1.Category;
             string category2 = experiment2.Category == null ? "" : experiment2.Category;
             category = (category1 == category2) ? category1 : category1 + " -vs- " + category2;
+            //timeoutX =
+            //timeoutY =
         }
 
         private void setupChart()
@@ -42,8 +44,8 @@ namespace PerformanceTest.Management
             chart.Legends.Clear();
             chart.Titles.Clear();
 
-            //axisMaximum = vm.timeoutX;
-            //if (timeoutY > axisMaximum) axisMaximum = timeoutY;
+            axisMaximum = timeoutX;
+            if (timeoutY > axisMaximum) axisMaximum = timeoutY;
 
             Title t = new Title(category, Docking.Top);
             t.Font = new Font(FontFamily.GenericSansSerif, 16.0f, FontStyle.Bold);
@@ -74,17 +76,17 @@ namespace PerformanceTest.Management
             chart.Series[0].ChartType = SeriesChartType.FastLine;
             chart.Series[0].Color = Color.Green;
             chart.Series[0].BorderDashStyle = ChartDashStyle.Dash;
-            //chart.Series[0].Points.AddXY(axisMinimum, timeoutY);
-            //chart.Series[0].Points.AddXY(timeoutX, timeoutY);
-            //chart.Series[0].Points.AddXY(timeoutX, axisMinimum);
+            chart.Series[0].Points.AddXY(axisMinimum, timeoutY);
+            chart.Series[0].Points.AddXY(timeoutX, timeoutY);
+            chart.Series[0].Points.AddXY(timeoutX, axisMinimum);
 
             chart.Series.Add("Error Markers");
             chart.Series[1].ChartType = SeriesChartType.FastLine;
             chart.Series[1].Color = Color.Red;
             chart.Series[1].BorderDashStyle = ChartDashStyle.Dash;
-            //chart.Series[1].Points.AddXY(axisMinimum, errorLine);
-            //chart.Series[1].Points.AddXY(errorLine, errorLine);
-            //chart.Series[1].Points.AddXY(errorLine, axisMinimum);
+            chart.Series[1].Points.AddXY(axisMinimum, errorLine);
+            chart.Series[1].Points.AddXY(errorLine, errorLine);
+            chart.Series[1].Points.AddXY(errorLine, axisMinimum);
 
             chart.Series.Add("Diagonal");
             chart.Series[2].ChartType = SeriesChartType.FastLine;
@@ -113,7 +115,6 @@ namespace PerformanceTest.Management
                 int inx = chart.Series.Count - 1;
                 int m3 = inx % 3;
                 int d3 = inx / 3;
-                // newSeries.ChartType = SeriesChartType.FastPoint;
                 newSeries.ChartType = SeriesChartType.Point;
                 newSeries.MarkerStyle = MarkerStyle.Cross;
                 newSeries.MarkerSize = 6;
@@ -163,76 +164,79 @@ namespace PerformanceTest.Management
 
             try
             {
-                foreach (var item  in vm.CompareItems)
+                if (vm.CompareItems != null && vm.CompareItems.Count() > 0)
                 {
-                    double x = item.Runtime1;
-                    double y = item.Runtime2;
-
-                    if (x < axisMinimum) x = axisMinimum;
-                    if (y < axisMinimum) y = axisMinimum;
-
-                    ResultStatus rc1 = item.Status1;
-                    ResultStatus rc2 = item.Status2;
-                    int sat1 = item.Sat1;
-                    int unsat1 = item.Unsat1;
-                    int sat2 = item.Sat2;
-                    int unsat2 = item.Unsat2;
-                    int res1 = item.Sat1 + item.Unsat1;
-                    int res2 = item.Sat2 + item.Unsat2;
-
-                    if ((!ckSAT.Checked && (sat1 > 0 || sat2 > 0)) ||
-                         (!ckUNSAT.Checked && (unsat1 > 0 || unsat2 > 0)) ||
-                         (!ckUNKNOWN.Checked && ((rc1 == ResultStatus.Success && res1 == 0) || (rc2 == ResultStatus.Success && res2 == 0))) ||
-                         (!ckBUG.Checked && (rc1 == ResultStatus.Bug || rc2 == ResultStatus.Bug)) ||
-                         (!ckERROR.Checked && (rc1 == ResultStatus.Error || rc2 == ResultStatus.Error)) ||
-                         (!ckTIME.Checked && (rc1 == ResultStatus.Timeout || rc2 == ResultStatus.Timeout)) ||
-                         (!ckMEMORY.Checked && (rc1 == ResultStatus.OutOfMemory || rc2 == ResultStatus.OutOfMemory)))
-                        continue;
-
-                    if ((rc1 != ResultStatus.Success && rc1 != ResultStatus.Timeout) || (x != timeoutX && res1 == 0))
-                        x = errorLine;
-                    if ((rc2 != ResultStatus.Success && rc2 != ResultStatus.Timeout) || (y != timeoutY && res2 == 0))
-                        y = errorLine;
-
-                    if (x < timeoutX && y < timeoutY)
+                    foreach(var item in vm.CompareItems)
                     {
-                        totalX += x;
-                        totalY += y;
-                    }
+                        double x = item.Runtime1;
+                        double y = item.Runtime2;
 
-                    if (fancy)
-                    {
-                        string name = item.Filename;
-                        int inx = name.IndexOf('\\', name.IndexOf('\\') + 1);
-                        string c = (inx > 0) ? name.Substring(0, inx) : name;
-                        Series s;
+                        if (x < axisMinimum) x = axisMinimum;
+                        if (y < axisMinimum) y = axisMinimum;
 
-                        if (classes.ContainsKey(c))
-                            s = chart.Series[classes[c]];
-                        else
+                        ResultStatus rc1 = item.Status1;
+                        ResultStatus rc2 = item.Status2;
+                        int sat1 = item.Sat1;
+                        int unsat1 = item.Unsat1;
+                        int sat2 = item.Sat2;
+                        int unsat2 = item.Unsat2;
+                        int res1 = item.Sat1 + item.Unsat1;
+                        int res2 = item.Sat2 + item.Unsat2;
+
+                        if ((!ckSAT.Checked && (sat1 > 0 || sat2 > 0)) ||
+                             (!ckUNSAT.Checked && (unsat1 > 0 || unsat2 > 0)) ||
+                             (!ckUNKNOWN.Checked && ((rc1 == ResultStatus.Success && res1 == 0) || (rc2 == ResultStatus.Success && res2 == 0))) ||
+                             (!ckBUG.Checked && (rc1 == ResultStatus.Bug || rc2 == ResultStatus.Bug)) ||
+                             (!ckERROR.Checked && (rc1 == ResultStatus.Error || rc2 == ResultStatus.Error)) ||
+                             (!ckTIME.Checked && (rc1 == ResultStatus.Timeout || rc2 == ResultStatus.Timeout)) ||
+                             (!ckMEMORY.Checked && (rc1 == ResultStatus.OutOfMemory || rc2 == ResultStatus.OutOfMemory)))
+                             return;
+
+                        if ((rc1 != ResultStatus.Success && rc1 != ResultStatus.Timeout) || (x != timeoutX && res1 == 0))
+                            x = errorLine;
+                        if ((rc2 != ResultStatus.Success && rc2 != ResultStatus.Timeout) || (y != timeoutY && res2 == 0))
+                            y = errorLine;
+
+                        if (x < timeoutX && y < timeoutY)
                         {
-                            addSeries(c);
-                            classes.Add(c, chart.Series.Count - 1);
-                            s = chart.Series.Last();
+                            totalX += x;
+                            totalY += y;
                         }
 
-                        s.Points.AddXY(x, y);
-                        s.Points.Last().ToolTip = name;
-                    }
-                    else
-                    {
-                        if ((sat1 < sat2 && unsat1 == unsat2) ||
-                            (sat1 == sat2 && unsat1 < unsat2))
-                            chart.Series[4].Points.AddXY(x, y);
-                        else if ((sat1 > sat2 && unsat1 == unsat2) ||
-                            (sat1 == sat2 && unsat1 > unsat2))
-                            chart.Series[5].Points.AddXY(x, y);
-                        else
-                            chart.Series[3].Points.AddXY(x, y);
-                    }
+                        if (fancy)
+                        {
+                            string name = item.Filename;
+                            int inx = name.IndexOf('\\', name.IndexOf('\\') + 1);
+                            string c = (inx > 0) ? name.Substring(0, inx) : name;
+                            Series s;
 
-                    if (x > y) y_faster++; else if (y > x) y_slower++;
-                    total++;
+                            if (classes.ContainsKey(c))
+                                s = chart.Series[classes[c]];
+                            else
+                            {
+                                addSeries(c);
+                                classes.Add(c, chart.Series.Count - 1);
+                                s = chart.Series.Last();
+                            }
+
+                            s.Points.AddXY(x, y);
+                            s.Points.Last().ToolTip = name;
+                        }
+                        else
+                        {
+                            if ((sat1 < sat2 && unsat1 == unsat2) ||
+                               (sat1 == sat2 && unsat1 < unsat2))
+                                chart.Series[4].Points.AddXY(x, y);
+                            else if ((sat1 > sat2 && unsat1 == unsat2) ||
+                                (sat1 == sat2 && unsat1 > unsat2))
+                                chart.Series[5].Points.AddXY(x, y);
+                            else
+                                chart.Series[3].Points.AddXY(x, y);
+                        }
+
+                        if (x > y) y_faster++; else if (y > x) y_slower++;
+                        total++;
+                    };
                 }
             }
             finally

@@ -15,13 +15,13 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
             <DataGrid AutoGenerateColumns="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,0,0" Name="dataGrid" IsReadOnly="True" RowHeight="23" 
                       AlternatingRowBackground="AliceBlue" GridLinesVisibility="None" SelectionUnit="FullRow" SelectionMode="Extended"
                       MouseDoubleClick="dataGrid_MouseDoubleClick"
-                      EnableRowVirtualization="True"
+                      EnableRowVirtualization="True" EnableColumnVirtualization="True"
                       ItemsSource="{Binding CompareItems}">
                 <DataGrid.Columns>
                     <DataGridTextColumn Binding="{Binding Path=Filename, Mode=OneWay}" Header="Filename"/>

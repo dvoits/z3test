@@ -115,7 +115,10 @@ namespace AzurePerformanceTest
         {
             throw new NotImplementedException();
         }
-
+        public override Task<ExperimentDefinition> GetDefinition(ExperimentID id)
+        {
+            throw new NotImplementedException();
+        }
         public override async Task<ExperimentID> StartExperiment(ExperimentDefinition definition, string creator = null, string note = null)
         {
             if (!CanStart) throw new InvalidOperationException("Cannot start experiment since the manager is in read mode");

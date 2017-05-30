@@ -25,6 +25,9 @@ namespace PerformanceTest.Management
         private ExperimentListViewModel experimentsVm;
 
         public static RoutedCommand SaveMetaCSVCommand = new RoutedCommand();
+        public static RoutedCommand SaveOutputCommand = new RoutedCommand();
+        public static RoutedCommand SaveMatrixCommand = new RoutedCommand();
+        public static RoutedCommand SaveBinaryCommand = new RoutedCommand();
         public static RoutedCommand FlagCommand = new RoutedCommand();
         public static RoutedCommand TallyCommand = new RoutedCommand();
         public static RoutedCommand CopyCommand = new RoutedCommand();
@@ -33,6 +36,11 @@ namespace PerformanceTest.Management
         public static RoutedCommand CreateGroupCommand = new RoutedCommand();
         public static RoutedCommand CompareCommand = new RoutedCommand();
         public static RoutedCommand ScatterplotCommand = new RoutedCommand();
+        public static RoutedCommand ReinforcementsCommand = new RoutedCommand();
+        public static RoutedCommand RequeueIErrorsCommand = new RoutedCommand();
+        public static RoutedCommand RecoveryCommand = new RoutedCommand();
+        public static RoutedCommand DuplicatesCommand = new RoutedCommand();
+
         public MainWindow()
         {
             InitializeComponent();
@@ -481,6 +489,81 @@ namespace PerformanceTest.Management
             dlg.Show();
 
             Mouse.OverrideCursor = null;
+        }
+        private void canSaveBinary(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count == 1;
+        }
+        private void saveBinary(object target, ExecutedRoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+        private void canSaveOutput(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count == 1;
+        }
+        private void saveOutput(object target, ExecutedRoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+        private void canSaveMatrix(object sender, CanExecuteRoutedEventArgs e)
+        {
+            if (managerVm == null || dataGrid.SelectedItems.Count <= 1)
+            {
+                e.CanExecute = false;
+                return;
+            }
+            else
+            {
+
+                var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().ToArray();
+                string rc = sts[0].Category;
+                for (var i = 0; i < sts.Length; i++)
+                {
+                    if (sts[i].Category != rc)
+                    {
+                        e.CanExecute = false;
+                        return;
+                    }
+                }
+            }
+            e.CanExecute = true;
+        }
+        private void saveMatrix(object target, ExecutedRoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+        private void canShowReinforcements(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count == 1;
+        }
+        private void showReinforcements(object target, ExecutedRoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+        private void canRequeueIErrors(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count > 0;
+        }
+        private void requeueIErrors(object target, ExecutedRoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+        private void canRecovery(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count > 0;
+        }
+        private void recovery(object target, ExecutedRoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+        private void canShowDuplicates(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count >= 1;
+        }
+        private void showDuplicates(object target, ExecutedRoutedEventArgs e)
+        {
+            throw new NotImplementedException();
         }
     }
 }
