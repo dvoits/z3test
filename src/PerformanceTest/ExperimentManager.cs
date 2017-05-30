@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Measurement;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -33,7 +34,8 @@ namespace PerformanceTest
         public abstract Task DeleteExperiment(ExperimentID id);
         public abstract Task UpdateStatusFlag(ExperimentID id, bool flag);
         public abstract Task UpdateNote(ExperimentID id, string note);
-
+        public abstract Task UpdateResultStatus(ExperimentID id, ResultStatus status);
+        public abstract Task UpdateRuntime(ExperimentID id, double runtime);
         public abstract Task<IEnumerable<Experiment>> FindExperiments(ExperimentFilter? filter = null);
 
         /// <summary>

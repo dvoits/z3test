@@ -92,6 +92,10 @@
       <Project>{879e906f-d5a6-4332-97a7-6952f3c00abc}</Project>
       <Name>LocalPerformanceTest</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\Measurement\Measurement.csproj">
+      <Project>{e315bfab-d44b-4a75-82a3-1eeaf33b5717}</Project>
+      <Name>Measurement</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\PerformanceTest\PerformanceTest.csproj">
       <Project>{86056f9d-4f4e-492b-bbc2-7a176043e42c}</Project>
       <Name>PerformanceTest</Name>

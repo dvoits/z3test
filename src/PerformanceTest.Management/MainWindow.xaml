@@ -18,10 +18,11 @@
             <RowDefinition Height="25" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="17*" />
+            <ColumnDefinition Width="691*"/>
         </Grid.ColumnDefinitions>
 
-        <Menu Grid.Row="0" Grid.ColumnSpan="1"  IsMainMenu="True" Name="mnuMain">
+        <Menu Grid.Row="0" Grid.ColumnSpan="2"  IsMainMenu="True" Name="mnuMain">
             <MenuItem Header="_File">
                 <MenuItem Header="_New..." Name="menuNewJob" IsEnabled="False" Click="btnNewJob_Click">
                     <MenuItem.Icon>
@@ -41,7 +42,7 @@
             </MenuItem>
         </Menu>
 
-        <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Height="60" Margin="10,10,10,10" Name="grid" Grid.Row="1" Grid.Column="0">
+        <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Height="60" Margin="10,10,10,10" Name="grid" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -66,7 +67,7 @@
 
         </Grid>
 
-        <TabControl Grid.Row="2" Grid.Column="0" TabStripPlacement="Bottom">
+        <TabControl Grid.Row="2" Grid.Column="0" TabStripPlacement="Bottom" Grid.ColumnSpan="2">
             <TabItem Header="Experiments" >
                 <DataGrid AutoGenerateColumns="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,10,10,10" Name="dataGrid" IsReadOnly="False" 
                           GridLinesVisibility="None" SelectionUnit="FullRow" SelectionMode="Extended" AlternatingRowBackground="AliceBlue" 
@@ -151,7 +152,7 @@
             </TabItem>
         </TabControl>
 
-        <StatusBar Height="25" HorizontalAlignment="Stretch" Grid.Row="4" Grid.Column="0" Name="statusBar" VerticalAlignment="Bottom">
+        <StatusBar Height="25" HorizontalAlignment="Stretch" Grid.Row="3" Grid.Column="0" Name="statusBar" VerticalAlignment="Bottom" Grid.ColumnSpan="2">
             <StatusBarItem Content="" HorizontalAlignment="Stretch" />
         </StatusBar>
     </Grid>

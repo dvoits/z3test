@@ -32,7 +32,7 @@ namespace PerformanceTest.Management
         {
             allResults = Results = null;
             var res = await manager.GetResults(id);
-            allResults = Results = res.Select(e => new BenchmarkResultViewModel(e)).ToArray();
+            allResults = Results = res.Select(e => new BenchmarkResultViewModel(e, manager, message)).ToArray();
         }
         public IEnumerable<BenchmarkResultViewModel> Results
         {
@@ -92,14 +92,25 @@ namespace PerformanceTest.Management
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
-    public class BenchmarkResultViewModel
+    public class BenchmarkResultViewModel: INotifyPropertyChanged
     {
         private BenchmarkResult result;
+        private readonly ExperimentManager manager;
+        private readonly IUIService message;
+        private ResultStatus status;
+        private double runtime;
         public event PropertyChangedEventHandler PropertyChanged;
-
-        public BenchmarkResultViewModel (BenchmarkResult res)
+        public BenchmarkResultViewModel (BenchmarkResult res, ExperimentManager manager, IUIService message)
         {
+            if (res == null) throw new ArgumentNullException("benchmark");
+            if (manager == null) throw new ArgumentNullException("manager");
+            if (message == null) throw new ArgumentNullException("message");
             this.result = res;
+            this.manager = manager;
+            this.message = message;
+
+            this.status = res.Status;
+            this.runtime = res.NormalizedRuntime;
         }
         public int ID
         {
@@ -115,11 +126,34 @@ namespace PerformanceTest.Management
         }
         public ResultStatus Status
         {
-            get { return result.Status; }
+            get { return status; }
             set {
-                throw new NotImplementedException();
-                //result.updateStatus(value);
-                //NotifyPropertyChanged("Results");
+                status = value;
+                NotifyPropertyChanged();
+                UpdateResultStatus();
+                NotifyPropertyChanged("Runtime");
+            }
+        }
+        private async void UpdateResultStatus()
+        {
+            try
+            {
+                if (status == ResultStatus.Timeout) UpdateRuntime();
+                await manager.UpdateResultStatus(result.ExperimentID, status);
+                BenchmarkResult newResult = new BenchmarkResult(result.ExperimentID, result.BenchmarkFileName, result.WorkerInformation,
+                    result.AcquireTime, runtime, result.TotalProcessorTime, result.WallClockTime, result.PeakMemorySizeMB,
+                    status, result.ExitCode, result.StdOut, result.StdErr, result.Properties);
+                result = newResult;
+                Trace.WriteLine("Result status changed to '" + status.ToString() + "' for " + result.ExperimentID);
+                
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("Failed to update experiment result status: " + ex.Message);
+                status = result.Status;
+                runtime = result.NormalizedRuntime;
+                NotifyPropertyChanged("Status");
+                message.ShowError("Failed to update benchmark status: " + ex.Message);
             }
         }
         private int GetProperty (string prop)
@@ -153,15 +187,28 @@ namespace PerformanceTest.Management
         }
         public double NormalizedRuntime
         {
-            get { return result.NormalizedRuntime; }
+            get { return runtime; }
+            set {
+                runtime = value;
+                NotifyPropertyChanged();
+             //   UpdateRuntimeStatus();
+            }
         }
-        public TimeSpan TotalProcessorTime
+        private async void UpdateRuntime()
         {
-            get { return result.TotalProcessorTime; }
-        }
-        public TimeSpan WallClockTime
-        {
-            get { return result.WallClockTime; }
+            try
+            {
+                await manager.UpdateRuntime(result.ExperimentID, runtime);
+                Trace.WriteLine("Runtime changed to '" + runtime + "' for " + result.ExperimentID);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("Failed to update experiment runtime: " + ex.Message);
+                runtime = result.NormalizedRuntime;
+                NotifyPropertyChanged("Runtime");
+                message.ShowError("Failed to update benchmark runtime: " + ex.Message);
+                throw ex;
+            }
         }
 
         public double MemorySizeMB
@@ -174,11 +221,21 @@ namespace PerformanceTest.Management
         }
         public string StdOut
         {
-            get { return result.StdOut.ToString() != "" ? result.StdOut.ToString() : "*** NO OUTPUT SAVED ***"; }
+            get
+            {
+                StreamReader reader = new StreamReader(result.StdOut);
+                string text = reader.ReadToEnd();
+                return text != "" ? text : "*** NO OUTPUT SAVED ***";
+            }
         }
         public string StdErr
         {
-            get { return result.StdErr.ToString() != "" ? result.StdErr.ToString() : "*** NO OUTPUT SAVED ***"; }
+            get
+            {
+                StreamReader reader = new StreamReader(result.StdErr);
+                string text = reader.ReadToEnd();
+                return text != "" ? text : "*** NO OUTPUT SAVED ***";
+            }
         }
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
         {

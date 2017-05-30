@@ -1,14 +1,16 @@
-﻿using System;
+﻿using Measurement;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
 
 namespace PerformanceTest.Management
 {
-    public class ExperimentPropertiesViewModel
+    public class ExperimentPropertiesViewModel: INotifyPropertyChanged
     {
         public static async Task<ExperimentPropertiesViewModel> CreateAsync(ExperimentManager manager, int id, IDomainResolver domainResolver)
         {
@@ -196,7 +198,10 @@ namespace PerformanceTest.Management
         {
             get { return "Experiment #" + id.ToString(); }
         }
-
+        private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
 
     }
 }

@@ -144,6 +144,14 @@ namespace PerformanceTest
             storage.ReplaceExperimentRow(newRow);
             return Task.FromResult(0);
         }
+        public override Task UpdateResultStatus(int id, ResultStatus status)
+        {
+            throw new NotImplementedException();
+        }
+        public override Task UpdateRuntime(int id, double runtime)
+        {
+            throw new NotImplementedException();
+        }
         public override async Task<BenchmarkResult[]> GetResults(int id)
         {
             ExperimentInstance experiment;

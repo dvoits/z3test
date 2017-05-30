@@ -167,7 +167,7 @@ namespace PerformanceTest.Management
                 Trace.WriteLine("Failed to update experiment note: " + ex.Message);
                 note = status.Note;
                 NotifyPropertyChanged("Note");
-                message.ShowError("Failed to update experiment status flag: " + ex.Message);
+                message.ShowError("Failed to update experiment note: " + ex.Message);
             }
         }
         private async void UpdateStatusFlag()
@@ -183,7 +183,7 @@ namespace PerformanceTest.Management
                 Trace.WriteLine("Failed to update experiment status flag: " + ex.Message);
                 flag = status.Flag;
                 NotifyPropertyChanged("Note");
-                message.ShowError("Failed to update experiment note: " + ex.Message);
+                message.ShowError("Failed to update experiment status flag: " + ex.Message);
             }
         }
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")

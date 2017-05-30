@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using PerformanceTest;
 using Microsoft.Azure.Batch.Auth;
 using Microsoft.Azure.Batch;
-
+using Measurement;
 using ExperimentID = System.Int32;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.Azure.Batch.Common;
@@ -171,6 +171,15 @@ namespace AzurePerformanceTest
         public override async Task UpdateStatusFlag(ExperimentID id, bool flag)
         {
             await storage.UpdateStatusFlag(id, flag);
+        }
+        public override Task UpdateResultStatus(ExperimentID id, ResultStatus status)
+        {
+            throw new NotImplementedException();
+            //await storage.UpdateResultStatus(id, status);
+        }
+        public override Task UpdateRuntime(ExperimentID id, double runtime)
+        {
+            throw new NotImplementedException();
         }
     }
 }
