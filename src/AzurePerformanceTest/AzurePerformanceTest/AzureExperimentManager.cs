@@ -81,7 +81,8 @@ namespace AzurePerformanceTest
         {
             return ExperimentDefinition.Create(
                 experimentEntity.Executable,
-                experimentEntity.BenchmarkContainer,
+                experimentEntity.BenchmarkContainerUri,
+                experimentEntity.BenchmarkDirectory,
                 experimentEntity.BenchmarkFileExtension,
                 experimentEntity.Parameters,
                 TimeSpan.FromSeconds(experimentEntity.BenchmarkTimeout),

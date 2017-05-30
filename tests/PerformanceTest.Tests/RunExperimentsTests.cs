@@ -18,7 +18,7 @@ namespace UnitTests
         private static ExperimentManager NewManager()
         {
             ReferenceExperiment reference = new ReferenceExperiment(
-                    ExperimentDefinition.Create("LinearEquationSolver.exe", "reference", "csv", "{0} 10", TimeSpan.FromSeconds(10), "default"),
+                    ExperimentDefinition.Create("LinearEquationSolver.exe", ExperimentDefinition.LocalDiskContainerUri, "reference", "csv", "{0} 10", TimeSpan.FromSeconds(10), "default"),
                     1, 0.17);
             ExperimentManager manager = LocalExperimentManager.NewExperiments("measure" + Guid.NewGuid(), reference, domainResolver);
             return manager;
@@ -55,7 +55,7 @@ namespace UnitTests
         [TestMethod]
         public async Task RunExperiment()
         {
-            ExperimentDefinition def = ExperimentDefinition.Create("LinearEquationSolver.exe", "benchmarks_1", "csv", "{0}", TimeSpan.FromSeconds(10), "default");
+            ExperimentDefinition def = ExperimentDefinition.Create("LinearEquationSolver.exe", ExperimentDefinition.LocalDiskContainerUri, "benchmarks_1", "csv", "{0}", TimeSpan.FromSeconds(10), "default");
 
             ExperimentManager manager = NewManager();
             var expId = await manager.StartExperiment(def);
@@ -72,7 +72,7 @@ namespace UnitTests
         [TestMethod]
         public async Task RunExperimentsWithCategory()
         {
-            ExperimentDefinition def = ExperimentDefinition.Create("LinearEquationSolver.exe", "benchmarks_2", "csv", "{0} 1000", TimeSpan.FromSeconds(10), "default", 
+            ExperimentDefinition def = ExperimentDefinition.Create("LinearEquationSolver.exe", ExperimentDefinition.LocalDiskContainerUri, "benchmarks_2", "csv", "{0} 1000", TimeSpan.FromSeconds(10), "default", 
                 category: "IdentitySquare");
 
             ExperimentManager manager = NewManager();
@@ -92,8 +92,8 @@ namespace UnitTests
         [TestMethod]
         public async Task FindExperiments()
         {
-            ExperimentDefinition def1 = ExperimentDefinition.Create("LinearEquationSolver.exe", "benchmarks_2", "csv", "{0} 1", TimeSpan.FromSeconds(10), "default", category: "IdentitySquare");
-            ExperimentDefinition def2 = ExperimentDefinition.Create("LinearEquationSolver.exe", "benchmarks_2", "csv", "{0} 2", TimeSpan.FromSeconds(10), "default", category: "IdentitySquare");
+            ExperimentDefinition def1 = ExperimentDefinition.Create("LinearEquationSolver.exe", ExperimentDefinition.LocalDiskContainerUri, "benchmarks_2", "csv", "{0} 1", TimeSpan.FromSeconds(10), "default", category: "IdentitySquare");
+            ExperimentDefinition def2 = ExperimentDefinition.Create("LinearEquationSolver.exe", ExperimentDefinition.LocalDiskContainerUri, "benchmarks_2", "csv", "{0} 2", TimeSpan.FromSeconds(10), "default", category: "IdentitySquare");
 
             ExperimentManager manager = NewManager();
 

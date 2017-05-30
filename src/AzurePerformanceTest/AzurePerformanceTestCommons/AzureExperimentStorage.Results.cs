@@ -1,4 +1,5 @@
-﻿using PerformanceTest;
+﻿using Microsoft.WindowsAzure.Storage;
+using PerformanceTest;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -60,20 +61,29 @@ namespace AzurePerformanceTest
                 Trace.WriteLine(string.Format("Results for experiment {0} are missing in local cache, downloading from cloud...", experimentID));
                 string blobName = GetResultBlobName(experimentID);
                 var blob = resultsContainer.GetBlobReference(blobName);
-
-                using (MemoryStream zipStream = new MemoryStream(4 << 20))
+                try
                 {
-                    await blob.DownloadToStreamAsync(zipStream);
-
-                    zipStream.Position = 0;
-                    using (ZipArchive zip = new ZipArchive(zipStream, ZipArchiveMode.Read))
+                    using (MemoryStream zipStream = new MemoryStream(4 << 20))
                     {
-                        var entry = zip.GetEntry(GetResultsFileName(experimentID));
-                        using (var tableStream = entry.Open())
-                        using (var fileStream = File.Create(cache.IdToPath(experimentID)))
+                        await blob.DownloadToStreamAsync(zipStream);
+
+                        zipStream.Position = 0;
+                        using (ZipArchive zip = new ZipArchive(zipStream, ZipArchiveMode.Read))
                         {
-                            await tableStream.CopyToAsync(fileStream);
+                            var entry = zip.GetEntry(GetResultsFileName(experimentID));
+                            using (var tableStream = entry.Open())
+                            using (var fileStream = File.Create(cache.IdToPath(experimentID)))
+                            {
+                                await tableStream.CopyToAsync(fileStream);
+                            }
                         }
+                    }
+                }
+                catch (StorageException ex)
+                {
+                    if (ex.RequestInformation.HttpStatusCode == 404) // Not found == no results
+                    {
+                        return new BenchmarkResult[] { };
                     }
                 }
             }

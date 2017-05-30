@@ -346,7 +346,7 @@ namespace PerformanceTest.Management
             {
                 ExperimentDefinition def = 
                     ExperimentDefinition.Create(
-                        vm.Executable, vm.BenchmarkLibrary, vm.Extension, vm.Parameters, 
+                        vm.Executable, vm.BenchmarkContainerUri, vm.BenchmarkLibrary, vm.Extension, vm.Parameters, 
                         TimeSpan.FromSeconds(vm.BenchmarkTimeoutSec), vm.Domain, 
                         vm.Categories, vm.BenchmarkMemoryLimitMb);
                 try

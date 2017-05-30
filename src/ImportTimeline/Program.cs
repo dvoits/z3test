@@ -76,7 +76,8 @@ namespace ImportTimeline
                     var metadata = new MetaData(file);
                     var exp = new ExperimentEntity((int)metadata.Id);
                     exp.Submitted = metadata.SubmissionTime;
-                    exp.BenchmarkContainer = metadata.BaseDirectory;
+                    exp.BenchmarkContainerUri = "";
+                    exp.BenchmarkDirectory = metadata.BaseDirectory;
                     exp.BenchmarkFileExtension = "smt2";
                     exp.Category = "smtlib-latest";
                     exp.Executable = metadata.BinaryId.ToString();

@@ -135,7 +135,7 @@ namespace PerformanceTest
                 Submitted = submitted,
                 Executable = experiment.Executable,
                 Parameters = experiment.Parameters,
-                BenchmarkContainer = experiment.BenchmarkContainer,
+                BenchmarkDirectory = experiment.BenchmarkDirectory,
                 BenchmarkFileExtension = experiment.BenchmarkFileExtension,
                 Category = experiment.Category,
                 BenchmarkTimeout = experiment.BenchmarkTimeout.TotalSeconds,

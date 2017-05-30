@@ -15,7 +15,7 @@ namespace PerformanceTest
 {
     public class ExperimentDefinition
     {
-        public static ExperimentDefinition Create(string executable, string benchmarkContainer, string benchmarkFileExtension, string parameters,
+        public static ExperimentDefinition Create(string executable, string benchmarkContainerUri, string benchmarkDirectory, string benchmarkFileExtension, string parameters,
             TimeSpan benchmarkTimeout,
             string domainName,
             string category = null, double memoryLimitMB = 0)
@@ -23,7 +23,8 @@ namespace PerformanceTest
             return new ExperimentDefinition()
             {
                 Executable = executable,
-                BenchmarkContainer = benchmarkContainer,
+                BenchmarkContainerUri = benchmarkContainerUri,
+                BenchmarkDirectory = benchmarkDirectory,
                 BenchmarkFileExtension = benchmarkFileExtension,
                 Parameters = parameters,
                 BenchmarkTimeout = benchmarkTimeout,
@@ -55,11 +56,19 @@ namespace PerformanceTest
         /// </summary>
         public string Parameters { get; private set; }
 
+        public const string LocalDiskContainerUri = "local";
+        public const string DefaultContainerUri = "default";
+        /// <summary>
+        /// A uri of a container with the benchmark files.
+        /// "local" for files on local disc
+        /// "default" for default container
+        /// </summary>
+        public string BenchmarkContainerUri { get; private set; }
 
         /// <summary>
-        /// A shared container with the benchmark files.
+        /// A directory within the container with the benchmark files.
         /// </summary>
-        public string BenchmarkContainer { get; private set; }
+        public string BenchmarkDirectory { get; private set; }
 
 
         /// <summary>

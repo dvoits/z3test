@@ -37,8 +37,8 @@ namespace PerformanceTest
         private static ExperimentDefinition MakeRelativeDefinition(string experimentsFolder, ExperimentDefinition def)
         {
             string relExec = Utils.MakeRelativePath(experimentsFolder, def.Executable);
-            string relContainer = Utils.MakeRelativePath(experimentsFolder, def.BenchmarkContainer);
-            return ExperimentDefinition.Create(relExec, relContainer, def.BenchmarkFileExtension,
+            string relDirectory = Utils.MakeRelativePath(experimentsFolder, def.BenchmarkDirectory);
+            return ExperimentDefinition.Create(relExec, def.BenchmarkContainerUri, relDirectory, def.BenchmarkFileExtension,
                 def.Parameters, def.BenchmarkTimeout, def.DomainName,
                 def.Category, def.MemoryLimitMB);
         }
@@ -54,7 +54,7 @@ namespace PerformanceTest
         {
             if (storage == null) throw new ArgumentNullException("storage");
             this.storage = storage;
-            this.reference = reference;
+            this.reference = storage.GetReferenceExperiment();
 
             runningExperiments = new ConcurrentDictionary<ExperimentID, ExperimentInstance>();
             runner = new LocalExperimentRunner(storage.Location, domainResolver);
@@ -170,7 +170,7 @@ namespace PerformanceTest
                     {
                         var id = q.Key;
                         var e = q.Value;
-                        return (filter.Value.BenchmarkContainerEquals == null || e.BenchmarkContainer == filter.Value.BenchmarkContainerEquals) &&
+                        return (filter.Value.BenchmarkContainerEquals == null || e.BenchmarkDirectory == filter.Value.BenchmarkContainerEquals) &&
                                     (filter.Value.CategoryEquals == null || e.Category == null || e.Category.Contains(filter.Value.CategoryEquals)) &&
                                     (filter.Value.ExecutableEquals == null || e.Executable == null || e.Executable == filter.Value.ExecutableEquals) &&
                                     (filter.Value.ParametersEquals == null || e.Parameters == null || e.Parameters == filter.Value.ParametersEquals) &&
@@ -223,7 +223,7 @@ namespace PerformanceTest
         private static ExperimentDefinition RowToDefinition(ExperimentEntity row)
         {
             return ExperimentDefinition.Create(
-                row.Executable, row.BenchmarkContainer,
+                row.Executable, row.BenchmarkContainerUri, row.BenchmarkDirectory,
                 row.BenchmarkFileExtension, row.Parameters,
                 TimeSpan.FromSeconds(row.BenchmarkTimeout),
                 row.DomainName, row.Category, row.MemoryLimitMB);
