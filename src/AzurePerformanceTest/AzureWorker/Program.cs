@@ -83,7 +83,7 @@ namespace AzureWorker
                         }
                     }
                 }
-                await storage.PutExperimentResultsWithBlobnames(experimentId, results.ToArray());
+                await storage.PutExperimentResultsWithBlobnames(experimentId, results.ToArray(), true);
                 await storage.SetCompletedBenchmarks(experimentId, processedBenchmarks);
                 foreach (CloudQueueMessage message in messages)
                 {

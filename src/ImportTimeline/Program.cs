@@ -108,6 +108,7 @@ namespace ImportTimeline
 
             var upload =
                 Directory.EnumerateFiles(pathToData, "*.zip")
+                .AsParallel()
                 .Select(async file =>
                 {
                     int expId = int.Parse(Path.GetFileNameWithoutExtension(file));
@@ -187,6 +188,8 @@ namespace ImportTimeline
             {
                 return String.Empty;
             }
+
+            if (uploadedOutputs.Count == 50000) uploadedOutputs.Clear();
 
             string blob = uploadedOutputs.GetOrAdd(content, blobName);
             if (blob != blobName)

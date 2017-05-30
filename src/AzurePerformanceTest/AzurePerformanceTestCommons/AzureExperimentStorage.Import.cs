@@ -99,10 +99,5 @@ namespace AzurePerformanceTest
             if (group.Count > 0)
                 yield return group;
         }
-
-        private static async Task UploadBlobAsync(Stream source, CloudBlockBlob blob)
-        {
-            await blob.UploadFromStreamAsync(source);
-        }
     }
 }
