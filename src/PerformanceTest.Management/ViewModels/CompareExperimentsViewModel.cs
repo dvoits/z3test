@@ -6,6 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.IO;
+using Measurement;
 
 namespace PerformanceTest.Management
 {
@@ -17,8 +19,7 @@ namespace PerformanceTest.Management
         private readonly ExperimentManager manager;
         private readonly IUIService message;
         private bool checkIgnorePostfix, checkIgnoreCategory, checkIgnorePrefix;
-        private string extension1, extension2;
-        //, category1, category2, sharedDirectory1, sharedDirectory2;
+        private string extension1, extension2, category1, category2;//, sharedDirectory1, sharedDirectory2;
         public event PropertyChangedEventHandler PropertyChanged;
         public CompareExperimentsViewModel(int id1, int id2, ExperimentManager manager, IUIService message)
         {
@@ -96,6 +97,14 @@ namespace PerformanceTest.Management
             get { return experiments; }
             private set { experiments = value; NotifyPropertyChanged(); }
         }
+        public string Category1
+        {
+            get { return category1; }
+        }
+        public string Category2
+        {
+            get { return category2; }
+        }
         public string Title
         {
             get { return "Comparison: " + id1.ToString() + " vs. " + id2.ToString(); }
@@ -155,10 +164,10 @@ namespace PerformanceTest.Management
             else if (code == 3) CompareItems = allResults.Where(e => e.Sat1 > 0 || e.Sat2 > 0).ToArray(); //one sat
             else if (code == 4) CompareItems = allResults.Where(e => e.Unsat1 > 0 || e.Unsat2 > 0).ToArray(); //one unsat
             else if (code == 5) CompareItems = allResults.Where(e => e.Unknown1 > 0 || e.Unknown2 > 0).ToArray(); //one unknown
-            else if (code == 6) CompareItems = allResults.Where(e => e.Status1 == "Bug" || e.Status2 == "Bug").ToArray(); //bugs
-            else if (code == 7) CompareItems = allResults.Where(e => e.Status1 == "Error" || e.Status2 == "Error").ToArray(); //errors
-            else if (code == 8) CompareItems = allResults.Where(e => e.Status1 == "Timeout" || e.Status2 == "Timeout").ToArray(); //timeout
-            else if (code == 9) CompareItems = allResults.Where(e => e.Status1 == "OutOfMemory" || e.Status2 == "OutOfMemory").ToArray(); //memout
+            else if (code == 6) CompareItems = allResults.Where(e => e.Status1 == ResultStatus.Bug || e.Status2 == ResultStatus.Bug).ToArray(); 
+            else if (code == 7) CompareItems = allResults.Where(e => e.Status1 == ResultStatus.Error || e.Status2 == ResultStatus.Error).ToArray(); 
+            else if (code == 8) CompareItems = allResults.Where(e => e.Status1 == ResultStatus.Timeout || e.Status2 == ResultStatus.Timeout).ToArray(); 
+            else if (code == 9) CompareItems = allResults.Where(e => e.Status1 == ResultStatus.OutOfMemory || e.Status2 == ResultStatus.OutOfMemory).ToArray(); 
             else if (code == 10) CompareItems = allResults.Where(e => e.Sat1 > 0 && e.Sat2 == 0 || e.Sat1 == 0 && e.Sat2 > 0).ToArray(); //sat star
             else if (code == 11) CompareItems = allResults.Where(e => e.Unsat1 > 0 && e.Unsat2 == 0 || e.Unsat1 == 0 && e.Unsat2 > 0).ToArray(); //unsat star
             else if (code == 12) CompareItems = allResults.Where(e => e.Sat1 > 0 && e.Sat2 == 0 || e.Sat1 == 0 && e.Sat2 > 0 || e.Unsat1 > 0 && e.Unsat2 == 0 || e.Unsat1 == 0 && e.Unsat2 > 0).ToArray(); //ok star
@@ -221,8 +230,8 @@ namespace PerformanceTest.Management
         public int ID2 { get { return result2.ExperimentID; } }
         public double Runtime1 { get { return result1.NormalizedRuntime; } }
         public double Runtime2 { get { return result2.NormalizedRuntime; } }
-        public string Status1 { get { return result1.Status.ToString(); } }
-        public string Status2 { get { return result2.Status.ToString(); } }
+        public ResultStatus Status1 { get { return result1.Status; } }
+        public ResultStatus Status2 { get { return result2.Status; } }
         public int Exitcode1 { get { return result1.ExitCode; } }
         public int Exitcode2 { get { return result2.ExitCode; } }
         public double Diff { get { return result1.NormalizedRuntime - result2.NormalizedRuntime; } }
@@ -259,19 +268,39 @@ namespace PerformanceTest.Management
         }
         public string StdOut1
         {
-            get { return result1.StdOut.ToString() != "" ? result1.StdOut.ToString() : "*** NO OUTPUT SAVED ***"; }
+            get
+            {
+                StreamReader reader = new StreamReader(result1.StdOut);
+                string text = reader.ReadToEnd();
+                return text != "" ? text : "*** NO OUTPUT SAVED ***";
+            }
         }
         public string StdErr1
         {
-            get { return result1.StdErr.ToString() != "" ? result1.StdErr.ToString() : "*** NO OUTPUT SAVED ***"; }
+            get
+            {
+                StreamReader reader = new StreamReader(result1.StdErr);
+                string text = reader.ReadToEnd();
+                return text != "" ? text : "*** NO OUTPUT SAVED ***";
+            }
         }
         public string StdOut2
         {
-            get { return result2.StdOut.ToString() != "" ? result2.StdOut.ToString() : "*** NO OUTPUT SAVED ***"; }
+            get
+            {
+                StreamReader reader = new StreamReader(result2.StdOut);
+                string text = reader.ReadToEnd();
+                return text != "" ? text : "*** NO OUTPUT SAVED ***";
+            }
         }
         public string StdErr2
         {
-            get { return result2.StdErr.ToString() != "" ? result2.StdErr.ToString() : "*** NO OUTPUT SAVED ***"; }
+            get
+            {
+                StreamReader reader = new StreamReader(result2.StdErr);
+                string text = reader.ReadToEnd();
+                return text != "" ? text : "*** NO OUTPUT SAVED ***";
+            }
         }
     }
 }

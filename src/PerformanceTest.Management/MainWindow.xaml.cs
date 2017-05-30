@@ -365,8 +365,9 @@ namespace PerformanceTest.Management
         private void showProperties(object target, ExecutedRoutedEventArgs e)
         {
             int id = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray()[0];
+            ExperimentStatusViewModel statusVm = experimentsVm.Items.Where(elem => elem.ID == id).ToArray()[0];
             ExperimentProperties dlg = new ExperimentProperties();
-            var vm = managerVm.BuildProperties(experimentsVm, id); 
+            var vm = managerVm.BuildProperties(statusVm, id); 
             dlg.DataContext = vm;
             dlg.Owner = this;
             dlg.Show();
@@ -448,12 +449,10 @@ namespace PerformanceTest.Management
         private void showScatterplot(object target, ExecutedRoutedEventArgs e)
         {
             Mouse.OverrideCursor = Cursors.Wait;
-            var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
-            //Scatterplot sp = new Scatterplot();
-            //var vm = new NewExperimentViewModel(managerVm,ids[0], ids[1], UIService.Instance);
-            //sp.DataContext = vm;
-            //sp.Owner = this;
-            //sp.Show();
+            var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().ToArray();
+            var vm = managerVm.BuildComparingResults(ids[0].ID, ids[1].ID);
+            Scatterplot sp = new Scatterplot(vm, ids[0], ids[1]);
+            sp.Show();
             Mouse.OverrideCursor = null;
         }
         private void dataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
