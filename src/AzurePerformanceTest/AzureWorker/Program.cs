@@ -86,7 +86,7 @@ namespace AzureWorker
                     }
                 }
                 results.Sort((a, b) => string.Compare(a.BenchmarkFileName, b.BenchmarkFileName));
-                await storage.PutExperimentResultsWithBlobnames(experimentId, results.ToArray());
+                await storage.PutExperimentResultsWithBlobnames(experimentId, results.ToArray(), true);
                 await storage.SetCompletedBenchmarks(experimentId, processedBenchmarks);
                 foreach (CloudQueueMessage message in messages)
                 {
