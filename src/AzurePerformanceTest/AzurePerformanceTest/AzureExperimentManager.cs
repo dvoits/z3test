@@ -138,7 +138,7 @@ namespace AzurePerformanceTest
 
                 string taskId = "taskStarter";
 
-                string taskCommandLine = string.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\AzureWorker.exe --add-tasks {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\" \"{7}\"", id, ExperimentDefinition.DefaultContainerUri, definition.BenchmarkDirectory, 
+                string taskCommandLine = string.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\AzureWorker.exe --add-tasks {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\" \"{7}\"", id, definition.BenchmarkContainerUri, definition.BenchmarkDirectory, 
                     definition.Category, definition.Executable, definition.Parameters, definition.BenchmarkTimeout.TotalSeconds.ToString(), definition.MemoryLimitMB.ToString());
                 CloudTask task = new CloudTask(taskId, taskCommandLine);
                 

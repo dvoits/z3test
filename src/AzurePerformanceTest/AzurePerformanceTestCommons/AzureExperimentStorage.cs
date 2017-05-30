@@ -345,6 +345,7 @@ namespace AzurePerformanceTest
             row.Executable = experiment.Executable;
             row.DomainName = experiment.DomainName;
             row.Parameters = experiment.Parameters;
+            row.BenchmarkContainerUri = experiment.BenchmarkContainerUri;
             row.BenchmarkDirectory = experiment.BenchmarkDirectory;
             row.BenchmarkFileExtension = experiment.BenchmarkFileExtension;
             row.Category = experiment.Category;
