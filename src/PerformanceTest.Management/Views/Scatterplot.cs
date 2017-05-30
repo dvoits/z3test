@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Measurement;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -170,8 +171,8 @@ namespace PerformanceTest.Management
                     if (x < axisMinimum) x = axisMinimum;
                     if (y < axisMinimum) y = axisMinimum;
 
-                    string rc1 = item.Status1;
-                    string rc2 = item.Status2;
+                    ResultStatus rc1 = item.Status1;
+                    ResultStatus rc2 = item.Status2;
                     int sat1 = item.Sat1;
                     int unsat1 = item.Unsat1;
                     int sat2 = item.Sat2;
@@ -181,16 +182,16 @@ namespace PerformanceTest.Management
 
                     if ((!ckSAT.Checked && (sat1 > 0 || sat2 > 0)) ||
                          (!ckUNSAT.Checked && (unsat1 > 0 || unsat2 > 0)) ||
-                         (!ckUNKNOWN.Checked && ((rc1 == "Success" && res1 == 0) || (rc2 == "Success" && res2 == 0))) ||
-                         (!ckBUG.Checked && (rc1 == "Bug" || rc2 == "Bug")) ||
-                         (!ckERROR.Checked && (rc1 == "Error" || rc2 == "Error")) ||
-                         (!ckTIME.Checked && (rc1 == "Timeout" || rc2 == "Timeout")) ||
-                         (!ckMEMORY.Checked && (rc1 == "OutOfMemory" || rc2 == "OutOfMemory")))
+                         (!ckUNKNOWN.Checked && ((rc1 == ResultStatus.Success && res1 == 0) || (rc2 == ResultStatus.Success && res2 == 0))) ||
+                         (!ckBUG.Checked && (rc1 == ResultStatus.Bug || rc2 == ResultStatus.Bug)) ||
+                         (!ckERROR.Checked && (rc1 == ResultStatus.Error || rc2 == ResultStatus.Error)) ||
+                         (!ckTIME.Checked && (rc1 == ResultStatus.Timeout || rc2 == ResultStatus.Timeout)) ||
+                         (!ckMEMORY.Checked && (rc1 == ResultStatus.OutOfMemory || rc2 == ResultStatus.OutOfMemory)))
                         continue;
 
-                    if ((rc1 != "Success" && rc1 != "Timeout") || (x != timeoutX && res1 == 0))
+                    if ((rc1 != ResultStatus.Success && rc1 != ResultStatus.Timeout) || (x != timeoutX && res1 == 0))
                         x = errorLine;
-                    if ((rc2 != "Success" && rc2 != "Timeout") || (y != timeoutY && res2 == 0))
+                    if ((rc2 != ResultStatus.Success && rc2 != ResultStatus.Timeout) || (y != timeoutY && res2 == 0))
                         y = errorLine;
 
                     if (x < timeoutX && y < timeoutY)

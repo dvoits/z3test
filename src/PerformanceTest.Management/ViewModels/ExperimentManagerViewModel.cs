@@ -46,9 +46,9 @@ namespace PerformanceTest.Management
         {
             return new CompareExperimentsViewModel(id1, id2, manager, uiService);
         }
-        public ExperimentPropertiesViewModel BuildProperties(ExperimentListViewModel experimentsVm, int id)
+        public ExperimentPropertiesViewModel BuildProperties(ExperimentStatusViewModel statusVm, int id)
         {
-            return new ExperimentPropertiesViewModel(experimentsVm, manager, id);
+            return new ExperimentPropertiesViewModel(statusVm, manager, id, uiService);
         }
     }
 

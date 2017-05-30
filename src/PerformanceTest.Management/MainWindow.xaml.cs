@@ -365,8 +365,9 @@ namespace PerformanceTest.Management
         private void showProperties(object target, ExecutedRoutedEventArgs e)
         {
             int id = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray()[0];
+            ExperimentStatusViewModel statusVm = experimentsVm.Items.Where(elem => elem.ID == id).ToArray()[0];
             ExperimentProperties dlg = new ExperimentProperties();
-            var vm = managerVm.BuildProperties(experimentsVm, id); 
+            var vm = managerVm.BuildProperties(statusVm, id); 
             dlg.DataContext = vm;
             dlg.Owner = this;
             dlg.Show();
