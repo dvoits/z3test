@@ -92,11 +92,22 @@ namespace AzurePerformanceTest
         public async Task<ReferenceExperiment> GetReferenceExperiment()
         {
             var blob = configContainer.GetBlockBlobReference("reference.json");
-            string content = await blob.DownloadTextAsync();
-            JsonSerializerSettings settings = new JsonSerializerSettings();
-            settings.ContractResolver = new PrivatePropertiesResolver();
-            ReferenceExperiment reference = JsonConvert.DeserializeObject<ReferenceExperiment>(content, settings);
-            return reference;
+            try
+            {
+                string content = await blob.DownloadTextAsync();
+                JsonSerializerSettings settings = new JsonSerializerSettings();
+                settings.ContractResolver = new PrivatePropertiesResolver();
+                ReferenceExperiment reference = JsonConvert.DeserializeObject<ReferenceExperiment>(content, settings);
+                return reference;
+            }
+            catch (StorageException ex)
+            {
+                if (ex.RequestInformation.HttpStatusCode == 404) // Not found
+                {
+                    return null;
+                }
+                throw;
+            }
         }
 
         internal class PrivatePropertiesResolver : DefaultContractResolver
