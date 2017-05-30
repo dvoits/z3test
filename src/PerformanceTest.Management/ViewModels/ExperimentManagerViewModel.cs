@@ -11,13 +11,16 @@ namespace PerformanceTest.Management
     {
         protected readonly ExperimentManager manager;
         protected readonly UIService uiService;
+        protected readonly IDomainResolver domainResolver;
 
-        public ExperimentManagerViewModel(ExperimentManager manager, UIService uiService)
+        public ExperimentManagerViewModel(ExperimentManager manager, UIService uiService, IDomainResolver domainResolver)
         {
             if (manager == null) throw new ArgumentNullException("manager");
             this.manager = manager;
             if (uiService == null) throw new ArgumentNullException("uiService");
             this.uiService = uiService;
+            if (domainResolver == null) throw new ArgumentNullException("domainResolver");
+            this.domainResolver = domainResolver;
         }
 
         public virtual string BenchmarkLibraryDescription
@@ -46,15 +49,15 @@ namespace PerformanceTest.Management
         {
             return new CompareExperimentsViewModel(id1, id2, manager, uiService);
         }
-        public ExperimentPropertiesViewModel BuildProperties(ExperimentListViewModel experimentsVm, int id)
+        public Task<ExperimentPropertiesViewModel> BuildProperties(int id)
         {
-            return new ExperimentPropertiesViewModel(experimentsVm, manager, id);
+            return ExperimentPropertiesViewModel.CreateAsync(manager, id, domainResolver);
         }
     }
 
     public class LocalExperimentManagerViewModel : ExperimentManagerViewModel
     {
-        public LocalExperimentManagerViewModel(LocalExperimentManager manager, UIService uiService) : base(manager, uiService)
+        public LocalExperimentManagerViewModel(LocalExperimentManager manager, UIService uiService, IDomainResolver domainResolver) : base(manager, uiService, domainResolver)
         {
         }
 

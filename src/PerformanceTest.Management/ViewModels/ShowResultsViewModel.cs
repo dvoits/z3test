@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Text;
 using System.Threading.Tasks;
+using Measurement;
 
 namespace PerformanceTest.Management
 {
@@ -49,14 +50,14 @@ namespace PerformanceTest.Management
 
         public void FilterResultsByError(int code)
         {
-            if (code == 0) Results = allResults.Where(e => e.Status == "Success" && e.Sat > 0).ToArray();
-            else if (code == 1) Results = allResults.Where(e => e.Status == "Success" && e.Unsat > 0).ToArray();
-            else if (code == 2) Results = allResults.Where(e => e.Status == "Success" && e.Unknown > 0).ToArray();
-            else if (code == 3) Results = allResults.Where(e => e.Status == "Bug").ToArray();
-            else if (code == 4) Results = allResults.Where(e => e.Status == "Error").ToArray();
-            else if (code == 5) Results = allResults.Where(e => e.Status == "Timeout").ToArray();
-            else if (code == 6) Results = allResults.Where(e => e.Status == "OutOfMemory").ToArray();
-            else if (code == 7) Results = allResults.Where(e => e.Status == "Success" && e.Sat + e.Unsat > e.TargetSat + e.TargetUnsat && e.Unknown < e.TargetUnknown).ToArray();
+            if (code == 0) Results = allResults.Where(e => e.Status == ResultStatus.Success && e.Sat > 0).ToArray();
+            else if (code == 1) Results = allResults.Where(e => e.Status == ResultStatus.Success && e.Unsat > 0).ToArray();
+            else if (code == 2) Results = allResults.Where(e => e.Status == ResultStatus.Success && e.Unknown > 0).ToArray();
+            else if (code == 3) Results = allResults.Where(e => e.Status == ResultStatus.Bug).ToArray();
+            else if (code == 4) Results = allResults.Where(e => e.Status == ResultStatus.Error).ToArray();
+            else if (code == 5) Results = allResults.Where(e => e.Status == ResultStatus.Timeout).ToArray();
+            else if (code == 6) Results = allResults.Where(e => e.Status == ResultStatus.OutOfMemory).ToArray();
+            else if (code == 7) Results = allResults.Where(e => e.Status == ResultStatus.Success && e.Sat + e.Unsat > e.TargetSat + e.TargetUnsat && e.Unknown < e.TargetUnknown).ToArray();
             else if (code == 8) Results = allResults.Where(e => e.Sat + e.Unsat < e.Sat + e.Unsat || e.Unknown > e.TargetUnknown).ToArray();
             else Results = allResults;
         }
@@ -84,7 +85,7 @@ namespace PerformanceTest.Management
         }
         public void FilterResultsByRuntime(int limit)
         {
-            Results = allResults.Where(e => e.Runtime >= limit).ToArray();
+            Results = allResults.Where(e => e.NormalizedRuntime >= limit).ToArray();
         }
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
         {
@@ -95,6 +96,7 @@ namespace PerformanceTest.Management
     {
         private BenchmarkResult result;
         public event PropertyChangedEventHandler PropertyChanged;
+
         public BenchmarkResultViewModel (BenchmarkResult res)
         {
             this.result = res;
@@ -111,12 +113,13 @@ namespace PerformanceTest.Management
         {
             get { return result.ExitCode; }
         }
-        public string Status
+        public ResultStatus Status
         {
-            get { return result.Status.ToString(); }
+            get { return result.Status; }
             set {
-                result.updateStatus(value);
-                NotifyPropertyChanged("Results");
+                throw new NotImplementedException();
+                //result.updateStatus(value);
+                //NotifyPropertyChanged("Results");
             }
         }
         private int GetProperty (string prop)
@@ -148,14 +151,19 @@ namespace PerformanceTest.Management
         {
             get { return GetProperty("TargetUNKNOWN"); }
         }
-        public double Runtime
+        public double NormalizedRuntime
         {
             get { return result.NormalizedRuntime; }
-            set {
-                result.updateRuntime(value);
-                NotifyPropertyChanged();
-            }
         }
+        public TimeSpan TotalProcessorTime
+        {
+            get { return result.TotalProcessorTime; }
+        }
+        public TimeSpan WallClockTime
+        {
+            get { return result.WallClockTime; }
+        }
+
         public double MemorySizeMB
         {
             get { return result.PeakMemorySizeMB; }

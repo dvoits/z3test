@@ -39,13 +39,14 @@ namespace PerformanceTest.Management
         {
             try
             {
-                var elems = dataGrid.SelectedItems.Cast<BenchmarkResultViewModel>();
-                foreach (var vm in elems)
-                {
-                    if (rc == "Timeout") vm.Runtime = 0.0; //some new value for runtime
-                    vm.Status = rc;
-                }
-                Console.WriteLine();
+                throw new NotImplementedException();
+                //var elems = dataGrid.SelectedItems.Cast<BenchmarkResultViewModel>();
+                //foreach (var vm in elems)
+                //{
+                //    if (rc == "Timeout") vm.NormalizedRuntime = 0.0; //some new value for runtime
+                //    vm.Status = rc;
+                //}
+                //Console.WriteLine();
             }
             catch (Exception ex)
             {

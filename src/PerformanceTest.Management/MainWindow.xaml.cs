@@ -47,11 +47,11 @@ namespace PerformanceTest.Management
             if (Directory.Exists(connectionString))
             {
                 LocalExperimentManager manager = LocalExperimentManager.OpenExperiments(connectionString, domainResolver);
-                return new LocalExperimentManagerViewModel(manager, UIService.Instance);
+                return new LocalExperimentManagerViewModel(manager, UIService.Instance, domainResolver);
             }else
             {
                 AzureExperimentManager azureManager = AzureExperimentManager.OpenWithoutStart(new AzureExperimentStorage(connectionString));
-                return new AzureExperimentManagerViewModel(azureManager, UIService.Instance);
+                return new AzureExperimentManagerViewModel(azureManager, UIService.Instance, domainResolver);
             }
         }
 
@@ -362,14 +362,26 @@ namespace PerformanceTest.Management
         {
             e.CanExecute = dataGrid.SelectedItems.Count == 1;
         }
-        private void showProperties(object target, ExecutedRoutedEventArgs e)
+        private async void showProperties(object target, ExecutedRoutedEventArgs e)
         {
-            int id = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray()[0];
-            ExperimentProperties dlg = new ExperimentProperties();
-            var vm = managerVm.BuildProperties(experimentsVm, id); 
-            dlg.DataContext = vm;
-            dlg.Owner = this;
-            dlg.Show();
+            var item = dataGrid.SelectedItem as ExperimentStatusViewModel;
+            if (item == null) return;
+
+            try
+            {                
+                UIService.Instance.StartIndicateLongOperation();
+                var vm = await managerVm.BuildProperties(item.ID);
+
+                ExperimentProperties dlg = new ExperimentProperties();
+                dlg.DataContext = vm;
+                dlg.Owner = this;
+                dlg.Show();
+            }
+            finally
+            {
+                UIService.Instance.StopIndicateLongOperation();
+            }
+
         }
         private void canRestartCommand(object sender, CanExecuteRoutedEventArgs e)
         {

@@ -10,56 +10,80 @@ namespace PerformanceTest.Management
 {
     public class ExperimentPropertiesViewModel
     {
-        private ExperimentStatusViewModel statusVm;
-        private IEnumerable<BenchmarkResultViewModel> result;
-        private ExperimentManager manager;
-        private int id;
+        public static async Task<ExperimentPropertiesViewModel> CreateAsync(ExperimentManager manager, int id, IDomainResolver domainResolver)
+        {
+            if (manager == null) throw new ArgumentNullException("manager");
+
+            Experiment exp = await manager.TryFindExperiment(id);
+            if (exp == null) throw new KeyNotFoundException(string.Format("There is no experiment with id {0}.", id));
+            ExperimentStatistics stat = await GetStatistics(manager, id, domainResolver.GetDomain(exp.Definition.DomainName ?? "Z3"));
+            return new ExperimentPropertiesViewModel(exp.Definition, exp.Status, stat);
+        }
+
+
+        private static async Task<ExperimentStatistics> GetStatistics(ExperimentManager manager, int id, Measurement.Domain domain)
+        {
+            var results = await manager.GetResults(id);
+            var aggr = domain.Aggregate(results.Select(r => new Measurement.ProcessRunAnalysis(r.Status, r.Properties)));
+            return new ExperimentStatistics(aggr);
+        }
+
+        private readonly int id;
+        private readonly ExperimentDefinition definition;
+        private readonly ExperimentStatus status;
+        private readonly ExperimentStatistics statistics;
         private readonly string[] MachineStatuses = { "OK", "Unable to retrieve status." };
-        public ExperimentPropertiesViewModel(ExperimentListViewModel experimentsVm, ExperimentManager manager, int id)
+
+
+        public ExperimentPropertiesViewModel(ExperimentDefinition def, ExperimentStatus status, ExperimentStatistics stat)
         {
-            this.id = id;
-            this.statusVm = experimentsVm.Items.Where(item => item.ID == id).ToArray()[0];
-            this.manager = manager;
-            GetResultsAsync();
+            if (def == null) throw new ArgumentNullException("def");
+            if (status == null) throw new ArgumentNullException("status");
+            if (stat == null) throw new ArgumentNullException("stat");
+
+            this.id = status.ID;
+            this.definition = def;
+            this.status = status;
+            this.statistics = stat;
         }
-        private async void GetResultsAsync()
+        public DateTime SubmissionTime
         {
-            var res = await manager.GetResults(id);
-            this.result = res.Select(elem => new BenchmarkResultViewModel(elem));
-        }
-        public string SubmissionTime
-        {
-            get { return statusVm.Submitted; }
+            get { return status.SubmissionTime; }
         }
         public string Category
         {
-            get { return statusVm.Category; }
+            get { return definition.Category; }
         }
         public int BenchmarksTotal
         {
-            get { return statusVm.BenchmarksTotal; }
+            get { return status.BenchmarksTotal; }
         }
         public int BenchmarksDone
         {
-            get { return statusVm.BenchmarksDone; }
+            get { return status.BenchmarksDone; }
         }
         public int BenchmarksQueued
         {
-            get { return statusVm.BenchmarksQueued; }
+            get { return status.BenchmarksQueued; }
         }
         public Brush QueuedForeground
         {
             get
             {
-                return (statusVm.BenchmarksQueued == 0) ? Brushes.Green : Brushes.Red;
+                return (status.BenchmarksQueued == 0) ? Brushes.Green : Brushes.Red;
             }
         }
-        
+
+        private int GetProperty(string prop)
+        {
+            return int.Parse(statistics.AggregatedResults.Properties[prop]);
+        }
+
         public int Sat
         {
             get
             {
-                return result.Sum(elem => elem.Sat);
+                return GetProperty("SAT");
             }
 
         }
@@ -67,35 +91,35 @@ namespace PerformanceTest.Management
         {
             get
             {
-                return result.Sum(elem => elem.Unsat);
+                return GetProperty("UNSAT");
             }
         }
         public int Unknown
         {
             get
             {
-                return result.Sum(elem => elem.Unknown);
+                return GetProperty("UNKNOWN");
             }
         }
         public int Overperformed
         {
             get
             {
-                return result.Sum(e => (e.Status == "Success" && e.Sat + e.Unsat > e.TargetSat + e.TargetUnsat && e.Unknown < e.TargetUnknown) ? 1 : 0);
+                return GetProperty("OVERPERFORMED");
             }
         }
         public int Underperformed
         {
             get
             {
-                return result.Sum(e => (e.Sat + e.Unsat < e.Sat + e.Unsat || e.Unknown > e.TargetUnknown) ? 1 : 0);
+                return GetProperty("UNDERPERFORMED");
             }
         }
         public int ProblemBug
         {
             get
             {
-                return result.Sum(e => (e.Status == "Bug") ? 1 : 0);
+                return statistics.AggregatedResults.Bugs;
             }
         }
         public Brush BugForeground
@@ -104,40 +128,40 @@ namespace PerformanceTest.Management
         }
         public int ProblemNonZero
         {
-            get { return result.Sum(e => (e.Status == "Error") ? 1 : 0); }
+            get { return statistics.AggregatedResults.Errors; }
         }
         public Brush NonZeroForeground
         {
-            get { return ProblemNonZero == 0 ? Brushes.Black : Brushes.Red; } 
+            get { return ProblemNonZero == 0 ? Brushes.Black : Brushes.Red; }
         }
         public int ProblemTimeout
         {
-            get { return result.Sum(e => (e.Status == "Timeout") ? 1 : 0); }
+            get { return statistics.AggregatedResults.Timeouts; }
         }
         public Brush TimeoutForeground
         {
-            get { return ProblemTimeout == 0 ? Brushes.Black : Brushes.Red; } 
+            get { return ProblemTimeout == 0 ? Brushes.Black : Brushes.Red; }
         }
         public int ProblemMemoryout
         {
-            get { return result.Sum(e => (e.Status == "OutOfMemory") ? 1 : 0); }
+            get { return statistics.AggregatedResults.MemoryOuts; }
         }
         public Brush MemoryoutForeground
         {
-            get { return ProblemMemoryout == 0 ? Brushes.Black : Brushes.Red; } 
+            get { return ProblemMemoryout == 0 ? Brushes.Black : Brushes.Red; }
         }
         public double TimeOut
         {
             get
             {
-                return result.Max(e => e.Runtime);
-            } 
+                return definition.BenchmarkTimeout.TotalSeconds;
+            }
         }
         public double MemoryOut
         {
             get
             {
-                return result.Max(e => Math.Abs(e.MemorySizeMB));
+                return definition.MemoryLimitMB;
             }
         }
         public string Machine
@@ -148,20 +172,16 @@ namespace PerformanceTest.Management
         {
             get;
         }
-        public string Group
-        {
-            get;
-        }
         public string Creator
         {
-            get { return statusVm.Creator; }
+            get { return status.Creator; }
         }
         public string Note
         {
-            get { return statusVm.Note; }
+            get { return status.Note; }
             set
             {
-                statusVm.Note = value;
+                throw new NotImplementedException();
             }
         }
         public string MachineStatus
@@ -176,7 +196,7 @@ namespace PerformanceTest.Management
         {
             get { return "Experiment #" + id.ToString(); }
         }
-            
-       
+
+
     }
 }

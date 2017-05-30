@@ -52,8 +52,10 @@
                         <DataGridTextColumn Binding="{Binding Path=Sat, Mode=OneWay}" Header="SAT" />
                         <DataGridTextColumn Binding="{Binding Path=Unsat, Mode=OneWay}" Header="UNSAT"/>
                         <DataGridTextColumn Binding="{Binding Path=Unknown, Mode=OneWay}" Header="UNKNOWN" />
-                        <DataGridTextColumn Binding="{Binding Path=Runtime, Mode=OneWay}" Header="Runtime"/>
+                        <DataGridTextColumn Binding="{Binding Path=NormalizedRuntime, Mode=OneWay}" Header="Normalized Runtime"/>
                         <DataGridTextColumn Binding="{Binding Path=MemorySizeMB, Mode=OneWay}" Header="Memory size (MB)" />
+                        <DataGridTextColumn Binding="{Binding Path=TotalProcessorTime, Mode=OneWay}" Header="Total processor time"/>
+                        <DataGridTextColumn Binding="{Binding Path=WallClockTime, Mode=OneWay}" Header="Wall clock time"/>
                         <DataGridTextColumn Binding="{Binding Path=Worker, Mode=OneWay}" Header="Worker"/>
                     </DataGrid.Columns>
                     <DataGrid.CommandBindings>

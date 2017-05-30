@@ -155,6 +155,15 @@ namespace PerformanceTest
             return storage.GetResults(id).ToArray();
         }
 
+        public override Task<Experiment> TryFindExperiment(int id)
+        {
+            ExperimentEntity entity;
+            if (!storage.GetExperiments().TryGetValue(id, out entity)) return null;
+
+            ExperimentDefinition def = RowToDefinition(entity);
+            ExperimentStatus status = GetStatus(id, entity);
+            return Task.FromResult(new Experiment { Definition = def, Status = status });
+        }
 
         public override Task<IEnumerable<Experiment>> FindExperiments(ExperimentFilter? filter = default(ExperimentFilter?))
         {
