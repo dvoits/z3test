@@ -158,7 +158,13 @@ namespace AzureWorker
                 int totalBenchmarks = 0;
                 var benchmarksDirClear = benchmarkDirectory.TrimEnd('/');
                 var benchmarksCatClear = benchmarkCategory.TrimStart('/');
-                var benchmarksPath = benchmarksDirClear + "/" + benchmarksCatClear;
+                string benchmarksPath;// = benchmarksDirClear + "/" + benchmarksCatClear;
+                if (string.IsNullOrEmpty(benchmarksDirClear))
+                    benchmarksPath = benchmarkCategory;
+                else if (string.IsNullOrEmpty(benchmarksCatClear))
+                    benchmarksPath = benchmarkCategory;
+                else
+                    benchmarksPath = benchmarksDirClear + "/" + benchmarksCatClear;
                 do
                 {
                     resultSegment = await benchmarkStorage.ListBlobsSegmentedAsync(benchmarksPath, continuationToken);
