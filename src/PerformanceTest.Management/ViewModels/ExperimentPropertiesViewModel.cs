@@ -36,6 +36,7 @@ namespace PerformanceTest.Management
         private readonly ExperimentStatistics statistics;
         private readonly string[] MachineStatuses = { "OK", "Unable to retrieve status." };
 
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public ExperimentPropertiesViewModel(ExperimentDefinition def, ExperimentStatus status, ExperimentStatistics stat)
         {
