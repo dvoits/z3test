@@ -35,7 +35,7 @@ namespace PerformanceTest.Management
             get { return experiments; }
             private set { experiments = value; NotifyPropertyChanged(); }
         }
-
+        
         public void Refresh()
         {
             RefreshItemsAsync();
@@ -78,7 +78,7 @@ namespace PerformanceTest.Management
                     };
                 }
                 var experiments = await Task.Run(() => manager.FindExperiments(f));
-                Items = experiments.Select(e => new ExperimentStatusViewModel(e.Status, manager, ui)).ToArray();
+                Items = experiments.Select(e => new ExperimentStatusViewModel(e, manager, ui)).ToArray();
             }
             finally
             {
@@ -95,6 +95,7 @@ namespace PerformanceTest.Management
     public class ExperimentStatusViewModel : INotifyPropertyChanged
     {
         private readonly ExperimentStatus status;
+        private readonly ExperimentDefinition definition; 
         private readonly ExperimentManager manager;
         private readonly IUIService message;
 
@@ -103,18 +104,20 @@ namespace PerformanceTest.Management
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public ExperimentStatusViewModel(ExperimentStatus status, ExperimentManager manager, IUIService message)
+        public ExperimentStatusViewModel(Experiment exp, ExperimentManager manager, IUIService message)
         {
-            if (status == null) throw new ArgumentNullException("status");
+            if (exp == null) throw new ArgumentNullException("experiment");
             if (manager == null) throw new ArgumentNullException("manager");
             if (message == null) throw new ArgumentNullException("message");
-            this.status = status;
+            this.status = exp.Status;
+            this.definition = exp.Definition;
             this.flag = status.Flag;
             this.note = status.Note;
             this.manager = manager;
             this.message = message;
         }
 
+        public ExperimentDefinition Definition { get { return definition; } }
         public int ID { get { return status.ID; } }
 
         public string Category { get { return status.Category; } }

@@ -172,17 +172,6 @@ namespace PerformanceTest
             ExperimentStatus status = GetStatus(id, entity);
             return Task.FromResult(new Experiment { Definition = def, Status = status });
         }
-        public override Task<ExperimentDefinition> GetDefinition(int id)
-        {
-            ExperimentInstance experiment;
-            if (runningExperiments.TryGetValue(id, out experiment))
-            {
-                //return experiment.Results;
-                return Task.FromResult(experiment.Definition);
-            }
-            //return storage.GetResults(id).ToArray();
-            throw new NotImplementedException();
-        }
 
         public override Task<IEnumerable<Experiment>> FindExperiments(ExperimentFilter? filter = default(ExperimentFilter?))
         {

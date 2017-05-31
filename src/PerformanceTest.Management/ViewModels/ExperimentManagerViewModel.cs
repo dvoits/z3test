@@ -43,11 +43,11 @@ namespace PerformanceTest.Management
         }
         public ShowResultsViewModel BuildResultsView(int id, string directory)
         {
-            return new ShowResultsViewModel(id, this.BenchmarkLibraryDescription, manager, uiService);
+            return new ShowResultsViewModel(id, directory, manager, uiService);
         }
-        public CompareExperimentsViewModel BuildComparingResults(int id1, int id2)
+        public CompareExperimentsViewModel BuildComparingResults(int id1, int id2, ExperimentDefinition def1, ExperimentDefinition def2)
         {
-            return new CompareExperimentsViewModel(id1, id2, manager, uiService);
+            return new CompareExperimentsViewModel(id1, id2, def1, def2, manager, uiService);
         }
         public Task<ExperimentPropertiesViewModel> BuildProperties(int id)
         {

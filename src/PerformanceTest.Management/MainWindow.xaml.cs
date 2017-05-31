@@ -475,9 +475,9 @@ namespace PerformanceTest.Management
         private void Compare(object target, ExecutedRoutedEventArgs e)
         {
             Mouse.OverrideCursor = Cursors.Wait;
-            var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
+            var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().ToArray();
             CompareExperiments dlg = new CompareExperiments();
-            var vm = managerVm.BuildComparingResults(ids[0], ids[1]);
+            var vm = managerVm.BuildComparingResults(ids[0].ID, ids[1].ID, ids[0].Definition, ids[1].Definition);
             dlg.DataContext = vm;
             dlg.Owner = this;
             dlg.Show();
@@ -493,7 +493,7 @@ namespace PerformanceTest.Management
             try
             {
                 var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().ToArray();
-                var vm = managerVm.BuildComparingResults(ids[0].ID, ids[1].ID);
+                var vm = managerVm.BuildComparingResults(ids[0].ID, ids[1].ID, ids[0].Definition, ids[1].Definition);
                 Scatterplot sp = new Scatterplot(vm, ids[0], ids[1]);
                 sp.Show();
             }
@@ -510,7 +510,7 @@ namespace PerformanceTest.Management
 
             var st = (ExperimentStatusViewModel)dataGrid.SelectedItem;
             ShowResults dlg = new ShowResults();
-            var vm = managerVm.BuildResultsView(st.ID, st.Category);
+            var vm = managerVm.BuildResultsView(st.ID, st.Definition.BenchmarkDirectory);
             dlg.DataContext = vm;
             dlg.Owner = this;
             dlg.Show();
