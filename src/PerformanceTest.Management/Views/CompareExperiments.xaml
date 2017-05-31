@@ -110,8 +110,6 @@
                             </DataTemplate>
                         </DataGridTextColumn.HeaderTemplate>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Binding="{Binding Path=ID1, Mode=OneWay}" Header="ID1" />
-                    <DataGridTextColumn Binding="{Binding Path=ID2, Mode=OneWay}" Header="ID2"/>
                 </DataGrid.Columns>
                 <DataGrid.CommandBindings>
                     <CommandBinding Command="{x:Static local:CompareExperiments.CopyFilenameCommand}" Executed="CopyFilename" CanExecute="canCopyFilename" />
