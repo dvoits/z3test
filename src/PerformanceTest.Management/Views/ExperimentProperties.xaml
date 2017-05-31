@@ -10,6 +10,7 @@
         >
     <Window.Resources>
         <local:BoolToAsteriskConverter x:Key="boolToAsterisk" />
+        <local:CountToBrushConverter x:Key="countToBrush" />
     </Window.Resources>
     <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10">
         <Grid.RowDefinitions>
@@ -57,7 +58,8 @@
             <Label Content="Queued" Grid.Row="0" Grid.Column="2"/>
             <Label Name="lblTotal" Grid.Row="1" Grid.Column="0" HorizontalContentAlignment="Right" Content="{Binding BenchmarksTotal, Mode=OneWay}"/>
             <Label Name="lblFinished" Grid.Row="1" Grid.Column="1" HorizontalContentAlignment="Right" Content="{Binding BenchmarksDone, Mode=OneWay}"/>
-            <Label Name="lblRunning" Grid.Row="1" Grid.Column="2" HorizontalContentAlignment="Right" Foreground="{Binding QueuedForeground, Mode=OneWay}" Content="{Binding BenchmarksQueued, Mode=OneWay}"/>
+            <Label Name="lblRunning" Grid.Row="1" Grid.Column="2" HorizontalContentAlignment="Right" 
+                   Foreground="{Binding BenchmarksQueued, Mode=OneWay, Converter={StaticResource countToBrush}, ConverterParameter=Green}" Content="{Binding BenchmarksQueued, Mode=OneWay}"/>
         </Grid>
         <Label Name="lblInfrastructureErrors" Foreground="Red" Content="" Grid.Row="4" Grid.Column="1" HorizontalAlignment="Left"/>
 
@@ -113,10 +115,14 @@
             <Label Content="Error" Grid.Row="0" Grid.Column="1"/>
             <Label Content="M/O" Grid.Row="0" Grid.Column="2"/>
             <Label Content="T/O" Grid.Row="0" Grid.Column="3"/>
-            <Label Name="lblBug" Grid.Row="1" Grid.Column="0" HorizontalContentAlignment="Right" Foreground="{Binding BugForeground, Mode=OneWay}" Content="{Binding ProblemBug, Mode=OneWay, FallbackValue=0}"/>
-            <Label Name="lblNonzero" Grid.Row="1" Grid.Column="1" HorizontalContentAlignment="Right" Foreground="{Binding NonZeroForeground, Mode=OneWay}" Content="{Binding ProblemNonZero, Mode=OneWay, FallbackValue=0}"/>
-            <Label Name="lblMemdout" Grid.Row="1" Grid.Column="2" HorizontalContentAlignment="Right" Foreground="{Binding MemoryoutForeground, Mode=OneWay}" Content="{Binding ProblemMemoryout, Mode=OneWay, FallbackValue=0}"/>
-            <Label Name="lblTimedout" Grid.Row="1" Grid.Column="3" HorizontalContentAlignment="Right" Foreground="{Binding TimeoutForeground, Mode=OneWay}" Content="{Binding ProblemTimeout, Mode=OneWay, FallbackValue=0}"/>
+            <Label Name="lblBug" Grid.Row="1" Grid.Column="0" HorizontalContentAlignment="Right" 
+                   Foreground="{Binding ProblemBug, Mode=OneWay, Converter={StaticResource countToBrush}}" Content="{Binding ProblemBug, Mode=OneWay, FallbackValue=0}"/>
+            <Label Name="lblNonzero" Grid.Row="1" Grid.Column="1" HorizontalContentAlignment="Right" 
+                   Foreground="{Binding ProblemNonZero, Mode=OneWay, Converter={StaticResource countToBrush}}" Content="{Binding ProblemNonZero, Mode=OneWay, FallbackValue=0}"/>
+            <Label Name="lblMemdout" Grid.Row="1" Grid.Column="2" HorizontalContentAlignment="Right" 
+                   Foreground="{Binding ProblemMemoryout, Mode=OneWay, Converter={StaticResource countToBrush}}" Content="{Binding ProblemMemoryout, Mode=OneWay, FallbackValue=0}"/>
+            <Label Name="lblTimedout" Grid.Row="1" Grid.Column="3" HorizontalContentAlignment="Right" 
+                   Foreground="{Binding ProblemTimeout, Mode=OneWay, Converter={StaticResource countToBrush}}" Content="{Binding ProblemTimeout, Mode=OneWay, FallbackValue=0}"/>
         </Grid>
 
         <TextBlock Text="Timeout:" Grid.Row="7" Grid.Column="0" />
@@ -141,7 +147,7 @@
         <TextBox Name="txtNote" IsReadOnly="False" Grid.Row="11" Grid.Column="1" MaxLength="256" Text="{Binding Note, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
         <StackPanel Grid.Column="1" Grid.Row="13" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Name="updateButton" IsDefault="False" Width="80" Command="{Binding SubmitNote}" TabIndex="16" IsCancel="True" Margin="0,0,10,0">Update</Button>
+            <Button Name="updateButton" IsDefault="False" Width="80" Command="{Binding Sync}" TabIndex="16" IsCancel="True" Margin="0,0,10,0">Update</Button>
             <Button Name="closeButton" IsDefault="False" Width="80" Click="closeButton_Click" TabIndex="16" IsCancel="True">Close</Button>
         </StackPanel>
     </Grid>

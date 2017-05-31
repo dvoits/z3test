@@ -12,7 +12,7 @@ using System.Windows.Media;
 
 namespace PerformanceTest.Management
 {
-    public class ExperimentPropertiesViewModel: INotifyPropertyChanged
+    public class ExperimentPropertiesViewModel : INotifyPropertyChanged
     {
         public static async Task<ExperimentPropertiesViewModel> CreateAsync(ExperimentManager manager, int id, IDomainResolver domainResolver, IUIService ui)
         {
@@ -20,8 +20,8 @@ namespace PerformanceTest.Management
 
             Experiment exp = await manager.TryFindExperiment(id);
             if (exp == null) throw new KeyNotFoundException(string.Format("There is no experiment with id {0}.", id));
-            ExperimentStatistics stat = await GetStatistics(manager, id, domainResolver.GetDomain(exp.Definition.DomainName ?? "Z3"));
-            return new ExperimentPropertiesViewModel(exp.Definition, exp.Status, stat, manager, ui);
+
+            return new ExperimentPropertiesViewModel(exp.Definition, exp.Status, domainResolver.GetDomain(exp.Definition.DomainName ?? "Z3"), manager, ui);
         }
 
 
@@ -34,36 +34,116 @@ namespace PerformanceTest.Management
 
         private readonly int id;
         private readonly ExperimentDefinition definition;
-        private readonly ExperimentStatus status;
-        private readonly ExperimentStatistics statistics;
+        private readonly Domain domain;
+        private ExperimentStatus status;
+        private ExperimentStatistics statistics;
         private readonly string[] MachineStatuses = { "OK", "Unable to retrieve status." };
 
         private readonly ExperimentManager manager;
         private readonly IUIService ui;
 
         private string currentNote;
+        private bool isSyncing;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public ExperimentPropertiesViewModel(ExperimentDefinition def, ExperimentStatus status, ExperimentStatistics stat, ExperimentManager manager, IUIService ui)
+        public ExperimentPropertiesViewModel(ExperimentDefinition def, ExperimentStatus status, Domain domain, ExperimentManager manager, IUIService ui)
         {
             if (def == null) throw new ArgumentNullException("def");
             if (status == null) throw new ArgumentNullException("status");
-            if (stat == null) throw new ArgumentNullException("stat");
+            if (domain == null) throw new ArgumentNullException("domain");
             if (manager == null) throw new ArgumentNullException("manager");
             if (ui == null) throw new ArgumentNullException("ui");
 
             this.id = status.ID;
             this.definition = def;
             this.status = status;
-            this.statistics = stat;
+            this.domain = domain;
             this.manager = manager;
             this.ui = ui;
 
             currentNote = status.Note;
-            SubmitNote = new DelegateCommand(
-                _ => UpdateNote(),
-                _ => status.Note != currentNote);
+
+            isSyncing = true;
+            Sync = new DelegateCommand(async _ =>
+                {
+                    isSyncing = true;
+                    Sync.RaiseCanExecuteChanged();
+                    try
+                    {
+                        if (NoteChanged) await SubmitNote();
+                        await Refresh();
+                    }
+                    catch (Exception ex)
+                    {
+                        ui.ShowError(ex.Message, "Failed to synchronize experiment properties");
+                    }
+                    finally
+                    {
+                        isSyncing = false;
+                        Sync.RaiseCanExecuteChanged();
+                    }
+                },
+                _ => !isSyncing);
+            Initialize();
+        }
+
+        private async void Initialize()
+        {
+            await BuildStatistics();
+            isSyncing = false;
+            Sync.RaiseCanExecuteChanged();
+        }
+
+        private async Task Refresh()
+        {
+            await RefreshStatus();
+            await BuildStatistics();
+        }
+
+        private async Task RefreshStatus()
+        {
+            var handle = ui.StartIndicateLongOperation("Gettings status of the experiment...");
+            try
+            {
+                var resp = (await Task.Run(() => manager.GetStatus(new[] { id }))).FirstOrDefault();
+                if (resp == null) return;
+                this.status = resp;
+                Note = status.Note;
+            }
+            finally
+            {
+                ui.StopIndicateLongOperation(handle);
+            }
+
+            NotifyPropertyChanged("NoteChanged");
+            NotifyPropertyChanged("SubmissionTime");
+            NotifyPropertyChanged("BenchmarksTotal");
+            NotifyPropertyChanged("BenchmarksDone");
+            NotifyPropertyChanged("BenchmarksQueued");
+            NotifyPropertyChanged("Creator");
+        }
+
+        private async Task BuildStatistics()
+        {
+            var handle = ui.StartIndicateLongOperation("Loading statistics for the experiment...");
+            try
+            {
+                statistics = await Task.Run(() => GetStatistics(manager, id, domain));
+            }
+            finally
+            {
+                ui.StopIndicateLongOperation(handle);
+            }
+            NotifyPropertyChanged("Sat");
+            NotifyPropertyChanged("Unsat");
+            NotifyPropertyChanged("Unknown");
+            NotifyPropertyChanged("Overperformed");
+            NotifyPropertyChanged("Underperformed");
+            NotifyPropertyChanged("ProblemBug");
+            NotifyPropertyChanged("ProblemNonZero");
+            NotifyPropertyChanged("ProblemTimeout");
+            NotifyPropertyChanged("ProblemMemoryout");
         }
 
         public bool NoteChanged
@@ -80,12 +160,11 @@ namespace PerformanceTest.Management
                 currentNote = value;
                 NotifyPropertyChanged("NoteChanged");
                 NotifyPropertyChanged();
-                SubmitNote.RaiseCanExecuteChanged();
             }
         }
 
 
-        public DelegateCommand SubmitNote { get; private set; }
+        public DelegateCommand Sync { get; private set; }
 
         public DateTime SubmissionTime
         {
@@ -107,20 +186,14 @@ namespace PerformanceTest.Management
         {
             get { return status.BenchmarksQueued; }
         }
-        public Brush QueuedForeground
-        {
-            get
-            {
-                return (status.BenchmarksQueued == 0) ? Brushes.Green : Brushes.Red;
-            }
-        }
 
-        private int GetProperty(string prop)
+        private int? GetProperty(string prop)
         {
+            if (statistics == null) return null;
             return int.Parse(statistics.AggregatedResults.Properties[prop]);
         }
 
-        public int Sat
+        public int? Sat
         {
             get
             {
@@ -128,68 +201,52 @@ namespace PerformanceTest.Management
             }
 
         }
-        public int Unsat
+        public int? Unsat
         {
             get
             {
                 return GetProperty("UNSAT");
             }
         }
-        public int Unknown
+        public int? Unknown
         {
             get
             {
                 return GetProperty("UNKNOWN");
             }
         }
-        public int Overperformed
+        public int? Overperformed
         {
             get
             {
                 return GetProperty("OVERPERFORMED");
             }
         }
-        public int Underperformed
+        public int? Underperformed
         {
             get
             {
                 return GetProperty("UNDERPERFORMED");
             }
         }
-        public int ProblemBug
+        public int? ProblemBug
         {
             get
             {
-                return statistics.AggregatedResults.Bugs;
+                return statistics == null ? null : (int?)statistics.AggregatedResults.Bugs;
             }
         }
-        public Brush BugForeground
+        public int? ProblemNonZero
         {
-            get { return ProblemBug == 0 ? Brushes.Black : Brushes.Red; }
+            get { return statistics == null ? null : (int?)statistics.AggregatedResults.Errors; }
         }
-        public int ProblemNonZero
+        public int? ProblemTimeout
         {
-            get { return statistics.AggregatedResults.Errors; }
+            get { return statistics == null ? null : (int?)statistics.AggregatedResults.Timeouts; }
         }
-        public Brush NonZeroForeground
+        public int? ProblemMemoryout
         {
-            get { return ProblemNonZero == 0 ? Brushes.Black : Brushes.Red; }
-        }
-        public int ProblemTimeout
-        {
-            get { return statistics.AggregatedResults.Timeouts; }
-        }
-        public Brush TimeoutForeground
-        {
-            get { return ProblemTimeout == 0 ? Brushes.Black : Brushes.Red; }
-        }
-        public int ProblemMemoryout
-        {
-            get { return statistics.AggregatedResults.MemoryOuts; }
-        }
-        public Brush MemoryoutForeground
-        {
-            get { return ProblemMemoryout == 0 ? Brushes.Black : Brushes.Red; }
+            get { return statistics == null ? null : (int?)statistics.AggregatedResults.MemoryOuts; }
         }
         public double TimeOut
         {
@@ -239,7 +296,7 @@ namespace PerformanceTest.Management
         }
 
 
-        private async void UpdateNote()
+        public async Task SubmitNote()
         {
             try
             {
@@ -247,7 +304,6 @@ namespace PerformanceTest.Management
                 status.Note = currentNote;
                 NotifyPropertyChanged("Note");
                 NotifyPropertyChanged("NoteChanged");
-                SubmitNote.RaiseCanExecuteChanged();
 
                 Trace.WriteLine("Note changed to '" + currentNote + "' for " + status.ID);
             }
@@ -257,7 +313,6 @@ namespace PerformanceTest.Management
                 currentNote = status.Note;
                 NotifyPropertyChanged("Note");
                 NotifyPropertyChanged("NoteChanged");
-                SubmitNote.RaiseCanExecuteChanged();
 
                 ui.ShowError("Failed to update experiment note: " + ex.Message);
             }

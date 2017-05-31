@@ -25,13 +25,12 @@ namespace PerformanceTest.Management
             InitializeComponent();
         }
 
-        private void closeButton_Click(object sender, RoutedEventArgs e)
+        private async void closeButton_Click(object sender, RoutedEventArgs e)
         {
             ExperimentPropertiesViewModel vm = DataContext as ExperimentPropertiesViewModel;
             if(vm != null)
             {
-                if (vm.SubmitNote.CanExecute(null))
-                    vm.SubmitNote.Execute(null);
+                if (vm.NoteChanged) await vm.SubmitNote();
             }
             Close();
         }
@@ -46,6 +45,37 @@ namespace PerformanceTest.Management
                 return "*";
             }
             else return string.Empty;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class CountToBrushConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            int count;
+            if (value is int?)
+            {
+                int? nullValue = (int?)value;
+                count = nullValue.HasValue ? nullValue.Value : 0;
+            }
+            else if (value is int)
+            {
+                count = (int)value;
+            }
+            else count = 0;
+
+            if (count == 0)
+            {
+                if(parameter != null && parameter is string && (string)parameter == "Green")
+                    return Brushes.Green;
+                return Brushes.Black;
+            }
+            return Brushes.Red;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

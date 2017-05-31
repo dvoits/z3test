@@ -32,7 +32,7 @@ namespace PerformanceTest.Management
         }
         private async void RefreshResultsAsync()
         {
-            int handle = uiService.StartIndicateLongOperation("Loading experiment results...");
+            var handle = uiService.StartIndicateLongOperation("Loading experiment results...");
             try
             {
                 allResults = Results = null;

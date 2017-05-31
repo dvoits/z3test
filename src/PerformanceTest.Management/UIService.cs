@@ -24,8 +24,8 @@ namespace PerformanceTest.Management
         string[] ChooseOptions(string title, string[] options, string[] selectedOptions);
 
         string ChooseOption(string title, string[] options, string selectedOption);
-        int StartIndicateLongOperation(string status = null);
-        void StopIndicateLongOperation(int handle);
+        long StartIndicateLongOperation(string status = null);
+        void StopIndicateLongOperation(long handle);
     }
 
     public class UIService : IUIService
@@ -102,10 +102,10 @@ namespace PerformanceTest.Management
             return null;
         }
 
-        private int opsId = 0;
-        private List<Tuple<int,string>> statuses = new List<Tuple<int, string>>();
+        private long opsId = 0;
+        private List<Tuple<long, string>> statuses = new List<Tuple<long, string>>();
 
-        public int StartIndicateLongOperation(string status = null)
+        public long StartIndicateLongOperation(string status = null)
         {
             if (status == null) status = "Working...";
 
@@ -116,10 +116,10 @@ namespace PerformanceTest.Management
             }
 
             statusVm.Status = status;
-            return opsId++;
+            return unchecked(opsId++);
         }
 
-        public void StopIndicateLongOperation(int handle)
+        public void StopIndicateLongOperation(long handle)
         {
             for (int i = statuses.Count; --i>=0; )
             {
