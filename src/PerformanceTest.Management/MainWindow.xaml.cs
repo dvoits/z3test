@@ -20,6 +20,7 @@ namespace PerformanceTest.Management
     public partial class MainWindow : Window
     {
         private readonly IDomainResolver domainResolver;
+        private readonly IUIService uiService;
 
         private ExperimentManagerViewModel managerVm;
         private ExperimentListViewModel experimentsVm;
@@ -48,6 +49,11 @@ namespace PerformanceTest.Management
             connectionString.Text = Properties.Settings.Default.ConnectionString;
 
             domainResolver = new DomainResolver(new[] { Measurement.Domain.Default, new Measurement.Z3Domain() });
+
+            ProgramStatusViewModel statusVm = new ProgramStatusViewModel();
+            statusBar.DataContext = statusVm;
+
+            uiService = new UIService(statusVm);
         }
 
         private ExperimentManagerViewModel Connect(string connectionString)
@@ -55,11 +61,12 @@ namespace PerformanceTest.Management
             if (Directory.Exists(connectionString))
             {
                 LocalExperimentManager manager = LocalExperimentManager.OpenExperiments(connectionString, domainResolver);
-                return new LocalExperimentManagerViewModel(manager, UIService.Instance, domainResolver);
-            }else
+                return new LocalExperimentManagerViewModel(manager, uiService, domainResolver);
+            }
+            else
             {
                 AzureExperimentManager azureManager = AzureExperimentManager.OpenWithoutStart(new AzureExperimentStorage(connectionString));
-                return new AzureExperimentManagerViewModel(azureManager, UIService.Instance, domainResolver);
+                return new AzureExperimentManagerViewModel(azureManager, uiService, domainResolver);
             }
         }
 
@@ -67,10 +74,19 @@ namespace PerformanceTest.Management
         {
             try
             {
+                btnConnect.IsEnabled = false;
                 if (experimentsVm == null)
                 {
-                    managerVm = Connect(connectionString.Text);
-                    experimentsVm = managerVm.BuildListView();
+                    int handle = uiService.StartIndicateLongOperation("Connecting...");
+                    try
+                    {                        
+                        managerVm = Connect(connectionString.Text);
+                        experimentsVm = managerVm.BuildListView();
+                    }
+                    finally
+                    {
+                        uiService.StopIndicateLongOperation(handle);
+                    }
 
                     dataGrid.DataContext = experimentsVm;
                     Properties.Settings.Default.ConnectionString = connectionString.Text;
@@ -82,7 +98,8 @@ namespace PerformanceTest.Management
                     btnUpdate.IsEnabled = true;
                     menuNewJob.IsEnabled = true;
                     menuNewCatchAll.IsEnabled = true;
-                } else
+                }
+                else // disconnect
                 {
                     experimentsVm = null;
                     connectionString.IsEnabled = true;
@@ -95,8 +112,9 @@ namespace PerformanceTest.Management
                     menuNewCatchAll.IsEnabled = false;
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
+                btnConnect.IsEnabled = true;
                 MessageBox.Show(ex.Message, "Failed to open experiments", MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
@@ -138,9 +156,11 @@ namespace PerformanceTest.Management
             {
                 var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
                 var count = ids.Length;
-                for (int i = 0; i < count; i++) {
+                for (int i = 0; i < count; i++)
+                {
                     int id = ids[i];
-                    try { 
+                    try
+                    {
                         experimentsVm.DeleteExperiment(id);
                     }
                     catch (Exception ex)
@@ -272,7 +292,7 @@ namespace PerformanceTest.Management
             for (var i = 0; i < count; i++)
             {
                 int id = ids[i];
-                total += experimentsVm.GetRuntime(id); 
+                total += experimentsVm.GetRuntime(id);
             }
             TimeSpan ts = TimeSpan.FromSeconds(total);
             MessageBox.Show(this,
@@ -299,7 +319,8 @@ namespace PerformanceTest.Management
                     MessageBox.Show(this, "Refusing to copy to the same database.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
-                try {
+                try
+                {
                     throw new NotImplementedException();
                 }
                 catch (Exception ex)
@@ -347,22 +368,23 @@ namespace PerformanceTest.Management
         private async void btnNewJob_Click(object sender, RoutedEventArgs e)
         {
             NewJobDialog dlg = new NewJobDialog();
-            var vm = new NewExperimentViewModel(managerVm, UIService.Instance);
+            var vm = new NewExperimentViewModel(managerVm, uiService);
             dlg.DataContext = vm;
             dlg.Owner = this;
             if (dlg.ShowDialog() == true)
             {
-                ExperimentDefinition def = 
+                ExperimentDefinition def =
                     ExperimentDefinition.Create(
-                        vm.Executable, vm.BenchmarkContainerUri, vm.BenchmarkLibrary, vm.Extension, vm.Parameters, 
-                        TimeSpan.FromSeconds(vm.BenchmarkTimeoutSec), vm.Domain, 
+                        vm.Executable, vm.BenchmarkContainerUri, vm.BenchmarkLibrary, vm.Extension, vm.Parameters,
+                        TimeSpan.FromSeconds(vm.BenchmarkTimeoutSec), vm.Domain,
                         vm.Categories, vm.BenchmarkMemoryLimitMb);
                 try
                 {
                     await managerVm.SubmitExperiment(def, System.Security.Principal.WindowsIdentity.GetCurrent().Name, vm.Note);
-                }catch(Exception ex)
+                }
+                catch (Exception ex)
                 {
-                    UIService.Instance.ShowError(ex.Message, "Failed to submit an experiment");
+                    uiService.ShowError(ex.Message, "Failed to submit an experiment");
                 }
             }
         }
@@ -375,9 +397,9 @@ namespace PerformanceTest.Management
             var item = dataGrid.SelectedItem as ExperimentStatusViewModel;
             if (item == null) return;
 
+            int handle = uiService.StartIndicateLongOperation("Loading properties of the experiment...");
             try
-            {                
-                UIService.Instance.StartIndicateLongOperation();
+            {
                 var vm = await managerVm.BuildProperties(item.ID);
 
                 ExperimentProperties dlg = new ExperimentProperties();
@@ -387,7 +409,7 @@ namespace PerformanceTest.Management
             }
             finally
             {
-                UIService.Instance.StopIndicateLongOperation();
+                uiService.StopIndicateLongOperation(handle);
             }
 
         }
@@ -467,19 +489,24 @@ namespace PerformanceTest.Management
         }
         private void showScatterplot(object target, ExecutedRoutedEventArgs e)
         {
-            Mouse.OverrideCursor = Cursors.Wait;
-            var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().ToArray();
-            var vm = managerVm.BuildComparingResults(ids[0].ID, ids[1].ID);
-            Scatterplot sp = new Scatterplot(vm, ids[0], ids[1]);
-            sp.Show();
-            Mouse.OverrideCursor = null;
+            int handle = uiService.StartIndicateLongOperation("Building scatter plot...");
+            try
+            {
+                var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().ToArray();
+                var vm = managerVm.BuildComparingResults(ids[0].ID, ids[1].ID);
+                Scatterplot sp = new Scatterplot(vm, ids[0], ids[1]);
+                sp.Show();
+            }
+            finally
+            {
+                uiService.StopIndicateLongOperation(handle);
+            }
+
         }
         private void dataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (dataGrid.SelectedItems.Count != 1)
                 return;
-
-            Mouse.OverrideCursor = Cursors.Wait;
 
             var st = (ExperimentStatusViewModel)dataGrid.SelectedItem;
             ShowResults dlg = new ShowResults();
@@ -487,8 +514,6 @@ namespace PerformanceTest.Management
             dlg.DataContext = vm;
             dlg.Owner = this;
             dlg.Show();
-
-            Mouse.OverrideCursor = null;
         }
         private void canSaveBinary(object sender, CanExecuteRoutedEventArgs e)
         {

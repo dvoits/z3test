@@ -61,6 +61,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ViewModels\ProgramStatusViewModel.cs" />
     <Compile Include="Views\Scatterplot.cs">
       <SubType>Form</SubType>
     </Compile>

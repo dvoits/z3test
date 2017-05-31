@@ -10,10 +10,10 @@ namespace PerformanceTest.Management
     public abstract class ExperimentManagerViewModel
     {
         protected readonly ExperimentManager manager;
-        protected readonly UIService uiService;
+        protected readonly IUIService uiService;
         protected readonly IDomainResolver domainResolver;
 
-        public ExperimentManagerViewModel(ExperimentManager manager, UIService uiService, IDomainResolver domainResolver)
+        public ExperimentManagerViewModel(ExperimentManager manager, IUIService uiService, IDomainResolver domainResolver)
         {
             if (manager == null) throw new ArgumentNullException("manager");
             this.manager = manager;
@@ -57,7 +57,7 @@ namespace PerformanceTest.Management
 
     public class LocalExperimentManagerViewModel : ExperimentManagerViewModel
     {
-        public LocalExperimentManagerViewModel(LocalExperimentManager manager, UIService uiService, IDomainResolver domainResolver) : base(manager, uiService, domainResolver)
+        public LocalExperimentManagerViewModel(LocalExperimentManager manager, IUIService uiService, IDomainResolver domainResolver) : base(manager, uiService, domainResolver)
         {
         }
 

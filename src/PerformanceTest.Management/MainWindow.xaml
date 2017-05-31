@@ -153,7 +153,7 @@
         </TabControl>
 
         <StatusBar Height="25" HorizontalAlignment="Stretch" Grid.Row="3" Grid.Column="0" Name="statusBar" VerticalAlignment="Bottom" Grid.ColumnSpan="2">
-            <StatusBarItem Content="" HorizontalAlignment="Stretch" />
+            <StatusBarItem Content="{Binding Status}" HorizontalAlignment="Stretch" />
         </StatusBar>
     </Grid>
 </Window>

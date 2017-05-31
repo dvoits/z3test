@@ -17,24 +17,32 @@ namespace PerformanceTest.Management
         private IEnumerable<BenchmarkResultViewModel> results, allResults;
         private readonly int id;
         private readonly ExperimentManager manager;
-        private readonly IUIService message;
+        private readonly IUIService uiService;
         private readonly string sharedDirectory;
         public event PropertyChangedEventHandler PropertyChanged;
-        public ShowResultsViewModel(int id, string sharedDirectory, ExperimentManager manager, IUIService message)
+        public ShowResultsViewModel(int id, string sharedDirectory, ExperimentManager manager, IUIService uiService)
         {
             if (manager == null) throw new ArgumentNullException("manager");
-            if (message == null) throw new ArgumentNullException("message");
+            if (uiService == null) throw new ArgumentNullException("uiService");
             this.manager = manager;
-            this.message = message;
+            this.uiService = uiService;
             this.id = id;
             this.sharedDirectory = sharedDirectory;
             RefreshResultsAsync();
         }
         private async void RefreshResultsAsync()
         {
-            allResults = Results = null;
-            var res = await manager.GetResults(id);
-            allResults = Results = res.Select(e => new BenchmarkResultViewModel(e, manager, message)).ToArray();
+            int handle = uiService.StartIndicateLongOperation("Loading experiment results...");
+            try
+            {
+                allResults = Results = null;
+                var res = await Task.Run(() => manager.GetResults(id));
+                allResults = Results = res.Select(e => new BenchmarkResultViewModel(e, manager, uiService)).ToArray();
+            }
+            finally
+            {
+                uiService.StopIndicateLongOperation(handle);
+            }
         }
         public IEnumerable<BenchmarkResultViewModel> Results
         {

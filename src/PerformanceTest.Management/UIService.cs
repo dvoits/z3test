@@ -24,14 +24,19 @@ namespace PerformanceTest.Management
         string[] ChooseOptions(string title, string[] options, string[] selectedOptions);
 
         string ChooseOption(string title, string[] options, string selectedOption);
-        void StartIndicateLongOperation();
-        void StopIndicateLongOperation();
+        int StartIndicateLongOperation(string status = null);
+        void StopIndicateLongOperation(int handle);
     }
 
     public class UIService : IUIService
     {
-        public static readonly UIService Instance = new UIService();
+        private ProgramStatusViewModel statusVm;
 
+        public UIService(ProgramStatusViewModel statusVm)
+        {
+            if (statusVm == null) throw new ArgumentNullException("statusVm");
+            this.statusVm = statusVm;
+        }
 
         public void ShowError(string error, string caption = null)
         {
@@ -97,23 +102,41 @@ namespace PerformanceTest.Management
             return null;
         }
 
-        private int longOps = 0;
+        private int opsId = 0;
+        private List<Tuple<int,string>> statuses = new List<Tuple<int, string>>();
 
-        public void StartIndicateLongOperation()
+        public int StartIndicateLongOperation(string status = null)
         {
-            longOps++;
-            if (longOps == 1)
+            if (status == null) status = "Working...";
+
+            statuses.Add(Tuple.Create(opsId, status));
+            if (statuses.Count == 1)
             {
                 Mouse.OverrideCursor = Cursors.Wait;
             }
+
+            statusVm.Status = status;
+            return opsId++;
         }
 
-        public void StopIndicateLongOperation()
+        public void StopIndicateLongOperation(int handle)
         {
-            longOps--;
-            if (longOps == 0)
+            for (int i = statuses.Count; --i>=0; )
             {
-                Mouse.OverrideCursor = null;
+                var s = statuses[i];
+                if(s.Item1 == handle)
+                {
+                    statuses.RemoveAt(i);
+                    if (statuses.Count == 0)
+                    {
+                        Mouse.OverrideCursor = null;
+                        statusVm.Status = "Ready.";
+                    }else
+                    {
+                        statusVm.Status = statuses.Last().Item2;
+                    }
+                    return;
+                }
             }
         }
     }

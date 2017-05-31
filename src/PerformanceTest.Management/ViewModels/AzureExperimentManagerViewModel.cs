@@ -10,7 +10,7 @@ namespace PerformanceTest.Management
 {
     public class AzureExperimentManagerViewModel : ExperimentManagerViewModel
     {
-        public AzureExperimentManagerViewModel(AzureExperimentManager manager, UIService uiService, IDomainResolver domainResolver) : base(manager, uiService, domainResolver)
+        public AzureExperimentManagerViewModel(AzureExperimentManager manager, IUIService uiService, IDomainResolver domainResolver) : base(manager, uiService, domainResolver)
         {
         }
 

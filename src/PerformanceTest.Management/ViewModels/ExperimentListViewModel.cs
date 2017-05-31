@@ -62,7 +62,7 @@ namespace PerformanceTest.Management
         }
         private async void RefreshItemsAsync(string filter = null)
         {
-            ui.StartIndicateLongOperation();
+            int handle = ui.StartIndicateLongOperation("Loading table of experiments...");
             try
             {
                 Items = null;
@@ -77,12 +77,12 @@ namespace PerformanceTest.Management
                         CreatorEquals = filter
                     };
                 }
-                var experiments = await manager.FindExperiments(f);
+                var experiments = await Task.Run(() => manager.FindExperiments(f));
                 Items = experiments.Select(e => new ExperimentStatusViewModel(e.Status, manager, ui)).ToArray();
             }
             finally
             {
-                ui.StopIndicateLongOperation();
+                ui.StopIndicateLongOperation(handle);
             }
         }
 
