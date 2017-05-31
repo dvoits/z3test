@@ -94,7 +94,7 @@ namespace PerformanceTest.Management
             if (e.Key == Key.Enter)
             {
                 var vm = DataContext as CompareExperimentsViewModel;
-                vm.FilterResultsByText("");
+                vm.Extension1 = txtExtensionLeft.Text;
             }
         }
 
@@ -103,7 +103,7 @@ namespace PerformanceTest.Management
             if (e.Key == Key.Enter)
             {
                 var vm = DataContext as CompareExperimentsViewModel;
-                vm.FilterResultsByText("");
+                vm.Extension2 = txtExtensionRight.Text;
             }
         }
 
