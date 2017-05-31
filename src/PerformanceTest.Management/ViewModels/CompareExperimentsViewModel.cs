@@ -80,7 +80,8 @@ namespace PerformanceTest.Management
         }
         private void UpdateCompared () //на случай другого сравнения
         {
-            List<ExperimentComparingResultsViewModel> resItems = allResults1.Join(allResults2, elem => modifyFilename(elem.BenchmarkFileName, 1), elem2 => modifyFilename(elem2.BenchmarkFileName, 2),
+            List<ExperimentComparingResultsViewModel> resItems = new List<ExperimentComparingResultsViewModel>();
+            if (allResults1 != null && allResults2 != null) resItems = allResults1.Join(allResults2, elem => modifyFilename(elem.BenchmarkFileName, 1), elem2 => modifyFilename(elem2.BenchmarkFileName, 2),
                 (f, s) => new ExperimentComparingResultsViewModel(f.BenchmarkFileName, f, s, manager, message)).ToList();
             CompareItems = allResults = resItems.OrderByDescending(q => Math.Abs(q.Diff));
         }
@@ -95,7 +96,6 @@ namespace PerformanceTest.Management
         private void RefreshItemsAsync()
         {
             allResults = CompareItems = null;
-
             Task t1 = Task.Factory.StartNew(getResults1);
             Task t2 = Task.Factory.StartNew(getResults2);
             Task.WaitAll(t1, t2);
