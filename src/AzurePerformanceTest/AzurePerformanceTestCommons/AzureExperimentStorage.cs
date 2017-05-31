@@ -74,8 +74,12 @@ namespace AzurePerformanceTest
             };
             Task.WaitAll(cloudEntityCreationTasks);
 
+            DefaultBenchmarkStorage = new AzureBenchmarkStorage(storageConnectionString, AzureBenchmarkStorage.DefaultContainerName);
+
             InitializeCache();
         }
+
+        public AzureBenchmarkStorage DefaultBenchmarkStorage { get; private set; }
 
         public IEnumerable<CloudBlockBlob> ListAzureWorkerBlobs()
         {

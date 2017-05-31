@@ -10,6 +10,7 @@ using Measurement;
 using ExperimentID = System.Int32;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.Azure.Batch.Common;
+using System.IO;
 
 namespace AzurePerformanceTest
 {
@@ -123,6 +124,7 @@ namespace AzurePerformanceTest
         {
             if (!CanStart) throw new InvalidOperationException("Cannot start experiment since the manager is in read mode");
 
+            var refExp = await storage.GetReferenceExperiment();
             var id = await storage.AddExperiment(definition, DateTime.Now, creator, note);
             //TODO: schedule execution
 
@@ -134,7 +136,7 @@ namespace AzurePerformanceTest
                 job.PoolInformation = new PoolInformation { PoolId = "testPool" };
                 job.JobPreparationTask = new JobPreparationTask
                 {
-                    CommandLine = "cmd /c (robocopy %AZ_BATCH_TASK_WORKING_DIR% %AZ_BATCH_NODE_SHARED_DIR%) ^& IF %ERRORLEVEL% LEQ 1 exit 0",
+                    CommandLine = "cmd /c (robocopy %AZ_BATCH_TASK_WORKING_DIR% %AZ_BATCH_NODE_SHARED_DIR% /e /purge) ^& IF %ERRORLEVEL% LEQ 1 exit 0",
                     ResourceFiles = new List<ResourceFile>(),
                     WaitForSuccess = true
                 };
@@ -150,6 +152,26 @@ namespace AzurePerformanceTest
                     string sasBlobToken = blob.GetSharedAccessSignature(sasConstraints);
                     string blobSasUri = String.Format("{0}{1}", blob.Uri, sasBlobToken);
                     job.JobPreparationTask.ResourceFiles.Add(new ResourceFile(blobSasUri, blob.Name));
+                }
+
+                if (refExp != null)
+                {
+                    string refContentFolder = "refdata";
+                    string refBenchFolder = Path.Combine(refContentFolder, "data");
+                    var refExpExecUri = storage.GetExecutableSasUri(refExp.Definition.Executable);
+                    job.JobPreparationTask.ResourceFiles.Add(new ResourceFile(refExpExecUri, Path.Combine(refContentFolder, refExp.Definition.Executable)));
+                    AzureBenchmarkStorage benchStorage;
+                    if (refExp.Definition.BenchmarkContainerUri == ExperimentDefinition.DefaultContainerUri)
+                        benchStorage = storage.DefaultBenchmarkStorage;
+                    else
+                        benchStorage = new AzureBenchmarkStorage(refExp.Definition.BenchmarkContainerUri);
+                    
+                    foreach (CloudBlockBlob blob in benchStorage.ListBlobs(refExp.Definition.BenchmarkDirectory, refExp.Definition.Category))
+                    {
+                        string[] parts = blob.Name.Split('/');
+                        string shortName = parts[parts.Length - 1];
+                        job.JobPreparationTask.ResourceFiles.Add(new ResourceFile(benchStorage.GetBlobSASUri(blob), Path.Combine(refBenchFolder, shortName)));
+                    }
                 }
 
                 await job.CommitAsync();
