@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Measurement;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -35,51 +36,51 @@ namespace PerformanceTest.Management
         {
             e.CanExecute = dataGrid.SelectedItems.Count > 0;
         }
-        private void Reclassify(string rc)
+        private void Reclassify(ResultStatus rc)
         {
-            try
-            {
-                var elems = dataGrid.SelectedItems.Cast<BenchmarkResultViewModel>();
-                foreach (var vm in elems)
-                {
-                    if (rc == "Timeout") vm.Runtime = 0.0; //some new value for runtime
-                    vm.Status = rc;
-                }
-                Console.WriteLine();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(this, "Exception: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            throw new NotImplementedException();
+            //try
+            //{
+            //    var elems = dataGrid.SelectedItems.Cast<BenchmarkResultViewModel>();
+            //    foreach (var vm in elems)
+            //    {
+            //        vm.Status = rc;
+            //    }
+            //    Console.WriteLine();
+            //}
+            //catch (Exception ex)
+            //{
+            //    MessageBox.Show(this, "Exception: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            //}
         }
         private void ReclassifyOK(object target, ExecutedRoutedEventArgs e)
         {
             Mouse.OverrideCursor = Cursors.Wait;
-            Reclassify("Success");
+            Reclassify(ResultStatus.Success);
             Mouse.OverrideCursor = null;
         }
         private void ReclassifyBug(object target, ExecutedRoutedEventArgs e)
         {
             Mouse.OverrideCursor = Cursors.Wait;
-            Reclassify("Bug");
+            Reclassify(ResultStatus.Bug);
             Mouse.OverrideCursor = null;
         }
         private void ReclassifyError(object target, ExecutedRoutedEventArgs e)
         {
             Mouse.OverrideCursor = Cursors.Wait;
-            Reclassify("Error");
+            Reclassify(ResultStatus.Error);
             Mouse.OverrideCursor = null;
         }
         private void ReclassifyTimeout(object target, ExecutedRoutedEventArgs e)
         {
             Mouse.OverrideCursor = Cursors.Wait;
-            Reclassify("Timeout");
+            Reclassify(ResultStatus.Timeout);
             Mouse.OverrideCursor = null;
         }
         private void ReclassifyMemout(object target, ExecutedRoutedEventArgs e)
         {
             Mouse.OverrideCursor = Cursors.Wait;
-            Reclassify("OutOfMemory");
+            Reclassify(ResultStatus.OutOfMemory);
             Mouse.OverrideCursor = null;
         }
         private void canRequeue(object sender, CanExecuteRoutedEventArgs e)

@@ -1,65 +1,130 @@
-﻿using System;
+﻿using Measurement;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using System.Windows.Media;
 
 namespace PerformanceTest.Management
 {
-    public class ExperimentPropertiesViewModel
+    public class ExperimentPropertiesViewModel: INotifyPropertyChanged
     {
-        private ExperimentStatusViewModel statusVm;
-        private IEnumerable<BenchmarkResultViewModel> result;
-        private ExperimentManager manager;
-        private int id;
+        public static async Task<ExperimentPropertiesViewModel> CreateAsync(ExperimentManager manager, int id, IDomainResolver domainResolver, IUIService ui)
+        {
+            if (manager == null) throw new ArgumentNullException("manager");
+
+            Experiment exp = await manager.TryFindExperiment(id);
+            if (exp == null) throw new KeyNotFoundException(string.Format("There is no experiment with id {0}.", id));
+            ExperimentStatistics stat = await GetStatistics(manager, id, domainResolver.GetDomain(exp.Definition.DomainName ?? "Z3"));
+            return new ExperimentPropertiesViewModel(exp.Definition, exp.Status, stat, manager, ui);
+        }
+
+
+        private static async Task<ExperimentStatistics> GetStatistics(ExperimentManager manager, int id, Measurement.Domain domain)
+        {
+            var results = await manager.GetResults(id);
+            var aggr = domain.Aggregate(results.Select(r => new Measurement.ProcessRunAnalysis(r.Status, r.Properties)));
+            return new ExperimentStatistics(aggr);
+        }
+
+        private readonly int id;
+        private readonly ExperimentDefinition definition;
+        private readonly ExperimentStatus status;
+        private readonly ExperimentStatistics statistics;
         private readonly string[] MachineStatuses = { "OK", "Unable to retrieve status." };
-        public ExperimentPropertiesViewModel(ExperimentListViewModel experimentsVm, ExperimentManager manager, int id)
+
+        private readonly ExperimentManager manager;
+        private readonly IUIService ui;
+
+        private string currentNote;
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public ExperimentPropertiesViewModel(ExperimentDefinition def, ExperimentStatus status, ExperimentStatistics stat, ExperimentManager manager, IUIService ui)
         {
-            this.id = id;
-            this.statusVm = experimentsVm.Items.Where(item => item.ID == id).ToArray()[0];
+            if (def == null) throw new ArgumentNullException("def");
+            if (status == null) throw new ArgumentNullException("status");
+            if (stat == null) throw new ArgumentNullException("stat");
+            if (manager == null) throw new ArgumentNullException("manager");
+            if (ui == null) throw new ArgumentNullException("ui");
+
+            this.id = status.ID;
+            this.definition = def;
+            this.status = status;
+            this.statistics = stat;
             this.manager = manager;
-            GetResultsAsync();
+            this.ui = ui;
+
+            currentNote = status.Note;
+            SubmitNote = new DelegateCommand(
+                _ => UpdateNote(),
+                _ => status.Note != currentNote);
         }
-        private async void GetResultsAsync()
+
+        public bool NoteChanged
         {
-            var res = await manager.GetResults(id);
-            this.result = res.Select(elem => new BenchmarkResultViewModel(elem));
+            get { return status.Note != currentNote; }
         }
-        public string SubmissionTime
+
+        public string Note
         {
-            get { return statusVm.Submitted; }
+            get { return currentNote; }
+            set
+            {
+                if (currentNote == value) return;
+                currentNote = value;
+                NotifyPropertyChanged("NoteChanged");
+                NotifyPropertyChanged();
+                SubmitNote.RaiseCanExecuteChanged();
+            }
+        }
+
+
+        public DelegateCommand SubmitNote { get; private set; }
+
+        public DateTime SubmissionTime
+        {
+            get { return status.SubmissionTime; }
         }
         public string Category
         {
-            get { return statusVm.Category; }
+            get { return definition.Category; }
         }
         public int BenchmarksTotal
         {
-            get { return statusVm.BenchmarksTotal; }
+            get { return status.BenchmarksTotal; }
         }
         public int BenchmarksDone
         {
-            get { return statusVm.BenchmarksDone; }
+            get { return status.BenchmarksDone; }
         }
         public int BenchmarksQueued
         {
-            get { return statusVm.BenchmarksQueued; }
+            get { return status.BenchmarksQueued; }
         }
         public Brush QueuedForeground
         {
             get
             {
-                return (statusVm.BenchmarksQueued == 0) ? Brushes.Green : Brushes.Red;
+                return (status.BenchmarksQueued == 0) ? Brushes.Green : Brushes.Red;
             }
         }
-        
+
+        private int GetProperty(string prop)
+        {
+            return int.Parse(statistics.AggregatedResults.Properties[prop]);
+        }
+
         public int Sat
         {
             get
             {
-                return result.Sum(elem => elem.Sat);
+                return GetProperty("SAT");
             }
 
         }
@@ -67,35 +132,35 @@ namespace PerformanceTest.Management
         {
             get
             {
-                return result.Sum(elem => elem.Unsat);
+                return GetProperty("UNSAT");
             }
         }
         public int Unknown
         {
             get
             {
-                return result.Sum(elem => elem.Unknown);
+                return GetProperty("UNKNOWN");
             }
         }
         public int Overperformed
         {
             get
             {
-                return result.Sum(e => (e.Status == "Success" && e.Sat + e.Unsat > e.TargetSat + e.TargetUnsat && e.Unknown < e.TargetUnknown) ? 1 : 0);
+                return GetProperty("OVERPERFORMED");
             }
         }
         public int Underperformed
         {
             get
             {
-                return result.Sum(e => (e.Sat + e.Unsat < e.Sat + e.Unsat || e.Unknown > e.TargetUnknown) ? 1 : 0);
+                return GetProperty("UNDERPERFORMED");
             }
         }
         public int ProblemBug
         {
             get
             {
-                return result.Sum(e => (e.Status == "Bug") ? 1 : 0);
+                return statistics.AggregatedResults.Bugs;
             }
         }
         public Brush BugForeground
@@ -104,65 +169,57 @@ namespace PerformanceTest.Management
         }
         public int ProblemNonZero
         {
-            get { return result.Sum(e => (e.Status == "Error") ? 1 : 0); }
+            get { return statistics.AggregatedResults.Errors; }
         }
         public Brush NonZeroForeground
         {
-            get { return ProblemNonZero == 0 ? Brushes.Black : Brushes.Red; } 
+            get { return ProblemNonZero == 0 ? Brushes.Black : Brushes.Red; }
         }
         public int ProblemTimeout
         {
-            get { return result.Sum(e => (e.Status == "Timeout") ? 1 : 0); }
+            get { return statistics.AggregatedResults.Timeouts; }
         }
         public Brush TimeoutForeground
         {
-            get { return ProblemTimeout == 0 ? Brushes.Black : Brushes.Red; } 
+            get { return ProblemTimeout == 0 ? Brushes.Black : Brushes.Red; }
         }
         public int ProblemMemoryout
         {
-            get { return result.Sum(e => (e.Status == "OutOfMemory") ? 1 : 0); }
+            get { return statistics.AggregatedResults.MemoryOuts; }
         }
         public Brush MemoryoutForeground
         {
-            get { return ProblemMemoryout == 0 ? Brushes.Black : Brushes.Red; } 
+            get { return ProblemMemoryout == 0 ? Brushes.Black : Brushes.Red; }
         }
         public double TimeOut
         {
             get
             {
-                return result.Max(e => e.Runtime);
-            } 
+                return definition.BenchmarkTimeout.TotalSeconds;
+            }
         }
         public double MemoryOut
         {
             get
             {
-                return result.Max(e => Math.Abs(e.MemorySizeMB));
+                return definition.MemoryLimitMB;
             }
         }
-        public string Machine
+        public string WorkerInformation
         {
             get;
         }
         public string Parameters
         {
-            get;
+            get { return definition.Parameters; }
         }
         public string Group
         {
-            get;
+            get { return definition.GroupName; }
         }
         public string Creator
         {
-            get { return statusVm.Creator; }
-        }
-        public string Note
-        {
-            get { return statusVm.Note; }
-            set
-            {
-                statusVm.Note = value;
-            }
+            get { return status.Creator; }
         }
         public string MachineStatus
         {
@@ -176,7 +233,34 @@ namespace PerformanceTest.Management
         {
             get { return "Experiment #" + id.ToString(); }
         }
-            
-       
+        private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+
+        private async void UpdateNote()
+        {
+            try
+            {
+                await manager.UpdateNote(status.ID, currentNote);
+                status.Note = currentNote;
+                NotifyPropertyChanged("Note");
+                NotifyPropertyChanged("NoteChanged");
+                SubmitNote.RaiseCanExecuteChanged();
+
+                Trace.WriteLine("Note changed to '" + currentNote + "' for " + status.ID);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("Failed to update experiment note: " + ex.Message);
+                currentNote = status.Note;
+                NotifyPropertyChanged("Note");
+                NotifyPropertyChanged("NoteChanged");
+                SubmitNote.RaiseCanExecuteChanged();
+
+                ui.ShowError("Failed to update experiment note: " + ex.Message);
+            }
+        }
     }
 }

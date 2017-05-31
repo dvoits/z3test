@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using PerformanceTest;
 using Microsoft.Azure.Batch.Auth;
 using Microsoft.Azure.Batch;
-
+using Measurement;
 using ExperimentID = System.Int32;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.Azure.Batch.Common;
@@ -61,24 +61,39 @@ namespace AzurePerformanceTest
             throw new NotImplementedException();
         }
 
+        public override async Task<Experiment> TryFindExperiment(int id)
+        {
+            try
+            {
+                var e = await storage.GetExperiment(id);
+                return ExperimentFromEntity(id, e);
+            }
+            catch (ArgumentException)
+            {
+                return null;
+            }
+        }
+
         public override async Task<IEnumerable<Experiment>> FindExperiments(ExperimentFilter? filter = default(ExperimentFilter?))
         {
             IEnumerable<KeyValuePair<int, ExperimentEntity>> experiments = await storage.GetExperiments(filter);
 
-            return 
+            return
                 experiments
                 .OrderByDescending(q => q.Value.Submitted)
-                .Select(e => {
-                    var id = e.Key;
-                    var expRow = e.Value;
-                    var totalRuntime = TimeSpan.FromSeconds(expRow.TotalRuntime);
-                    ExperimentDefinition def = RowToDefinition(id, expRow);
-                    ExperimentStatus status = new ExperimentStatus(id, def.Category, expRow.Submitted, expRow.Creator, expRow.Note, expRow.Flag, 0, 0, totalRuntime); 
-                    return new Experiment { Definition = def, Status = status };
-                });
+                .Select(e => ExperimentFromEntity(e.Key, e.Value));
         }
 
-        private ExperimentDefinition RowToDefinition(ExperimentID id, ExperimentEntity experimentEntity)
+        private Experiment ExperimentFromEntity(int id, ExperimentEntity entity)
+        {
+            var totalRuntime = TimeSpan.FromSeconds(entity.TotalRuntime);
+            ExperimentDefinition def = DefinitionFromEntity(entity);
+            ExperimentStatus status = new ExperimentStatus(id, def.Category, entity.Submitted, entity.Creator, entity.Note,
+                entity.Flag, entity.CompletedBenchmarks, entity.TotalBenchmarks, totalRuntime);
+            return new Experiment { Definition = def, Status = status };
+        }
+
+        private ExperimentDefinition DefinitionFromEntity(ExperimentEntity experimentEntity)
         {
             return ExperimentDefinition.Create(
                 experimentEntity.Executable,
@@ -101,7 +116,10 @@ namespace AzurePerformanceTest
         {
             throw new NotImplementedException();
         }
-
+        public override Task<ExperimentDefinition> GetDefinition(ExperimentID id)
+        {
+            throw new NotImplementedException();
+        }
         public override async Task<ExperimentID> StartExperiment(ExperimentDefinition definition, string creator = null, string note = null)
         {
             if (!CanStart) throw new InvalidOperationException("Cannot start experiment since the manager is in read mode");
@@ -160,10 +178,10 @@ namespace AzurePerformanceTest
 
                 string taskId = "taskStarter";
 
-                string taskCommandLine = string.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\AzureWorker.exe --add-tasks {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\" \"{7}\"", id, definition.BenchmarkContainerUri, definition.BenchmarkDirectory, 
+                string taskCommandLine = string.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\AzureWorker.exe --add-tasks {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\" \"{7}\"", id, definition.BenchmarkContainerUri, definition.BenchmarkDirectory,
                     definition.Category, definition.Executable, definition.Parameters, definition.BenchmarkTimeout.TotalSeconds.ToString(), definition.MemoryLimitMB.ToString());
                 CloudTask task = new CloudTask(taskId, taskCommandLine);
-                
+
                 await bc.JobOperations.AddTaskAsync(job.Id, task);
             }
 
@@ -178,6 +196,15 @@ namespace AzurePerformanceTest
         public override async Task UpdateStatusFlag(ExperimentID id, bool flag)
         {
             await storage.UpdateStatusFlag(id, flag);
+        }
+        public override Task UpdateResultStatus(ExperimentID id, ResultStatus status)
+        {
+            throw new NotImplementedException();
+            //await storage.UpdateResultStatus(id, status);
+        }
+        public override Task UpdateRuntime(ExperimentID id, double runtime)
+        {
+            throw new NotImplementedException();
         }
     }
 }

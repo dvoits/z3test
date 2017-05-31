@@ -24,6 +24,39 @@ namespace Measurement
 
 
         public abstract ProcessRunAnalysis Analyze(string inputFile, ProcessRunMeasure measure);
+
+        public AggregatedAnalysis Aggregate(IEnumerable<ProcessRunAnalysis> benchmarkResults)
+        {
+            var results = benchmarkResults.ToArray();
+
+            int bugs = 0, errors = 0, timeouts = 0, memouts = 0;
+            for (int i = 0; i < results.Length; i++)
+            {
+                var result = results[i];
+                switch (result.Status)
+                {
+                    case ResultStatus.OutOfMemory:
+                        memouts++;
+                        break;
+                    case ResultStatus.Timeout:
+                        timeouts++;
+                        break;
+                    case ResultStatus.Error:
+                        errors++;
+                        break;
+                    case ResultStatus.Bug:
+                        bugs++;
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            var props = AggregateProperties(results);
+            return new AggregatedAnalysis(bugs, errors, timeouts, memouts, props);
+        }
+
+        protected abstract IReadOnlyDictionary<string, string> AggregateProperties(IEnumerable<ProcessRunAnalysis> benchmarkResults);
     }
 
     public sealed class DefaultDomain : Domain
@@ -53,6 +86,11 @@ namespace Measurement
 
             return new ProcessRunAnalysis(status, new Dictionary<string, string>());
         }
+
+        protected override IReadOnlyDictionary<string, string> AggregateProperties(IEnumerable<ProcessRunAnalysis> benchmarkResults)
+        {
+            return new Dictionary<string, string>();
+        }
     }
 
     public class ProcessRunAnalysis
@@ -69,6 +107,28 @@ namespace Measurement
 
         public ResultStatus Status { get { return status; } }
         public IReadOnlyDictionary<string, string> OutputProperties { get { return outputProperties; } }
+    }
+
+    public class AggregatedAnalysis
+    {
+        public AggregatedAnalysis(int bugs, int errors, int timeouts, int memouts, IReadOnlyDictionary<string, string> props)
+        {
+            Bugs = bugs;
+            Errors = errors;
+            Timeouts = timeouts;
+            MemoryOuts = memouts;
+            Properties = props;
+        }
+
+        public int Bugs { get; private set; }
+
+        public int Errors { get; private set; }
+
+        public int Timeouts { get; private set; }
+
+        public int MemoryOuts { get; private set; }
+
+        public IReadOnlyDictionary<string, string> Properties { get; private set; }
     }
 
 

@@ -11,7 +11,7 @@ namespace PerformanceTest.Management
 {
     public class ExperimentListViewModel : INotifyPropertyChanged
     {
-        
+
         private IEnumerable<ExperimentStatusViewModel> experiments;
         private readonly ExperimentManager manager;
         private readonly IUIService ui;
@@ -56,32 +56,28 @@ namespace PerformanceTest.Management
             return res.Result.Sum(r => r.NormalizedRuntime);
         }
 
-        public async void FindExperiments(string filter)
+        public void FindExperiments(string filter)
         {
-            if (filter != "")
-            {
-                ExperimentManager.ExperimentFilter f = new ExperimentManager.ExperimentFilter
-                {
-                    NotesEquals = filter,
-                    CategoryEquals = filter,
-                    CreatorEquals = filter
-                };
-                var experiments = await manager.FindExperiments(f);
-                Items = experiments.Select(e => new ExperimentStatusViewModel(e.Status, manager, ui)).ToArray();
-            }
-            else
-            {
-                RefreshItemsAsync();
-            }
+            RefreshItemsAsync(filter);
         }
-        private async void RefreshItemsAsync()
+        private async void RefreshItemsAsync(string filter = null)
         {
             ui.StartIndicateLongOperation();
             try
             {
                 Items = null;
 
-                var experiments = await manager.FindExperiments();
+                ExperimentManager.ExperimentFilter? f = null;
+                if (!String.IsNullOrEmpty(filter))
+                {
+                    f = new ExperimentManager.ExperimentFilter
+                    {
+                        NotesEquals = filter,
+                        CategoryEquals = filter,
+                        CreatorEquals = filter
+                    };
+                }
+                var experiments = await manager.FindExperiments(f);
                 Items = experiments.Select(e => new ExperimentStatusViewModel(e.Status, manager, ui)).ToArray();
             }
             finally
@@ -135,7 +131,7 @@ namespace PerformanceTest.Management
                 UpdateNote();
             }
 
-        } 
+        }
 
         public string Creator { get { return status.Creator; } }
 
@@ -171,7 +167,7 @@ namespace PerformanceTest.Management
                 Trace.WriteLine("Failed to update experiment note: " + ex.Message);
                 note = status.Note;
                 NotifyPropertyChanged("Note");
-                message.ShowError("Failed to update experiment status flag: " + ex.Message);
+                message.ShowError("Failed to update experiment note: " + ex.Message);
             }
         }
         private async void UpdateStatusFlag()
@@ -187,7 +183,7 @@ namespace PerformanceTest.Management
                 Trace.WriteLine("Failed to update experiment status flag: " + ex.Message);
                 flag = status.Flag;
                 NotifyPropertyChanged("Note");
-                message.ShowError("Failed to update experiment note: " + ex.Message);
+                message.ShowError("Failed to update experiment status flag: " + ex.Message);
             }
         }
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")

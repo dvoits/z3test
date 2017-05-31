@@ -25,6 +25,9 @@ namespace PerformanceTest.Management
         private ExperimentListViewModel experimentsVm;
 
         public static RoutedCommand SaveMetaCSVCommand = new RoutedCommand();
+        public static RoutedCommand SaveOutputCommand = new RoutedCommand();
+        public static RoutedCommand SaveMatrixCommand = new RoutedCommand();
+        public static RoutedCommand SaveBinaryCommand = new RoutedCommand();
         public static RoutedCommand FlagCommand = new RoutedCommand();
         public static RoutedCommand TallyCommand = new RoutedCommand();
         public static RoutedCommand CopyCommand = new RoutedCommand();
@@ -33,6 +36,11 @@ namespace PerformanceTest.Management
         public static RoutedCommand CreateGroupCommand = new RoutedCommand();
         public static RoutedCommand CompareCommand = new RoutedCommand();
         public static RoutedCommand ScatterplotCommand = new RoutedCommand();
+        public static RoutedCommand ReinforcementsCommand = new RoutedCommand();
+        public static RoutedCommand RequeueIErrorsCommand = new RoutedCommand();
+        public static RoutedCommand RecoveryCommand = new RoutedCommand();
+        public static RoutedCommand DuplicatesCommand = new RoutedCommand();
+
         public MainWindow()
         {
             InitializeComponent();
@@ -47,11 +55,11 @@ namespace PerformanceTest.Management
             if (Directory.Exists(connectionString))
             {
                 LocalExperimentManager manager = LocalExperimentManager.OpenExperiments(connectionString, domainResolver);
-                return new LocalExperimentManagerViewModel(manager, UIService.Instance);
+                return new LocalExperimentManagerViewModel(manager, UIService.Instance, domainResolver);
             }else
             {
                 AzureExperimentManager azureManager = AzureExperimentManager.OpenWithoutStart(new AzureExperimentStorage(connectionString));
-                return new AzureExperimentManagerViewModel(azureManager, UIService.Instance);
+                return new AzureExperimentManagerViewModel(azureManager, UIService.Instance, domainResolver);
             }
         }
 
@@ -362,14 +370,26 @@ namespace PerformanceTest.Management
         {
             e.CanExecute = dataGrid.SelectedItems.Count == 1;
         }
-        private void showProperties(object target, ExecutedRoutedEventArgs e)
+        private async void showProperties(object target, ExecutedRoutedEventArgs e)
         {
-            int id = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray()[0];
-            ExperimentProperties dlg = new ExperimentProperties();
-            var vm = managerVm.BuildProperties(experimentsVm, id); 
-            dlg.DataContext = vm;
-            dlg.Owner = this;
-            dlg.Show();
+            var item = dataGrid.SelectedItem as ExperimentStatusViewModel;
+            if (item == null) return;
+
+            try
+            {                
+                UIService.Instance.StartIndicateLongOperation();
+                var vm = await managerVm.BuildProperties(item.ID);
+
+                ExperimentProperties dlg = new ExperimentProperties();
+                dlg.DataContext = vm;
+                dlg.Owner = this;
+                dlg.Show();
+            }
+            finally
+            {
+                UIService.Instance.StopIndicateLongOperation();
+            }
+
         }
         private void canRestartCommand(object sender, CanExecuteRoutedEventArgs e)
         {
@@ -448,12 +468,10 @@ namespace PerformanceTest.Management
         private void showScatterplot(object target, ExecutedRoutedEventArgs e)
         {
             Mouse.OverrideCursor = Cursors.Wait;
-            var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
-            //Scatterplot sp = new Scatterplot();
-            //var vm = new NewExperimentViewModel(managerVm,ids[0], ids[1], UIService.Instance);
-            //sp.DataContext = vm;
-            //sp.Owner = this;
-            //sp.Show();
+            var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().ToArray();
+            var vm = managerVm.BuildComparingResults(ids[0].ID, ids[1].ID);
+            Scatterplot sp = new Scatterplot(vm, ids[0], ids[1]);
+            sp.Show();
             Mouse.OverrideCursor = null;
         }
         private void dataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -471,6 +489,81 @@ namespace PerformanceTest.Management
             dlg.Show();
 
             Mouse.OverrideCursor = null;
+        }
+        private void canSaveBinary(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count == 1;
+        }
+        private void saveBinary(object target, ExecutedRoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+        private void canSaveOutput(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count == 1;
+        }
+        private void saveOutput(object target, ExecutedRoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+        private void canSaveMatrix(object sender, CanExecuteRoutedEventArgs e)
+        {
+            if (managerVm == null || dataGrid.SelectedItems.Count <= 1)
+            {
+                e.CanExecute = false;
+                return;
+            }
+            else
+            {
+
+                var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().ToArray();
+                string rc = sts[0].Category;
+                for (var i = 0; i < sts.Length; i++)
+                {
+                    if (sts[i].Category != rc)
+                    {
+                        e.CanExecute = false;
+                        return;
+                    }
+                }
+            }
+            e.CanExecute = true;
+        }
+        private void saveMatrix(object target, ExecutedRoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+        private void canShowReinforcements(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count == 1;
+        }
+        private void showReinforcements(object target, ExecutedRoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+        private void canRequeueIErrors(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count > 0;
+        }
+        private void requeueIErrors(object target, ExecutedRoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+        private void canRecovery(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count > 0;
+        }
+        private void recovery(object target, ExecutedRoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+        private void canShowDuplicates(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count >= 1;
+        }
+        private void showDuplicates(object target, ExecutedRoutedEventArgs e)
+        {
+            throw new NotImplementedException();
         }
     }
 }

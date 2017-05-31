@@ -18,10 +18,11 @@
             <RowDefinition Height="25" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="17*" />
+            <ColumnDefinition Width="691*"/>
         </Grid.ColumnDefinitions>
 
-        <Menu Grid.Row="0" Grid.ColumnSpan="1"  IsMainMenu="True" Name="mnuMain">
+        <Menu Grid.Row="0" Grid.ColumnSpan="2"  IsMainMenu="True" Name="mnuMain">
             <MenuItem Header="_File">
                 <MenuItem Header="_New..." Name="menuNewJob" IsEnabled="False" Click="btnNewJob_Click">
                     <MenuItem.Icon>
@@ -41,7 +42,7 @@
             </MenuItem>
         </Menu>
 
-        <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Height="60" Margin="10,10,10,10" Name="grid" Grid.Row="1" Grid.Column="0">
+        <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Height="60" Margin="10,10,10,10" Name="grid" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -66,11 +67,12 @@
 
         </Grid>
 
-        <TabControl Grid.Row="2" Grid.Column="0" TabStripPlacement="Bottom">
+        <TabControl Grid.Row="2" Grid.Column="0" TabStripPlacement="Bottom" Grid.ColumnSpan="2">
             <TabItem Header="Experiments" >
                 <DataGrid AutoGenerateColumns="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,10,10,10" Name="dataGrid" IsReadOnly="False" 
                           GridLinesVisibility="None" SelectionUnit="FullRow" SelectionMode="Extended" AlternatingRowBackground="AliceBlue" 
-                          ItemsSource="{Binding Items}" MouseDoubleClick="dataGrid_MouseDoubleClick" EnableRowVirtualization="True">
+                          ItemsSource="{Binding Items}" MouseDoubleClick="dataGrid_MouseDoubleClick" 
+                          EnableRowVirtualization="True" EnableColumnVirtualization="True" >
                     <DataGrid.Resources>
                         <DataTemplate x:Key="ProgressTemplate" >
                             <ProgressBar Minimum="0" Maximum="{Binding BenchmarksTotal, Mode=OneWay}" Value="{Binding BenchmarksDone, Mode=OneWay}" Width="75" Height="15" IsEnabled="True" />
@@ -98,17 +100,17 @@
                         <CommandBinding Command="{x:Static local:MainWindow.CopyCommand}" Executed="Copy" CanExecute="canCopy" />
                         <CommandBinding Command="{x:Static local:MainWindow.MoveCommand}" Executed="Move" CanExecute="canMove" />
                         <CommandBinding Command="{x:Static local:MainWindow.CreateGroupCommand}" Executed="CreateGroup" CanExecute="canCreateGroup" />
-                        <!--<CommandBinding Command="{x:Static local:MainWindow.SaveBinaryCommand}" Executed="showSaveBinary" CanExecute="canShowSaveBinary" />
-                        <CommandBinding Command="{x:Static local:MainWindow.UpdateBinaryCommand}" Executed="showUpdateBinaryCommand" CanExecute="canShowUpdateBinaryCommand" />
+                        <CommandBinding Command="{x:Static local:MainWindow.SaveBinaryCommand}" Executed="saveBinary" CanExecute="canSaveBinary" />
                         <CommandBinding Command="{x:Static local:MainWindow.ReinforcementsCommand}" Executed="showReinforcements" CanExecute="canShowReinforcements" />
-                        <CommandBinding Command="{x:Static local:MainWindow.RequeueIErrorsCommand}" Executed="showRequeueIErrorsCommand" CanExecute="canShowRequeueIErrorsCommand" />-->
+                        <CommandBinding Command="{x:Static local:MainWindow.RequeueIErrorsCommand}" Executed="requeueIErrors" CanExecute="canRequeueIErrors" />
                         <CommandBinding Command="{x:Static local:MainWindow.RestartCommand}" Executed="Restart" CanExecute="canRestartCommand" />
-                        <!--<CommandBinding Command="{x:Static local:MainWindow.RecoveryCommand}" Executed="showRecovery" CanExecute="canShowRecovery" />
-                        <CommandBinding Command="{x:Static local:MainWindow.DuplicatesCommand}" Executed="showDuplicates" CanExecute="canShowDuplicates" />-->
+                        <CommandBinding Command="{x:Static local:MainWindow.RecoveryCommand}" Executed="recovery" CanExecute="canRecovery" />
+                        <CommandBinding Command="{x:Static local:MainWindow.DuplicatesCommand}" Executed="showDuplicates" CanExecute="canShowDuplicates" />
                         <CommandBinding Command="{x:Static local:MainWindow.FlagCommand}" Executed="toggleFlag" CanExecute="canToggleFlag" />
                         <CommandBinding Command="{x:Static local:MainWindow.TallyCommand}" Executed="showTally" CanExecute="canShowTally" />
                         <CommandBinding Command="{x:Static local:MainWindow.SaveMetaCSVCommand}" Executed="saveMetaCSV" CanExecute="canSaveMetaCSV" />
-                        <!--<CommandBinding Command="{x:Static local:MainWindow.SaveOutputCommand}" Executed="showSaveOutput" CanExecute="canShowSaveOutput" />-->
+                        <CommandBinding Command="{x:Static local:MainWindow.SaveMatrixCommand}" Executed="saveMatrix" CanExecute="canSaveMatrix" />
+                        <CommandBinding Command="{x:Static local:MainWindow.SaveOutputCommand}" Executed="saveOutput" CanExecute="canSaveOutput" />
                         <CommandBinding Command="Properties" Executed="showProperties" CanExecute="canShowProperties" />
                     </DataGrid.CommandBindings>
                     <DataGrid.InputBindings>
@@ -122,20 +124,19 @@
                             <MenuItem Name="mnuCopy" Header="Copy _to..." Command="{x:Static local:MainWindow.CopyCommand}" />
                             <MenuItem Name="mnuMove" Header="_Move to..." Command="{x:Static local:MainWindow.MoveCommand}" />
                             <MenuItem Name="mnuCreateGroup" Header="Create _group..." Command="{x:Static local:MainWindow.CreateGroupCommand}" />
-                            <!--<MenuItem Name="mnuUpdateBinary" Header="Update binary..." Command="{x:Static local:MainWindow.UpdateBinaryCommand}" />
                             <MenuItem Name="mnuReinforcements" Header="Call _reinforcements..." Command="{x:Static local:MainWindow.ReinforcementsCommand}" />
-                            <MenuItem Name="mnuRecovery" Header="Requeue in. errors..." Command="{x:Static local:MainWindow.RequeueIErrorsCommand}" />-->
+                            <MenuItem Name="mnuRecovery" Header="Requeue in. errors..." Command="{x:Static local:MainWindow.RequeueIErrorsCommand}" />
                             <MenuItem Name="mnuRestart" Header="Restart" Command="{x:Static local:MainWindow.RestartCommand}" />
-                            <!--<MenuItem Name="mnuRequeueIE" Header="Start recovery..." Command="{x:Static local:MainWindow.RecoveryCommand}" />
-                            <MenuItem Name="mnuDuplicates" Header="Resolve _duplicates..." Command="{x:Static local:MainWindow.DuplicatesCommand}" />-->
+                            <MenuItem Name="mnuRequeueIE" Header="Start recovery..." Command="{x:Static local:MainWindow.RecoveryCommand}" />
+                            <MenuItem Name="mnuDuplicates" Header="Resolve _duplicates..." Command="{x:Static local:MainWindow.DuplicatesCommand}" />
                             <MenuItem Name="mnuFlag" Header="Toggle _flag" Command="{x:Static local:MainWindow.FlagCommand}" InputGestureText="Ctrl-T" />
                             <MenuItem Name="mnuTally" Header="Ta_lly" Command="{x:Static local:MainWindow.TallyCommand}" />
                             <MenuItem Name="mnuSave" Header="Save...">
-                                <!--<MenuItem Name="mnuSaveBinary" Header="_Binary to..." Command="{x:Static custom:MainWindow.SaveBinaryCommand}" />-->
+                                <MenuItem Name="mnuSaveBinary" Header="_Binary to..." Command="{x:Static local:MainWindow.SaveBinaryCommand}" />
                                 <MenuItem Name="mnuSaveAs" Header="CS_V..." Command="SaveAs"/>
                                 <MenuItem Name="mnuSaveMetaCSV" Header="_Meta CSV..." Command="{x:Static local:MainWindow.SaveMetaCSVCommand}"/>
-                                <!--<MenuItem Name="mnuSaveMatrix" Header="Matri_x..." Command="{x:Static local:MainWindow.SaveMatrixCommand}"/>
-                                <MenuItem Name="mnuSaveOutput" Header="_Output..." Command="{x:Static local:MainWindow.SaveOutputCommand}"/>-->
+                                <MenuItem Name="mnuSaveMatrix" Header="Matri_x..." Command="{x:Static local:MainWindow.SaveMatrixCommand}"/>
+                                <MenuItem Name="mnuSaveOutput" Header="_Output..." Command="{x:Static local:MainWindow.SaveOutputCommand}"/>
                             </MenuItem>
                             <MenuItem Name="mnuProperties" Command="Properties" />
                         </ContextMenu>
@@ -151,7 +152,7 @@
             </TabItem>
         </TabControl>
 
-        <StatusBar Height="25" HorizontalAlignment="Stretch" Grid.Row="4" Grid.Column="0" Name="statusBar" VerticalAlignment="Bottom">
+        <StatusBar Height="25" HorizontalAlignment="Stretch" Grid.Row="3" Grid.Column="0" Name="statusBar" VerticalAlignment="Bottom" Grid.ColumnSpan="2">
             <StatusBarItem Content="" HorizontalAlignment="Stretch" />
         </StatusBar>
     </Grid>

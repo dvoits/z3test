@@ -71,6 +71,37 @@ namespace Measurement
                 });
         }
 
+        protected override IReadOnlyDictionary<string, string> AggregateProperties(IEnumerable<ProcessRunAnalysis> benchmarkResults)
+        {
+            int sat = 0, unsat = 0, unknown = 0, overPerf = 0, underPerf = 0;
+            foreach (ProcessRunAnalysis r in benchmarkResults)
+            {
+                int _sat = int.Parse(r.OutputProperties["SAT"]);
+                int _unsat = int.Parse(r.OutputProperties["UNSAT"]);
+                int _unk = int.Parse(r.OutputProperties["UNKNOWN"]);
+                int _tsat = int.Parse(r.OutputProperties["TargetSAT"]);
+                int _tunsat = int.Parse(r.OutputProperties["TargetUNSAT"]);
+                int _tunk = int.Parse(r.OutputProperties["TargetUNKNOWN"]);
+
+                sat += _sat;
+                unsat += _unsat;
+                unknown += _unk;
+
+                if (r.Status == ResultStatus.Success && _sat + _unsat > _tsat + _tunsat && _unk < _tunk)
+                    overPerf++;
+                if (_sat + _unsat < _tsat + _tunsat || _unk > _tunk)
+                    underPerf++;
+            }
+            return new Dictionary<string, string>
+                {
+                    { "SAT", sat.ToString() },
+                    { "UNSAT", unsat.ToString() },
+                    { "UNKNOWN", unknown.ToString() },
+                    { "OVERPERFORMED", overPerf.ToString() },
+                    { "UNDERPERFORMED", underPerf.ToString() }
+                };
+        }
+
         private ResultStatus GetBugCode(ProcessRunMeasure measure)
         {
             ResultStatus status = ResultStatus.Error; // no bug found means general error.

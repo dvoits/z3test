@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Measurement;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -29,12 +30,21 @@ namespace PerformanceTest
         /// <param name="id"></param>
         /// <returns>List of results of currently completed benchmarks</returns>
         public abstract Task<BenchmarkResult[]> GetResults(ExperimentID id);
-
+        public abstract Task<ExperimentDefinition> GetDefinition(ExperimentID id);
         public abstract Task DeleteExperiment(ExperimentID id);
         public abstract Task UpdateStatusFlag(ExperimentID id, bool flag);
         public abstract Task UpdateNote(ExperimentID id, string note);
-
+        public abstract Task UpdateResultStatus(ExperimentID id, ResultStatus status);
+        public abstract Task UpdateRuntime(ExperimentID id, double runtime);
         public abstract Task<IEnumerable<Experiment>> FindExperiments(ExperimentFilter? filter = null);
+
+        /// <summary>
+        /// Tries to find an experiment with given id and returns information about that experiment.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns>Returns null, if there is no experiment with given id.</returns>
+        public abstract Task<Experiment> TryFindExperiment(ExperimentID id);
+
 
         public struct ExperimentFilter
         {
@@ -46,9 +56,9 @@ namespace PerformanceTest
 
             public string ParametersEquals { get; set; }
 
-            public string NotesEquals { get; set;}
+            public string NotesEquals { get; set; }
 
-            public string CreatorEquals { get; set;}
+            public string CreatorEquals { get; set; }
         }
     }
 
@@ -79,5 +89,19 @@ namespace PerformanceTest
 
         public double ReferenceValue { get; private set; }
 
+    }
+
+    public class ExperimentStatistics
+    {
+        private readonly Measurement.AggregatedAnalysis analysis;
+
+        public ExperimentStatistics(Measurement.AggregatedAnalysis analysis)
+        {
+            if (analysis == null)
+                throw new ArgumentNullException("analysis");
+            this.analysis = analysis;
+        }
+
+        public Measurement.AggregatedAnalysis AggregatedResults { get { return analysis; } }
     }
 }
