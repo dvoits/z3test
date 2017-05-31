@@ -39,7 +39,7 @@ namespace PerformanceTest.Management
         public IEnumerable<BenchmarkResultViewModel> Results
         {
             get { return results; }
-            set { results = value; NotifyPropertyChanged(); }
+            private set { results = value; NotifyPropertyChanged(); }
         }
         public string Title
         {

@@ -2,24 +2,26 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using System.Windows.Media;
 
 namespace PerformanceTest.Management
 {
     public class ExperimentPropertiesViewModel: INotifyPropertyChanged
     {
-        public static async Task<ExperimentPropertiesViewModel> CreateAsync(ExperimentManager manager, int id, IDomainResolver domainResolver)
+        public static async Task<ExperimentPropertiesViewModel> CreateAsync(ExperimentManager manager, int id, IDomainResolver domainResolver, IUIService ui)
         {
             if (manager == null) throw new ArgumentNullException("manager");
 
             Experiment exp = await manager.TryFindExperiment(id);
             if (exp == null) throw new KeyNotFoundException(string.Format("There is no experiment with id {0}.", id));
             ExperimentStatistics stat = await GetStatistics(manager, id, domainResolver.GetDomain(exp.Definition.DomainName ?? "Z3"));
-            return new ExperimentPropertiesViewModel(exp.Definition, exp.Status, stat);
+            return new ExperimentPropertiesViewModel(exp.Definition, exp.Status, stat, manager, ui);
         }
 
 
@@ -36,19 +38,55 @@ namespace PerformanceTest.Management
         private readonly ExperimentStatistics statistics;
         private readonly string[] MachineStatuses = { "OK", "Unable to retrieve status." };
 
+        private readonly ExperimentManager manager;
+        private readonly IUIService ui;
+
+        private string currentNote;
+
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public ExperimentPropertiesViewModel(ExperimentDefinition def, ExperimentStatus status, ExperimentStatistics stat)
+        public ExperimentPropertiesViewModel(ExperimentDefinition def, ExperimentStatus status, ExperimentStatistics stat, ExperimentManager manager, IUIService ui)
         {
             if (def == null) throw new ArgumentNullException("def");
             if (status == null) throw new ArgumentNullException("status");
             if (stat == null) throw new ArgumentNullException("stat");
+            if (manager == null) throw new ArgumentNullException("manager");
+            if (ui == null) throw new ArgumentNullException("ui");
 
             this.id = status.ID;
             this.definition = def;
             this.status = status;
             this.statistics = stat;
+            this.manager = manager;
+            this.ui = ui;
+
+            currentNote = status.Note;
+            SubmitNote = new DelegateCommand(
+                _ => UpdateNote(),
+                _ => status.Note != currentNote);
         }
+
+        public bool NoteChanged
+        {
+            get { return status.Note != currentNote; }
+        }
+
+        public string Note
+        {
+            get { return currentNote; }
+            set
+            {
+                if (currentNote == value) return;
+                currentNote = value;
+                NotifyPropertyChanged("NoteChanged");
+                NotifyPropertyChanged();
+                SubmitNote.RaiseCanExecuteChanged();
+            }
+        }
+
+
+        public DelegateCommand SubmitNote { get; private set; }
+
         public DateTime SubmissionTime
         {
             get { return status.SubmissionTime; }
@@ -167,7 +205,7 @@ namespace PerformanceTest.Management
                 return definition.MemoryLimitMB;
             }
         }
-        public string Machine
+        public string WorkerInformation
         {
             get;
         }
@@ -178,14 +216,6 @@ namespace PerformanceTest.Management
         public string Creator
         {
             get { return status.Creator; }
-        }
-        public string Note
-        {
-            get { return status.Note; }
-            set
-            {
-                throw new NotImplementedException();
-            }
         }
         public string MachineStatus
         {
@@ -204,5 +234,29 @@ namespace PerformanceTest.Management
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
+
+        private async void UpdateNote()
+        {
+            try
+            {
+                await manager.UpdateNote(status.ID, currentNote);
+                status.Note = currentNote;
+                NotifyPropertyChanged("Note");
+                NotifyPropertyChanged("NoteChanged");
+                SubmitNote.RaiseCanExecuteChanged();
+
+                Trace.WriteLine("Note changed to '" + currentNote + "' for " + status.ID);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("Failed to update experiment note: " + ex.Message);
+                currentNote = status.Note;
+                NotifyPropertyChanged("Note");
+                NotifyPropertyChanged("NoteChanged");
+                SubmitNote.RaiseCanExecuteChanged();
+
+                ui.ShowError("Failed to update experiment note: " + ex.Message);
+            }
+        }
     }
 }

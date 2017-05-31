@@ -51,7 +51,7 @@ namespace PerformanceTest.Management
         }
         public Task<ExperimentPropertiesViewModel> BuildProperties(int id)
         {
-            return ExperimentPropertiesViewModel.CreateAsync(manager, id, domainResolver);
+            return ExperimentPropertiesViewModel.CreateAsync(manager, id, domainResolver, uiService);
         }
     }
 
