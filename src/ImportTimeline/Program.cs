@@ -47,8 +47,8 @@ namespace ImportTimeline
 
 
             Console.WriteLine("\nUploading results table...");
-            //var experimentInfo = UploadResults(pathToData, submitted, storage);
-            var experimentInfo = AddStatisticsNoUpload(pathToData, experiments, storage);
+            var experimentInfo = UploadResults(pathToData, experiments, storage);
+            //var experimentInfo = AddStatisticsNoUpload(pathToData, experiments, storage);
 
             Console.Write("\nUploading experiments table from... ");
             UploadExperiments(experiments, experimentInfo, storage);
@@ -96,7 +96,7 @@ namespace ImportTimeline
             return experiments;
         }
 
-        static IDictionary<int, TimeSpan> UploadResults(string pathToData, Dictionary<int, DateTime> submitted, AzureExperimentStorage storage)
+        static IDictionary<int, TimeSpan> UploadResults(string pathToData, ConcurrentDictionary<int, ExperimentEntity> experiments, AzureExperimentStorage storage)
         {
             List<int> missingExperiments = new List<int>();
             ConcurrentDictionary<string, string> uploadedOutputs = new ConcurrentDictionary<string, string>();
@@ -109,32 +109,30 @@ namespace ImportTimeline
                 {
                     int expId = int.Parse(Path.GetFileNameWithoutExtension(file));
 
-                    DateTime submittedTime;
-                    if (submitted == null)
-                    {
-                        submittedTime = DateTime.Now;
-                    }
-                    else if (!submitted.TryGetValue(expId, out submittedTime))
+                    ExperimentEntity e;
+                    if (!experiments.TryGetValue(expId, out e))
                     {
                         missingExperiments.Add(expId);
                         Console.WriteLine("Experiment {0} has results but not metadata");
                         return 0;
                     }
+
                     Console.WriteLine("Uploading results for {0}... ", expId);
 
                     CSVData table = new CSVData(file, (uint)expId);
                     var buildResults =
                         table.Rows
                         .OrderBy(r => r.Filename)
-                        .Select(r => PrepareBenchmarkResult(r, storage, uploadedOutputs, expId, submittedTime));
+                        .Select(r => PrepareBenchmarkResult(r, storage, uploadedOutputs, expId, e.Submitted));
 
                     var entities = await Task.WhenAll(buildResults);
                     Console.WriteLine("All outputs uploaded for {0}", expId);
 
-                    var totalRunTime = TimeSpan.FromTicks(entities.Sum(r => r.TotalProcessorTime.Ticks));
-                    experimentInfo[expId] = totalRunTime;
+                    var totalRunTime = table.Rows.Sum(r => r.Runtime);
+                    e.TotalRuntime = totalRunTime;
+                    e.CompletedBenchmarks = e.TotalBenchmarks = table.Rows.Count;
 
-                    //await storage.PutExperimentResultsWithBlobnames(expId, entities, false);
+                    await storage.PutExperimentResultsWithBlobnames(expId, entities, false);
                     Console.WriteLine("Done uploading results for {0}.", expId);
                     return 0;
                 });
