@@ -134,6 +134,14 @@ namespace PerformanceTest.Management
         {
             get { return result.ExitCode; }
         }
+        public double WallClockTime
+        {
+            get { return result.WallClockTime.TotalSeconds; }
+        }
+        public double TotalProcessorTime
+        {
+            get { return result.TotalProcessorTime.TotalSeconds; }
+        }
         public ResultStatus Status
         {
             get { return status; }
