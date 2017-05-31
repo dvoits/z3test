@@ -15,6 +15,8 @@ using System.Diagnostics;
 using AzurePerformanceTest;
 using Microsoft.WindowsAzure.Storage.Queue;
 using System.Runtime.Serialization.Formatters.Binary;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace AzureWorker
 {
@@ -181,15 +183,17 @@ namespace AzureWorker
 
         private static string CombineBlobPath(string benchmarkDirectory, string benchmarkCategory)
         {
-            var benchmarksDirClear = benchmarkDirectory.TrimEnd('/');
-            var benchmarksCatClear = benchmarkCategory.TrimStart('/');
             string benchmarksPath;
-            if (string.IsNullOrEmpty(benchmarksDirClear))
+            if (string.IsNullOrEmpty(benchmarkDirectory))
                 benchmarksPath = benchmarkCategory;
-            else if (string.IsNullOrEmpty(benchmarksCatClear))
-                benchmarksPath = benchmarkCategory;
+            else if (string.IsNullOrEmpty(benchmarkCategory))
+                benchmarksPath = benchmarkDirectory;
             else
+            {
+                var benchmarksDirClear = benchmarkDirectory.TrimEnd('/');
+                var benchmarksCatClear = benchmarkCategory.TrimStart('/');
                 benchmarksPath = benchmarksDirClear + "/" + benchmarksCatClear;
+            }
             return benchmarksPath;
         }
 
@@ -249,9 +253,11 @@ namespace AzureWorker
             if (File.Exists(normalFilePath))
             {
                 normal = double.Parse(File.ReadAllText(normalFilePath));
+                Trace.WriteLine(string.Format("Normal found within file: {0}", normal));
             }
             else
             {
+                Trace.WriteLine("Normal not found within file, computing.");
                 normal = await RunReference(new string[] { });
             }
 
@@ -279,53 +285,68 @@ namespace AzureWorker
         {
             string workerDir = Environment.GetEnvironmentVariable(SharedDirEnvVariableName);
             string normalFilePath = Path.Combine(workerDir, PerformanceCoefficientFileName);
+            //var random = new Random();
+            //System.Threading.Thread.Sleep(random.Next(60000));
             var storage = new AzureExperimentStorage(Settings.Default.StorageAccountName, Settings.Default.StorageAccountKey);
-            var exp = await storage.GetReferenceExperiment();
-            if (exp == null)
+            //var exp = await storage.GetReferenceExperiment();
+            //if (exp == null)
+            //{
+            //    //no reference experiment
+            //    File.WriteAllText(normalFilePath, "1.0");
+            //    return 1.0;
+            //}
+            string refJsonPath = Path.Combine(workerDir, "reference.json");
+            if (!File.Exists(refJsonPath))
             {
                 //no reference experiment
+                Trace.WriteLine("Reference.json not found, assuming normal 1.0.");
                 File.WriteAllText(normalFilePath, "1.0");
                 return 1.0;
             }
+            var exp = ParseReferenceExperiment(refJsonPath);
 
-            var benchmarkStorage = CreateBenchmarkStorage(exp.Definition.BenchmarkContainerUri);
-            var benchPath = CombineBlobPath(exp.Definition.BenchmarkDirectory, exp.Definition.Category);
-            var pathForBenchmarks = Path.Combine(workerDir, "refbench");
-            Directory.CreateDirectory(pathForBenchmarks);
-            var execBlob = storage.GetExecutableReference(exp.Definition.Executable);
-            var execPath = Path.Combine(workerDir, exp.Definition.Executable);
-            await execBlob.DownloadToFileAsync(execPath, FileMode.Create);
+            //var benchmarkStorage = CreateBenchmarkStorage(exp.Definition.BenchmarkContainerUri);
+            //var benchPath = CombineBlobPath(exp.Definition.BenchmarkDirectory, exp.Definition.Category);
+            var pathForBenchmarks = Path.Combine(workerDir, "refdata", "data");
+            //Directory.CreateDirectory(pathForBenchmarks);
+            //var execBlob = storage.GetExecutableReference(exp.Definition.Executable);
+            var execPath = Path.Combine(workerDir, "refdata", exp.Definition.Executable);
+            //await execBlob.DownloadToFileAsync(execPath, FileMode.Create);
 
-            BlobContinuationToken continuationToken = null;
-            BlobResultSegment resultSegment = null;
+            //BlobContinuationToken continuationToken = null;
+            //BlobResultSegment resultSegment = null;
 
-            List<Task> dlTasks = new List<Task>();
-            int no = 0;
-            do
-            {
-                resultSegment = await benchmarkStorage.ListBlobsSegmentedAsync(benchPath, continuationToken);
-                foreach (CloudBlockBlob blob in resultSegment.Results)
-                {
-                    dlTasks.Add(blob.DownloadToFileAsync(Path.Combine(pathForBenchmarks, no.ToString() + ".test"), FileMode.Create));
-                    ++no;
-                }
+            //List<Task> dlTasks = new List<Task>();
+            //int no = 0;
+            //do
+            //{
+            //    resultSegment = await benchmarkStorage.ListBlobsSegmentedAsync(benchPath, continuationToken);
+            //    foreach (CloudBlockBlob blob in resultSegment.Results)
+            //    {
+            //        dlTasks.Add(blob.DownloadToFileAsync(Path.Combine(pathForBenchmarks, no.ToString() + ".test"), FileMode.Create));
+            //        ++no;
+            //    }
 
-                continuationToken = resultSegment.ContinuationToken;
-            }
-            while (continuationToken != null);
+            //    continuationToken = resultSegment.ContinuationToken;
+            //}
+            //while (continuationToken != null);
+            //await Task.WhenAll(dlTasks);
             
             Domain domain = new Z3Domain(); // todo: take custom domain name from `args`
-            BenchmarkResult[] results = new BenchmarkResult[no];
-            for (int i = 0; i < no; ++i)
+            string[] benchmarks = Directory.EnumerateFiles(pathForBenchmarks).Select(fn => Path.Combine(pathForBenchmarks, fn)).ToArray();
+            Trace.WriteLine(string.Format("Found {0} benchmarks in folder {1}", benchmarks.Length, pathForBenchmarks));
+            BenchmarkResult[] results = new BenchmarkResult[benchmarks.Length];
+            for (int i = 0; i < benchmarks.Length; ++i)
             {
+                Trace.WriteLine(string.Format("Procssing reference file {0}", benchmarks[i]));
                 results[i] = LocalExperimentRunner.RunBenchmark(
                     -1,
                     execPath,
                     exp.Definition.Parameters,
                     "ref",
-                    Path.Combine(pathForBenchmarks, i.ToString() + ".test"),
+                    benchmarks[i],
                     exp.Repetitions,
-                    exp.Definition.ExperimentTimeout,
+                    exp.Definition.BenchmarkTimeout,
                     exp.Definition.MemoryLimitMB,
                     null,
                     null,
@@ -350,6 +371,24 @@ namespace AzureWorker
                 return new AzureBenchmarkStorage(uri);
         }
 
-        
+        private static ReferenceExperiment ParseReferenceExperiment(string filename)
+        {
+            string content = File.ReadAllText(filename);
+            JsonSerializerSettings settings = new JsonSerializerSettings();
+            settings.ContractResolver = new PrivatePropertiesResolver();
+            ReferenceExperiment reference = JsonConvert.DeserializeObject<ReferenceExperiment>(content, settings);
+            return reference;
+        }
+
+        internal class PrivatePropertiesResolver : DefaultContractResolver
+        {
+            protected override JsonProperty CreateProperty(System.Reflection.MemberInfo member, MemberSerialization memberSerialization)
+            {
+                JsonProperty prop = base.CreateProperty(member, memberSerialization);
+                prop.Writable = true;
+                return prop;
+            }
+        }
+
     }
 }

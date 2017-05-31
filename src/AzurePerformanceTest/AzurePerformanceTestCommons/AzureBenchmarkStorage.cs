@@ -63,6 +63,39 @@ namespace AzurePerformanceTest
             return await inputsContainer.ListBlobsSegmentedAsync(prefix, true, BlobListingDetails.All, null, currentToken, null, null);
         }
 
+        public async Task<BlobResultSegment> ListBlobsSegmentedAsync(string directory, string category, BlobContinuationToken currentToken = null)
+        {
+            string prefix = CombineBlobPath(directory, category);
+            return await ListBlobsSegmentedAsync(prefix, currentToken);
+        }
+
+        public IEnumerable<IListBlobItem> ListBlobs(string prefix = "")
+        {
+            return inputsContainer.ListBlobs(prefix, true);
+        }
+
+        public IEnumerable<IListBlobItem> ListBlobs(string directory, string category)
+        {
+            string prefix = CombineBlobPath(directory, category);
+            return ListBlobs(prefix);
+        }
+
+        private static string CombineBlobPath(string part1, string part2)
+        {
+            string benchmarksPath;
+            if (string.IsNullOrEmpty(part1))
+                benchmarksPath = part2;
+            else if (string.IsNullOrEmpty(part2))
+                benchmarksPath = part1;
+            else
+            {
+                var benchmarksDirClear = part1.TrimEnd('/');
+                var benchmarksCatClear = part2.TrimStart('/');
+                benchmarksPath = benchmarksDirClear + "/" + benchmarksCatClear;
+            }
+            return benchmarksPath;
+        }
+
         public string GetBlobSASUri(CloudBlob blob)
         {
             if (this.signature != null)
