@@ -142,6 +142,8 @@ namespace PerformanceTest
         public int BenchmarksQueued { get { return BenchmarksTotal - BenchmarksDone; } }
 
         public TimeSpan TotalRuntime { get; private set; }
+
+        public string WorkerInformation { get; private set; }
     }
 
 

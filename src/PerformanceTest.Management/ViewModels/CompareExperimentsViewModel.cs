@@ -8,25 +8,28 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.IO;
 using Measurement;
+using System.Diagnostics;
 
 namespace PerformanceTest.Management
 {
-    public class CompareExperimentsViewModel: INotifyPropertyChanged
+    public class CompareExperimentsViewModel : INotifyPropertyChanged
     {
-        private IEnumerable<BenchmarkResult> allResults1, allResults2;
-        private IEnumerable<ExperimentComparingResultsViewModel> experiments, allResults;
+        private BenchmarkResult[] allResults1, allResults2;
+        private ExperimentComparingResultsViewModel[] experiments, allResults;
         private readonly int id1, id2;
         private readonly ExperimentManager manager;
-        private readonly IUIService message;
+        private readonly IUIService uiService;
         private bool checkIgnorePostfix, checkIgnoreCategory, checkIgnorePrefix;
         private string extension1, extension2, category1, category2;//, sharedDirectory1, sharedDirectory2;
+
         public event PropertyChangedEventHandler PropertyChanged;
+
         public CompareExperimentsViewModel(int id1, int id2, ExperimentManager manager, IUIService message)
         {
             if (manager == null) throw new ArgumentNullException("manager");
             if (message == null) throw new ArgumentNullException("message");
             this.manager = manager;
-            this.message = message;
+            this.uiService = message;
             this.id1 = id1;
             this.id2 = id2;
             this.checkIgnoreCategory = false;
@@ -34,7 +37,7 @@ namespace PerformanceTest.Management
             this.checkIgnorePrefix = false;
             this.extension1 = ".smt2";
             this.extension2 = ".smt2";
-            
+
             //this.category1 = "smtlib-latest";
             //this.category2 = "smtlib-latest";
             //this.sharedDirectory1 = "";
@@ -42,7 +45,7 @@ namespace PerformanceTest.Management
 
             RefreshItemsAsync();
         }
-        private string modifyFilename (string filename, int n)
+        private string modifyFilename(string filename, int n)
         {
             //EnableExtensions PostFix and prefix
             string result = filename;
@@ -78,30 +81,74 @@ namespace PerformanceTest.Management
             }
             return result;
         }
-        private void UpdateCompared () //на случай другого сравнения
+        private void UpdateCompared() //на случай другого сравнения
         {
-            List<ExperimentComparingResultsViewModel> resItems = new List<ExperimentComparingResultsViewModel>();
-            if (allResults1 != null && allResults2 != null) resItems = allResults1.Join(allResults2, elem => modifyFilename(elem.BenchmarkFileName, 1), elem2 => modifyFilename(elem2.BenchmarkFileName, 2),
-                (f, s) => new ExperimentComparingResultsViewModel(f.BenchmarkFileName, f, s, manager, message)).ToList();
-            CompareItems = allResults = resItems.OrderByDescending(q => Math.Abs(q.Diff));
+            Stopwatch sw = Stopwatch.StartNew();
+
+            var join = InnerJoinOrderedResults(allResults1, allResults2, manager, uiService);
+            Array.Sort<ExperimentComparingResultsViewModel>(join, (a, b) =>
+            {
+                double diff = Math.Abs(a.Diff) - Math.Abs(b.Diff);
+                if (diff < 0) return 1;
+                else if (diff > 0) return -1;
+                else return 0;
+            });
+            CompareItems = allResults = join;
+
+            sw.Stop();
+            Trace.WriteLine("inner join: " + sw.ElapsedMilliseconds);
         }
-        private async void getResults1()
+
+        private static ExperimentComparingResultsViewModel[] InnerJoinOrderedResults(BenchmarkResult[] r1, BenchmarkResult[] r2, ExperimentManager manager, IUIService uiService)
         {
-            allResults1 = await manager.GetResults(id1);
+            int n1 = r1.Length;
+            int n2 = r2.Length;
+            if (n2 < n1)
+            {
+                BenchmarkResult[] r = r1; r1 = r2; r2 = r;
+                int n = n1; n1 = n2; n2 = n;
+            }
+
+            Debug.Assert(n1 <= n2);
+            var join = new ExperimentComparingResultsViewModel[Math.Min(n1, n2)];
+            int i = 0;
+            for (int i1 = 0, i2 = 0; i1 < n1 && i2 < n2;)
+            {
+                int cmp = string.Compare(r1[i1].BenchmarkFileName, r2[i2].BenchmarkFileName);
+                if (cmp == 0)
+                {
+                    join[i++] = new ExperimentComparingResultsViewModel(r1[i1].BenchmarkFileName, r1[i1], r2[i2], manager, uiService);
+                    i1++; i2++;
+                }
+                else if (cmp < 0) // ~ r1 < r2
+                {
+                    i1++;
+                }
+                else // ~ r1 > r2
+                {
+                    i2++;
+                }
+            }
+            var join2 = new ExperimentComparingResultsViewModel[i];
+            for (; --i >= 0;)
+            {
+                join2[i] = join[i];
+            }
+            return join2;
         }
-        private async void getResults2()
-        {
-            allResults2 = await manager.GetResults(id2);
-        }
+
         private void RefreshItemsAsync()
         {
             allResults = CompareItems = null;
-            Task t1 = Task.Factory.StartNew(getResults1);
-            Task t2 = Task.Factory.StartNew(getResults2);
-            Task.WaitAll(t1, t2);
+
+            var t1 = Task.Run(() => manager.GetResults(id1));
+            var t2 = Task.Run(() => manager.GetResults(id2));
+            allResults1 = t1.Result;
+            allResults2 = t2.Result;
+
             UpdateCompared();
         }
-        public IEnumerable<ExperimentComparingResultsViewModel> CompareItems
+        public ExperimentComparingResultsViewModel[] CompareItems
         {
             get { return experiments; }
             private set { experiments = value; NotifyPropertyChanged(); }
@@ -173,10 +220,10 @@ namespace PerformanceTest.Management
             else if (code == 3) CompareItems = allResults.Where(e => e.Sat1 > 0 || e.Sat2 > 0).ToArray(); //one sat
             else if (code == 4) CompareItems = allResults.Where(e => e.Unsat1 > 0 || e.Unsat2 > 0).ToArray(); //one unsat
             else if (code == 5) CompareItems = allResults.Where(e => e.Unknown1 > 0 || e.Unknown2 > 0).ToArray(); //one unknown
-            else if (code == 6) CompareItems = allResults.Where(e => e.Status1 == ResultStatus.Bug || e.Status2 == ResultStatus.Bug).ToArray(); 
-            else if (code == 7) CompareItems = allResults.Where(e => e.Status1 == ResultStatus.Error || e.Status2 == ResultStatus.Error).ToArray(); 
-            else if (code == 8) CompareItems = allResults.Where(e => e.Status1 == ResultStatus.Timeout || e.Status2 == ResultStatus.Timeout).ToArray(); 
-            else if (code == 9) CompareItems = allResults.Where(e => e.Status1 == ResultStatus.OutOfMemory || e.Status2 == ResultStatus.OutOfMemory).ToArray(); 
+            else if (code == 6) CompareItems = allResults.Where(e => e.Status1 == ResultStatus.Bug || e.Status2 == ResultStatus.Bug).ToArray();
+            else if (code == 7) CompareItems = allResults.Where(e => e.Status1 == ResultStatus.Error || e.Status2 == ResultStatus.Error).ToArray();
+            else if (code == 8) CompareItems = allResults.Where(e => e.Status1 == ResultStatus.Timeout || e.Status2 == ResultStatus.Timeout).ToArray();
+            else if (code == 9) CompareItems = allResults.Where(e => e.Status1 == ResultStatus.OutOfMemory || e.Status2 == ResultStatus.OutOfMemory).ToArray();
             else if (code == 10) CompareItems = allResults.Where(e => e.Sat1 > 0 && e.Sat2 == 0 || e.Sat1 == 0 && e.Sat2 > 0).ToArray(); //sat star
             else if (code == 11) CompareItems = allResults.Where(e => e.Unsat1 > 0 && e.Unsat2 == 0 || e.Unsat1 == 0 && e.Unsat2 > 0).ToArray(); //unsat star
             else if (code == 12) CompareItems = allResults.Where(e => e.Sat1 > 0 && e.Sat2 == 0 || e.Sat1 == 0 && e.Sat2 > 0 || e.Unsat1 > 0 && e.Unsat2 == 0 || e.Unsat1 == 0 && e.Unsat2 > 0).ToArray(); //ok star
@@ -190,7 +237,7 @@ namespace PerformanceTest.Management
                 var resVm = allResults;
                 if (filter == "sat")
                 {
-                    resVm = resVm.Where(e => Regex.IsMatch(e.Filename, "/^(?:(?!unsat).)*$/")).ToList();
+                    resVm = resVm.Where(e => Regex.IsMatch(e.Filename, "/^(?:(?!unsat).)*$/")).ToArray();
                 }
                 CompareItems = resVm.Where(e => e.Filename.Contains(filter)).ToArray();
             }

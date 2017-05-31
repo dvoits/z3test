@@ -115,8 +115,8 @@
             <Label Content="T/O" Grid.Row="0" Grid.Column="3"/>
             <Label Name="lblBug" Grid.Row="1" Grid.Column="0" HorizontalContentAlignment="Right" Foreground="{Binding BugForeground, Mode=OneWay}" Content="{Binding ProblemBug, Mode=OneWay, FallbackValue=0}"/>
             <Label Name="lblNonzero" Grid.Row="1" Grid.Column="1" HorizontalContentAlignment="Right" Foreground="{Binding NonZeroForeground, Mode=OneWay}" Content="{Binding ProblemNonZero, Mode=OneWay, FallbackValue=0}"/>
-            <Label Name="lblMemdout" Grid.Row="1" Grid.Column="2" HorizontalContentAlignment="Right" Foreground="{Binding TimeoutForeground, Mode=OneWay}" Content="{Binding ProblemTimeout, Mode=OneWay, FallbackValue=0}"/>
-            <Label Name="lblTimedout" Grid.Row="1" Grid.Column="3" HorizontalContentAlignment="Right" Foreground="{Binding MemoryoutForeground, Mode=OneWay}" Content="{Binding ProblemMemoryout, Mode=OneWay, FallbackValue=0}"/>
+            <Label Name="lblMemdout" Grid.Row="1" Grid.Column="2" HorizontalContentAlignment="Right" Foreground="{Binding MemoryoutForeground, Mode=OneWay}" Content="{Binding ProblemMemoryout, Mode=OneWay, FallbackValue=0}"/>
+            <Label Name="lblTimedout" Grid.Row="1" Grid.Column="3" HorizontalContentAlignment="Right" Foreground="{Binding TimeoutForeground, Mode=OneWay}" Content="{Binding ProblemTimeout, Mode=OneWay, FallbackValue=0}"/>
         </Grid>
 
         <TextBlock Text="Timeout:" Grid.Row="7" Grid.Column="0" />

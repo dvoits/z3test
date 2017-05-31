@@ -135,6 +135,8 @@ namespace PerformanceTest.Management
 
         public string Creator { get { return status.Creator; } }
 
+        public string WorkerInformation { get { return status.WorkerInformation; } }
+
         public int BenchmarksDone { get { return status.BenchmarksDone; } }
         public int BenchmarksTotal { get { return status.BenchmarksTotal; } }
         public int BenchmarksQueued { get { return status.BenchmarksQueued; } }
