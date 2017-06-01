@@ -474,14 +474,12 @@ namespace PerformanceTest.Management
         }
         private void Compare(object target, ExecutedRoutedEventArgs e)
         {
-            Mouse.OverrideCursor = Cursors.Wait;
             var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().ToArray();
             CompareExperiments dlg = new CompareExperiments();
             var vm = managerVm.BuildComparingResults(ids[0].ID, ids[1].ID, ids[0].Definition, ids[1].Definition);
             dlg.DataContext = vm;
             dlg.Owner = this;
             dlg.Show();
-            Mouse.OverrideCursor = null;
         }
         private void canShowScatterplot(object sender, CanExecuteRoutedEventArgs e)
         {

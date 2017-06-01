@@ -116,14 +116,22 @@ namespace PerformanceTest.Management
 
         private void RefreshItemsAsync()
         {
-            allResults = CompareItems = null;
+            var handle = uiService.StartIndicateLongOperation("Loading comparison table of 2 experiments...");
+            try
+            {
+                allResults = CompareItems = null;
 
-            var t1 = Task.Run(() => manager.GetResults(id1));
-            var t2 = Task.Run(() => manager.GetResults(id2));
-            allResults1 = t1.Result;
-            allResults2 = t2.Result;
+                var t1 = Task.Run(() => manager.GetResults(id1));
+                var t2 = Task.Run(() => manager.GetResults(id2));
+                allResults1 = t1.Result;
+                allResults2 = t2.Result;
 
-            UpdateCompared();
+                UpdateCompared();
+            }
+            finally
+            {
+                uiService.StopIndicateLongOperation(handle);
+            }
         }
         public ExperimentComparingResultsViewModel[] CompareItems
         {

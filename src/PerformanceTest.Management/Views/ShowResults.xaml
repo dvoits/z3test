@@ -46,7 +46,6 @@
                           EnableRowVirtualization="True" EnableColumnVirtualization="True"
                           ItemsSource="{Binding Results}" MouseDoubleClick="dataGrid_MouseDoubleClick">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Binding="{Binding Path=ID, Mode=OneWay}" Header="ID" />
                         <DataGridTextColumn Binding="{Binding Path=Filename, Mode=OneWay}" Header="Filename" Width="SizeToCells"/>
                         <DataGridTextColumn Binding="{Binding Path=ExitCode, Mode=OneWay}" Header="Exitcode" />
                         <DataGridTextColumn Binding="{Binding Path=Status, Mode=OneWay}" Header="Status"/>
