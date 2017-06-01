@@ -77,7 +77,7 @@ namespace PerformanceTest.Management
                 btnConnect.IsEnabled = false;
                 if (experimentsVm == null)
                 {
-                    int handle = uiService.StartIndicateLongOperation("Connecting...");
+                    var handle = uiService.StartIndicateLongOperation("Connecting...");
                     try
                     {                        
                         managerVm = Connect(connectionString.Text);
@@ -397,7 +397,7 @@ namespace PerformanceTest.Management
             var item = dataGrid.SelectedItem as ExperimentStatusViewModel;
             if (item == null) return;
 
-            int handle = uiService.StartIndicateLongOperation("Loading properties of the experiment...");
+            var handle = uiService.StartIndicateLongOperation("Loading properties of the experiment...");
             try
             {
                 var vm = await managerVm.BuildProperties(item.ID);
@@ -489,7 +489,7 @@ namespace PerformanceTest.Management
         }
         private void showScatterplot(object target, ExecutedRoutedEventArgs e)
         {
-            int handle = uiService.StartIndicateLongOperation("Building scatter plot...");
+            var handle = uiService.StartIndicateLongOperation("Building scatter plot...");
             try
             {
                 var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().ToArray();

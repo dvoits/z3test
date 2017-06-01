@@ -112,9 +112,12 @@ namespace AzurePerformanceTest
             return await storage.GetResults(id);
         }
 
-        public override Task<IEnumerable<ExperimentStatus>> GetStatus(IEnumerable<ExperimentID> ids)
+        public override async Task<IEnumerable<ExperimentStatus>> GetStatus(IEnumerable<ExperimentID> ids)
         {
-            throw new NotImplementedException();
+            // todo: can be done in a more efficient way
+            var req = ids.Select(id => storage.GetExperiment(id));
+            var exps = await Task.WhenAll(req);
+            return exps.Select(entity => ExperimentFromEntity(int.Parse(entity.RowKey), entity).Status);
         }
         public override async Task<ExperimentID> StartExperiment(ExperimentDefinition definition, string creator = null, string note = null)
         {

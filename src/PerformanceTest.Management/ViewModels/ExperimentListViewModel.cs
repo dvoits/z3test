@@ -62,7 +62,7 @@ namespace PerformanceTest.Management
         }
         private async void RefreshItemsAsync(string filter = null)
         {
-            int handle = ui.StartIndicateLongOperation("Loading table of experiments...");
+            var handle = ui.StartIndicateLongOperation("Loading table of experiments...");
             try
             {
                 Items = null;
