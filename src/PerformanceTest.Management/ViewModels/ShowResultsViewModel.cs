@@ -47,7 +47,11 @@ namespace PerformanceTest.Management
         public IEnumerable<BenchmarkResultViewModel> Results
         {
             get { return results; }
-            private set { results = value; NotifyPropertyChanged(); }
+            private set
+            {
+                results = value;
+                NotifyPropertyChanged();
+            }
         }
         public string Title
         {
@@ -88,10 +92,15 @@ namespace PerformanceTest.Management
                 }
                 if (code == 1)
                 {
-                    Results = allResults.Where(e => e.StdOut.Contains(filter) || e.StdErr.Contains(filter)).ToArray();
+                    Results = allResults.AsParallel().Where(e => compareStd(e, filter)).ToArray();
                 }
             }
             else Results = allResults;
+        }
+        private bool compareStd(BenchmarkResultViewModel result, string filter)
+        {
+            if (result.StdErr == "*** NO OUTPUT SAVED ***" && result.StdOut == "***NO OUTPUT SAVED ***") return false;
+            return result.StdOut.Contains(filter) || result.StdErr.Contains(filter);
         }
         public void FilterResultsByRuntime(int limit)
         {
@@ -130,7 +139,7 @@ namespace PerformanceTest.Management
         {
             get { return result.BenchmarkFileName; }
         }
-        public int Exitcode
+        public int ExitCode
         {
             get { return result.ExitCode; }
         }

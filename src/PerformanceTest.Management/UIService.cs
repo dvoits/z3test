@@ -14,7 +14,7 @@ namespace PerformanceTest.Management
     public interface IUIService
     {
         void ShowError(string error, string caption = null);
-
+        void ShowWarning(string warning, string caption = null);
         /// <summary>Prompts a user to select a folder.</summary>
         /// <returns>Returns a selected folder path or null, if the user has cancelled selection.</returns>
         string ChooseFolder(string initialFolder, string description = null);
@@ -37,7 +37,10 @@ namespace PerformanceTest.Management
             if (statusVm == null) throw new ArgumentNullException("statusVm");
             this.statusVm = statusVm;
         }
-
+        public void ShowWarning(string warning, string caption = null)
+        {
+            MessageBox.Show(warning, caption ?? "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
         public void ShowError(string error, string caption = null)
         {
             MessageBox.Show(error, caption ?? "Error", MessageBoxButton.OK, MessageBoxImage.Error);
