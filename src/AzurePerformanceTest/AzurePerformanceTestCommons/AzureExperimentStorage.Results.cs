@@ -17,107 +17,172 @@ namespace AzurePerformanceTest
 {
     public partial class AzureExperimentStorage
     {
-        private FileStorage cache;
+        //private FileStorage cache;
 
         private void InitializeCache()
         {
-            string appFolder = AppDomain.CurrentDomain.BaseDirectory;
-            try
-            {
-                cache = FileStorage.Open(Path.Combine(appFolder, "cache"));
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine("Failed to open local cache: " + ex.Message);
+        //    string appFolder = AppDomain.CurrentDomain.BaseDirectory;
+        //    try
+        //    {
+        //        cache = FileStorage.Open(Path.Combine(appFolder, "cache"));
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Trace.WriteLine("Failed to open local cache: " + ex.Message);
 
-                int i = 0;
-                while (true)
-                {
-                    try
-                    {
-                        FileStorage.Clear(appFolder);
-                        cache = FileStorage.Open(appFolder);
-                        return;
-                    }
-                    catch (Exception ex2)
-                    {
-                        Trace.WriteLine(String.Format("Failed to create new cache: {0}, attempt {1}", ex2.Message, ++i));
-                        if (i == 10) throw;
-                        Thread.Sleep(100);
-                    }
-                }
-            }
+        //        int i = 0;
+        //        while (true)
+        //        {
+        //            try
+        //            {
+        //                FileStorage.Clear(appFolder);
+        //                cache = FileStorage.Open(appFolder);
+        //                return;
+        //            }
+        //            catch (Exception ex2)
+        //            {
+        //                Trace.WriteLine(String.Format("Failed to create new cache: {0}, attempt {1}", ex2.Message, ++i));
+        //                if (i == 10) throw;
+        //                Thread.Sleep(100);
+        //            }
+        //        }
+        //    }
         }
 
         public void ClearCache()
         {
-            cache.Clear();
+            //cache.Clear();
         }
 
-        public async Task<BenchmarkResult[]> GetResults(ExperimentID experimentID)
+        public async Task<BenchmarkResult[]> GetResults(ExperimentID experimentId)
         {
-            if (!cache.HasResults(experimentID))
-            {
-                Trace.WriteLine(string.Format("Results for experiment {0} are missing in local cache, downloading from cloud...", experimentID));
-                string blobName = GetResultBlobName(experimentID);
-                var blob = resultsContainer.GetBlobReference(blobName);
-                try
-                {
-                    using (MemoryStream zipStream = new MemoryStream(4 << 20))
-                    {
-                        await blob.DownloadToStreamAsync(zipStream);
+            BenchmarkResult[] results;
 
-                        zipStream.Position = 0;
-                        using (ZipArchive zip = new ZipArchive(zipStream, ZipArchiveMode.Read))
+            string blobName = GetResultBlobName(experimentId);
+            var blob = resultsContainer.GetBlobReference(blobName);
+            try
+            {
+                using (MemoryStream zipStream = new MemoryStream(4 << 20))
+                {
+                    await blob.DownloadToStreamAsync(zipStream, 
+                        AccessCondition.GenerateEmptyCondition(),
+                        new Microsoft.WindowsAzure.Storage.Blob.BlobRequestOptions
                         {
-                            var entry = zip.GetEntry(GetResultsFileName(experimentID));
-                            using (var tableStream = entry.Open())
-                            using (var fileStream = File.Create(cache.IdToPath(experimentID)))
-                            {
-                                await tableStream.CopyToAsync(fileStream);
-                            }
+                             RetryPolicy = new Microsoft.WindowsAzure.Storage.RetryPolicies.ExponentialRetry(TimeSpan.FromMilliseconds(100), 10)
+                        }, null);
+
+                    zipStream.Position = 0;
+                    using (ZipArchive zip = new ZipArchive(zipStream, ZipArchiveMode.Read))
+                    {
+                        var entry = zip.GetEntry(GetResultsFileName(experimentId));
+                        using (var tableStream = entry.Open())
+                        {
+                            results = BenchmarkResultsStorage.LoadBenchmarks(experimentId, tableStream);
                         }
                     }
                 }
-                catch (StorageException ex)
+            }
+            catch (StorageException ex)
+            {
+                if (ex.RequestInformation.HttpStatusCode == 404) // Not found == no results
+                    return new BenchmarkResult[] { };
+                throw;
+            }
+
+            for (int i = 0; i < results.Length; i++)
+            {
+                var r = results[i];
+
+                Stream stdout = null;
+                if (r.StdOut != null && r.StdOut.Length > 0)
                 {
-                    if (ex.RequestInformation.HttpStatusCode == 404) // Not found == no results
-                    {
-                        return new BenchmarkResult[] { };
-                    }
+                    blobName = Utils.StreamToString(r.StdOut, false);
+                    stdout = new LazyBlobStream(outputContainer.GetBlobReference(blobName));
+                }
+
+                Stream stderr = null;
+                if (r.StdErr != null && r.StdErr.Length > 0)
+                {
+                    blobName = Utils.StreamToString(r.StdErr, false);
+                    stderr = new LazyBlobStream(outputContainer.GetBlobReference(blobName));
+                }
+
+                if (stdout != null || stderr != null)
+                {
+                    results[i] = new BenchmarkResult(r.ExitCode, r.BenchmarkFileName, r.WorkerInformation, r.AcquireTime, r.NormalizedRuntime, r.TotalProcessorTime, r.WallClockTime,
+                        r.PeakMemorySizeMB, r.Status, r.ExitCode,
+                        stdout == null ? r.StdOut : stdout,
+                        stderr == null ? r.StdErr : stderr,
+                        r.Properties);
                 }
             }
-            BenchmarkResult[] results =
-                cache.GetResults(experimentID)
-                .Select(r =>
-                {
-                    Stream stdout = null;
-                    if(r.StdOut != null && r.StdOut.Length > 0)
-                    {
-                        string blobName = Utils.StreamToString(r.StdOut, false);
-                        stdout = new LazyBlobStream(outputContainer.GetBlobReference(blobName));
-                    }
-
-                    Stream stderr = null;
-                    if (r.StdErr != null && r.StdErr.Length > 0)
-                    {
-                        string blobName = Utils.StreamToString(r.StdErr, false);
-                        stderr = new LazyBlobStream(outputContainer.GetBlobReference(blobName));
-                    }
-
-                    if (stdout != null || stderr != null)
-                    {
-                        return new BenchmarkResult(r.ExitCode, r.BenchmarkFileName, r.WorkerInformation, r.AcquireTime, r.NormalizedRuntime, r.TotalProcessorTime, r.WallClockTime,
-                            r.PeakMemorySizeMB, r.Status, r.ExitCode,
-                            stdout == null ? r.StdOut : stdout,
-                            stderr == null ? r.StdErr : stderr,
-                            r.Properties);
-                    }
-                    else return r;
-                })
-                .ToArray();
             return results;
         }
+
+        //public async Task<BenchmarkResult[]> GetResultsUsingCache(ExperimentID experimentID)
+        //{
+        //    if (!cache.HasResults(experimentID))
+        //    {
+        //        Trace.WriteLine(string.Format("Results for experiment {0} are missing in local cache, downloading from cloud...", experimentID));
+        //        string blobName = GetResultBlobName(experimentID);
+        //        var blob = resultsContainer.GetBlobReference(blobName);
+        //        try
+        //        {
+        //            using (MemoryStream zipStream = new MemoryStream(4 << 20))
+        //            {
+        //                await blob.DownloadToStreamAsync(zipStream);
+
+        //                zipStream.Position = 0;
+        //                using (ZipArchive zip = new ZipArchive(zipStream, ZipArchiveMode.Read))
+        //                {
+        //                    var entry = zip.GetEntry(GetResultsFileName(experimentID));
+        //                    using (var tableStream = entry.Open())
+        //                    using (var fileStream = File.Create(cache.IdToPath(experimentID)))
+        //                    {
+        //                        await tableStream.CopyToAsync(fileStream);
+        //                    }
+        //                }
+        //            }
+        //        }
+        //        catch (StorageException ex)
+        //        {
+        //            if (ex.RequestInformation.HttpStatusCode == 404) // Not found == no results
+        //            {
+        //                return new BenchmarkResult[] { };
+        //            }
+        //        }
+        //    }
+        //    BenchmarkResult[] results =
+        //        cache.GetResults(experimentID)
+        //        .Select(r =>
+        //        {
+        //            Stream stdout = null;
+        //            if(r.StdOut != null && r.StdOut.Length > 0)
+        //            {
+        //                string blobName = Utils.StreamToString(r.StdOut, false);
+        //                stdout = new LazyBlobStream(outputContainer.GetBlobReference(blobName));
+        //            }
+
+        //            Stream stderr = null;
+        //            if (r.StdErr != null && r.StdErr.Length > 0)
+        //            {
+        //                string blobName = Utils.StreamToString(r.StdErr, false);
+        //                stderr = new LazyBlobStream(outputContainer.GetBlobReference(blobName));
+        //            }
+
+        //            if (stdout != null || stderr != null)
+        //            {
+        //                return new BenchmarkResult(r.ExitCode, r.BenchmarkFileName, r.WorkerInformation, r.AcquireTime, r.NormalizedRuntime, r.TotalProcessorTime, r.WallClockTime,
+        //                    r.PeakMemorySizeMB, r.Status, r.ExitCode,
+        //                    stdout == null ? r.StdOut : stdout,
+        //                    stderr == null ? r.StdErr : stderr,
+        //                    r.Properties);
+        //            }
+        //            else return r;
+        //        })
+        //        .ToArray();
+        //    return results;
+        //}
 
         /// <summary>
         /// Puts the benchmark results of the given experiment to the storage.
