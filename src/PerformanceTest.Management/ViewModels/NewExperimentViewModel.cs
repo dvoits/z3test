@@ -32,6 +32,7 @@ namespace PerformanceTest.Management
             this.service = service;
 
             domain = "Z3";
+            benchmarkContainerUri = ExperimentDefinition.DefaultContainerUri;
             UseMostRecentExecutable = true;
 
             ChooseContainerCommand = new DelegateCommand(ChooseBenchmarkContainer);

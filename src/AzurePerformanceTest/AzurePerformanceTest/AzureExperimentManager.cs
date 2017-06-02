@@ -16,6 +16,10 @@ namespace AzurePerformanceTest
 {
     public class AzureExperimentManager : ExperimentManager
     {
+        public const string KeyBatchAccount = "BatchAccount";
+        public const string KeyBatchURL = "BatchURL";
+        public const string KeyBatchAccessKey = "BatchAccessKey";
+
         AzureExperimentStorage storage;
         BatchSharedKeyCredentials batchCreds;
 
@@ -42,6 +46,21 @@ namespace AzurePerformanceTest
             return new AzureExperimentManager(storage, batchUrl, batchAccName, batchKey);
         }
 
+        public static AzureExperimentManager Open(string connectionString)
+        {
+            ConnectionString cs = new ConnectionString(connectionString);
+            string batchAccountName = cs.TryGet(KeyBatchAccount);
+            string batchUrl = cs.TryGet(KeyBatchURL);
+            string batchAccessKey = cs.TryGet(KeyBatchAccessKey);
+
+            cs.RemoveKeys(KeyBatchAccount, KeyBatchURL, KeyBatchAccessKey);
+            string storageConnectionString = cs.ToString();
+
+            AzureExperimentStorage storage = new AzureExperimentStorage(storageConnectionString);
+            if (batchAccountName != null)
+                return Open(storage, batchUrl, batchAccountName, batchAccessKey);
+            return OpenWithoutStart(storage);
+        }
 
         /// <summary>
         /// Creates a manager in a mode when it can open data but not start new experiments.

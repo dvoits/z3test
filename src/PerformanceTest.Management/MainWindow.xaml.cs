@@ -21,6 +21,7 @@ namespace PerformanceTest.Management
     {
         private readonly IDomainResolver domainResolver;
         private readonly IUIService uiService;
+        private readonly RecentValuesStorage recentValues;
 
         private ExperimentManagerViewModel managerVm;
         private ExperimentListViewModel experimentsVm;
@@ -46,13 +47,13 @@ namespace PerformanceTest.Management
         {
             InitializeComponent();
 
-            connectionString.Text = Properties.Settings.Default.ConnectionString;
+            recentValues = new RecentValuesStorage();
+            connectionString.Text = recentValues.ConnectionString;
 
             domainResolver = new DomainResolver(new[] { Measurement.Domain.Default, new Measurement.Z3Domain() });
 
             ProgramStatusViewModel statusVm = new ProgramStatusViewModel();
             statusBar.DataContext = statusVm;
-
             uiService = new UIService(statusVm);
         }
 
@@ -65,7 +66,7 @@ namespace PerformanceTest.Management
             }
             else
             {
-                AzureExperimentManager azureManager = AzureExperimentManager.OpenWithoutStart(new AzureExperimentStorage(connectionString));
+                AzureExperimentManager azureManager = AzureExperimentManager.Open(connectionString);
                 return new AzureExperimentManagerViewModel(azureManager, uiService, domainResolver);
             }
         }
@@ -79,7 +80,7 @@ namespace PerformanceTest.Management
                 {
                     var handle = uiService.StartIndicateLongOperation("Connecting...");
                     try
-                    {                        
+                    {
                         managerVm = Connect(connectionString.Text);
                         experimentsVm = managerVm.BuildListView();
                     }
@@ -89,20 +90,20 @@ namespace PerformanceTest.Management
                     }
 
                     dataGrid.DataContext = experimentsVm;
-                    Properties.Settings.Default.ConnectionString = connectionString.Text;
-                    Properties.Settings.Default.Save();
-                    connectionString.IsEnabled = false;
+                    recentValues.ConnectionString = connectionString.Text;
+                    connectionString.IsReadOnly = true;
                     btnConnect.Content = "Disconnect";
                     btnConnect.IsEnabled = true;
                     btnNewJob.IsEnabled = true;
                     btnUpdate.IsEnabled = true;
                     menuNewJob.IsEnabled = true;
                     menuNewCatchAll.IsEnabled = true;
+                    btnEdit.Visibility = Visibility.Collapsed;
                 }
                 else // disconnect
                 {
                     experimentsVm = null;
-                    connectionString.IsEnabled = true;
+                    connectionString.IsReadOnly = false;
                     btnConnect.Content = "Connect";
                     btnConnect.IsEnabled = true;
                     dataGrid.DataContext = null;
@@ -110,12 +111,13 @@ namespace PerformanceTest.Management
                     btnUpdate.IsEnabled = false;
                     menuNewJob.IsEnabled = false;
                     menuNewCatchAll.IsEnabled = false;
+                    btnEdit.Visibility = Visibility.Visible;
                 }
             }
             catch (Exception ex)
             {
                 btnConnect.IsEnabled = true;
-                MessageBox.Show(ex.Message, "Failed to open experiments", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(ex.Message, "Failed to connect", MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
         }
@@ -587,6 +589,25 @@ namespace PerformanceTest.Management
         private void showDuplicates(object target, ExecutedRoutedEventArgs e)
         {
             throw new NotImplementedException();
+        }
+
+        private void btnEdit_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                ConnectionStringBuilderViewModel vm = new ConnectionStringBuilderViewModel(connectionString.Text);
+                ConnectionStringBuilder dlg = new ConnectionStringBuilder();
+                dlg.DataContext = vm;
+                dlg.Owner = this;
+                if (dlg.ShowDialog() == true)
+                {
+                    connectionString.Text = vm.ConnectionString;
+                }
+            }
+            catch (Exception ex)
+            {
+                uiService.ShowError(ex.Message, "Failed to edit the connection string");
+            }
         }
     }
 }

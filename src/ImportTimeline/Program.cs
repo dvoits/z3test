@@ -59,7 +59,7 @@ namespace ImportTimeline
         }
 
         private static void UploadExperiments(ConcurrentDictionary<int, ExperimentEntity> experiments, IDictionary<int, TimeSpan> experimentInfo, AzureExperimentStorage storage)
-        {            
+        {
             storage.ImportExperiments(experiments.Select(e => e.Value)).Wait();
         }
 
@@ -132,8 +132,15 @@ namespace ImportTimeline
                     e.TotalRuntime = totalRunTime;
                     e.CompletedBenchmarks = e.TotalBenchmarks = table.Rows.Count;
 
-                    await storage.PutExperimentResultsWithBlobnames(expId, entities, false);
-                    Console.WriteLine("Done uploading results for {0}.", expId);
+                    try
+                    {
+                        await storage.PutExperimentResultsWithBlobnames(expId, entities, false);
+                        Console.WriteLine("Done uploading results for {0}.", expId);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Failed to upload experiment results of {0}: {1}", expId, ex.ToString());
+                    }                    
                     return 0;
                 });
 
@@ -166,7 +173,7 @@ namespace ImportTimeline
                 ExperimentEntity e;
                 if (!experiments.TryGetValue(expId, out e))
                 {
-                    missingExperiments.Add(expId);                    
+                    missingExperiments.Add(expId);
                     Console.WriteLine("Experiment {0} has results but not metadata");
                     return;
                 }
@@ -174,7 +181,7 @@ namespace ImportTimeline
                 CSVData table = new CSVData(file, (uint)expId);
                 var totalRunTime = table.Rows.Sum(r => r.Runtime);
                 e.TotalRuntime = totalRunTime;
-                e.CompletedBenchmarks = e.TotalBenchmarks = table.Rows.Count;                
+                e.CompletedBenchmarks = e.TotalBenchmarks = table.Rows.Count;
                 Console.WriteLine("Done for {0}", expId);
             });
 

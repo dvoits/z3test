@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:PerformanceTest.Management"
         mc:Ignorable="d"
         Title="Performance Tests Management" 
-        Height="511" Width="716" MinHeight="600" MinWidth="450"
+        Height="511" Width="900" MinHeight="600" MinWidth="650"
         ResizeMode="CanResizeWithGrip"
         Icon="/PerformanceTest.Management;component/Images/servers.ico">
 
@@ -50,19 +50,24 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="120" MinWidth="120" />
                 <ColumnDefinition MinWidth="100" />
-                <ColumnDefinition Width="80" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
             <Label Content="Connection string:" HorizontalAlignment="Left" Name="label5" VerticalAlignment="Center" Grid.Row="0" Grid.Column="0"/>
             <TextBox HorizontalAlignment="Stretch" Name="connectionString" VerticalAlignment="Center" Grid.Row="0" Grid.Column="1" TabIndex="0"/>
-            <Button Content="Connect" HorizontalAlignment="Right" Name="btnConnect"  Click="btnConnect_Click" VerticalAlignment="Center" Width="75" Grid.Row="0" Grid.Column="3" TabIndex="5" />
+            <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal">
+                <Button Content="Connect" HorizontalAlignment="Right" Name="btnConnect"  Click="btnConnect_Click" Margin="5,0,0,0"
+                    VerticalAlignment="Center" Width="75" TabIndex="5" />
+                <Button Content="Edit..." HorizontalAlignment="Right" Name="btnEdit"  Click="btnEdit_Click" Margin="5,0,0,0"
+                    VerticalAlignment="Center" Width="75" Grid.Row="0" Grid.Column="4" TabIndex="6" />
+            </StackPanel>
 
             <Label Content="Operations:" HorizontalAlignment="Left" Name="label4" VerticalAlignment="Center" Grid.Row="1" Grid.Column="0"/>
             <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Stretch">
-                <Button Content="Update List" Margin="0,0,50,0" Height="23" HorizontalAlignment="Left" Name="btnUpdate" VerticalAlignment="Center" IsEnabled="false" Padding="5,0,5,0" TabIndex="6" Click="btnUpdate_Click" />
-                <Button Content="New Experiment" Margin="0,0,50,0" Height="23" HorizontalAlignment="Left" Name="btnNewJob" VerticalAlignment="Center" Padding="5,0,5,0" IsEnabled="false"  TabIndex="7" Click="btnNewJob_Click" />
+                <Button Content="Update List" Margin="0,0,50,0" Height="23" HorizontalAlignment="Left" Name="btnUpdate" VerticalAlignment="Center" IsEnabled="false" Padding="5,0,5,0" TabIndex="7" Click="btnUpdate_Click" />
+                <Button Content="New Experiment" Margin="0,0,50,0" Height="23" HorizontalAlignment="Left" Name="btnNewJob" VerticalAlignment="Center" Padding="5,0,5,0" IsEnabled="false"  TabIndex="8" Click="btnNewJob_Click" />
                 <Label Content="Filter:" Margin="0,0,10,0" Height="23" HorizontalAlignment="Stretch"/>
-                <TextBox MinWidth="240" x:Name="txtFilter" HorizontalAlignment="Stretch" VerticalAlignment="Center" TabIndex="8" KeyUp="filter_KeyUp" Height="18" Margin="0,10,0,5.333" />
+                <TextBox MinWidth="240" x:Name="txtFilter" HorizontalAlignment="Stretch" VerticalAlignment="Center" TabIndex="9" KeyUp="filter_KeyUp" Height="18" Margin="0,10,0,5.333" />
             </StackPanel>
 
         </Grid>

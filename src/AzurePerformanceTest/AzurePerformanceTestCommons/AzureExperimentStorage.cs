@@ -234,6 +234,11 @@ namespace AzurePerformanceTest
                 Trace.WriteLine(string.Format("Failed to upload text to the blob: {0}, blob name: {1}, response code: {2}", ex.Message, blobName, requestInfo.HttpStatusCode));
                 throw;
             }
+            catch(Exception exc)
+            {
+                Trace.WriteLine(string.Format("Failed to upload text to the blob: {0}, blob name: {1}", exc.Message, blobName));
+                throw;
+            }
         }
 
         public async Task PutSerializedExperimentResults(ExperimentID expId, IEnumerable<string> results)
