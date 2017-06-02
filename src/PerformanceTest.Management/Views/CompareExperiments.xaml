@@ -25,85 +25,87 @@
                       ItemsSource="{Binding CompareItems}">
                 <DataGrid.Columns>
                     <DataGridTextColumn Binding="{Binding Path=Filename, Mode=OneWay}" Header="Filename"/>
-                    <DataGridTextColumn Binding="{Binding Path=Runtime1, Mode=OneWay}">
+                    <DataGridTextColumn Binding="{Binding Path=Results1.NormalizedRuntime, Mode=OneWay}">
                         <DataGridTextColumn.HeaderTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding DataContext.Runtime1Title, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
                             </DataTemplate>
                         </DataGridTextColumn.HeaderTemplate>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Binding="{Binding Path=Runtime2, Mode=OneWay}" >
+                    <DataGridTextColumn Binding="{Binding Path=Results2.NormalizedRuntime, Mode=OneWay}" >
                         <DataGridTextColumn.HeaderTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding DataContext.Runtime2Title, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
                             </DataTemplate>
                         </DataGridTextColumn.HeaderTemplate>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Binding="{Binding Path=Status1, Mode=OneWay}" >
+                    <DataGridTextColumn Binding="{Binding Path=Results1.Status, Mode=OneWay}" >
                         <DataGridTextColumn.HeaderTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding DataContext.Status1Title, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
                             </DataTemplate>
                         </DataGridTextColumn.HeaderTemplate>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Binding="{Binding Path=Status2, Mode=OneWay}" >
+                    <DataGridTextColumn Binding="{Binding Path=Results2.Status, Mode=OneWay}" >
                         <DataGridTextColumn.HeaderTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding DataContext.Status2Title, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
                             </DataTemplate>
                         </DataGridTextColumn.HeaderTemplate>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Binding="{Binding Path=Exitcode1, Mode=OneWay}" >
+                    <DataGridTextColumn Binding="{Binding Path=Results1.ExitCode, Mode=OneWay}" >
                         <DataGridTextColumn.HeaderTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding DataContext.Exitcode1Title, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
                             </DataTemplate>
                         </DataGridTextColumn.HeaderTemplate>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Binding="{Binding Path=Exitcode2, Mode=OneWay}" >
+                    <DataGridTextColumn Binding="{Binding Path=Results2.ExitCode, Mode=OneWay}" >
                         <DataGridTextColumn.HeaderTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding DataContext.Exitcode2Title, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
                             </DataTemplate>
                         </DataGridTextColumn.HeaderTemplate>
                     </DataGridTextColumn>
+                    
                     <DataGridTextColumn Binding="{Binding Path=Diff, Mode=OneWay}" Header="Diff"/>
-                    <DataGridTextColumn Binding="{Binding Path=Sat1, Mode=OneWay}" >
+
+                    <DataGridTextColumn Binding="{Binding Path=Results1.Sat, Mode=OneWay}" >
                         <DataGridTextColumn.HeaderTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding DataContext.Sat1Title, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
                             </DataTemplate>
                         </DataGridTextColumn.HeaderTemplate>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Binding="{Binding Path=Unsat1, Mode=OneWay}" >
+                    <DataGridTextColumn Binding="{Binding Path=Results1.Unsat, Mode=OneWay}" >
                         <DataGridTextColumn.HeaderTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding DataContext.Unsat1Title, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
                             </DataTemplate>
                         </DataGridTextColumn.HeaderTemplate>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Binding="{Binding Path=Unknown1, Mode=OneWay}" >
+                    <DataGridTextColumn Binding="{Binding Path=Results1.Unknown, Mode=OneWay}" >
                         <DataGridTextColumn.HeaderTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding DataContext.Unknown1Title, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
                             </DataTemplate>
                         </DataGridTextColumn.HeaderTemplate>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Binding="{Binding Path=Sat2, Mode=OneWay}" >
+                    <DataGridTextColumn Binding="{Binding Path=Results2.Sat, Mode=OneWay}" >
                         <DataGridTextColumn.HeaderTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding DataContext.Sat2Title, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
                             </DataTemplate>
                         </DataGridTextColumn.HeaderTemplate>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Binding="{Binding Path=Unsat2, Mode=OneWay}" >
+                    <DataGridTextColumn Binding="{Binding Path=Results2.Unsat, Mode=OneWay}" >
                         <DataGridTextColumn.HeaderTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding DataContext.Unsat2Title, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
                             </DataTemplate>
                         </DataGridTextColumn.HeaderTemplate>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Binding="{Binding Path=Unknown2, Mode=OneWay}" >
+                    <DataGridTextColumn Binding="{Binding Path=Results2.Unknown, Mode=OneWay}" >
                         <DataGridTextColumn.HeaderTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding DataContext.Unknown2Title, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>

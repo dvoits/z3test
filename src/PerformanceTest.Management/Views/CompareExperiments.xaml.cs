@@ -14,15 +14,20 @@ using System.Windows.Shapes;
 
 namespace PerformanceTest.Management
 {
-    /// <summary>
-    /// Interaction logic for CompareExperiments.xaml
-    /// </summary>
     public partial class CompareExperiments : Window
     {
         public static RoutedCommand CopyFilenameCommand = new RoutedCommand();
+
+        private IUIService uiService;
+
         public CompareExperiments()
         {
             InitializeComponent();
+        }
+
+        public void SetUIService(IUIService uiService)
+        {
+            this.uiService = uiService;
         }
 
         private void canCopyFilename(object sender, CanExecuteRoutedEventArgs e)
@@ -31,29 +36,35 @@ namespace PerformanceTest.Management
         }
         private void CopyFilename(object target, ExecutedRoutedEventArgs e)
         {
-            ExperimentComparingResultsViewModel elem = (ExperimentComparingResultsViewModel)dataGrid.SelectedItem;
+            CompareBenchmarksViewModel elem = (CompareBenchmarksViewModel)dataGrid.SelectedItem;
             Clipboard.SetText(elem.Filename);
         }
-        private void dataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private async void dataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            if (dataGrid.SelectedItems.Count != 1)
+            if (dataGrid.SelectedItems.Count != 1 || uiService == null)
                 return;
-     
-            Mouse.OverrideCursor = Cursors.Wait;
 
-            ExperimentComparingResultsViewModel elem = (ExperimentComparingResultsViewModel)dataGrid.SelectedItem;
-            ShowOutputViewModel vm = null;
-            int inx = dataGrid.CurrentCell.Column.DisplayIndex;
-            if (inx == 1 || inx == 3 || inx == 5 || inx >= 8 && inx <= 10 || inx == 14)
-                vm = new ShowOutputViewModel(elem.ID1, elem.Filename, elem.StdOut1, elem.StdErr1);
-            else
-                vm = new ShowOutputViewModel(elem.ID2, elem.Filename, elem.StdOut2, elem.StdErr2);
-            ShowOutput w = new ShowOutput();
-            w.DataContext = vm;
-            w.Owner = this;
 
-            w.Show();
-            Mouse.OverrideCursor = null;
+            var handle = uiService.StartIndicateLongOperation("Loading output for the benchmark...");
+            try
+            {
+                ShowOutput w = new ShowOutput();
+                w.Owner = this;
+                w.Show();
+
+                CompareBenchmarksViewModel elem = (CompareBenchmarksViewModel)dataGrid.SelectedItem;
+                int inx = dataGrid.CurrentCell.Column.DisplayIndex;
+                BenchmarkResultViewModel result = (inx == 1 || inx == 3 || inx == 5 || inx >= 8 && inx <= 10 || inx == 14) ? elem.Results1 : elem.Results2;
+
+                string stdout = await result.GetStdOutAsync(true);
+                string stderr = await result.GetStdErrAsync(true);
+                ShowOutputViewModel vm = new ShowOutputViewModel(result.ID, elem.Filename, stdout, stderr);
+                w.DataContext = vm;
+            }
+            finally
+            {
+                uiService.StopIndicateLongOperation(handle);
+            }
         }
         private void RadioButton_Click(object sender, RoutedEventArgs e)
         {

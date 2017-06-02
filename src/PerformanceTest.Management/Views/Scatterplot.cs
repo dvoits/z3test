@@ -195,19 +195,19 @@ namespace PerformanceTest.Management
                 {
                     foreach(var item in vm.CompareItems)
                     {
-                        double x = item.Runtime1;
-                        double y = item.Runtime2;
+                        double x = item.Results1.NormalizedRuntime;
+                        double y = item.Results2.NormalizedRuntime;
 
                         if (x < axisMinimum) x = axisMinimum;
                         if (y < axisMinimum) y = axisMinimum;
 
-                        ResultStatus rc1 = item.Status1;
-                        ResultStatus rc2 = item.Status2;
-                        int res1 = item.Sat1 + item.Unsat1;
-                        int res2 = item.Sat2 + item.Unsat2;
+                        ResultStatus rc1 = item.Results1.Status;
+                        ResultStatus rc2 = item.Results2.Status;
+                        int res1 = item.Results1.Sat + item.Results1.Unsat;
+                        int res2 = item.Results2.Sat + item.Results2.Unsat;
 
-                        if ((!ckSAT.Checked && (item.Sat1 > 0 || item.Sat2 > 0)) ||
-                             (!ckUNSAT.Checked && (item.Unsat1 > 0 || item.Unsat2 > 0)) ||
+                        if ((!ckSAT.Checked && (item.Results1.Sat > 0 || item.Results2.Sat > 0)) ||
+                             (!ckUNSAT.Checked && (item.Results1.Unsat > 0 || item.Results2.Unsat > 0)) ||
                              (!ckUNKNOWN.Checked && ((rc1 == ResultStatus.Success && res1 == 0) || (rc2 == ResultStatus.Success && res2 == 0))) ||
                              (!ckBUG.Checked && (rc1 == ResultStatus.Bug || rc2 == ResultStatus.Bug)) ||
                              (!ckERROR.Checked && (rc1 == ResultStatus.Error || rc2 == ResultStatus.Error)) ||
@@ -247,11 +247,11 @@ namespace PerformanceTest.Management
                         }
                         else
                         {
-                            if ((item.Sat1 < item.Sat2 && item.Unsat1 == item.Unsat2) ||
-                               (item.Sat1 == item.Sat2 && item.Unsat1 < item.Unsat2))
+                            if ((item.Results1.Sat < item.Results2.Sat && item.Results1.Unsat == item.Results2.Unsat) ||
+                               (item.Results1.Sat == item.Results2.Sat && item.Results1.Unsat < item.Results2.Unsat))
                                 chart.Series[4].Points.AddXY(x, y);
-                            else if ((item.Sat1 > item.Sat2 && item.Unsat1 == item.Unsat2) ||
-                                (item.Sat1 == item.Sat2 && item.Unsat1 > item.Unsat2))
+                            else if ((item.Results1.Sat > item.Results2.Sat && item.Results1.Unsat == item.Results2.Unsat) ||
+                                (item.Results1.Sat == item.Results2.Sat && item.Results1.Unsat > item.Results2.Unsat))
                                 chart.Series[5].Points.AddXY(x, y);
                             else
                                 chart.Series[3].Points.AddXY(x, y);
