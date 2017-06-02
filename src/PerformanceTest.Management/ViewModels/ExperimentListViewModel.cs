@@ -97,7 +97,7 @@ namespace PerformanceTest.Management
         private readonly ExperimentStatus status;
         private readonly ExperimentDefinition definition; 
         private readonly ExperimentManager manager;
-        private readonly IUIService message;
+        private readonly IUIService uiService;
 
         private bool flag;
         private string note;
@@ -114,7 +114,7 @@ namespace PerformanceTest.Management
             this.flag = status.Flag;
             this.note = status.Note;
             this.manager = manager;
-            this.message = message;
+            this.uiService = message;
         }
 
         public ExperimentDefinition Definition { get { return definition; } }
@@ -169,10 +169,9 @@ namespace PerformanceTest.Management
             }
             catch (Exception ex)
             {
-                Trace.WriteLine("Failed to update experiment note: " + ex.Message);
                 note = status.Note;
                 NotifyPropertyChanged("Note");
-                message.ShowError("Failed to update experiment note: " + ex.Message);
+                uiService.ShowError(ex, "Failed to update experiment note");
             }
         }
         private async void UpdateStatusFlag()
@@ -185,10 +184,9 @@ namespace PerformanceTest.Management
             }
             catch (Exception ex)
             {
-                Trace.WriteLine("Failed to update experiment status flag: " + ex.Message);
                 flag = status.Flag;
                 NotifyPropertyChanged("Note");
-                message.ShowError("Failed to update experiment status flag: " + ex.Message);
+                uiService.ShowError(ex, "Failed to update experiment status flag");
             }
         }
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")

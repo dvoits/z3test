@@ -157,7 +157,7 @@ namespace PerformanceTest.Management
             if (e.Key == Key.Enter)
             {
                 var vm = DataContext as ShowResultsViewModel;
-                vm.FilterResultsByText(txtFilename.Text, 0); 
+                vm.FilterResultsByText(txtFilename.Text, 0);
                 radioFNTEXT.IsChecked = true;
             }
         }
@@ -190,21 +190,24 @@ namespace PerformanceTest.Management
                 radioOutputContains.IsChecked = true;
             }
         }
-        private void dataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private async void dataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (dataGrid.SelectedItems.Count != 1)
                 return;
 
-            Mouse.OverrideCursor = Cursors.Wait;
+            try
+            {
+                BenchmarkResultViewModel vm = (BenchmarkResultViewModel)dataGrid.SelectedItem;
+                ShowOutput w = new ShowOutput();
+                w.Owner = this;
+                w.Show();
 
-            BenchmarkResultViewModel elem = (BenchmarkResultViewModel)dataGrid.SelectedItem;
-            ShowOutputViewModel vm = new ShowOutputViewModel(elem.ID, elem.Filename, elem.StdOut, elem.StdErr);
-            ShowOutput w = new ShowOutput();
-            w.DataContext = vm;
-            w.Owner = this;
-
-            w.Show();
-            Mouse.OverrideCursor = null;
+                w.DataContext = await vm.GetOutputViewModel();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Failed to load output");
+            }
         }
     }
 }

@@ -57,21 +57,24 @@ namespace PerformanceTest.Management
             uiService = new UIService(statusVm);
         }
 
-        private ExperimentManagerViewModel Connect(string connectionString)
+        private Task<ExperimentManagerViewModel> ConnectAsync(string connectionString)
         {
-            if (Directory.Exists(connectionString))
+            return Task.Run(() => // run in thread pool
             {
-                LocalExperimentManager manager = LocalExperimentManager.OpenExperiments(connectionString, domainResolver);
-                return new LocalExperimentManagerViewModel(manager, uiService, domainResolver);
-            }
-            else
-            {
-                AzureExperimentManager azureManager = AzureExperimentManager.Open(connectionString);
-                return new AzureExperimentManagerViewModel(azureManager, uiService, domainResolver);
-            }
+                if (Directory.Exists(connectionString))
+                {
+                    LocalExperimentManager manager = LocalExperimentManager.OpenExperiments(connectionString, domainResolver);
+                    return new LocalExperimentManagerViewModel(manager, uiService, domainResolver) as ExperimentManagerViewModel;
+                }
+                else
+                {
+                    AzureExperimentManager azureManager = AzureExperimentManager.Open(connectionString);
+                    return new AzureExperimentManagerViewModel(azureManager, uiService, domainResolver) as ExperimentManagerViewModel;
+                }
+            });
         }
 
-        private void btnConnect_Click(object sender, RoutedEventArgs e)
+        private async void btnConnect_Click(object sender, RoutedEventArgs e)
         {
             try
             {
@@ -81,7 +84,7 @@ namespace PerformanceTest.Management
                     var handle = uiService.StartIndicateLongOperation("Connecting...");
                     try
                     {
-                        managerVm = Connect(connectionString.Text);
+                        managerVm = await ConnectAsync(connectionString.Text);
                         experimentsVm = managerVm.BuildListView();
                     }
                     finally
@@ -117,7 +120,7 @@ namespace PerformanceTest.Management
             catch (Exception ex)
             {
                 btnConnect.IsEnabled = true;
-                MessageBox.Show(ex.Message, "Failed to connect", MessageBoxButton.OK, MessageBoxImage.Error);
+                uiService.ShowError(ex, "Failed to connect");
             }
 
         }
@@ -386,7 +389,7 @@ namespace PerformanceTest.Management
                 }
                 catch (Exception ex)
                 {
-                    uiService.ShowError(ex.Message, "Failed to submit an experiment");
+                    uiService.ShowError(ex, "Failed to submit an experiment");
                 }
             }
         }
@@ -606,7 +609,7 @@ namespace PerformanceTest.Management
             }
             catch (Exception ex)
             {
-                uiService.ShowError(ex.Message, "Failed to edit the connection string");
+                uiService.ShowError(ex, "Failed to edit the connection string");
             }
         }
     }

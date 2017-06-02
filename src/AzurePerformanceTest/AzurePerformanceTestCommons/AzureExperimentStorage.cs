@@ -488,12 +488,18 @@ namespace AzurePerformanceTest
         {
             get
             {
-                throw new NotSupportedException();
+                if (stream == null) return 0;
+                else return stream.Position;
             }
 
             set
             {
-                throw new NotSupportedException();
+                if (value != 0) throw new NotSupportedException("Cannot seek to custom position");
+                if (stream != null)
+                {
+                    stream.Dispose();
+                    stream = null;
+                }
             }
         }
 

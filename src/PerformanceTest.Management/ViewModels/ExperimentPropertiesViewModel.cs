@@ -76,7 +76,7 @@ namespace PerformanceTest.Management
                     }
                     catch (Exception ex)
                     {
-                        ui.ShowError(ex.Message, "Failed to synchronize experiment properties");
+                        ui.ShowError(ex, "Failed to synchronize experiment properties");
                     }
                     finally
                     {
@@ -309,12 +309,11 @@ namespace PerformanceTest.Management
             }
             catch (Exception ex)
             {
-                Trace.WriteLine("Failed to update experiment note: " + ex.Message);
                 currentNote = status.Note;
                 NotifyPropertyChanged("Note");
                 NotifyPropertyChanged("NoteChanged");
 
-                ui.ShowError("Failed to update experiment note: " + ex.Message);
+                ui.ShowError(ex, "Failed to update experiment note");
             }
         }
     }

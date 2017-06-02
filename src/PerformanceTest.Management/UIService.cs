@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -14,6 +15,8 @@ namespace PerformanceTest.Management
     public interface IUIService
     {
         void ShowError(string error, string caption = null);
+        void ShowError(Exception ex, string caption = null);
+
         void ShowWarning(string warning, string caption = null);
         /// <summary>Prompts a user to select a folder.</summary>
         /// <returns>Returns a selected folder path or null, if the user has cancelled selection.</returns>
@@ -41,9 +44,44 @@ namespace PerformanceTest.Management
         {
             MessageBox.Show(warning, caption ?? "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
+
+
+
+        public void ShowError(Exception ex, string caption = null)
+        {
+            Trace.WriteLine("Application error: " + ex);
+
+            string message = GetMessage(ex);
+            ShowError(message, caption);
+        }
+
         public void ShowError(string error, string caption = null)
         {
             MessageBox.Show(error, caption ?? "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
+        private string GetMessage(Exception ex)
+        {
+            string message;
+            if (ex == null) message = "An error has occured.";
+            else
+            {
+                AggregateException aex = ex as AggregateException;
+                List<string> lines = new List<string>();
+                if (aex != null && aex.InnerExceptions.Count > 1)
+                {
+                    foreach (var x in aex.InnerExceptions)
+                    {
+                        lines.Add(GetMessage(x));
+                    }
+                    message = String.Join(Environment.NewLine, lines.Distinct());
+                }
+                else
+                {
+                    message = ex.Message;
+                }
+            }
+            return message;
         }
 
         public string ChooseFolder(string initialFolder, string description = null)

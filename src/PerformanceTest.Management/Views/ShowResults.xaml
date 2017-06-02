@@ -6,6 +6,9 @@
         xmlns:local="clr-namespace:PerformanceTest.Management"
         mc:Ignorable="d"
         Title="{Binding Title}" Height="518" Width="877" WindowStartupLocation="CenterOwner">
+    <Window.Resources>
+        <local:InverseBooleanConverter x:Key="inverseBool" />
+    </Window.Resources>
     <Grid>
         <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,0,0" Name="gridOuter">
             <Grid.RowDefinitions>
@@ -91,7 +94,7 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <StackPanel Grid.Row="0" Orientation="Horizontal">
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" IsEnabled="{Binding IsFiltering, Converter={StaticResource inverseBool}}">
                         <RadioButton Name="radioAll" GroupName="Option" Padding="5,0,5,0" Click="RadioButton_Click" IsChecked="True" VerticalAlignment="Center">All</RadioButton>
                         <RadioButton Name="radioSAT" GroupName="Option" Padding="5,0,5,0" Click="RadioButton_Click" VerticalAlignment="Center">SAT</RadioButton>
                         <RadioButton Name="radioUNSAT" GroupName="Option" Padding="5,0,5,0" Click="RadioButton_Click" VerticalAlignment="Center">UNSAT</RadioButton>
@@ -101,7 +104,7 @@
                         <RadioButton Name="radioMemouts" GroupName="Option" Padding="5,0,5,0" Click="RadioButton_Click" VerticalAlignment="Center">MEMORY</RadioButton>
                         <RadioButton Name="radioTimeouts" GroupName="Option" Padding="5,0,5,0" Click="RadioButton_Click" VerticalAlignment="Center">TIMEOUT</RadioButton>
                     </StackPanel>
-                    <StackPanel Grid.Row="1" Orientation="Horizontal">
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" IsEnabled="{Binding IsFiltering, Converter={StaticResource inverseBool}}">
                         <RadioButton Name="radioOver" GroupName="Option" Padding="5,0,5,0" Click="RadioButton_Click" VerticalAlignment="Center">Overperformed</RadioButton>
                         <RadioButton Name="radioUnder" GroupName="Option" Padding="5,0,5,0" Click="RadioButton_Click" VerticalAlignment="Center">Underperformed</RadioButton>
                         <RadioButton Name="radioMoreThan" GroupName="Option" Padding="5,0,5,0" Click="RadioButton_Click" VerticalAlignment="Center">More than:</RadioButton>
@@ -110,7 +113,7 @@
                         <RadioButton Name="radioOutputContains" GroupName="Option" Padding="5,0,5,0" Click="RadioButton_Click" VerticalAlignment="Center">Output contains:</RadioButton>
                         <TextBox Name="txtOutputMatch" Width="194" Height="20" VerticalAlignment="Center" HorizontalContentAlignment="Left" KeyUp="txtOutputMatch_KeyUp" Text="text" />
                     </StackPanel>
-                    <StackPanel Grid.Row="2" Orientation="Horizontal">
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" IsEnabled="{Binding IsFiltering, Converter={StaticResource inverseBool}}">
                         <Label Content="Filename contains: " VerticalAlignment="Center" />
                         <RadioButton Name="radioFNSAT" GroupName="Option" Padding="5,0,5,0" Click="RadioButton_Click" VerticalAlignment="Center">"sat"</RadioButton>
                         <RadioButton Name="radioFNUNSAT" GroupName="Option" Padding="5,0,5,0" Click="RadioButton_Click" VerticalAlignment="Center">"unsat"</RadioButton>
