@@ -46,7 +46,7 @@ namespace ImportTimeline
             Console.WriteLine("{0} experiments found.", experiments.Count);
 
 
-            Console.WriteLine("\nUploading results table...");
+            Console.WriteLine("\nUploading results tables...");
             var experimentInfo = UploadResults(pathToData, experiments, storage);
             //var experimentInfo = AddStatisticsNoUpload(pathToData, experiments, storage);
 
@@ -84,7 +84,7 @@ namespace ImportTimeline
                 exp.MemoryLimitMB = metadata.Memoryout / 1024.0 / 1024.0;
 
                 exp.Flag = false;
-                exp.Creator = "";
+                exp.Creator = "Imported from Nightly data";
                 exp.ExperimentTimeout = 0;
                 exp.GroupName = "";
 
@@ -108,6 +108,7 @@ namespace ImportTimeline
                 .Select(async file =>
                 {
                     int expId = int.Parse(Path.GetFileNameWithoutExtension(file));
+                    Console.WriteLine("Uploading experiment {0}...", expId);
 
                     ExperimentEntity e;
                     if (!experiments.TryGetValue(expId, out e))
@@ -117,16 +118,12 @@ namespace ImportTimeline
                         return 0;
                     }
 
-                    Console.WriteLine("Uploading results for {0}... ", expId);
-
                     CSVData table = new CSVData(file, (uint)expId);
-                    var buildResults =
+                    var entities =
                         table.Rows
                         .OrderBy(r => r.Filename)
-                        .Select(r => PrepareBenchmarkResult(r, storage, uploadedOutputs, expId, e.Submitted));
-
-                    var entities = await Task.WhenAll(buildResults);
-                    Console.WriteLine("All outputs uploaded for {0}", expId);
+                        .Select(r => PrepareBenchmarkResult(r, storage, uploadedOutputs, expId, e.Submitted))
+                        .ToArray();
 
                     var totalRunTime = table.Rows.Sum(r => r.Runtime);
                     e.TotalRuntime = totalRunTime;
@@ -134,7 +131,7 @@ namespace ImportTimeline
 
                     try
                     {
-                        await storage.PutExperimentResultsWithBlobnames(expId, entities, false);
+                        await storage.PutAzureExperimentResults(expId, entities, false);
                         Console.WriteLine("Done uploading results for {0}.", expId);
                     }
                     catch (Exception ex)
@@ -198,11 +195,8 @@ namespace ImportTimeline
             return experimentInfo;
         }
 
-        private static async Task<PerformanceTest.BenchmarkResult> PrepareBenchmarkResult(CSVRow r, AzureExperimentStorage storage, ConcurrentDictionary<string, string> uploadedOutputs, int expId, DateTime submittedTime)
+        private static AzureBenchmarkResult PrepareBenchmarkResult(CSVRow r, AzureExperimentStorage storage, ConcurrentDictionary<string, string> uploadedOutputs, int expId, DateTime submittedTime)
         {
-            string stdout = await UploadOutput(r.StdOut, uploadedOutputs, storage, String.Format(@"imported\stdout\{0}\{1}", expId, r.Filename));
-            string stderr = await UploadOutput(r.StdErr, uploadedOutputs, storage, String.Format(@"imported\stderr\{0}\{1}", expId, r.Filename));
-
             var properties = new Dictionary<string, string>()
                             {
                                 { "SAT", r.SAT.ToString() },
@@ -214,13 +208,24 @@ namespace ImportTimeline
                             };
 
 
-            var b = new PerformanceTest.BenchmarkResult(
-                expId, r.Filename, "HPC Cluster node",
-                submittedTime, r.Runtime, TimeSpan.FromSeconds(r.Runtime), TimeSpan.FromSeconds(0), 0,
-                ResultCodeToStatus(r.ResultCode), r.ReturnValue,
-                GenerateStreamFromString(stdout),
-                GenerateStreamFromString(stderr),
-                properties);
+            var b = new AzureBenchmarkResult
+            {
+                AcquireTime = submittedTime,
+                BenchmarkFileName = r.Filename,
+                ExitCode = r.ReturnValue,
+                ExperimentID = expId,
+                NormalizedRuntime = r.Runtime,
+                PeakMemorySizeMB = -1,
+                Properties = properties,
+                Status = ResultCodeToStatus(r.ResultCode),
+                StdErr = r.StdErr,
+                StdOut = r.StdOut,
+                StdErrStoredExternally = false,
+                StdOutStoredExternally = false,
+                TotalProcessorTime = TimeSpan.FromSeconds(r.Runtime),
+                WallClockTime = TimeSpan.FromSeconds(r.Runtime),
+                WorkerInformation = ""
+            };
             return b;
         }
 
