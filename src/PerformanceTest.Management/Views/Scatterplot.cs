@@ -25,7 +25,7 @@ namespace PerformanceTest.Management
         private uint timeoutX = 1800;
         private uint timeoutY = 1800;
         private Dictionary<string, int> classes = new Dictionary<string, int>();
-        public Scatterplot(CompareExperimentsViewModel vm, ExperimentStatusViewModel exp1, ExperimentStatusViewModel exp2)
+        public Scatterplot(CompareExperimentsViewModel vm, ExperimentStatusViewModel exp1, ExperimentStatusViewModel exp2, double timeout1, double timeout2)
         {
             InitializeComponent();
             this.vm = vm;
@@ -35,8 +35,8 @@ namespace PerformanceTest.Management
             string category1 = experiment1.Category == null ? "" : experiment1.Category;
             string category2 = experiment2.Category == null ? "" : experiment2.Category;
             category = (category1 == category2) ? category1 : category1 + " -vs- " + category2;
-            //timeoutX =
-            //timeoutY =
+            timeoutX = (uint)timeout1;
+            timeoutY = (uint)timeout2;
         }
 
         private void setupChart()
@@ -46,6 +46,33 @@ namespace PerformanceTest.Management
 
             axisMaximum = timeoutX;
             if (timeoutY > axisMaximum) axisMaximum = timeoutY;
+            // Round max up to next order of magnitude.
+            {
+                uint orders = 0;
+                uint temp = axisMaximum;
+                while (temp > 0)
+                {
+                    temp = temp / 10;
+                    orders++;
+                }
+
+                uint newmax = 1;
+                for (uint i = 0; i < orders; i++)
+                    newmax *= 10;
+
+                if (newmax <= axisMaximum)
+                {
+                    // errorLine = ((newmax * 10) - newmax) / 2;
+                    axisMaximum *= 10;
+                }
+                else
+                {
+                    // errorLine = axisMaximum + ((newmax - axisMaximum) / 2);
+                    axisMaximum = newmax;
+                }
+
+                errorLine = axisMaximum;
+            }
 
             Title t = new Title(category, Docking.Top);
             t.Font = new Font(FontFamily.GenericSansSerif, 16.0f, FontStyle.Bold);
@@ -176,21 +203,17 @@ namespace PerformanceTest.Management
 
                         ResultStatus rc1 = item.Status1;
                         ResultStatus rc2 = item.Status2;
-                        int sat1 = item.Sat1;
-                        int unsat1 = item.Unsat1;
-                        int sat2 = item.Sat2;
-                        int unsat2 = item.Unsat2;
                         int res1 = item.Sat1 + item.Unsat1;
                         int res2 = item.Sat2 + item.Unsat2;
 
-                        if ((!ckSAT.Checked && (sat1 > 0 || sat2 > 0)) ||
-                             (!ckUNSAT.Checked && (unsat1 > 0 || unsat2 > 0)) ||
+                        if ((!ckSAT.Checked && (item.Sat1 > 0 || item.Sat2 > 0)) ||
+                             (!ckUNSAT.Checked && (item.Unsat1 > 0 || item.Unsat2 > 0)) ||
                              (!ckUNKNOWN.Checked && ((rc1 == ResultStatus.Success && res1 == 0) || (rc2 == ResultStatus.Success && res2 == 0))) ||
                              (!ckBUG.Checked && (rc1 == ResultStatus.Bug || rc2 == ResultStatus.Bug)) ||
                              (!ckERROR.Checked && (rc1 == ResultStatus.Error || rc2 == ResultStatus.Error)) ||
                              (!ckTIME.Checked && (rc1 == ResultStatus.Timeout || rc2 == ResultStatus.Timeout)) ||
                              (!ckMEMORY.Checked && (rc1 == ResultStatus.OutOfMemory || rc2 == ResultStatus.OutOfMemory)))
-                             return;
+                             continue;
 
                         if ((rc1 != ResultStatus.Success && rc1 != ResultStatus.Timeout) || (x != timeoutX && res1 == 0))
                             x = errorLine;
@@ -224,11 +247,11 @@ namespace PerformanceTest.Management
                         }
                         else
                         {
-                            if ((sat1 < sat2 && unsat1 == unsat2) ||
-                               (sat1 == sat2 && unsat1 < unsat2))
+                            if ((item.Sat1 < item.Sat2 && item.Unsat1 == item.Unsat2) ||
+                               (item.Sat1 == item.Sat2 && item.Unsat1 < item.Unsat2))
                                 chart.Series[4].Points.AddXY(x, y);
-                            else if ((sat1 > sat2 && unsat1 == unsat2) ||
-                                (sat1 == sat2 && unsat1 > unsat2))
+                            else if ((item.Sat1 > item.Sat2 && item.Unsat1 == item.Unsat2) ||
+                                (item.Sat1 == item.Sat2 && item.Unsat1 > item.Unsat2))
                                 chart.Series[5].Points.AddXY(x, y);
                             else
                                 chart.Series[3].Points.AddXY(x, y);

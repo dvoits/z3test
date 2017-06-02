@@ -494,7 +494,7 @@ namespace PerformanceTest.Management
             {
                 var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().ToArray();
                 var vm = managerVm.BuildComparingResults(ids[0].ID, ids[1].ID, ids[0].Definition, ids[1].Definition);
-                Scatterplot sp = new Scatterplot(vm, ids[0], ids[1]);
+                Scatterplot sp = new Scatterplot(vm, ids[0], ids[1], ids[0].Definition.BenchmarkTimeout.TotalSeconds, ids[1].Definition.BenchmarkTimeout.TotalSeconds);
                 sp.Show();
             }
             finally
