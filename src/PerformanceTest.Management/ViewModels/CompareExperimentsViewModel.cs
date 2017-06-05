@@ -240,14 +240,24 @@ namespace PerformanceTest.Management
 
             var param = new CheckboxParameters(checkIgnoreCategory, checkIgnorePrefix, checkIgnorePostfix, category1, category2, extension1, extension2, sharedDirectory1, sharedDirectory2);
             var join = InnerJoinOrderedResults(allResults1, allResults2, manager, param, uiService);
-            Array.Sort<CompareBenchmarksViewModel>(join, (a, b) =>
+            Array.Sort<CompareBenchmarksViewModel>(join, new VMComparer());
+            CompareItems = allResults = join;
+        }
+
+        private sealed class VMComparer : IComparer<CompareBenchmarksViewModel>
+        {
+            public int Compare(CompareBenchmarksViewModel x, CompareBenchmarksViewModel y)
             {
-                double diff = Math.Abs(a.Diff) - Math.Abs(b.Diff);
+                if (x == null)
+                    if (y == null) return 0;
+                    else return 1;
+                if (y == null) return -1;
+
+                double diff = Math.Abs(x.Diff) - Math.Abs(y.Diff);
                 if (diff < 0) return 1;
                 else if (diff > 0) return -1;
                 else return 0;
-            });
-            CompareItems = allResults = join;
+            }
         }
 
         private static CompareBenchmarksViewModel[] InnerJoinOrderedResults(BenchmarkResult[] r1, BenchmarkResult[] r2, ExperimentManager manager, CheckboxParameters param, IUIService uiService)

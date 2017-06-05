@@ -15,8 +15,9 @@ namespace PerformanceTest.Management
 {
     public partial class Scatterplot : Form
     {
-        private CompareExperimentsViewModel vm = null;
-        private ExperimentStatusViewModel experiment1, experiment2;
+        private readonly IUIService uiService;
+        private readonly CompareExperimentsViewModel vm;
+        private readonly ExperimentStatusViewModel experiment1, experiment2;
         private string category = "";
         private bool fancy = false;
         private double axisMinimum = 0.1;
@@ -25,21 +26,66 @@ namespace PerformanceTest.Management
         private uint timeoutX = 1800;
         private uint timeoutY = 1800;
         private Dictionary<string, int> classes = new Dictionary<string, int>();
-        public Scatterplot(CompareExperimentsViewModel vm, ExperimentStatusViewModel exp1, ExperimentStatusViewModel exp2, double timeout1, double timeout2)
+
+
+        public Scatterplot(CompareExperimentsViewModel vm, ExperimentStatusViewModel exp1, ExperimentStatusViewModel exp2, double timeout1, double timeout2, IUIService uiService)
         {
+            if (vm == null) throw new ArgumentNullException("vm");
+            if (exp1 == null) throw new ArgumentNullException("exp1");
+            if (exp2 == null) throw new ArgumentNullException("exp2");
+            if (uiService == null) throw new ArgumentNullException("uiService");
+
+            this.uiService = uiService;
+
             InitializeComponent();
             this.vm = vm;
             this.experiment1 = exp1;
             this.experiment2 = exp2;
-            this.Text = "Plot: " + exp1.ID.ToString() + " vs " + exp2.ID.ToString();
+            
             string category1 = experiment1.Category == null ? "" : experiment1.Category;
             string category2 = experiment2.Category == null ? "" : experiment2.Category;
             category = (category1 == category2) ? category1 : category1 + " -vs- " + category2;
             timeoutX = (uint)timeout1;
             timeoutY = (uint)timeout2;
+
+            UpdateStatus(true);
+
+
+            vm.PropertyChanged += (s, a) =>
+            {
+                if (a.PropertyName == "CompareItems")
+                {
+                    if (chart.Series.Count > 0)
+                    {
+                        RefreshChart();
+                    }
+                    else
+                    {
+                        SetupChart();
+                        RefreshChart();
+                    }
+                }
+            };
+
         }
 
-        private void setupChart()
+        private void UpdateStatus(bool isBusy)
+        {
+            if (isBusy)
+            {
+                this.Text = string.Format("Plot: {0} vs {1} (working...)", experiment1.ID, experiment2.ID);
+                Cursor = System.Windows.Forms.Cursors.WaitCursor;
+                gpOptions.Enabled = false;
+            }
+            else
+            {
+                this.Text = string.Format("Plot: {0} vs {1}", experiment1.ID, experiment2.ID);
+                Cursor = System.Windows.Forms.Cursors.Default;
+                gpOptions.Enabled = true;
+            }
+        }
+
+        private void SetupChart()
         {
             chart.Legends.Clear();
             chart.Titles.Clear();
@@ -184,16 +230,28 @@ namespace PerformanceTest.Management
                 newSeries.YAxisType = AxisType.Primary;
             }
         }
-        private void refreshChart()
+        private void RefreshChart()
         {
             double totalX = 0.0, totalY = 0.0;
             uint total = 0, y_faster = 0, y_slower = 0;
 
+            var handle = uiService.StartIndicateLongOperation("Displaying scatter plot...");
             try
             {
-                if (vm.CompareItems != null && vm.CompareItems.Count() > 0)
+                UpdateStatus(true);
+
+
+                bool cksat = ckSAT.Checked;
+                bool ckunsat = ckUNSAT.Checked;
+                bool ckunk = ckUNKNOWN.Checked;
+                bool ckbug = ckBUG.Checked;
+                bool ckerror = ckERROR.Checked;
+                bool cktime = ckTIME.Checked;
+                bool ckmemory = ckMEMORY.Checked;
+
+                if (vm.CompareItems != null && vm.CompareItems.Length > 0)
                 {
-                    foreach(var item in vm.CompareItems)
+                    foreach (var item in vm.CompareItems)
                     {
                         double x = item.Results1.NormalizedRuntime;
                         double y = item.Results2.NormalizedRuntime;
@@ -206,14 +264,14 @@ namespace PerformanceTest.Management
                         int res1 = item.Results1.Sat + item.Results1.Unsat;
                         int res2 = item.Results2.Sat + item.Results2.Unsat;
 
-                        if ((!ckSAT.Checked && (item.Results1.Sat > 0 || item.Results2.Sat > 0)) ||
-                             (!ckUNSAT.Checked && (item.Results1.Unsat > 0 || item.Results2.Unsat > 0)) ||
-                             (!ckUNKNOWN.Checked && ((rc1 == ResultStatus.Success && res1 == 0) || (rc2 == ResultStatus.Success && res2 == 0))) ||
-                             (!ckBUG.Checked && (rc1 == ResultStatus.Bug || rc2 == ResultStatus.Bug)) ||
-                             (!ckERROR.Checked && (rc1 == ResultStatus.Error || rc2 == ResultStatus.Error)) ||
-                             (!ckTIME.Checked && (rc1 == ResultStatus.Timeout || rc2 == ResultStatus.Timeout)) ||
-                             (!ckMEMORY.Checked && (rc1 == ResultStatus.OutOfMemory || rc2 == ResultStatus.OutOfMemory)))
-                             continue;
+                        if ((!cksat && (item.Results1.Sat > 0 || item.Results2.Sat > 0)) ||
+                             (!ckunsat && (item.Results1.Unsat > 0 || item.Results2.Unsat > 0)) ||
+                             (!ckunk && ((rc1 == ResultStatus.Success && res1 == 0) || (rc2 == ResultStatus.Success && res2 == 0))) ||
+                             (!ckbug && (rc1 == ResultStatus.Bug || rc2 == ResultStatus.Bug)) ||
+                             (!ckerror && (rc1 == ResultStatus.Error || rc2 == ResultStatus.Error)) ||
+                             (!cktime && (rc1 == ResultStatus.Timeout || rc2 == ResultStatus.Timeout)) ||
+                             (!ckmemory && (rc1 == ResultStatus.OutOfMemory || rc2 == ResultStatus.OutOfMemory)))
+                            continue;
 
                         if ((rc1 != ResultStatus.Success && rc1 != ResultStatus.Timeout) || (x != timeoutX && res1 == 0))
                             x = errorLine;
@@ -230,20 +288,22 @@ namespace PerformanceTest.Management
                         {
                             string name = item.Filename;
                             int inx = name.IndexOf('\\', name.IndexOf('\\') + 1);
-                            string c = (inx > 0) ? name.Substring(0, inx) : name;
+                            string c = inx > 0 ? name.Substring(0, inx) : name;
                             Series s;
+                            int k;
 
-                            if (classes.ContainsKey(c))
-                                s = chart.Series[classes[c]];
+                            if (classes.TryGetValue(c, out k))
+                                s = chart.Series[k];
                             else
                             {
                                 addSeries(c);
-                                classes.Add(c, chart.Series.Count - 1);
-                                s = chart.Series.Last();
+                                int l = chart.Series.Count - 1;
+                                classes.Add(c, l);
+                                s = chart.Series[l];
                             }
 
-                            s.Points.AddXY(x, y);
-                            s.Points.Last().ToolTip = name;
+                            int j = s.Points.AddXY(x, y);
+                            s.Points[j].ToolTip = name;
                         }
                         else
                         {
@@ -265,6 +325,8 @@ namespace PerformanceTest.Management
             finally
             {
                 chart.Update();
+                if(vm.CompareItems != null) UpdateStatus(false);
+                uiService.StopIndicateLongOperation(handle);
             }
 
             double avgSpeedup = totalX / totalY;
@@ -276,22 +338,18 @@ namespace PerformanceTest.Management
 
             lblTotal.Text = total.ToString();
             lblFaster.Text = y_faster.ToString();
-            lblSlower.Text = y_slower.ToString();
+            lblSlower.Text = y_slower.ToString();            
         }
         private void scatterTest_Load(object sender, EventArgs e)
         {
-            Mouse.OverrideCursor = System.Windows.Input.Cursors.Wait;
-            setupChart();
-            refreshChart();
-            Mouse.OverrideCursor = null;
+            SetupChart();
+            RefreshChart();
         }
         private void ckCheckedChanged(object sender, EventArgs e)
         {
-            Mouse.OverrideCursor = System.Windows.Input.Cursors.Wait;
             fancy = cbFancy.Checked;
-            setupChart();
-            refreshChart();
-            Mouse.OverrideCursor = null;
+            SetupChart();
+            RefreshChart();
         }
         private void addSpeedupLine(Chart chart, double f, Color c)
         {

@@ -188,6 +188,7 @@ namespace PerformanceTest.Management
                 stream.Position = 0;
                 StreamReader reader = new StreamReader(stream);
                 text = await reader.ReadToEndAsync();
+                text = System.Text.RegularExpressions.Regex.Unescape(text);
             }
 
             if (useDefaultIfMissing && String.IsNullOrEmpty(text))
