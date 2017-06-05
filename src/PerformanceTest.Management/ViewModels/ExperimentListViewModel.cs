@@ -48,12 +48,13 @@ namespace PerformanceTest.Management
             Items = items;
         }
 
-        public double GetRuntime(int id)
+        public Task<double> GetRuntimes(int[] ids)
         {
-            var res = manager.GetResults(id);
-            if (!res.IsCompleted)
-                return 0;
-            return res.Result.Sum(r => r.NormalizedRuntime);
+            return Task.Run(async () =>
+            {
+                var res = await manager.GetStatus(ids);
+                return res.Sum(r => r.TotalRuntime.TotalSeconds);
+            });
         }
 
         public void FindExperiments(string filter)

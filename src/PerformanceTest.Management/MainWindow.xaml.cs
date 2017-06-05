@@ -287,25 +287,33 @@ namespace PerformanceTest.Management
             e.CanExecute = dataGrid.SelectedItems.Count > 0;
         }
 
-        private void showTally(object target, ExecutedRoutedEventArgs e)
+        private async void showTally(object target, ExecutedRoutedEventArgs e)
         {
-            Mouse.OverrideCursor = Cursors.Wait;
-
-            double total = 0.0;
-            var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
-            var count = ids.Length;
-            for (var i = 0; i < count; i++)
+            try
             {
-                int id = ids[i];
-                total += experimentsVm.GetRuntime(id);
-            }
-            TimeSpan ts = TimeSpan.FromSeconds(total);
-            MessageBox.Show(this,
-                           "The total amount of runtime spent computing the selected results is " + ts.ToString() + ".", "Tally",
-                           MessageBoxButton.OK,
-                           MessageBoxImage.Information);
+                double total;
+                var handle = uiService.StartIndicateLongOperation("Computing run time for the selected experiments...");
+                var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
+                try
+                {
+                    total = await experimentsVm.GetRuntimes(ids);
+                }
+                finally
+                {
+                    uiService.StopIndicateLongOperation(handle);
 
-            Mouse.OverrideCursor = null;
+                }
+                TimeSpan ts = TimeSpan.FromSeconds(total);
+                MessageBox.Show(this,
+                               "The total amount of runtime spent computing the selected results is " + ts.ToString() + ".", "Tally",
+                               MessageBoxButton.OK,
+                               MessageBoxImage.Information);
+
+            }
+            catch (Exception ex)
+            {
+                uiService.ShowError(ex, "Failed to compute run time");
+            }
         }
 
         private void canCopy(object sender, CanExecuteRoutedEventArgs e)
@@ -612,6 +620,30 @@ namespace PerformanceTest.Management
             catch (Exception ex)
             {
                 uiService.ShowError(ex, "Failed to edit the connection string");
+            }
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            try
+            {
+                recentValues.ShowProgress = mnuOptProgress.IsChecked;
+            }
+            catch (Exception ex)
+            {
+                uiService.ShowError(ex, "Failed to save recent values");
+            }
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                mnuOptProgress.IsChecked = recentValues.ShowProgress;
+            }
+            catch (Exception ex)
+            {
+                uiService.ShowError(ex, "Failed to restore recent values");
             }
         }
     }

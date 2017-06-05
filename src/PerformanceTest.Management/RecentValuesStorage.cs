@@ -17,10 +17,29 @@ namespace PerformanceTest.Management
         {
         }
 
+        public bool ShowProgress
+        {
+            get { return ReadBool("ShowProgress"); }
+            set { WriteBool("ShowProgress", value); }
+        }
+
         public string ConnectionString
         {
             get { return ReadString("ConnectionString"); }
             set { WriteString("ConnectionString", value); }
+        }
+
+
+
+        private void WriteBool(string key, bool value)
+        {
+            Registry.SetValue(keyName, key, value ? 1 : 0, RegistryValueKind.DWord);
+        }
+
+        private bool ReadBool(string key)
+        {
+            var val = Registry.GetValue(keyName, key, 0);
+            return val is int && (int)val == 1;
         }
 
         private string ReadString(string key)
