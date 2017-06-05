@@ -62,6 +62,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="RecentValuesStorage.cs" />
+    <Compile Include="SaveData.cs" />
     <Compile Include="ViewModels\BenchmarkResultViewModel.cs" />
     <Compile Include="ViewModels\BrowseTreeViewModel.cs" />
     <Compile Include="ViewModels\ConnectionStringBuilderViewModel.cs" />

@@ -53,7 +53,26 @@ namespace PerformanceTest.Management
         {
             return ExperimentPropertiesViewModel.CreateAsync(manager, id, domainResolver, uiService);
         }
-
+        public void SaveMetaData (string filename, ExperimentStatusViewModel[] experiments)
+        {
+            SaveData.SaveMetaCSV(filename, experiments, manager, domainResolver, uiService);
+        }
+        public void SaveCSVData(string filename, ExperimentStatusViewModel[] experiments)
+        {
+            SaveData.SaveCSV(filename, experiments, manager, uiService);
+        }
+        public void SaveBinary(string filename, ExperimentStatusViewModel experiment)
+        {
+            SaveData.SaveBinary(filename, experiment, manager, uiService);
+        }
+        public void SaveMatrix(string filename, ExperimentStatusViewModel[] experiments)
+        {
+            SaveData.SaveMatrix(filename, experiments, manager, uiService);
+        }
+        public void SaveOutput(string selectedPath, ExperimentStatusViewModel experiment)
+        {
+            SaveData.SaveOutput(selectedPath, experiment, manager, uiService);
+        }
         public abstract Task<string[]> GetDirectories(string baseDirectory);
     }
 
