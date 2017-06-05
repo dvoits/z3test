@@ -53,6 +53,8 @@ namespace PerformanceTest.Management
         {
             return ExperimentPropertiesViewModel.CreateAsync(manager, id, domainResolver, uiService);
         }
+
+        public abstract string[] GetDirectories(string baseDirectory);
     }
 
     public class LocalExperimentManagerViewModel : ExperimentManagerViewModel
@@ -82,6 +84,11 @@ namespace PerformanceTest.Management
         public override string HandleMultileTargetFiles(string[] files, string mainFile)
         {
             return mainFile;
+        }
+
+        public override string[] GetDirectories(string baseDirectory)
+        {
+            throw new NotImplementedException();
         }
     }
 }

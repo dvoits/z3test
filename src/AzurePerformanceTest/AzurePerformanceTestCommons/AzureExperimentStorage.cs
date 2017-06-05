@@ -81,6 +81,7 @@ namespace AzurePerformanceTest
 
         public AzureBenchmarkStorage DefaultBenchmarkStorage { get; private set; }
 
+
         public IEnumerable<CloudBlockBlob> ListAzureWorkerBlobs()
         {
             return configContainer.ListBlobs().Select(listItem => listItem as CloudBlockBlob);

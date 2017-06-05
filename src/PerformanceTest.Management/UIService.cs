@@ -26,7 +26,7 @@ namespace PerformanceTest.Management
 
         string[] ChooseOptions(string title, string[] options, string[] selectedOptions);
 
-        string ChooseOption(string title, string[] options, string selectedOption);
+        string ChooseOption(string title, string[] options, string selectedOption, Func<string[], string[]> getSubOptions = null);
         long StartIndicateLongOperation(string status = null);
         void StopIndicateLongOperation(long handle);
     }
@@ -123,7 +123,7 @@ namespace PerformanceTest.Management
 
         public string[] ChooseOptions(string title, string[] options, string[] selectedOptions)
         {
-            var dlg = new ChooseOptionsWindow(options, selectedOptions);
+            var dlg = new ChooseOptionsWindow(options, selectedOptions, this);
             dlg.Title = title;
             if (dlg.ShowDialog() == true)
             {
@@ -132,9 +132,9 @@ namespace PerformanceTest.Management
             return null;
         }
 
-        public string ChooseOption(string title, string[] options, string selectedOption)
+        public string ChooseOption(string title, string[] options, string selectedOption, Func<string[], string[]> getSubOptions = null)
         {
-            var dlg = new ChooseOptionsWindow(options, selectedOption);
+            var dlg = new ChooseOptionsWindow(options, selectedOption, this, getSubOptions);
             dlg.Title = title;
             if (dlg.ShowDialog() == true)
             {

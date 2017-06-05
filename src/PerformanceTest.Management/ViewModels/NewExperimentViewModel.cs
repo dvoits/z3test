@@ -35,7 +35,7 @@ namespace PerformanceTest.Management
             benchmarkContainerUri = ExperimentDefinition.DefaultContainerUri;
             UseMostRecentExecutable = true;
 
-            ChooseContainerCommand = new DelegateCommand(ChooseBenchmarkContainer);
+            ChooseDirectoryCommand = new DelegateCommand(ChooseDirectory);
             ChooseCategoriesCommand = new DelegateCommand(ChooseCategories);
             ChooseExecutableCommand = new DelegateCommand(ChooseExecutable);
         }
@@ -148,7 +148,7 @@ namespace PerformanceTest.Management
         }
 
 
-        public ICommand ChooseContainerCommand
+        public ICommand ChooseDirectoryCommand
         {
             get; private set;
         }
@@ -195,13 +195,23 @@ namespace PerformanceTest.Management
             UseMostRecentExecutable = false;
         }
 
-        private void ChooseBenchmarkContainer()
+        private void ChooseDirectory()
         {
-            string folder = service.ChooseFolder(BenchmarkLibrary, manager.BenchmarkLibraryDescription);
-            if (folder != null)
+            string[] directories = manager.GetDirectories("");
+
+            var selected = service.ChooseOption("Choose directory", directories, null, (selection) =>
             {
-                BenchmarkLibrary = folder;
+                return manager.GetDirectories(string.Join("/", selection));
+            });
+            if (selected != null)
+            {
+                BenchmarkLibrary = selected;
             }
+            //string folder = service.ChooseFolder(BenchmarkLibrary, manager.BenchmarkLibraryDescription);
+            //if (folder != null)
+            //{
+            //    BenchmarkLibrary = folder;
+            //}
         }
 
         private void ChooseCategories()
@@ -209,7 +219,7 @@ namespace PerformanceTest.Management
             string[] allCategories = manager.GetAvailableCategories(BenchmarkLibrary);
             string[] selected = Categories == null ? new string[0] : Categories.Split(',').Select(s => s.Trim()).ToArray();
 
-            selected = service.ChooseOptions("Choose Categories", allCategories, selected);
+            selected = service.ChooseOptions("Choose categories", allCategories, selected);
             if (selected != null)
             {
                 Categories = String.Join(",", selected);

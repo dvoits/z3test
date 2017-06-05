@@ -70,6 +70,8 @@ namespace AzurePerformanceTest
             return new AzureExperimentManager(storage);
         }
 
+        public AzureExperimentStorage Storage { get { return storage; } }
+
         public bool CanStart
         {
             get { return batchCreds != null; }

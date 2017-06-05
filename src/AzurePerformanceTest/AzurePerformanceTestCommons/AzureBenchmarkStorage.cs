@@ -74,6 +74,29 @@ namespace AzurePerformanceTest
             return inputsContainer.ListBlobs(prefix, true);
         }
 
+        public IEnumerable<string> ListDirectories(string baseDirectory = "")
+        {
+            CloudBlobDirectory dir = inputsContainer.GetDirectoryReference(baseDirectory);
+            return dir.ListBlobs(false, BlobListingDetails.None)
+                .Where(d => d is CloudBlobDirectory)
+                .Select(d =>
+                {
+                    string prefix;
+                    CloudBlobDirectory cd = d as CloudBlobDirectory;
+                    if (cd.Parent != null && cd.Parent.Prefix != null)
+                    {
+                        prefix = cd.Prefix.Substring(cd.Parent.Prefix.Length, cd.Prefix.Length - cd.Parent.Prefix.Length - 1);
+                    }
+                    else
+                    {
+                        prefix = cd.Prefix.Substring(0, cd.Prefix.Length - 1);
+                    }
+                    return prefix;
+                })
+                .Distinct();
+
+        }
+
         public IEnumerable<IListBlobItem> ListBlobs(string directory, string category)
         {
             string prefix = CombineBlobPath(directory, category);

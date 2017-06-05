@@ -6,7 +6,7 @@
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:local="clr-namespace:PerformanceTest.Management"
         mc:Ignorable="d"
-        Title="New Experiment..." Height="531" Width="510" Loaded="Window_Loaded" WindowStartupLocation="CenterOwner" ShowInTaskbar="False" ResizeMode="NoResize">
+        Title="New Experiment..." Height="613.5" Width="510" Loaded="Window_Loaded" WindowStartupLocation="CenterOwner" ShowInTaskbar="False" ResizeMode="NoResize">
 
     <Window.Resources>
         <local:InverseBooleanConverter x:Key="InverseBooleanConverter" />
@@ -19,14 +19,16 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="485" />
+            <ColumnDefinition Width="305.75" />
+            <ColumnDefinition Width="180.25"/>
         </Grid.ColumnDefinitions>
 
-        <TabControl Grid.Row="0" Grid.ColumnSpan="3" HorizontalAlignment="Stretch" VerticalAlignment="Top">
+        <TabControl Grid.Row="0" Grid.ColumnSpan="2" HorizontalAlignment="Stretch" VerticalAlignment="Top">
             <TabItem Name="tiES" Header="Experiment settings">
 
-                <Grid Name="grdData"  VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+                <Grid Name="grdData"  VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Height="426" Margin="0,10,0,0">
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
@@ -44,19 +46,33 @@
                         <ColumnDefinition Width="30" />
                     </Grid.ColumnDefinitions>
 
-                    <Label Content="Shared directory:" Height="28" HorizontalAlignment="Left" Name="label3" VerticalAlignment="Center" Grid.Row="0" />
-                    <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtSharedDir" VerticalAlignment="Center" Grid.Row="0"  Grid.Column="1" TabIndex="1" 
+
+
+                    <Label Content="Benchmark container:" Height="28" HorizontalAlignment="Left" Name="label3" VerticalAlignment="Center" Grid.Row="0" />
+                    <StackPanel Orientation="Vertical" Grid.Row="0" Grid.Column="1">
+                        <RadioButton GroupName="groupContainer" IsChecked="True">Default</RadioButton>
+                        <RadioButton GroupName="groupContainer" HorizontalContentAlignment="Stretch">
+                            <Grid Margin="0,0,0,0" IsEnabled="False">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Margin="0,0,10,0" Grid.Column="0">Connection string:</TextBlock>
+                                <TextBox Height="24" Grid.Column="1" />
+                            </Grid>
+                        </RadioButton>
+                        
+                    </StackPanel>
+
+                    <Label Content="Directory:" Height="28" HorizontalAlignment="Left"  VerticalAlignment="Center" Grid.Row="1" />
+                    <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtSharedDir" VerticalAlignment="Center" Grid.Row="1"  Grid.Column="1" TabIndex="1" 
                              ToolTip="{Binding BenchmarkLibaryDescription}"
                              Text="{Binding BenchmarkLibrary, Mode=TwoWay}"
                              Margin="0,2" />
-                    <Button Height="23" Width="Auto" HorizontalAlignment="Stretch" Name="btnSelectSharedDir" VerticalAlignment="Stretch" Grid.Row="0" Grid.Column="2" TabIndex="2"  Margin="0,2" 
-                            Command="{Binding ChooseContainerCommand}">
+                    <Button Height="23" Width="Auto" HorizontalAlignment="Stretch" Name="btnSelectSharedDir" VerticalAlignment="Stretch" Grid.Row="1" Grid.Column="2" TabIndex="2"  Margin="0,2" 
+                            Command="{Binding ChooseDirectoryCommand}">
                         <Image Source="/PerformanceTest.Management;component/Images/taskbrowse.ico" />
                     </Button>
-
-                    <Label Content="Benchmark extension:" Height="28" HorizontalAlignment="Left" Name="label14" VerticalAlignment="Center" Grid.Row="1" Grid.Column="0"/>
-                    <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtExtension" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1" TabIndex="3" ToolTip="The extension of benchmark files, e.g., smt2 for SMT-Lib version 2 files." Margin="0,2"
-                             Text="{Binding Extension}"/>
 
                     <Label Content="Categories:" Height="28" HorizontalAlignment="Left" Name="label8" VerticalAlignment="Center" Grid.Row="2" Grid.Column="0"/>
                     <TextBox Height="23" HorizontalAlignment="Stretch" Name="txtCategories" 
@@ -67,8 +83,14 @@
                         <Image Source="/PerformanceTest.Management;component/Images/taskbrowse.ico" />
                     </Button>
 
-                    <Label Content="Executable:" Height="28" HorizontalAlignment="Left" Name="label9" VerticalAlignment="Center" Grid.Row="3" Grid.Column="0" Margin="0,6,0,5"/>
-                    <Grid Grid.Row="3" Grid.Column="1">
+                    <Label Content="Benchmark extension:" Height="28" HorizontalAlignment="Left" Name="label14" VerticalAlignment="Center" Grid.Row="3" Grid.Column="0"/>
+                    <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtExtension" VerticalAlignment="Center" Grid.Row="3" Grid.Column="1" TabIndex="3" ToolTip="The extension of benchmark files, e.g., smt2 for SMT-Lib version 2 files." Margin="0,2"
+                             Text="{Binding Extension}"/>
+
+
+
+                    <Label Content="Executable:" Height="28" HorizontalAlignment="Left" Name="label9" VerticalAlignment="Center" Grid.Row="4" Grid.Column="0" Margin="0,6,0,5"/>
+                    <Grid Grid.Row="4" Grid.Column="1">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
@@ -85,13 +107,13 @@
                                  IsEnabled="{Binding UseNewExecutable}"
                                  Text="{Binding Executable}"/>
                     </Grid>
-                    <Button Height="23" HorizontalAlignment="Stretch" Name="btnSelectExecutable" VerticalAlignment="Stretch" TabIndex="12" Grid.Row="3" Grid.Column="2"  Margin="0,16,0,0"
+                    <Button Height="23" HorizontalAlignment="Stretch" Name="btnSelectExecutable" VerticalAlignment="Stretch" TabIndex="12" Grid.Row="4" Grid.Column="2"  Margin="0,16,0,0"
                             Command="{Binding ChooseExecutableCommand}">
                         <Image Source="/PerformanceTest.Management;component/Images/taskbrowse.ico" />
                     </Button>
 
-                    <Label Content="Parameters:" Height="28" HorizontalAlignment="Left" Name="labelParameters" VerticalAlignment="Center" Grid.Row="4" Grid.Column="0" />
-                    <StackPanel Orientation="Vertical" VerticalAlignment="Center"  Grid.Row="4" Grid.Column="1">
+                    <Label Content="Parameters:" Height="28" HorizontalAlignment="Left" Name="labelParameters" VerticalAlignment="Center" Grid.Row="5" Grid.Column="0" />
+                    <StackPanel Orientation="Vertical" VerticalAlignment="Center"  Grid.Row="5" Grid.Column="1">
                         <TextBox Height="24" Margin="0,5,0,0" HorizontalAlignment="Stretch" Name="txtParameters" TabIndex="14" ToolTip="Parameters for the executable." 
                                  Text="{Binding Parameters}"/>
                         <TextBlock Margin="0,5,10,10">
@@ -99,29 +121,29 @@
                         </TextBlock>
                     </StackPanel>
 
-                    <Label Content="Domain:" Height="28" HorizontalAlignment="Left" Name="labelDomain" VerticalAlignment="Center" Grid.Row="5" Grid.Column="0" />
-                    <ComboBox Height="24" HorizontalAlignment="Stretch" Name="cbSelectDomain" VerticalAlignment="Center" TabIndex="14"  Grid.Row="5" Grid.Column="1"
+                    <Label Content="Domain:" Height="28" HorizontalAlignment="Left" Name="labelDomain" VerticalAlignment="Center" Grid.Row="6" Grid.Column="0" />
+                    <ComboBox Height="24" HorizontalAlignment="Stretch" Name="cbSelectDomain" VerticalAlignment="Center" TabIndex="14"  Grid.Row="6" Grid.Column="1"
                               ToolTip="Determines an additional analysis and process results interpretation." IsEnabled="True"
-                              SelectedItem="{Binding Domain}" ItemsSource="{Binding Domains}">                        
+                              SelectedItem="{Binding Domain}" ItemsSource="{Binding Domains}">
                     </ComboBox>
 
-                    <Label Content="Replace (check-sat):" Height="28" HorizontalAlignment="Left" Name="labelReplaceCheckSat" VerticalAlignment="Center" Grid.Row="6" Grid.Column="0" Grid.RowSpan="2" />
-                    <GroupBox Grid.RowSpan="2" Grid.Row="6" Grid.Column="1">
+                    <Label Content="Replace (check-sat):" Height="28" HorizontalAlignment="Left" Name="labelReplaceCheckSat" VerticalAlignment="Center" Grid.Row="7" Grid.Column="0" Grid.RowSpan="2" />
+                    <GroupBox Grid.RowSpan="2" Grid.Row="7" Grid.Column="1">
                         <GroupBox.Header>
                             <CheckBox Name="chkReplaceCheckSat" Content="Enable"  IsChecked="False" />
                         </GroupBox.Header>
                         <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtReplaceCheckSat" VerticalAlignment="Center" TabIndex="14" ToolTip="(check-sat) will be replace by this." IsEnabled="False" Width="250" />
                     </GroupBox>
 
-                    <Label Content="Memory limit:" Height="28" HorizontalAlignment="Left" Name="labelMemout" VerticalAlignment="Center" Grid.Row="8" Grid.Column="0"/>
-                    <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtMemout" VerticalAlignment="Center" TabIndex="15" Grid.Row="8" Grid.Column="1" ToolTip="The memory limit (per benchmark)." Margin="0,2" 
+                    <Label Content="Memory limit:" Height="28" HorizontalAlignment="Left" Name="labelMemout" VerticalAlignment="Center" Grid.Row="9" Grid.Column="0"/>
+                    <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtMemout" VerticalAlignment="Center" TabIndex="15" Grid.Row="9" Grid.Column="1" ToolTip="The memory limit (per benchmark)." Margin="0,2" 
                              Text="{Binding BenchmarkMemoryLimitMb}"/>
-                    <Label Content="MB" HorizontalAlignment="Left" Grid.Row="8" Grid.Column="2"/>
+                    <Label Content="MB" HorizontalAlignment="Left" Grid.Row="9" Grid.Column="2"/>
 
-                    <Label Content="Timeout:" Height="28" HorizontalAlignment="Left" Name="label12" VerticalAlignment="Center" Grid.Row="9" Grid.Column="0"/>
-                    <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtTimeout" VerticalAlignment="Center" TabIndex="15" Grid.Row="9" Grid.Column="1" ToolTip="The time limit (per benchmark)." Margin="0,2"
+                    <Label Content="Timeout:" Height="28" HorizontalAlignment="Left" Name="label12" VerticalAlignment="Center" Grid.Row="10" Grid.Column="0"/>
+                    <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtTimeout" VerticalAlignment="Center" TabIndex="15" Grid.Row="10" Grid.Column="1" ToolTip="The time limit (per benchmark)." Margin="0,2"
                              Text="{Binding BenchmarkTimeoutSec}"/>
-                    <Label Content="sec" HorizontalAlignment="Left" Grid.Row="9" Grid.Column="2"/>
+                    <Label Content="sec" HorizontalAlignment="Left" Grid.Row="10" Grid.Column="2"/>
                 </Grid>
             </TabItem>
 
@@ -141,7 +163,7 @@
             </TabItem>
         </TabControl>
 
-        <StackPanel Grid.Column="1" Grid.Row="2" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+        <StackPanel Grid.Column="1" Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
             <Button Name="okButton" IsDefault="True" Width="80" Click="okButton_Click" TabIndex="16">OK</Button>
             <Button Name="cancelButton" IsCancel="True" Width="80" Click="cancelButton_Click" Margin="10,0,10,0" TabIndex="17">Cancel</Button>
         </StackPanel>

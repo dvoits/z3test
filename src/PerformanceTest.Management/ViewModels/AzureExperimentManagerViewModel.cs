@@ -24,6 +24,15 @@ namespace PerformanceTest.Management
             throw new NotImplementedException();
         }
 
+        public override string[] GetDirectories(string baseDirectory = "")
+        {
+            AzureExperimentManager manager = (AzureExperimentManager)base.manager;
+            var expStorage = manager.Storage;
+            var benchStorage = expStorage.DefaultBenchmarkStorage;
+
+            return benchStorage.ListDirectories(baseDirectory).ToArray();
+        }
+
         public override string HandleMultileTargetFiles(string[] files, string mainFile)
         {
             throw new NotImplementedException();
