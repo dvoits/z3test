@@ -41,12 +41,13 @@ namespace PerformanceTest.Management
             this.extension1 = "." + def1.BenchmarkFileExtension;
             this.extension2 = "." + def2.BenchmarkFileExtension;
             this.category1 = def1.Category;
-            this.category2 = def2.Category; ;
+            this.category2 = def2.Category;
             this.sharedDirectory1 = def1.BenchmarkDirectory;
             this.sharedDirectory2 = def2.BenchmarkDirectory;
-
-            RefreshItemsAsync();
+            
+            DownloadResultsAsync();
         }
+
         public bool IsFiltering
         {
             get { return isFiltering; }
@@ -57,12 +58,15 @@ namespace PerformanceTest.Management
             }
         }
 
-
-
         public CompareBenchmarksViewModel[] CompareItems
         {
             get { return experiments; }
-            private set { experiments = value; NotifyPropertyChanged(); }
+            private set
+            {
+                experiments = value;
+                NotifyPropertyChanged();
+                NotifyPropertyChanged("Title");
+            }
         }
         public string Category1
         {
@@ -74,7 +78,16 @@ namespace PerformanceTest.Management
         }
         public string Title
         {
-            get { return "Comparison: " + id1.ToString() + " vs. " + id2.ToString(); }
+            get
+            {
+                string title = string.Format("Comparison: {0} vs. {1}", id1, id2);
+                if (CompareItems != null && allResults != null)
+                {
+                    title += String.Format(" ({0} of {1} items shown)", CompareItems.Length, allResults.Length);
+                }
+                return title;
+            }
+
         }
         public bool CheckIgnorePostfix
         {
@@ -82,7 +95,7 @@ namespace PerformanceTest.Management
             set
             {
                 checkIgnorePostfix = !checkIgnorePostfix;
-                UpdateCompared();
+                JoinResults();
                 NotifyPropertyChanged("EnableFirstExtension");
                 NotifyPropertyChanged("EnableSecondExtension");
             }
@@ -93,7 +106,7 @@ namespace PerformanceTest.Management
             set
             {
                 checkIgnorePrefix = !checkIgnorePrefix;
-                UpdateCompared();
+                JoinResults();
             }
         }
         public bool CheckIgnoreCategory
@@ -102,7 +115,7 @@ namespace PerformanceTest.Management
             set
             {
                 checkIgnoreCategory = !checkIgnoreCategory;
-                UpdateCompared();
+                JoinResults();
             }
         }
         public bool EnableFirstExtension
@@ -119,7 +132,7 @@ namespace PerformanceTest.Management
             set
             {
                 extension1 = value;
-                UpdateCompared();
+                JoinResults();
             }
         }
         public string Extension2
@@ -128,7 +141,7 @@ namespace PerformanceTest.Management
             set
             {
                 extension2 = value;
-                UpdateCompared();
+                JoinResults();
             }
         }
 
@@ -148,7 +161,7 @@ namespace PerformanceTest.Management
 
         public void FilterResultsByError(int code)
         {
-            if (IsFiltering) return;
+            if (IsFiltering || allResults == null) return;
             IsFiltering = true;
             try
             {
@@ -176,7 +189,7 @@ namespace PerformanceTest.Management
 
         public void FilterResultsByText(string filter)
         {
-            if (IsFiltering) return;
+            if (IsFiltering || allResults == null) return;
             IsFiltering = true;
             try
             {
@@ -197,7 +210,7 @@ namespace PerformanceTest.Management
             }
         }
 
-        private async void RefreshItemsAsync()
+        private async void DownloadResultsAsync()
         {
             if (IsFiltering) return;
             IsFiltering = true;
@@ -209,10 +222,10 @@ namespace PerformanceTest.Management
 
                 var t1 = Task.Run(() => manager.GetResults(id1));
                 var t2 = Task.Run(() => manager.GetResults(id2));
-                allResults1 = t1.Result;
-                allResults2 = t2.Result;
+                allResults1 = await t1;
+                allResults2 = await t2;
 
-                UpdateCompared();
+                JoinResults();
             }
             finally
             {
@@ -221,8 +234,10 @@ namespace PerformanceTest.Management
             }
         }
 
-        private void UpdateCompared()
+        private void JoinResults()
         {
+            if (allResults1 == null || allResults2 == null) return;
+
             var param = new CheckboxParameters(checkIgnoreCategory, checkIgnorePrefix, checkIgnorePostfix, category1, category2, extension1, extension2, sharedDirectory1, sharedDirectory2);
             var join = InnerJoinOrderedResults(allResults1, allResults2, manager, param, uiService);
             Array.Sort<CompareBenchmarksViewModel>(join, (a, b) =>
@@ -252,12 +267,12 @@ namespace PerformanceTest.Management
             int i = 0;
             for (int i1 = 0, i2 = 0; i1 < n1 && i2 < n2;)
             {
-                string filename1 = param.Category1 + "\\" + r1[i1].BenchmarkFileName;
-                string filename2 = param.Category2 + "\\" + r2[i2].BenchmarkFileName;
+                string filename1 = r1[i1].BenchmarkFileName;
+                string filename2 = r2[i2].BenchmarkFileName;
                 if (param.IsCategoryChecked)
                 {
-                    filename1 = filename1.Substring(param.Category1.Length + 1, filename1.Length - param.Category1.Length - 1);
-                    filename2 = filename2.Substring(param.Category2.Length + 1, filename2.Length - param.Category2.Length - 1);
+                    filename1 = filename1.Substring(param.Category1.Length + 1);
+                    filename2 = filename2.Substring(param.Category2.Length + 1);
                 }
                 if (param.IsPostfixChecked)
                 {
@@ -350,11 +365,11 @@ namespace PerformanceTest.Management
 
         public double Diff { get { return result1.NormalizedRuntime - result2.NormalizedRuntime; } }
 
-        public BenchmarkResultViewModel Results1 { get{ return result1; } }
+        public BenchmarkResultViewModel Results1 { get { return result1; } }
 
         public BenchmarkResultViewModel Results2 { get { return result2; } }
-                
-        
+
+
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
