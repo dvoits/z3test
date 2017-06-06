@@ -381,19 +381,28 @@ namespace PerformanceTest.Management
         private async void btnNewJob_Click(object sender, RoutedEventArgs e)
         {
             NewJobDialog dlg = new NewJobDialog();
-            var vm = new NewExperimentViewModel(managerVm, uiService);
+            var vm = new NewExperimentViewModel(managerVm, uiService, recentValues);
             dlg.DataContext = vm;
             dlg.Owner = this;
             if (dlg.ShowDialog() == true)
             {
+                try
+                {
+                    vm.SaveRecentSettings();
+                }
+                catch(Exception ex)
+                {
+                    uiService.ShowWarning(ex.Message, "Failed to save recent settings");
+                }
+
                 ExperimentDefinition def =
                     ExperimentDefinition.Create(
-                        vm.Executable, vm.BenchmarkContainerUri, vm.BenchmarkLibrary, vm.Extension, vm.Parameters,
+                        vm.Executable, vm.BenchmarkContainerUri, vm.BenchmarkDirectory, vm.Extension, vm.Parameters,
                         TimeSpan.FromSeconds(vm.BenchmarkTimeoutSec), vm.Domain,
                         vm.Categories, vm.BenchmarkMemoryLimitMb);
                 try
                 {
-                    await managerVm.SubmitExperiment(def, System.Security.Principal.WindowsIdentity.GetCurrent().Name, vm.Note);
+                    await managerVm.SubmitExperiment(def, System.Security.Principal.WindowsIdentity.GetCurrent().Name, vm.Note);                    
                 }
                 catch (Exception ex)
                 {

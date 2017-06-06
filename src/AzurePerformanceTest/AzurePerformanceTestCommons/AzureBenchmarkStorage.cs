@@ -77,7 +77,11 @@ namespace AzurePerformanceTest
         public IEnumerable<string> ListDirectories(string baseDirectory = "")
         {
             CloudBlobDirectory dir = inputsContainer.GetDirectoryReference(baseDirectory);
-            return dir.ListBlobs(false, BlobListingDetails.None)
+            return dir.ListBlobs(false, BlobListingDetails.None, 
+                options: new BlobRequestOptions
+                {
+                     RetryPolicy = new Microsoft.WindowsAzure.Storage.RetryPolicies.ExponentialRetry(TimeSpan.FromMilliseconds(50), 5)
+                })
                 .Where(d => d is CloudBlobDirectory)
                 .Select(d =>
                 {

@@ -27,7 +27,7 @@ namespace PerformanceTest.Management
         {
             get { return null; }
         }
-        public abstract string[] GetAvailableCategories(string benchmarkContainer);
+        public abstract Task<string[]> GetAvailableCategories(string benchmarkContainer);
 
 
         public virtual async Task SubmitExperiment(ExperimentDefinition def, string creator, string note)
@@ -68,17 +68,17 @@ namespace PerformanceTest.Management
             get { return "A folder that contains benchmark files."; }
         }
 
-        public override string[] GetAvailableCategories(string benchmarkContainer)
+        public override Task<string[]> GetAvailableCategories(string benchmarkContainer)
         {
             if (Directory.Exists(benchmarkContainer))
             {
                 var sep = new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
-                return Directory.EnumerateDirectories(benchmarkContainer).Select(dir => {
+                return Task.FromResult(Directory.EnumerateDirectories(benchmarkContainer).Select(dir => {
                     int i = dir.LastIndexOfAny(sep);
                     return i >= 0 ? dir.Substring(i + 1) : dir;
-                }).ToArray();
+                }).ToArray());
             }
-            return new string[0];
+            return Task.FromResult(new string[0]);
         }
 
         public override string HandleMultileTargetFiles(string[] files, string mainFile)

@@ -13,23 +13,31 @@ namespace PerformanceTest.Management
     {
         private readonly ExperimentManagerViewModel manager;
         private readonly IUIService service;
+        private readonly RecentValuesStorage recentValues;
 
         private string benchmarkContainerUri;
-        private string benchmarkLibrary;
+        private string benchmarkDirectory;
         private string categories;
         private bool useMostRecentExecutable;
         private string executable;
         private string domain;
+        private double memlimit;
+        private double timelimit;
+        private string parameters;
+        private string extension;
+        private string note;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
 
-        public NewExperimentViewModel(ExperimentManagerViewModel manager, IUIService service)
+        public NewExperimentViewModel(ExperimentManagerViewModel manager, IUIService service, RecentValuesStorage recentValues)
         {
             if (manager == null) throw new ArgumentNullException("manager");
             if (service == null) throw new ArgumentNullException("service");
+            if (recentValues == null) throw new ArgumentNullException("recentValues");
             this.manager = manager;
             this.service = service;
+            this.recentValues = recentValues;
 
             domain = "Z3";
             benchmarkContainerUri = ExperimentDefinition.DefaultContainerUri;
@@ -38,6 +46,15 @@ namespace PerformanceTest.Management
             ChooseDirectoryCommand = new DelegateCommand(ChooseDirectory);
             ChooseCategoriesCommand = new DelegateCommand(ChooseCategories);
             ChooseExecutableCommand = new DelegateCommand(ChooseExecutable);
+
+            benchmarkDirectory = recentValues.BenchmarkDirectory;
+            categories = recentValues.BenchmarkCategories;
+            executable = recentValues.ExperimentExecutable;
+            extension = recentValues.BenchmarkExtension;
+            parameters = recentValues.ExperimentExecutableParameters;
+            timelimit = recentValues.BenchmarkTimeLimit.TotalSeconds;
+            memlimit = recentValues.BenchmarkMemoryLimit;
+            note = recentValues.ExperimentNote;
         }
 
         public string BenchmarkLibaryDescription
@@ -55,13 +72,15 @@ namespace PerformanceTest.Management
             }
         }
 
-        public string BenchmarkLibrary
+        public string BenchmarkDirectory
         {
-            get { return benchmarkLibrary; }
+            get { return benchmarkDirectory; }
             set
             {
-                benchmarkLibrary = value;
+                if (benchmarkDirectory == value) return;
+                benchmarkDirectory = value;
                 NotifyPropertyChanged();
+                Categories = "";
             }
         }
 
@@ -128,24 +147,52 @@ namespace PerformanceTest.Management
 
         public string Parameters
         {
-            get; set;
+            get { return parameters; }
+            set
+            {
+                parameters = value;
+                NotifyPropertyChanged();
+            }
         }
 
         public double BenchmarkTimeoutSec
         {
-            get; set;
+            get { return timelimit; }
+            set
+            {
+                timelimit = value;
+                NotifyPropertyChanged();
+            }
         }
 
-        public int BenchmarkMemoryLimitMb
+        public double BenchmarkMemoryLimitMb
         {
-            get; set;
+            get { return memlimit; }
+            set
+            {
+                memlimit = value;
+                NotifyPropertyChanged();
+            }
         }
 
-        public string Extension { get; set; }
+        public string Extension
+        {
+            get { return extension; }
+            set
+            {
+                extension = value;
+                NotifyPropertyChanged();
+            }
+        }
 
         public string Note
         {
-            get; set;
+            get { return note; }
+            set
+            {
+                note = value;
+                NotifyPropertyChanged();
+            }
         }
 
 
@@ -162,6 +209,18 @@ namespace PerformanceTest.Management
         public ICommand ChooseExecutableCommand
         {
             get; private set;
+        }
+
+        public void SaveRecentSettings()
+        {
+            recentValues.BenchmarkDirectory = benchmarkDirectory;
+            recentValues.BenchmarkCategories = categories;
+            recentValues.ExperimentExecutable = executable;
+            recentValues.BenchmarkExtension = extension;
+            recentValues.ExperimentExecutableParameters = parameters;
+            recentValues.BenchmarkTimeLimit = TimeSpan.FromSeconds(timelimit);
+            recentValues.BenchmarkMemoryLimit = memlimit;
+            recentValues.ExperimentNote = note;
         }
 
 
@@ -201,14 +260,14 @@ namespace PerformanceTest.Management
         {
             try
             {
-                string[] initial = BenchmarkLibrary == null ? new string[0] : BenchmarkLibrary.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+                string[] initial = BenchmarkDirectory == null ? new string[0] : BenchmarkDirectory.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
                 var selected = await service.BrowseTree("Browse for directory", initial, selection =>
                 {
                     return manager.GetDirectories(string.Join("/", selection));
                 });
                 if (selected != null)
                 {
-                    BenchmarkLibrary = string.Join("/", selected);
+                    BenchmarkDirectory = string.Join("/", selected);
                 }
             }
             catch (Exception ex)
@@ -217,15 +276,32 @@ namespace PerformanceTest.Management
             }
         }
 
-        private void ChooseCategories()
+        private async void ChooseCategories()
         {
-            string[] allCategories = manager.GetAvailableCategories(BenchmarkLibrary);
-            string[] selected = Categories == null ? new string[0] : Categories.Split(',').Select(s => s.Trim()).ToArray();
-
-            selected = service.ChooseOptions("Choose categories", allCategories, selected);
-            if (selected != null)
+            try
             {
-                Categories = String.Join(",", selected);
+                string[] allCategories;
+                var handle = service.StartIndicateLongOperation("Loading categories...");
+                try
+                {
+                    allCategories = await manager.GetAvailableCategories(BenchmarkDirectory);
+                }
+                finally
+                {
+                    service.StopIndicateLongOperation(handle);
+                }
+
+                string[] selected = Categories == null ? new string[0] : Categories.Split(',').Select(s => s.Trim()).ToArray();
+
+                selected = service.ChooseOptions("Choose categories", allCategories, selected);
+                if (selected != null)
+                {
+                    Categories = String.Join(",", selected);
+                }
+            }
+            catch (Exception ex)
+            {
+                service.ShowError(ex);
             }
         }
 

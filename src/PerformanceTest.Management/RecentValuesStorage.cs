@@ -29,7 +29,67 @@ namespace PerformanceTest.Management
             set { WriteString("ConnectionString", value); }
         }
 
+        public string BenchmarkDirectory
+        {
+            get { return ReadString("BenchmarkDirectory"); }
+            set { WriteString("BenchmarkDirectory", value); }
+        }
 
+        public string BenchmarkCategories
+        {
+            get { return ReadString("BenchmarkCategories"); }
+            set { WriteString("BenchmarkCategories", value); }
+        }
+
+        public string BenchmarkExtension
+        {
+            get { return ReadString("BenchmarkExtension"); }
+            set { WriteString("BenchmarkExtension", value); }
+        }
+
+        public string ExperimentExecutable
+        {
+            get { return ReadString("ExperimentExecutable"); }
+            set { WriteString("ExperimentExecutable", value); }
+        }
+
+        public string ExperimentExecutableParameters
+        {
+            get { return ReadString("ExperimentExecutableParameters"); }
+            set { WriteString("ExperimentExecutableParameters", value); }
+        }
+
+        public double BenchmarkMemoryLimit
+        {
+            get
+            {
+                double mem = ReadDouble("BenchmarkMemoryLimit");
+                return Double.IsNaN(mem) ? 0 : mem;
+            }
+            set
+            {
+                WriteDouble("BenchmarkMemoryLimit", value);
+            }
+        }
+
+        public TimeSpan BenchmarkTimeLimit
+        {
+            get
+            {
+                double sec = ReadDouble("BenchmarkTimeLimit");
+                return Double.IsNaN(sec) ? TimeSpan.FromSeconds(0) : TimeSpan.FromSeconds(sec);
+            }
+            set
+            {
+                WriteDouble("BenchmarkTimeLimit", value.TotalSeconds);
+            }
+        }
+
+        public string ExperimentNote
+        {
+            get { return ReadString("ExperimentNote"); }
+            set { WriteString("ExperimentNote", value); }
+        }
 
         private void WriteBool(string key, bool value)
         {
@@ -52,5 +112,33 @@ namespace PerformanceTest.Management
             Registry.SetValue(keyName, key, value, RegistryValueKind.String);
         }
 
+
+
+        private int ReadInt(string key)
+        {
+            object obj = Registry.GetValue(keyName, key, "");
+            if (obj is int) return (int)obj;
+            return 0;
+        }
+
+        private void WriteInt(string key, int value)
+        {
+            Registry.SetValue(keyName, key, value, RegistryValueKind.DWord);
+        }
+
+
+        private double ReadDouble(string key)
+        {
+            string s = ReadString(key);
+            if (s == null) return double.NaN;
+            double d;
+            if (!double.TryParse(s, out d)) return double.NaN;
+            return d;
+        }
+
+        private void WriteDouble(string key, double value)
+        {
+            WriteString(key, value.ToString());
+        }
     }
 }
