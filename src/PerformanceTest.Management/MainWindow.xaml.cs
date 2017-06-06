@@ -164,15 +164,7 @@ namespace PerformanceTest.Management
                 for (int i = 0; i < count; i++)
                 {
                     int id = ids[i];
-                    try
-                    {
-                        experimentsVm.DeleteExperiment(id);
-                    }
-                    catch (Exception ex)
-                    {
-                        string msg = String.Format("Error: could not delete experiment #{0} because of: {1} ", id, ex.Message);
-                        r = MessageBox.Show(msg, "Error", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
-                    }
+                    experimentsVm.DeleteExperiment(id);
                 }
             }
         }
@@ -301,7 +293,6 @@ namespace PerformanceTest.Management
                 finally
                 {
                     uiService.StopIndicateLongOperation(handle);
-
                 }
                 TimeSpan ts = TimeSpan.FromSeconds(total);
                 MessageBox.Show(this,
@@ -371,7 +362,7 @@ namespace PerformanceTest.Management
         private void filter_KeyUp(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
-                experimentsVm.FindExperiments(txtFilter.Text);
+                experimentsVm.FilterExperiments(txtFilter.Text);
         }
         private void MenuItemExit_Click(object sender, RoutedEventArgs e)
         {
@@ -390,7 +381,7 @@ namespace PerformanceTest.Management
                 {
                     vm.SaveRecentSettings();
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     uiService.ShowWarning(ex.Message, "Failed to save recent settings");
                 }
@@ -402,7 +393,7 @@ namespace PerformanceTest.Management
                         vm.Categories, vm.BenchmarkMemoryLimitMb);
                 try
                 {
-                    await managerVm.SubmitExperiment(def, System.Security.Principal.WindowsIdentity.GetCurrent().Name, vm.Note);                    
+                    await managerVm.SubmitExperiment(def, System.Security.Principal.WindowsIdentity.GetCurrent().Name, vm.Note);
                 }
                 catch (Exception ex)
                 {

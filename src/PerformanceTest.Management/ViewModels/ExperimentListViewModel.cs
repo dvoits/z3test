@@ -11,14 +11,11 @@ namespace PerformanceTest.Management
 {
     public class ExperimentListViewModel : INotifyPropertyChanged
     {
-
-        private IEnumerable<ExperimentStatusViewModel> experiments;
         private readonly ExperimentManager manager;
         private readonly IUIService ui;
-
+        private IEnumerable<ExperimentStatusViewModel> experiments;
 
         public event PropertyChangedEventHandler PropertyChanged;
-
 
         public ExperimentListViewModel(ExperimentManager manager, IUIService ui)
         {
@@ -35,17 +32,30 @@ namespace PerformanceTest.Management
             get { return experiments; }
             private set { experiments = value; NotifyPropertyChanged(); }
         }
-        
+
         public void Refresh()
         {
             RefreshItemsAsync();
         }
 
-        public void DeleteExperiment(int id)
+        public async void DeleteExperiment(int id)
         {
-            var items = Items.Where(st => st.ID != id).ToArray();
-            manager.DeleteExperiment(id);
-            Items = items;
+            if (experiments == null) return;
+            var handle = ui.StartIndicateLongOperation("Deleting the experiment...");
+            try
+            {
+                Items = experiments.Where(st => st.ID != id).ToArray();
+                await Task.Run(() => manager.DeleteExperiment(id));
+            }
+            catch (Exception ex)
+            {
+                Refresh();
+                ui.ShowError(ex, "Error occured when tried to delete the experiment " + id.ToString());
+            }
+            finally
+            {
+                ui.StopIndicateLongOperation(handle);
+            }
         }
 
         public Task<double> GetRuntimes(int[] ids)
@@ -57,29 +67,54 @@ namespace PerformanceTest.Management
             });
         }
 
-        public void FindExperiments(string filter)
+        public async void FilterExperiments(string keyword)
         {
-            RefreshItemsAsync(filter);
+            if (experiments == null) return;
+            var handle = ui.StartIndicateLongOperation("Filtering experiments...");
+            try
+            {
+                Items = null;
+                Items = await Task.Run(() => experiments.Where(e =>
+                    Contains(e.Category, keyword) ||
+                    Contains(e.Creator, keyword) ||
+                    Contains(e.ID.ToString(), keyword) ||
+                    Contains(e.WorkerInformation, keyword) ||
+                    Contains(e.Definition.BenchmarkDirectory, keyword) ||
+                    Contains(e.Definition.BenchmarkFileExtension, keyword) ||
+                    Contains(e.Definition.Category, keyword) ||
+                    Contains(e.Definition.Executable, keyword) ||
+                    Contains(e.Definition.Parameters, keyword) ||
+                    Contains(e.Submitted.ToString(), keyword)
+                ).ToArray());
+            }
+            catch (Exception ex)
+            {
+                ui.ShowError(ex, "Failed to load experiments list");
+            }
+            finally
+            {
+                ui.StopIndicateLongOperation(handle);
+            }
         }
-        private async void RefreshItemsAsync(string filter = null)
+
+        private static bool Contains(string str, string keyword)
+        {
+            if (str == null) return String.IsNullOrEmpty(keyword);
+            return keyword == null || str.Contains(keyword);
+        }
+
+        private async void RefreshItemsAsync()
         {
             var handle = ui.StartIndicateLongOperation("Loading table of experiments...");
             try
             {
                 Items = null;
-
-                ExperimentManager.ExperimentFilter? f = null;
-                if (!String.IsNullOrEmpty(filter))
-                {
-                    f = new ExperimentManager.ExperimentFilter
-                    {
-                        NotesEquals = filter,
-                        CategoryEquals = filter,
-                        CreatorEquals = filter
-                    };
-                }
-                var experiments = await Task.Run(() => manager.FindExperiments(f));
+                var experiments = await Task.Run(() => manager.FindExperiments());
                 Items = experiments.Select(e => new ExperimentStatusViewModel(e, manager, ui)).ToArray();
+            }
+            catch (Exception ex)
+            {
+                ui.ShowError(ex, "Failed to load experiments list");
             }
             finally
             {
@@ -96,7 +131,7 @@ namespace PerformanceTest.Management
     public class ExperimentStatusViewModel : INotifyPropertyChanged
     {
         private readonly ExperimentStatus status;
-        private readonly ExperimentDefinition definition; 
+        private readonly ExperimentDefinition definition;
         private readonly ExperimentManager manager;
         private readonly IUIService uiService;
 
