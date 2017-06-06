@@ -16,15 +16,8 @@ namespace PerformanceTest.Management
 {
     public partial class ChooseOptionsWindow : Window
     {
-        private readonly IUIService uiService;
-        private readonly Func<string[], string[]> getSubOptions = null;
-        private string[] path = new string[] { };
-
-        public ChooseOptionsWindow(string[] options, string[] selected, IUIService uiService)
+        public ChooseOptionsWindow(string[] options, string[] selected)
         {
-            if (uiService == null) throw new ArgumentNullException("uiService");
-            this.uiService = uiService;
-
             InitializeComponent();
 
             listBox.SelectionMode = SelectionMode.Multiple;
@@ -37,11 +30,8 @@ namespace PerformanceTest.Management
             listBox.Focus();
         }
 
-        public ChooseOptionsWindow(string[] options, string selected, IUIService uiService, Func<string[], string[]> getSubOptions = null)
+        public ChooseOptionsWindow(string[] options, string selected)
         {
-            if (uiService == null) throw new ArgumentNullException("uiService");
-            this.uiService = uiService;
-
             InitializeComponent();
 
             listBox.SelectionMode = SelectionMode.Single;
@@ -51,46 +41,7 @@ namespace PerformanceTest.Management
             }
             listBox.SelectedItem = selected;
             listBox.Focus();
-
-            if (getSubOptions != null)
-            {
-                this.getSubOptions = getSubOptions;
-                listBox.MouseDoubleClick += OnDoubleClick;
-            }
         }
-
-        private void OnDoubleClick(object sender, MouseButtonEventArgs e)
-        {
-            try
-            {
-                if (listBox.SelectedItem != null && listBox.SelectedItem is string)
-                {
-                    pnPath.Visibility = Visibility.Visible;
-
-                    string sel = (string)listBox.SelectedItem;
-                    string[] path2 = new string[path.Length + 1];
-                    for (int i = 0; i < path.Length; i++)
-                        path2[i] = path[i];
-                    path2[path.Length] = sel;
-                    string[] sub = getSubOptions(path2);
-                    Array.Sort<string>(sub);
-
-                    path = path2;
-                    listBox.Items.Clear();
-                    foreach (var item in sub)
-                    {
-                        listBox.Items.Add(item);
-                    }
-
-                    tbPath.Text = String.Join("/", path2);
-                }
-            }
-            catch (Exception ex)
-            {
-                uiService.ShowError(ex);
-            }
-        }
-
 
         public string[] SelectedOptions
         {

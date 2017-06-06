@@ -63,8 +63,12 @@
     </ApplicationDefinition>
     <Compile Include="RecentValuesStorage.cs" />
     <Compile Include="ViewModels\BenchmarkResultViewModel.cs" />
+    <Compile Include="ViewModels\BrowseTreeViewModel.cs" />
     <Compile Include="ViewModels\ConnectionStringBuilderViewModel.cs" />
     <Compile Include="ViewModels\ProgramStatusViewModel.cs" />
+    <Compile Include="Views\BrowseDialog.xaml.cs">
+      <DependentUpon>BrowseDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\ConnectionStringBuilder.xaml.cs">
       <DependentUpon>ConnectionStringBuilder.xaml</DependentUpon>
     </Compile>
@@ -103,6 +107,10 @@
     <Compile Include="ViewModels\DelegateCommand.cs" />
     <Compile Include="ViewModels\ExperimentManagerViewModel.cs" />
     <Compile Include="ViewModels\NewExperimentViewModel.cs" />
+    <Page Include="Views\BrowseDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\ConnectionStringBuilder.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

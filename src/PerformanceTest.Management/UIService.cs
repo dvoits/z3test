@@ -26,8 +26,12 @@ namespace PerformanceTest.Management
 
         string[] ChooseOptions(string title, string[] options, string[] selectedOptions);
 
-        string ChooseOption(string title, string[] options, string selectedOption, Func<string[], string[]> getSubOptions = null);
+        Task<string[]> BrowseTree(string title, string[] selected, Func<string[], Task<string[]>> getChildren);
+
+        string ChooseOption(string title, string[] options, string selectedOption);
+
         long StartIndicateLongOperation(string status = null);
+
         void StopIndicateLongOperation(long handle);
     }
 
@@ -123,7 +127,7 @@ namespace PerformanceTest.Management
 
         public string[] ChooseOptions(string title, string[] options, string[] selectedOptions)
         {
-            var dlg = new ChooseOptionsWindow(options, selectedOptions, this);
+            var dlg = new ChooseOptionsWindow(options, selectedOptions);
             dlg.Title = title;
             if (dlg.ShowDialog() == true)
             {
@@ -132,15 +136,54 @@ namespace PerformanceTest.Management
             return null;
         }
 
-        public string ChooseOption(string title, string[] options, string selectedOption, Func<string[], string[]> getSubOptions = null)
+        public string ChooseOption(string title, string[] options, string selectedOption)
         {
-            var dlg = new ChooseOptionsWindow(options, selectedOption, this, getSubOptions);
+            var dlg = new ChooseOptionsWindow(options, selectedOption);
             dlg.Title = title;
             if (dlg.ShowDialog() == true)
             {
                 return dlg.SelectedOptions.Length > 0 ? dlg.SelectedOptions[0] : null;
             }
             return null;
+        }
+
+        public async Task<string[]> BrowseTree(string title, string[] selected, Func<string[], Task<string[]>> getChildren)
+        {
+            var dlg = new BrowseDialog();
+            BrowseTreeViewModel vm;
+
+            var handle = StartIndicateLongOperation("Listing items...");
+            try
+            {
+                var root = await GetTreeChildren(null, getChildren);
+                vm = new BrowseTreeViewModel(title, root);
+                await vm.Select(selected);
+                dlg.DataContext = vm;
+            }
+            finally
+            {
+                StopIndicateLongOperation(handle);
+            }
+
+            if(dlg.ShowDialog() == true)
+            {
+                return vm.SelectedPath != null ? vm.SelectedPath.Select(t => t.Text).ToArray() : new string[0];
+            }
+            return null;
+        }
+
+        private async Task<BrowseTreeItemViewModel[]> GetTreeChildren(BrowseTreeItemViewModel parent, Func<string[], Task<string[]>> getChildrenContent)
+        {
+            List<string> path = new List<string>();
+            BrowseTreeItemViewModel t = parent;
+            while (t != null)
+            {
+                path.Add(t.Text);
+                t = t.Parent;
+            }
+            path.Reverse();
+            var children = await getChildrenContent(path.ToArray());
+            return children.Select(child => new BrowseTreeItemViewModel(child, parent, new GetChildren(p => GetTreeChildren(p, getChildrenContent)))).ToArray();
         }
 
         private long opsId = 0;

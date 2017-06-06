@@ -58,7 +58,8 @@ namespace PerformanceTest.Management
         public string BenchmarkLibrary
         {
             get { return benchmarkLibrary; }
-            set {
+            set
+            {
                 benchmarkLibrary = value;
                 NotifyPropertyChanged();
             }
@@ -169,13 +170,14 @@ namespace PerformanceTest.Management
             string[] files = service.ChooseFiles(Executable, "Executable files (*.exe;*.dll)|*.exe;*.dll|All Files (*.*)|*.*", "exe");
             if (files == null || files.Length == 0) return;
 
-            if(files.Length == 1)
+            if (files.Length == 1)
             {
                 Executable = files[0];
-            }else
+            }
+            else
             {
                 string[] exeFiles = files.Where(f => f.EndsWith(".exe")).ToArray();
-                if(exeFiles.Length == 0)
+                if (exeFiles.Length == 0)
                 {
                     service.ShowError("No executable files have been chosen.", "New experiment");
                     return;
@@ -195,23 +197,24 @@ namespace PerformanceTest.Management
             UseMostRecentExecutable = false;
         }
 
-        private void ChooseDirectory()
+        private async void ChooseDirectory()
         {
-            string[] directories = manager.GetDirectories("");
-
-            var selected = service.ChooseOption("Choose directory", directories, null, (selection) =>
+            try
             {
-                return manager.GetDirectories(string.Join("/", selection));
-            });
-            if (selected != null)
-            {
-                BenchmarkLibrary = selected;
+                string[] initial = BenchmarkLibrary == null ? new string[0] : BenchmarkLibrary.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+                var selected = await service.BrowseTree("Browse for directory", initial, selection =>
+                {
+                    return manager.GetDirectories(string.Join("/", selection));
+                });
+                if (selected != null)
+                {
+                    BenchmarkLibrary = string.Join("/", selected);
+                }
             }
-            //string folder = service.ChooseFolder(BenchmarkLibrary, manager.BenchmarkLibraryDescription);
-            //if (folder != null)
-            //{
-            //    BenchmarkLibrary = folder;
-            //}
+            catch (Exception ex)
+            {
+                service.ShowError(ex);
+            }
         }
 
         private void ChooseCategories()
