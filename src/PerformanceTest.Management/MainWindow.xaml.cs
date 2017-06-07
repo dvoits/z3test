@@ -92,7 +92,7 @@ namespace PerformanceTest.Management
                         uiService.StopIndicateLongOperation(handle);
                     }
 
-                    dataGrid.DataContext = experimentsVm;
+                    DataContext = experimentsVm;
                     recentValues.ConnectionString = connectionString.Text;
                     connectionString.IsReadOnly = true;
                     btnConnect.Content = "Disconnect";
@@ -109,7 +109,7 @@ namespace PerformanceTest.Management
                     connectionString.IsReadOnly = false;
                     btnConnect.Content = "Connect";
                     btnConnect.IsEnabled = true;
-                    dataGrid.DataContext = null;
+                    DataContext = null;
                     btnNewJob.IsEnabled = false;
                     btnUpdate.IsEnabled = false;
                     menuNewJob.IsEnabled = false;
@@ -359,11 +359,7 @@ namespace PerformanceTest.Management
                 }
             }
         }
-        private void filter_KeyUp(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter)
-                experimentsVm.FilterExperiments(txtFilter.Text);
-        }
+
         private void MenuItemExit_Click(object sender, RoutedEventArgs e)
         {
             Close();
@@ -644,6 +640,18 @@ namespace PerformanceTest.Management
             catch (Exception ex)
             {
                 uiService.ShowError(ex, "Failed to restore recent values");
+            }
+        }
+
+        private void txtFilter_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                var vm = DataContext as ExperimentListViewModel;
+                if(vm != null)
+                {
+                    vm.FilterKeyword = txtFilter.Text;
+                }
             }
         }
     }

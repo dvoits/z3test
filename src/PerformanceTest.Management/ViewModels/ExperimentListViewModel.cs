@@ -13,7 +13,11 @@ namespace PerformanceTest.Management
     {
         private readonly ExperimentManager manager;
         private readonly IUIService ui;
-        private IEnumerable<ExperimentStatusViewModel> experiments;
+        private ExperimentStatusViewModel[] allExperiments;
+        private ExperimentStatusViewModel[] filteredExperiments;
+
+        private string keyword;
+        private bool filterPending, isFiltering;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -27,11 +31,28 @@ namespace PerformanceTest.Management
             RefreshItemsAsync();
         }
 
-        public IEnumerable<ExperimentStatusViewModel> Items
+        public ExperimentStatusViewModel[] Items
         {
-            get { return experiments; }
-            private set { experiments = value; NotifyPropertyChanged(); }
+            get { return filteredExperiments; }
+            private set
+            {
+                filteredExperiments = value;
+                NotifyPropertyChanged();
+            }
         }
+
+        public string FilterKeyword
+        {
+            get { return keyword; }
+            set
+            {
+                if (keyword == value) return;
+                keyword = value;
+                NotifyPropertyChanged();
+                FilterExperiments(keyword);
+            }
+        }
+
 
         public void Refresh()
         {
@@ -40,11 +61,11 @@ namespace PerformanceTest.Management
 
         public async void DeleteExperiment(int id)
         {
-            if (experiments == null) return;
+            if (allExperiments == null) return;
             var handle = ui.StartIndicateLongOperation("Deleting the experiment...");
             try
             {
-                Items = experiments.Where(st => st.ID != id).ToArray();
+                Items = filteredExperiments.Where(st => st.ID != id).ToArray();
                 await Task.Run(() => manager.DeleteExperiment(id));
             }
             catch (Exception ex)
@@ -67,50 +88,15 @@ namespace PerformanceTest.Management
             });
         }
 
-        public async void FilterExperiments(string keyword)
-        {
-            if (experiments == null) return;
-            var handle = ui.StartIndicateLongOperation("Filtering experiments...");
-            try
-            {
-                Items = null;
-                Items = await Task.Run(() => experiments.Where(e =>
-                    Contains(e.Category, keyword) ||
-                    Contains(e.Creator, keyword) ||
-                    Contains(e.ID.ToString(), keyword) ||
-                    Contains(e.WorkerInformation, keyword) ||
-                    Contains(e.Definition.BenchmarkDirectory, keyword) ||
-                    Contains(e.Definition.BenchmarkFileExtension, keyword) ||
-                    Contains(e.Definition.Category, keyword) ||
-                    Contains(e.Definition.Executable, keyword) ||
-                    Contains(e.Definition.Parameters, keyword) ||
-                    Contains(e.Submitted.ToString(), keyword)
-                ).ToArray());
-            }
-            catch (Exception ex)
-            {
-                ui.ShowError(ex, "Failed to load experiments list");
-            }
-            finally
-            {
-                ui.StopIndicateLongOperation(handle);
-            }
-        }
-
-        private static bool Contains(string str, string keyword)
-        {
-            if (str == null) return String.IsNullOrEmpty(keyword);
-            return keyword == null || str.Contains(keyword);
-        }
-
         private async void RefreshItemsAsync()
         {
             var handle = ui.StartIndicateLongOperation("Loading table of experiments...");
             try
             {
                 Items = null;
-                var experiments = await Task.Run(() => manager.FindExperiments());
-                Items = experiments.Select(e => new ExperimentStatusViewModel(e, manager, ui)).ToArray();
+                var exp = await Task.Run(() => manager.FindExperiments());
+                allExperiments = exp.Select(e => new ExperimentStatusViewModel(e, manager, ui)).ToArray();
+                Items = FilterExperiments(allExperiments, keyword);
             }
             catch (Exception ex)
             {
@@ -120,6 +106,64 @@ namespace PerformanceTest.Management
             {
                 ui.StopIndicateLongOperation(handle);
             }
+        }
+
+        private async void FilterExperiments(string keyword)
+        {
+            if (allExperiments == null) return;
+            if (isFiltering)
+            {
+                filterPending = true;
+                return;
+            }
+
+            var handle = ui.StartIndicateLongOperation("Filtering experiments...");
+            isFiltering = true;
+            try
+            {
+                do
+                {
+                    filterPending = false;
+
+                    var old = allExperiments;
+                    var filtered = await Task.Run(() => FilterExperiments(old, keyword).ToArray());
+
+                    if (allExperiments == old)
+                        Items = filtered;
+                } while (filterPending);
+            }
+            catch (Exception ex)
+            {
+                ui.ShowError(ex, "Failed to filter experiments list");
+            }
+            finally
+            {
+                ui.StopIndicateLongOperation(handle);
+                isFiltering = false;
+            }
+        }
+
+        private static ExperimentStatusViewModel[] FilterExperiments(ExperimentStatusViewModel[] source, string keyword)
+        {
+            if (String.IsNullOrEmpty(keyword)) return source;
+
+            List<ExperimentStatusViewModel> dest = new List<ExperimentStatusViewModel>(source.Length);
+            for (int i = 0; i < source.Length; i++)
+            {
+                var e = source[i];
+                if (Contains(e.Category, keyword) ||
+                    Contains(e.Creator, keyword) ||
+                    Contains(e.ID.ToString(), keyword) ||
+                    Contains(e.Note, keyword))
+                    dest.Add(e);
+            }
+            return dest.ToArray();
+        }
+
+        private static bool Contains(string str, string keyword)
+        {
+            if (str == null) return String.IsNullOrEmpty(keyword);
+            return keyword == null || str.Contains(keyword);
         }
 
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
