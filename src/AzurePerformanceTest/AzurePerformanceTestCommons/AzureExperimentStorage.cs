@@ -37,6 +37,8 @@ namespace AzurePerformanceTest
         private CloudTable resultsTable;
         private CloudQueueClient queueClient;
 
+        private readonly IRetryPolicy retryPolicy = new ExponentialRetry(TimeSpan.FromMilliseconds(250), 7);
+
 
 
         const string resultsContainerName = "results";
@@ -77,8 +79,6 @@ namespace AzurePerformanceTest
             Task.WaitAll(cloudEntityCreationTasks);
 
             DefaultBenchmarkStorage = new AzureBenchmarkStorage(storageConnectionString, AzureBenchmarkStorage.DefaultContainerName);
-
-            InitializeCache();
         }
 
         public AzureBenchmarkStorage DefaultBenchmarkStorage { get; private set; }
@@ -205,7 +205,7 @@ namespace AzurePerformanceTest
             try
             {
                 await blob.UploadFromStreamAsync(source, AccessCondition.GenerateIfNotExistsCondition(),
-                    new BlobRequestOptions() { RetryPolicy = new LinearRetry(TimeSpan.FromSeconds(0.5), 15) }, null);
+                    new BlobRequestOptions() { RetryPolicy = retryPolicy }, null);
                 return true;
             }
             catch (StorageException ex) when (ex.RequestInformation?.HttpStatusCode == (int)HttpStatusCode.Conflict)
@@ -289,6 +289,59 @@ namespace AzurePerformanceTest
             TableOperation insertOperation = TableOperation.Insert(row);
             await experimentsTable.ExecuteAsync(insertOperation);
             return id;
+        }
+
+        /// <summary>
+        /// Deletes experiments table entry, output blobs, results blob.
+        /// </summary>
+        public async Task DeleteExperiment(ExperimentID id)
+        {
+            // Removes the output blobs
+            var removeOutputs = Task.Run(async () =>
+            {
+                string prefix = BlobNamePrefix(id);
+                BlobContinuationToken token = null;
+
+                do
+                {
+                    var segment = await outputContainer.ListBlobsSegmentedAsync(prefix, true, BlobListingDetails.None, null,
+                        token, new BlobRequestOptions { RetryPolicy = retryPolicy }, null);
+
+                    segment.Results
+                        .AsParallel()
+                        .ForAll(r =>
+                        {
+                            CloudBlob blob = r as CloudBlob;
+                            if (blob != null)
+                            {
+                                blob.DeleteIfExists(DeleteSnapshotsOption.IncludeSnapshots, options: new BlobRequestOptions { RetryPolicy = retryPolicy });
+                            }
+                        });
+
+                    token = segment.ContinuationToken;
+                } while (token != null);
+            });
+
+            // Removes the results table blob
+            var removeResults = Task.Run(async () =>
+            {
+                string resultsBlobName = GetResultBlobName(id);
+                var resultsBlob = resultsContainer.GetBlobReference(resultsBlobName);
+                await resultsBlob.DeleteIfExistsAsync(
+                      DeleteSnapshotsOption.IncludeSnapshots, AccessCondition.GenerateEmptyCondition(),
+                      new BlobRequestOptions { RetryPolicy = retryPolicy }, null);
+            });
+
+
+            // Removes the row from the experiments table
+            var removeEntity = Task.Run(async () =>
+            {
+                var exp = await GetExperiment(id);
+                TableOperation deleteOperation = TableOperation.Delete(exp);
+                await experimentsTable.ExecuteAsync(deleteOperation, new TableRequestOptions { RetryPolicy = retryPolicy }, null);
+            });
+
+            await Task.WhenAll(removeOutputs, removeResults, removeEntity);
         }
 
         private static TableQuery<NextExperimentIDEntity> QueryForNextId()
@@ -394,7 +447,7 @@ namespace AzurePerformanceTest
 
         private async Task<ExperimentEntity> FirstExperimentInQuery(TableQuery<ExperimentEntity> query)
         {
-            var list = (await experimentsTable.ExecuteQuerySegmentedAsync(query, null)).ToList();
+            var list = (await experimentsTable.ExecuteQuerySegmentedAsync(query, null, new TableRequestOptions { RetryPolicy = retryPolicy }, null)).ToList();
 
             if (list.Count == 0)
                 throw new ArgumentException("Experiment with given ID not found");

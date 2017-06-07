@@ -77,9 +77,10 @@ namespace AzurePerformanceTest
             get { return batchCreds != null; }
         }
 
-        public override Task DeleteExperiment(ExperimentID id)
+        public override async Task DeleteExperiment(ExperimentID id)
         {
-            throw new NotImplementedException();
+            // todo: stop running experiment here
+            await storage.DeleteExperiment(id);
         }
 
         public override async Task<Experiment> TryFindExperiment(int id)

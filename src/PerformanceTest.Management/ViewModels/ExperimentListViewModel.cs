@@ -62,6 +62,7 @@ namespace PerformanceTest.Management
         public async void DeleteExperiment(int id)
         {
             if (allExperiments == null) return;
+
             var handle = ui.StartIndicateLongOperation("Deleting the experiment...");
             try
             {
