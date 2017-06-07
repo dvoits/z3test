@@ -61,16 +61,8 @@ namespace PerformanceTest.Management
         {
             return Task.Run(() => // run in thread pool
             {
-                if (Directory.Exists(connectionString))
-                {
-                    LocalExperimentManager manager = LocalExperimentManager.OpenExperiments(connectionString, domainResolver);
-                    return new LocalExperimentManagerViewModel(manager, uiService, domainResolver) as ExperimentManagerViewModel;
-                }
-                else
-                {
-                    AzureExperimentManager azureManager = AzureExperimentManager.Open(connectionString);
-                    return new AzureExperimentManagerViewModel(azureManager, uiService, domainResolver) as ExperimentManagerViewModel;
-                }
+                AzureExperimentManager azureManager = AzureExperimentManager.Open(connectionString);
+                return new AzureExperimentManagerViewModel(azureManager, uiService, domainResolver) as ExperimentManagerViewModel;
             });
         }
 
@@ -373,6 +365,7 @@ namespace PerformanceTest.Management
             dlg.Owner = this;
             if (dlg.ShowDialog() == true)
             {
+                var handle = uiService.StartIndicateLongOperation("Submitting new experiment...");
                 try
                 {
                     vm.SaveRecentSettings();
@@ -382,18 +375,25 @@ namespace PerformanceTest.Management
                     uiService.ShowWarning(ex.Message, "Failed to save recent settings");
                 }
 
-                ExperimentDefinition def =
-                    ExperimentDefinition.Create(
-                        vm.Executable, vm.BenchmarkContainerUri, vm.BenchmarkDirectory, vm.Extension, vm.Parameters,
-                        TimeSpan.FromSeconds(vm.BenchmarkTimeoutSec), vm.Domain,
-                        vm.Categories, vm.BenchmarkMemoryLimitMb);
+                int? expId = null;
                 try
                 {
-                    await managerVm.SubmitExperiment(def, System.Security.Principal.WindowsIdentity.GetCurrent().Name, vm.Note);
+                    expId = await managerVm.SubmitExperiment(vm, System.Security.Principal.WindowsIdentity.GetCurrent().Name);
+
                 }
                 catch (Exception ex)
                 {
                     uiService.ShowError(ex, "Failed to submit an experiment");
+                }
+                finally
+                {
+                    uiService.StopIndicateLongOperation(handle);
+                }
+
+                if (expId.HasValue)
+                {
+                    experimentsVm.Refresh();
+                    uiService.ShowInfo(string.Format("Experiment {0} submitted.", expId.Value));
                 }
             }
         }
@@ -648,7 +648,7 @@ namespace PerformanceTest.Management
             if (e.Key == Key.Enter)
             {
                 var vm = DataContext as ExperimentListViewModel;
-                if(vm != null)
+                if (vm != null)
                 {
                     vm.FilterKeyword = txtFilter.Text;
                 }

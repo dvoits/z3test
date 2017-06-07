@@ -18,6 +18,9 @@ namespace PerformanceTest.Management
         void ShowError(Exception ex, string caption = null);
 
         void ShowWarning(string warning, string caption = null);
+
+        void ShowInfo(string message, string caption = null);
+
         /// <summary>Prompts a user to select a folder.</summary>
         /// <returns>Returns a selected folder path or null, if the user has cancelled selection.</returns>
         string ChooseFolder(string initialFolder, string description = null);
@@ -49,7 +52,10 @@ namespace PerformanceTest.Management
             MessageBox.Show(warning, caption ?? "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
 
-
+        public void ShowInfo(string message, string caption = null)
+        {
+            MessageBox.Show(message, caption ?? "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
 
         public void ShowError(Exception ex, string caption = null)
         {

@@ -30,12 +30,7 @@ namespace PerformanceTest.Management
         public abstract Task<string[]> GetAvailableCategories(string benchmarkContainer);
 
 
-        public virtual async Task SubmitExperiment(ExperimentDefinition def, string creator, string note)
-        {
-            var id = await manager.StartExperiment(def, creator, note);
-        }
-
-        public abstract string HandleMultileTargetFiles(string[] files, string mainFile);
+        public abstract Task<int> SubmitExperiment(NewExperimentViewModel newExperiment, string creator);
 
         public ExperimentListViewModel BuildListView()
         {
@@ -55,40 +50,5 @@ namespace PerformanceTest.Management
         }
 
         public abstract Task<string[]> GetDirectories(string baseDirectory);
-    }
-
-    public class LocalExperimentManagerViewModel : ExperimentManagerViewModel
-    {
-        public LocalExperimentManagerViewModel(LocalExperimentManager manager, IUIService uiService, IDomainResolver domainResolver) : base(manager, uiService, domainResolver)
-        {
-        }
-
-        public override string BenchmarkLibraryDescription
-        {
-            get { return "A folder that contains benchmark files."; }
-        }
-
-        public override Task<string[]> GetAvailableCategories(string benchmarkContainer)
-        {
-            if (Directory.Exists(benchmarkContainer))
-            {
-                var sep = new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
-                return Task.FromResult(Directory.EnumerateDirectories(benchmarkContainer).Select(dir => {
-                    int i = dir.LastIndexOfAny(sep);
-                    return i >= 0 ? dir.Substring(i + 1) : dir;
-                }).ToArray());
-            }
-            return Task.FromResult(new string[0]);
-        }
-
-        public override string HandleMultileTargetFiles(string[] files, string mainFile)
-        {
-            return mainFile;
-        }
-
-        public override Task<string[]> GetDirectories(string baseDirectory)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

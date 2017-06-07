@@ -18,14 +18,15 @@ namespace PerformanceTest.Management
         private string benchmarkContainerUri;
         private string benchmarkDirectory;
         private string categories;
-        private bool useMostRecentExecutable;
-        private string executable;
         private string domain;
         private double memlimit;
         private double timelimit;
         private string parameters;
         private string extension;
         private string note;
+
+        private bool useMostRecentExecutable;
+        private string[] fileNames;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -41,7 +42,6 @@ namespace PerformanceTest.Management
 
             domain = "Z3";
             benchmarkContainerUri = ExperimentDefinition.DefaultContainerUri;
-            UseMostRecentExecutable = true;
 
             ChooseDirectoryCommand = new DelegateCommand(ChooseDirectory);
             ChooseCategoriesCommand = new DelegateCommand(ChooseCategories);
@@ -49,12 +49,13 @@ namespace PerformanceTest.Management
 
             benchmarkDirectory = recentValues.BenchmarkDirectory;
             categories = recentValues.BenchmarkCategories;
-            executable = recentValues.ExperimentExecutable;
             extension = recentValues.BenchmarkExtension;
             parameters = recentValues.ExperimentExecutableParameters;
             timelimit = recentValues.BenchmarkTimeLimit.TotalSeconds;
             memlimit = recentValues.BenchmarkMemoryLimit;
             note = recentValues.ExperimentNote;
+
+            UseMostRecentExecutable = true;
         }
 
         public string BenchmarkLibaryDescription
@@ -110,15 +111,9 @@ namespace PerformanceTest.Management
             get { return new[] { "Z3", "default" }; }
         }
 
-        public string Executable
+        public string MainExecutable
         {
-            get { return executable; }
-            set
-            {
-                if (executable == value) return;
-                executable = value;
-                NotifyPropertyChanged();
-            }
+            get { return fileNames != null && fileNames.Length > 0 ? fileNames[0] : string.Empty; }
         }
 
         public bool UseMostRecentExecutable
@@ -143,6 +138,11 @@ namespace PerformanceTest.Management
                 NotifyPropertyChanged("UseMostRecentExecutable");
                 NotifyPropertyChanged("UseNewExecutable");
             }
+        }
+
+        public string[] ExecutableFileNames
+        {
+            get { return fileNames; }
         }
 
         public string Parameters
@@ -215,7 +215,6 @@ namespace PerformanceTest.Management
         {
             recentValues.BenchmarkDirectory = benchmarkDirectory;
             recentValues.BenchmarkCategories = categories;
-            recentValues.ExperimentExecutable = executable;
             recentValues.BenchmarkExtension = extension;
             recentValues.ExperimentExecutableParameters = parameters;
             recentValues.BenchmarkTimeLimit = TimeSpan.FromSeconds(timelimit);
@@ -223,17 +222,12 @@ namespace PerformanceTest.Management
             recentValues.ExperimentNote = note;
         }
 
-
         private void ChooseExecutable()
         {
-            string[] files = service.ChooseFiles(Executable, "Executable files (*.exe;*.dll)|*.exe;*.dll|All Files (*.*)|*.*", "exe");
+            string[] files = service.ChooseFiles(null, "Executable files (*.exe;*.dll)|*.exe;*.dll|All Files (*.*)|*.*", "exe");
             if (files == null || files.Length == 0) return;
 
-            if (files.Length == 1)
-            {
-                Executable = files[0];
-            }
-            else
+            if (files.Length > 1)
             {
                 string[] exeFiles = files.Where(f => f.EndsWith(".exe")).ToArray();
                 if (exeFiles.Length == 0)
@@ -247,12 +241,18 @@ namespace PerformanceTest.Management
                 else
                 {
                     mainFile = service.ChooseOption("Select main executable", exeFiles, exeFiles[0]);
-                    if (mainFile == null) return;
-
-                    mainFile = manager.HandleMultileTargetFiles(files, mainFile);
+                    if (mainFile == null) return;                    
                 }
-                Executable = mainFile;
+
+                // First element of the file names array must be main executable
+                int i = Array.IndexOf(files, mainFile);
+                if (i < 0) throw new InvalidOperationException("The chosen main executable is not found in the original file list");
+                files[i] = files[0];
+                files[0] = mainFile;
             }
+            fileNames = files;
+            NotifyPropertyChanged("MainExecutable");
+            NotifyPropertyChanged("ExecutableFileNames");
             UseMostRecentExecutable = false;
         }
 

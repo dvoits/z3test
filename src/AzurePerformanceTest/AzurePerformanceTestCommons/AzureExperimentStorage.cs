@@ -2,6 +2,7 @@
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.Queue;
+using Microsoft.WindowsAzure.Storage.RetryPolicies;
 using Microsoft.WindowsAzure.Storage.Table;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -12,6 +13,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading;
@@ -187,6 +189,29 @@ namespace AzurePerformanceTest
             };
             string signature = blob.GetSharedAccessSignature(sasConstraints);
             return blob.Uri + signature;
+        }
+
+        /// <summary>
+        /// If the blob was successfully uploaded, returns true.
+        /// If the blob already exists, returns false.
+        /// Otherwise throws an exception.
+        /// </summary>
+        public async Task<bool> TryUploadNewExecutable(Stream source, string blobName)
+        {
+            if (source == null) throw new ArgumentNullException("source");
+            if (blobName == null) throw new ArgumentNullException("blobName");
+
+            CloudBlockBlob blob = binContainer.GetBlockBlobReference(blobName);
+            try
+            {
+                await blob.UploadFromStreamAsync(source, AccessCondition.GenerateIfNotExistsCondition(),
+                    new BlobRequestOptions() { RetryPolicy = new LinearRetry(TimeSpan.FromSeconds(0.5), 15) }, null);
+                return true;
+            }
+            catch (StorageException ex) when (ex.RequestInformation?.HttpStatusCode == (int)HttpStatusCode.Conflict)
+            {
+                return false;
+            }
         }
 
         private static string GetResultsFileName(int expId)

@@ -113,8 +113,8 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBox Height="23" HorizontalAlignment="Stretch" Name="txtExecutable" VerticalAlignment="Center" Grid.Column="0" ToolTip="The target executable." 
-                                 IsEnabled="{Binding UseNewExecutable}"
-                                 Text="{Binding Executable}"/>
+                                 IsEnabled="{Binding UseNewExecutable}" IsReadOnly="True"
+                                 Text="{Binding MainExecutable, Mode=OneWay}"/>
                         <Button Width="23" Height="23" HorizontalAlignment="Stretch" Name="btnSelectExecutable" VerticalAlignment="Stretch" Grid.Column="1" Margin="2"
                             Command="{Binding ChooseExecutableCommand}">
                             <Image Source="/PerformanceTest.Management;component/Images/taskbrowse.ico" />

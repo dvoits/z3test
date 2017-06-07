@@ -47,12 +47,6 @@ namespace PerformanceTest.Management
             set { WriteString("BenchmarkExtension", value); }
         }
 
-        public string ExperimentExecutable
-        {
-            get { return ReadString("ExperimentExecutable"); }
-            set { WriteString("ExperimentExecutable", value); }
-        }
-
         public string ExperimentExecutableParameters
         {
             get { return ReadString("ExperimentExecutableParameters"); }
