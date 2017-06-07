@@ -220,9 +220,9 @@ namespace PerformanceTest.Management
 
         public string WorkerInformation { get { return status.WorkerInformation; } }
 
-        public int BenchmarksDone { get { return status.BenchmarksDone; } }
-        public int BenchmarksTotal { get { return status.BenchmarksTotal; } }
-        public int BenchmarksQueued { get { return status.BenchmarksQueued; } }
+        public int? BenchmarksDone { get { return status.BenchmarksTotal == 0 ? null : (int?)status.BenchmarksDone; } }
+        public int? BenchmarksTotal { get { return status.BenchmarksTotal == 0 ? null : (int?)status.BenchmarksTotal; } }
+        public int? BenchmarksQueued { get { return status.BenchmarksTotal == 0 ? null : (int?)status.BenchmarksQueued; } }
 
         public bool Flag
         {
@@ -239,6 +239,7 @@ namespace PerformanceTest.Management
                 }
             }
         }
+
         private async void UpdateNote()
         {
             try

@@ -104,7 +104,7 @@
     <Compile Include="Views\CopyDialog.xaml.cs">
       <DependentUpon>CopyDialog.xaml</DependentUpon>
     </Compile>
-    <Compile Include="ViewModels\DelegateCommand.cs" />
+    <Compile Include="DelegateCommand.cs" />
     <Compile Include="ViewModels\ExperimentManagerViewModel.cs" />
     <Compile Include="ViewModels\NewExperimentViewModel.cs" />
     <Page Include="Views\BrowseDialog.xaml">
