@@ -17,32 +17,45 @@ namespace PerformanceTest.Management
     }
     public class SaveData
     {
-        SaveData ()
+        SaveData () {}
+        private static int[] computeUnique(ExperimentStatusViewModel[] experiments, BenchmarkResult[][] b)
         {
-        }
-        private static async Task<ExperimentStatistics> GetStatistics(ExperimentManager manager, int id, Measurement.Domain domain)
-        {
-            var results = await manager.GetResults(id);
-            var aggr = domain.Aggregate(results.Select(r => new Measurement.ProcessRunAnalysis(r.Status, r.Properties)));
-            return new ExperimentStatistics(aggr);
-        }
+            int[] res = new int[experiments.Length];
+            for (int i = 0; i < experiments.Length; i++) res[i] = 0;
 
-        private static List<int> computeUnique(ExperimentStatusViewModel[] experiments, BenchmarkResult[][] b)
-        {
-            List<int> res = new List<int>();
-
-
+            Dictionary<string, Dictionary<int, int>> data =
+                    new Dictionary<string, Dictionary<int, int>>();
+            //create dictionary for all benchmarks
             for (int i = 0; i < experiments.Length; i++)
             {
-                List<string> filenames = new List<string>();
-                for (int j = 0; j < experiments.Length; j++)
+                int id = experiments[i].ID;
+                for (int j = 0; j < b[i].Length; j++)
                 {
-
+                    BenchmarkResult bij = b[i][j]; 
+                    if (!data.ContainsKey(bij.BenchmarkFileName)) data.Add(bij.BenchmarkFileName, new Dictionary<int, int>());
+                    if (!data[bij.BenchmarkFileName].ContainsKey(id))
+                        data[bij.BenchmarkFileName].Add(id, bij.ExitCode);
                 }
-
-
-
-                res.Add(filenames.Count);
+            }
+            //find similar for all experiments benchmarks and check exitCode. 
+            foreach (KeyValuePair<string, Dictionary<int, int>> d in data.OrderBy(x => x.Key))
+            {
+                int count = d.Value.Count();
+                if (count == experiments.Length)
+                {
+                    for (int i = 0; i < count; i++)
+                    {
+                        int idi = experiments[i].ID;
+                        bool condition = true;
+                        for (int j = 0; j < count; j++)
+                        {
+                            int idj = experiments[j].ID;
+                            if (i == j) condition = condition && d.Value[idj] == 0;
+                            else condition = condition && d.Value[idj] != 0;
+                        }
+                        if (condition) ++res[i];
+                    }
+                }
             }
             return res;
         }
@@ -54,20 +67,20 @@ namespace PerformanceTest.Management
             if (domainResolver == null) throw new ArgumentNullException("domain");
             if (uiService == null) throw new ArgumentNullException("uiService");
 
-            StreamWriter f = new StreamWriter(filename, false);
-            f.WriteLine("\"ID\",\"# Total\",\"# SAT\",\"# UNSAT\",\"# UNKNOWN\",\"# Timeout\",\"# Memout\",\"# Bug\",\"# Error\",\"# Unique\",\"Parameters\",\"Note\"");
-            var count = experiments.Length;
-            BenchmarkResult[][] b = new BenchmarkResult[count][];
-            b = await DownloadResultsAsync(experiments, manager);
-            var unique = computeUnique(experiments, b);
             var handle = uiService.StartIndicateLongOperation("Save meta csv...");
             try
             {
+                StreamWriter f = new StreamWriter(filename, false);
+                f.WriteLine("\"ID\",\"# Total\",\"# SAT\",\"# UNSAT\",\"# UNKNOWN\",\"# Timeout\",\"# Memout\",\"# Bug\",\"# Error\",\"# Unique\",\"Parameters\",\"Note\"");
+                var count = experiments.Length;
+                BenchmarkResult[][] b = new BenchmarkResult[count][];
+                b = await DownloadResultsAsync(experiments, manager);
+                var unique = computeUnique(experiments, b);
                 for (var i = 0; i < count; i++)
                 {
                     var domain = domainResolver.GetDomain(experiments[i].Definition.DomainName ?? "Z3");
-                    var t1 = Task.Run(() => GetStatistics(manager, experiments[i].ID, domain));
-                    var statistics = await t1;
+                    var aggr = domain.Aggregate(b[i].Select(r => new Measurement.ProcessRunAnalysis(r.Status, r.Properties)));
+                    var statistics = new ExperimentStatistics(aggr);
                     var def = experiments[i].Definition;
                     string ps = def.Parameters.Trim(' ');
                     string note = experiments[i].Note.Trim(' ');
@@ -92,13 +105,17 @@ namespace PerformanceTest.Management
                                 "\"" + ps + "\"," +
                                 "\"" + note + "\"");
                 }
+                f.WriteLine();
+                f.Close();
+            }
+            catch (Exception ex)
+            {
+                uiService.ShowError(ex, "Failed to save meta CSV");
             }
             finally
             {
                 uiService.StopIndicateLongOperation(handle);
             }
-            f.WriteLine();
-            f.Close();
         }
         public static async void SaveCSV (string filename, ExperimentStatusViewModel[] experiments, ExperimentManager manager, IUIService uiService)
         {
@@ -107,29 +124,29 @@ namespace PerformanceTest.Management
             if (manager == null) throw new ArgumentNullException("manager");
             if (uiService == null) throw new ArgumentNullException("uiService");
 
-            StreamWriter f = new StreamWriter(filename, false);
-            var count = experiments.Length;
-            Dictionary<string, Dictionary<int, CSVDatum>> data =
-                    new Dictionary<string, Dictionary<int, CSVDatum>>();
             var handle = uiService.StartIndicateLongOperation("Save csv...");
             try
             {
+                StreamWriter f = new StreamWriter(filename, false);
+                var count = experiments.Length;
+                Dictionary<string, Dictionary<int, CSVDatum>> data =
+                    new Dictionary<string, Dictionary<int, CSVDatum>>();
+                var benchs = await DownloadResultsAsync(experiments, manager);
                 f.Write(",");
                 for (var i = 0; i < count; i++)
                 {
                     int id = experiments[i].ID;
                     var def = experiments[i].Definition;
-                    string ps = def.Parameters.Trim(' ');
-                    string note = experiments[i].Note.Trim(' ');
+                    string ps = def.Parameters == null ? "" : def.Parameters.Trim(' ');
+                    string note = experiments[i].Note == null ? "" : experiments[i].Note.Trim(' ');
                     var ex_timeout = def.BenchmarkTimeout.TotalSeconds;
 
-                    f.Write(experiments[i].Note.Trim(' ') + ",");
+                    f.Write(note + ",");
                     if (ps != "") f.Write("'" + ps + "'");
                     f.Write(",,,,");
 
                     double error_line = 10.0 * ex_timeout;
-                    var t1 = Task.Run(() => manager.GetResults(id));
-                    var benchmarks = await t1;
+                    var benchmarks = benchs[i];
                     bool HasDuplicates = false;
                     for (var j = 0; j < benchmarks.Length; j++)
                     {
@@ -201,12 +218,16 @@ namespace PerformanceTest.Management
                     }
                     f.WriteLine();
                 }
+                f.Close();
+            }
+            catch (Exception ex)
+            {
+                uiService.ShowError(ex, "Failed to save CSV");
             }
             finally
             {
                 uiService.StopIndicateLongOperation(handle);
             }
-            f.Close();
         }
         public static async void SaveOutput (string selectedPath, ExperimentStatusViewModel experiment, ExperimentManager manager, IUIService uiService)
         {
@@ -247,6 +268,10 @@ namespace PerformanceTest.Management
                 }
 
             }
+            catch (Exception ex)
+            {
+                uiService.ShowError(ex, "Failed to save output");
+            }
             finally
             {
                 uiService.StopIndicateLongOperation(handle);
@@ -259,7 +284,7 @@ namespace PerformanceTest.Management
             int numItems = experiments.Length;
             f.WriteLine(@"\begin{table}");
             f.WriteLine(@"  \centering");
-            f.Write(@"  \begin{tabular}[h]{|p{8cm}|");
+            f.Write(@"  \begin{tabular}[h]{|p{.5\textwidth}|");
             for (int i = 0; i < numItems; i++)
                 f.Write(@"c|");
             f.WriteLine(@"}\cline{2-" + (numItems + 1) + "}");
@@ -269,7 +294,7 @@ namespace PerformanceTest.Management
             for (int i = 0; i < numItems; i++)
             {
                 string label = experiments[i].Note.Replace(@"\", @"\textbackslash ").Replace(@"_", @"\_");
-                f.Write(@" & \multicolumn{1}{l|}{\rotatebox[origin=c]{90}{\parbox{8cm}{" + label + @"}}}");
+                f.Write(@" & \multicolumn{1}{l|}{\rotatebox[origin=c]{90}{\parbox{.5\textwidth}{" + label + @"}}}");
             }
             f.WriteLine(@"\\\hline\hline");
             
@@ -286,7 +311,7 @@ namespace PerformanceTest.Management
                         f.Write(@" & $\pm 0$");
                     else
                     {
-                        int q = FindSimilarBenchmarks(b[i], b[j], condition);
+                        int q = FindSimilarBenchmarks(b[i], b[j], condition, false);
                         f.Write(@" & $" + (q > 0 ? @"+" : (q == 0) ? @"\pm" : @"") + q.ToString() + "$");
                         if (i == 1 && j == 0) example_value = q;
                     }
@@ -331,40 +356,14 @@ namespace PerformanceTest.Management
                     f.WriteLine(@"\end{document}");
                 }
             }
+            catch (Exception ex)
+            {
+                uiService.ShowError(ex, "Failed to save matrix");
+            }
             finally
             {
                 uiService.StopIndicateLongOperation(handle);
             }
-        }
-        public static void SaveBinary(string filename, ExperimentStatusViewModel experiment, ExperimentManager manager, IUIService uiService)
-        {
-            if (filename == null) throw new ArgumentNullException("filename");
-            if (experiment == null) throw new ArgumentNullException("experiment");
-            if (manager == null) throw new ArgumentNullException("manager");
-            if (uiService == null) throw new ArgumentNullException("uiService");
-
-
-            throw new NotImplementedException();
-            //var handle = uiService.StartIndicateLongOperation("Save tex...");
-            //try
-            //{
-
-            //    string executable_path = experiment.Definition.Executable;
-            //    FileStream file = File.Open(filename, FileMode.OpenOrCreate, FileAccess.Write);
-
-            //    //if ()
-            //    //{
-            //    //    byte[] data = ;
-            //    //    file.Write(data, 0, data.Length);
-            //    //}
-            //    //else
-            //    //    uiService.ShowError("Could not get binary data");
-            //    file.Close();
-            //}
-            //finally
-            //{
-            //    uiService.StopIndicateLongOperation(handle);
-            //}
         }
         private static async Task<BenchmarkResult[][]> DownloadResultsAsync(ExperimentStatusViewModel[] experiments, ExperimentManager manager)
         {
@@ -383,18 +382,19 @@ namespace PerformanceTest.Management
             }
             return b;
         }
-        private static bool ConditionTrue(int condition, BenchmarkResult elem1, BenchmarkResult elem2)
+        private static bool ConditionTrue(int condition, BenchmarkResult elem1, BenchmarkResult elem2, bool isEqual_ij)
         {
-            bool condition1 = elem1.BenchmarkFileName == elem2.BenchmarkFileName && elem1.ExitCode == 0 && elem2.ExitCode != 0 ||
-                              elem1.Status == ResultStatus.Success && elem2.Status == ResultStatus.Success && elem1.NormalizedRuntime < elem2.NormalizedRuntime;
-
+            bool condition1 = elem1.BenchmarkFileName == elem2.BenchmarkFileName && 
+                              (elem1.ExitCode == 0 && elem2.ExitCode != 0 || 
+                               elem1.Status == ResultStatus.Success && elem2.Status == ResultStatus.Success && elem1.NormalizedRuntime < elem2.NormalizedRuntime);
             if (condition == 0) condition1 = condition1 && (Int32.Parse(elem1.Properties["UNSAT"]) + Int32.Parse(elem2.Properties["UNSAT"]) > 0 ||
                                                             Int32.Parse(elem1.Properties["SAT"]) + Int32.Parse(elem2.Properties["SAT"]) > 0);
             if (condition == 1) condition1 = condition1 && (Int32.Parse(elem1.Properties["SAT"]) + Int32.Parse(elem2.Properties["SAT"]) > 0);
             if (condition == 2) condition1 = condition1 && (Int32.Parse(elem1.Properties["UNSAT"]) + Int32.Parse(elem2.Properties["UNSAT"]) > 0);
+            
             return condition1;
         }
-        private static int FindSimilarBenchmarks (BenchmarkResult[] br1, BenchmarkResult[] br2, int condition)
+        private static int FindSimilarBenchmarks (BenchmarkResult[] br1, BenchmarkResult[] br2, int condition, bool isEqual_ij)
         {
             int result = 0; 
 
@@ -406,7 +406,7 @@ namespace PerformanceTest.Management
                 int cmp = string.Compare(filename1, filename2);
                 if (cmp == 0)
                 {
-                    if (ConditionTrue(condition, br1[i1], br2[i2])) result++;
+                    if (ConditionTrue(condition, br1[i1], br2[i2], isEqual_ij)) result++;
                     i1++; i2++;
                 }
                 else if (cmp < 0) // ~ r1 < r2
@@ -420,5 +420,6 @@ namespace PerformanceTest.Management
             }
             return result;
         }
+        
     }
 }

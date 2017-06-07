@@ -61,10 +61,8 @@ namespace PerformanceTest.Management
         {
             SaveData.SaveCSV(filename, experiments, manager, uiService);
         }
-        public void SaveBinary(string filename, ExperimentStatusViewModel experiment)
-        {
-            SaveData.SaveBinary(filename, experiment, manager, uiService);
-        }
+        public abstract Task<Stream> SaveExecutable(string filename, string exBlobName);
+        
         public void SaveMatrix(string filename, ExperimentStatusViewModel[] experiments)
         {
             SaveData.SaveMatrix(filename, experiments, manager, uiService);
@@ -106,6 +104,10 @@ namespace PerformanceTest.Management
         }
 
         public override Task<string[]> GetDirectories(string baseDirectory)
+        {
+            throw new NotImplementedException();
+        }
+        public override Task<Stream> SaveExecutable(string filename, string exBlobName)
         {
             throw new NotImplementedException();
         }

@@ -54,5 +54,13 @@ namespace PerformanceTest.Management
         {
             throw new NotImplementedException();
         }
+        public override Task<Stream> SaveExecutable(string filename, string exBlobName)
+        {
+            if (filename == null) throw new ArgumentNullException("filename");
+            if (exBlobName == null) throw new ArgumentNullException("exBlobName");
+            AzureExperimentManager manager = (AzureExperimentManager)base.manager;
+            var result = Task.Run(() => manager.Storage.DownloadExecutable(exBlobName));
+            return result;
+        }
     }
 }

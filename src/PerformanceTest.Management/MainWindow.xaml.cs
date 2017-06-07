@@ -476,19 +476,35 @@ namespace PerformanceTest.Management
         {
             e.CanExecute = dataGrid.SelectedItems.Count == 1;
         }
-        private void saveBinary(object target, ExecutedRoutedEventArgs e)
+        private async void saveBinary(object target, ExecutedRoutedEventArgs e)
         {
             System.Windows.Forms.SaveFileDialog dlg = new System.Windows.Forms.SaveFileDialog();
             dlg.Filter = "Executable files (*.exe)|*.exe|All files (*.*)|*.*";
             dlg.FilterIndex = 1;
             dlg.RestoreDirectory = true;
 
-            var experiment = (ExperimentStatusViewModel)dataGrid.SelectedItem;
-            dlg.FileName = "binary_" + experiment.ID + ".exe";
-
-            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            var handle = uiService.StartIndicateLongOperation("Save binary...");
+            try
             {
-                managerVm.SaveBinary(dlg.FileName, experiment);
+                var experiment = (ExperimentStatusViewModel)dataGrid.SelectedItem;
+                dlg.FileName = "binary_" + experiment.ID + ".exe";
+
+                if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    Stream result = await managerVm.SaveExecutable(dlg.FileName, experiment.Definition.Executable);
+                    string fn = dlg.FileName;
+                    FileStream file = File.Open(fn, FileMode.OpenOrCreate, FileAccess.Write);
+                    result.CopyTo(file);
+                    file.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                uiService.ShowError(ex, "Failed to save binary");
+            }
+            finally
+            {
+                uiService.StopIndicateLongOperation(handle);
             }
         }
         private void canSaveOutput(object sender, CanExecuteRoutedEventArgs e)
