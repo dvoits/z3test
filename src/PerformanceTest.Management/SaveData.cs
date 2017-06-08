@@ -107,7 +107,7 @@ namespace PerformanceTest.Management
                 }
                 f.WriteLine();
                 f.Close();
-            }
+        }
             catch (Exception ex)
             {
                 uiService.ShowError(ex, "Failed to save meta CSV");

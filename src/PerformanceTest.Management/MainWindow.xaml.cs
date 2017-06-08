@@ -195,6 +195,7 @@ namespace PerformanceTest.Management
 
             if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
+
                 var experiments = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().ToArray();
                 managerVm.SaveMetaData(dlg.FileName, experiments);
             }
@@ -488,7 +489,7 @@ namespace PerformanceTest.Management
         private async void saveBinary(object target, ExecutedRoutedEventArgs e)
         {
             System.Windows.Forms.SaveFileDialog dlg = new System.Windows.Forms.SaveFileDialog();
-            dlg.Filter = "Executable files (*.exe)|*.exe|All files (*.*)|*.*";
+            dlg.Filter = "Executable files (*.zip)|*.zip|All files (*.*)|*.*";
             dlg.FilterIndex = 1;
             dlg.RestoreDirectory = true;
 
@@ -496,7 +497,7 @@ namespace PerformanceTest.Management
             try
             {
                 var experiment = (ExperimentStatusViewModel)dataGrid.SelectedItem;
-                dlg.FileName = "binary_" + experiment.ID + ".exe";
+                dlg.FileName = "binary_" + experiment.ID + ".zip";
 
                 if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 {
