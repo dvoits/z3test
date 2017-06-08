@@ -106,20 +106,21 @@ namespace PerformanceTest.Management
 
             for (int i = 0; i < cats.Length; i++)
             {
+                string category = cats[i].Trim();
                 ExperimentDefinition def =
                 ExperimentDefinition.Create(
                     packageName, newExperiment.BenchmarkContainerUri, newExperiment.BenchmarkDirectory, newExperiment.Extension, newExperiment.Parameters,
                     TimeSpan.FromSeconds(newExperiment.BenchmarkTimeoutSec), newExperiment.Domain,
-                    cats[i], newExperiment.BenchmarkMemoryLimitMb);
+                    category, newExperiment.BenchmarkMemoryLimitMb);
 
                 try
                 {
                     int id = await manager.StartExperiment(def, creator, newExperiment.Note);
-                    res[i] = Tuple.Create<string, int?, Exception>(cats[i], id, null);
+                    res[i] = Tuple.Create<string, int?, Exception>(category, id, null);
                 }
                 catch (Exception ex)
                 {
-                    res[i] = Tuple.Create<string, int?, Exception>(cats[i], null, ex);
+                    res[i] = Tuple.Create<string, int?, Exception>(category, null, ex);
                 }
             }
             return res;
