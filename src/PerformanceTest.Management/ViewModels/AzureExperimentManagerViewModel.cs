@@ -110,5 +110,28 @@ namespace PerformanceTest.Management
 
             return await manager.StartExperiment(def, creator, newExperiment.Note);
         }
+        public Task<Stream> SaveExecutable(string filename, string exBlobName)
+        {
+            if (filename == null) throw new ArgumentNullException("filename");
+            if (exBlobName == null) throw new ArgumentNullException("exBlobName");
+            return Task.Run(() => manager.Storage.DownloadExecutable(exBlobName));
+        }
+
+        public void SaveMetaData(string filename, ExperimentStatusViewModel[] experiments)
+        {
+            SaveData.SaveMetaCSV(filename, experiments, manager, domainResolver, uiService);
+        }
+        public void SaveCSVData(string filename, ExperimentStatusViewModel[] experiments)
+        {
+            SaveData.SaveCSV(filename, experiments, manager, uiService);
+        }
+        public void SaveMatrix(string filename, ExperimentStatusViewModel[] experiments)
+        {
+            SaveData.SaveMatrix(filename, experiments, manager, uiService);
+        }
+        public void SaveOutput(string selectedPath, ExperimentStatusViewModel experiment)
+        {
+            SaveData.SaveOutput(selectedPath, experiment, manager, uiService);
+        }
     }
 }

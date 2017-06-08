@@ -535,6 +535,11 @@ namespace AzurePerformanceTest
                     return table.ExecuteBatchAsync(opsBatch);
                 }));
         }
+        public Stream DownloadExecutable(string exBlobName)
+        {
+            var blob = binContainer.GetBlobReference(exBlobName);
+            return new LazyBlobStream(blob);
+        }
     }
 
     public class LazyBlobStream : Stream

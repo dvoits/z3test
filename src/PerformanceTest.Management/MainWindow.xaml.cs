@@ -175,25 +175,9 @@ namespace PerformanceTest.Management
 
             if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                StreamWriter f = new StreamWriter(dlg.FileName, false);
-                //not implemented 
-
-
-                f.WriteLine();
-                f.Close();
+                var experiments = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().ToArray();
+                managerVm.SaveCSVData(dlg.FileName, experiments);
             }
-        }
-        private List<int> computeUnique()
-        {
-            List<int> ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToList();
-            List<int> res = new List<int>();
-            for (int i = 0; i < ids.Count; i++)
-            {
-                //what is a filename
-                List<string> filenames = new List<string>();
-                res.Add(filenames.Count);
-            }
-            return res;
         }
 
         private void canSaveMetaCSV(object sender, CanExecuteRoutedEventArgs e)
@@ -211,45 +195,9 @@ namespace PerformanceTest.Management
 
             if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                throw new NotImplementedException();
-                //StreamWriter f = new StreamWriter(dlg.FileName, false);
-                //f.WriteLine("\"ID\",\"# Total\",\"# SAT\",\"# UNSAT\",\"# UNKNOWN\",\"# Timeout\",\"# Memout\",\"# Bug\",\"# Error\",\"# Unique\",\"Parameters\",\"Note\""); 
-                //var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
-                //var count = ids.Length;
-                //var unique = computeUnique();
-                //for (var i = 0; i < count; i++)
-                //{
-                //    //not implemented 
-                //    var experiment = experimentsVm.Items.Where(st => st.ID == ids[i]).ToArray()[0];
-                //    var def = managerVm.GetDefinition(ids[i]).Result;
-                //    string ps = def.Parameters;
-                //    string note = experiment.Note;
-                //    int total =  0;
-                //    int sat = 0;
-                //    int unsat = 0;
-                //    int unknown = 0;
-                //    int timeouts = 0;
-                //    int memouts = 0;
-                //    int bugs = 0;
-                //    int errors = 0;
-
-                //    f.WriteLine(ids[i] + "," +
-                //                total + "," +
-                //                sat + "," +
-                //                unsat + "," +
-                //                unknown + "," +
-                //                timeouts + "," +
-                //                memouts + "," +
-                //                bugs + "," +
-                //                errors + "," +
-                //                unique[i] + "," +
-                //                "\"" + ps + "\"," +
-                //                "\"" + note + "\"");
-                //}
-                //f.WriteLine();
-                //f.Close();
+                var experiments = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().ToArray();
+                managerVm.SaveMetaData(dlg.FileName, experiments);
             }
-
         }
 
         private void canToggleFlag(object sender, CanExecuteRoutedEventArgs e)
@@ -468,7 +416,7 @@ namespace PerformanceTest.Management
                 string note = dlg.txtNote.Text;
                 //for (var i = 0; i < ids.Length; i++)
                 //{
-                //    ExperimentDefinition def = managerVm.GetDefinition(ids[i].ID).Result;
+                //    ExperimentDefinition def = ids[i].Definition;
                 //    //change groupName
                 //    //change note
                 //}
@@ -528,9 +476,36 @@ namespace PerformanceTest.Management
         {
             e.CanExecute = dataGrid.SelectedItems.Count == 1;
         }
-        private void saveBinary(object target, ExecutedRoutedEventArgs e)
+        private async void saveBinary(object target, ExecutedRoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            System.Windows.Forms.SaveFileDialog dlg = new System.Windows.Forms.SaveFileDialog();
+            dlg.Filter = "Executable files (*.exe)|*.exe|All files (*.*)|*.*";
+            dlg.FilterIndex = 1;
+            dlg.RestoreDirectory = true;
+
+            var handle = uiService.StartIndicateLongOperation("Save binary...");
+            try
+            {
+                var experiment = (ExperimentStatusViewModel)dataGrid.SelectedItem;
+                dlg.FileName = "binary_" + experiment.ID + ".exe";
+
+                if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    Stream result = await managerVm.SaveExecutable(dlg.FileName, experiment.Definition.Executable);
+                    string fn = dlg.FileName;
+                    FileStream file = File.Open(fn, FileMode.OpenOrCreate, FileAccess.Write);
+                    result.CopyTo(file);
+                    file.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                uiService.ShowError(ex, "Failed to save binary");
+            }
+            finally
+            {
+                uiService.StopIndicateLongOperation(handle);
+            }
         }
         private void canSaveOutput(object sender, CanExecuteRoutedEventArgs e)
         {
@@ -538,7 +513,13 @@ namespace PerformanceTest.Management
         }
         private void saveOutput(object target, ExecutedRoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            System.Windows.Forms.FolderBrowserDialog dlg = new System.Windows.Forms.FolderBrowserDialog();
+            dlg.ShowNewFolderButton = true;
+            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                var experiment = (ExperimentStatusViewModel)dataGrid.SelectedItem;
+                managerVm.SaveOutput(dlg.SelectedPath, experiment);
+            }
         }
         private void canSaveMatrix(object sender, CanExecuteRoutedEventArgs e)
         {
@@ -565,7 +546,17 @@ namespace PerformanceTest.Management
         }
         private void saveMatrix(object target, ExecutedRoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            System.Windows.Forms.SaveFileDialog dlg = new System.Windows.Forms.SaveFileDialog();
+            dlg.Filter = "LaTeX files (*.tex)|*.tex|All files (*.*)|*.*";
+            dlg.FilterIndex = 1;
+            dlg.RestoreDirectory = true;
+            dlg.FileName = "matrix.tex";
+
+            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                var experiments = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().ToArray();
+                managerVm.SaveMatrix(dlg.FileName, experiments);
+            }
         }
         private void canShowReinforcements(object sender, CanExecuteRoutedEventArgs e)
         {
