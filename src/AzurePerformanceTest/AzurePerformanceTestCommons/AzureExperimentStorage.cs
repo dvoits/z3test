@@ -214,6 +214,21 @@ namespace AzurePerformanceTest
             }
         }
 
+        public async Task<bool> DeleteExecutable(string executableName)
+        {
+            if (executableName == null) throw new ArgumentNullException("executableName");
+            CloudBlockBlob blob = binContainer.GetBlockBlobReference(executableName);
+            try
+            {
+                return await blob.DeleteIfExistsAsync(DeleteSnapshotsOption.IncludeSnapshots, AccessCondition.GenerateEmptyCondition(),
+                    new BlobRequestOptions() { RetryPolicy = retryPolicy }, null);
+            }
+            catch (StorageException ex) when (ex.RequestInformation?.HttpStatusCode == (int)HttpStatusCode.Conflict)
+            {
+                return false;
+            }
+        }
+
         private static string GetResultsFileName(int expId)
         {
             return String.Format("{0}.csv", expId);

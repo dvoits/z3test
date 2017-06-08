@@ -11,7 +11,7 @@ namespace PerformanceTest.Management
 {
     public class NewExperimentViewModel : INotifyPropertyChanged
     {
-        private readonly ExperimentManagerViewModel manager;
+        private readonly AzureExperimentManagerViewModel manager;
         private readonly IUIService service;
         private readonly RecentValuesStorage recentValues;
 
@@ -31,7 +31,7 @@ namespace PerformanceTest.Management
         public event PropertyChangedEventHandler PropertyChanged;
 
 
-        public NewExperimentViewModel(ExperimentManagerViewModel manager, IUIService service, RecentValuesStorage recentValues)
+        public NewExperimentViewModel(AzureExperimentManagerViewModel manager, IUIService service, RecentValuesStorage recentValues)
         {
             if (manager == null) throw new ArgumentNullException("manager");
             if (service == null) throw new ArgumentNullException("service");

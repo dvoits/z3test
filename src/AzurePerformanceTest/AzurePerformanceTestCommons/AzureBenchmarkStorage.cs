@@ -43,6 +43,7 @@ namespace AzurePerformanceTest
             this.signature = "?" + parts[1];
             inputsContainer = new CloudBlobContainer(new Uri(containerUri));
         }
+        
 
         public string GetContainerSASUri()
         {

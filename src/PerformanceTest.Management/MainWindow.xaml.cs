@@ -23,7 +23,7 @@ namespace PerformanceTest.Management
         private readonly IUIService uiService;
         private readonly RecentValuesStorage recentValues;
 
-        private ExperimentManagerViewModel managerVm;
+        private AzureExperimentManagerViewModel managerVm;
         private ExperimentListViewModel experimentsVm;
 
         public static RoutedCommand SaveMetaCSVCommand = new RoutedCommand();
@@ -57,12 +57,12 @@ namespace PerformanceTest.Management
             uiService = new UIService(statusVm);
         }
 
-        private Task<ExperimentManagerViewModel> ConnectAsync(string connectionString)
+        private Task<AzureExperimentManagerViewModel> ConnectAsync(string connectionString)
         {
             return Task.Run(() => // run in thread pool
             {
                 AzureExperimentManager azureManager = AzureExperimentManager.Open(connectionString);
-                return new AzureExperimentManagerViewModel(azureManager, uiService, domainResolver) as ExperimentManagerViewModel;
+                return new AzureExperimentManagerViewModel(azureManager, uiService, domainResolver);
             });
         }
 

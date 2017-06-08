@@ -83,6 +83,12 @@ namespace AzurePerformanceTest
             await storage.DeleteExperiment(id);
         }
 
+        public override Task DeleteExecutable(string executableName)
+        {
+            if (executableName == null) throw new ArgumentNullException("executableName");
+            return storage.DeleteExecutable(executableName);
+        }
+
         public override async Task<Experiment> TryFindExperiment(int id)
         {
             try

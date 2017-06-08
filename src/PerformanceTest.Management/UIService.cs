@@ -36,6 +36,11 @@ namespace PerformanceTest.Management
         long StartIndicateLongOperation(string status = null);
 
         void StopIndicateLongOperation(long handle);
+
+        /// <summary>
+        /// Returns true if yes, false if no, and null if cancel.
+        /// </summary>
+        bool? AskYesNoCancel(string message, string caption);
     }
 
     public class UIService : IUIService
@@ -68,6 +73,22 @@ namespace PerformanceTest.Management
         public void ShowError(string error, string caption = null)
         {
             MessageBox.Show(error, caption ?? "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
+
+        public bool? AskYesNoCancel(string message, string caption)
+        {
+            var r = MessageBox.Show(message, caption, MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+            switch (r)
+            {
+                case MessageBoxResult.Yes:
+                    return true;
+                case MessageBoxResult.No:
+                    return false;
+                case MessageBoxResult.Cancel:
+                default:
+                    return null;
+            }
         }
 
         private string GetMessage(Exception ex)

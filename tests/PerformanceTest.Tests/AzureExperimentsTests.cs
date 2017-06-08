@@ -24,7 +24,6 @@ namespace PerformanceTest.Tests
                 storageConnectionString = File.ReadAllText("ConnectionString.txt");
 
                 AzureExperimentStorage storage = new AzureExperimentStorage(storageConnectionString);
-                storage.ClearCache();
             }
         }
 

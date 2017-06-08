@@ -31,6 +31,8 @@ namespace PerformanceTest
         /// <returns>List of results of currently completed benchmarks</returns>
         public abstract Task<BenchmarkResult[]> GetResults(ExperimentID id);
         public abstract Task DeleteExperiment(ExperimentID id);
+        public abstract Task DeleteExecutable(string executableName);
+
         public abstract Task UpdateStatusFlag(ExperimentID id, bool flag);
         public abstract Task UpdateNote(ExperimentID id, string note);
         public abstract Task UpdateResultStatus(ExperimentID id, ResultStatus status);

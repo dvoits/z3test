@@ -63,11 +63,24 @@ namespace PerformanceTest.Management
         {
             if (allExperiments == null) return;
 
+            var expr = allExperiments.First(e => e.ID == id);
+            string executable = expr.Definition.Executable;
+
+            bool deleteExecutable = false;
+            int n = allExperiments.Count(e => e.Definition.Executable == executable);
+            if (n == 1)
+            {
+                var ans = ui.AskYesNoCancel(string.Format("Would you like to delete the executable that was used by the experiment {0}?", id), "Deleting the experiment");
+                if (ans == null) return;
+                deleteExecutable = ans.Value;
+            }
+
             var handle = ui.StartIndicateLongOperation("Deleting the experiment...");
             try
             {
                 Items = filteredExperiments.Where(st => st.ID != id).ToArray();
                 await Task.Run(() => manager.DeleteExperiment(id));
+                await Task.Run(() => manager.DeleteExecutable(executable));
             }
             catch (Exception ex)
             {

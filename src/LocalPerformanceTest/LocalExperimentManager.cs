@@ -244,6 +244,11 @@ namespace PerformanceTest
                 TimeSpan.FromSeconds(row.BenchmarkTimeout),
                 row.DomainName, row.Category, row.MemoryLimitMB);
         }
+
+        public override Task DeleteExecutable(string executableName)
+        {
+            throw new NotImplementedException();
+        }
     }
     
 

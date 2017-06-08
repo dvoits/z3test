@@ -8,28 +8,55 @@ using System.Threading.Tasks;
 
 namespace PerformanceTest.Management
 {
-    public class AzureExperimentManagerViewModel : ExperimentManagerViewModel
+    public class AzureExperimentManagerViewModel 
     {
-        public AzureExperimentManagerViewModel(AzureExperimentManager manager, IUIService uiService, IDomainResolver domainResolver) : base(manager, uiService, domainResolver)
+        protected readonly AzureExperimentManager manager;
+        protected readonly IUIService uiService;
+        protected readonly IDomainResolver domainResolver;
+
+        public AzureExperimentManagerViewModel(AzureExperimentManager manager, IUIService uiService, IDomainResolver domainResolver)
         {
+            if (manager == null) throw new ArgumentNullException("manager");
+            this.manager = manager;
+            if (uiService == null) throw new ArgumentNullException("uiService");
+            this.uiService = uiService;
+            if (domainResolver == null) throw new ArgumentNullException("domainResolver");
+            this.domainResolver = domainResolver;
         }
 
-        public override string BenchmarkLibraryDescription
+
+        public string BenchmarkLibraryDescription
         {
             get { return "Microsoft Azure blob container that contains benchmark files"; }
         }
 
-        public override async Task<string[]> GetAvailableCategories(string directory)
+        public ExperimentListViewModel BuildListView()
+        {
+            return new ExperimentListViewModel(manager, uiService);
+        }
+        public ShowResultsViewModel BuildResultsView(int id, string directory)
+        {
+            return new ShowResultsViewModel(id, directory, manager, uiService);
+        }
+        public CompareExperimentsViewModel BuildComparingResults(int id1, int id2, ExperimentDefinition def1, ExperimentDefinition def2)
+        {
+            return new CompareExperimentsViewModel(id1, id2, def1, def2, manager, uiService);
+        }
+        public Task<ExperimentPropertiesViewModel> BuildProperties(int id)
+        {
+            return ExperimentPropertiesViewModel.CreateAsync(manager, id, domainResolver, uiService);
+        }
+
+        public async Task<string[]> GetAvailableCategories(string directory)
         {
             if (directory == null) throw new ArgumentNullException("directory");
             string[] cats = await GetDirectories(directory);
             return cats;
         }
 
-        public override Task<string[]> GetDirectories(string baseDirectory = "")
+        public Task<string[]> GetDirectories(string baseDirectory = "")
         {
             if (baseDirectory == null) throw new ArgumentNullException("baseDirectory");
-            AzureExperimentManager manager = (AzureExperimentManager)base.manager;
             var expStorage = manager.Storage;
             var benchStorage = expStorage.DefaultBenchmarkStorage;
 
@@ -50,7 +77,7 @@ namespace PerformanceTest.Management
             });
         }
 
-        public override async Task<int> SubmitExperiment(NewExperimentViewModel newExperiment, string creator)
+        public async Task<int> SubmitExperiment(NewExperimentViewModel newExperiment, string creator)
         {
             AzureExperimentManager azureManager = (AzureExperimentManager)manager;
             string packageName;
