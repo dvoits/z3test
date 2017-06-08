@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace PerformanceTest.Management
 {
-    public class AzureExperimentManagerViewModel 
+    public class AzureExperimentManagerViewModel
     {
         protected readonly AzureExperimentManager manager;
         protected readonly IUIService uiService;
@@ -77,11 +77,10 @@ namespace PerformanceTest.Management
             });
         }
 
-        public async Task<int> SubmitExperiment(NewExperimentViewModel newExperiment, string creator)
+        public async Task<Tuple<string, int?, Exception>[]> SubmitExperiments(NewExperimentViewModel newExperiment, string creator)
         {
-            AzureExperimentManager azureManager = (AzureExperimentManager)manager;
+            // Uploading package with binaries
             string packageName;
-
             if (newExperiment.UseMostRecentExecutable)
                 throw new NotImplementedException();
             else // upload new executable
@@ -97,19 +96,36 @@ namespace PerformanceTest.Management
                     {
                         stream.Position = 0;
                         packageName = string.Format("{0}.{1:yyyy-MM-ddTHH-mm-ss-ffff}.zip", fileName, DateTime.UtcNow);
-                    } while (!await azureManager.Storage.TryUploadNewExecutable(stream, packageName));
+                    } while (!await manager.Storage.TryUploadNewExecutable(stream, packageName));
                 }
             }
 
-            ExperimentDefinition def =
+            // Submitting experiments
+            string[] cats = newExperiment.Categories.Split(',');
+            var res = new Tuple<string, int?, Exception>[cats.Length];
+
+            for (int i = 0; i < cats.Length; i++)
+            {
+                ExperimentDefinition def =
                 ExperimentDefinition.Create(
                     packageName, newExperiment.BenchmarkContainerUri, newExperiment.BenchmarkDirectory, newExperiment.Extension, newExperiment.Parameters,
                     TimeSpan.FromSeconds(newExperiment.BenchmarkTimeoutSec), newExperiment.Domain,
-                    newExperiment.Categories, newExperiment.BenchmarkMemoryLimitMb);
+                    cats[i], newExperiment.BenchmarkMemoryLimitMb);
 
-
-            return await manager.StartExperiment(def, creator, newExperiment.Note);
+                try
+                {
+                    int id = await manager.StartExperiment(def, creator, newExperiment.Note);
+                    res[i] = Tuple.Create<string, int?, Exception>(cats[i], id, null);
+                }
+                catch (Exception ex)
+                {
+                    res[i] = Tuple.Create<string, int?, Exception>(cats[i], null, ex);
+                }
+            }
+            return res;
         }
+
+
         public Task<Stream> SaveExecutable(string filename, string exBlobName)
         {
             if (filename == null) throw new ArgumentNullException("filename");

@@ -323,26 +323,35 @@ namespace PerformanceTest.Management
                     uiService.ShowWarning(ex.Message, "Failed to save recent settings");
                 }
 
-                int? expId = null;
+                Tuple<string, int?, Exception>[] result;
                 try
                 {
-                    expId = await managerVm.SubmitExperiment(vm, System.Security.Principal.WindowsIdentity.GetCurrent().Name);
-
+                    result = await managerVm.SubmitExperiments(vm, System.Security.Principal.WindowsIdentity.GetCurrent().Name);
                 }
                 catch (Exception ex)
                 {
                     uiService.ShowError(ex, "Failed to submit an experiment");
+                    return;
                 }
                 finally
                 {
                     uiService.StopIndicateLongOperation(handle);
                 }
 
-                if (expId.HasValue)
+                experimentsVm.Refresh();
+
+                StringBuilder sb = new StringBuilder();
+                for(int i = 0; i < result.Length; i++)
                 {
-                    experimentsVm.Refresh();
-                    uiService.ShowInfo(string.Format("Experiment {0} submitted.", expId.Value));
+                    if (i > 0) sb.AppendLine();
+
+                    var r = result[i];
+                    if (r.Item2.HasValue) 
+                        sb.AppendFormat("Experiment for category {0} successfully submitted with id {1}.", r.Item1, r.Item2.Value);
+                    if(r.Item3 != null)
+                        sb.AppendFormat("Experiment for category {0} could not be submitted: {1}.", r.Item1, r.Item3.Message);
                 }
+                uiService.ShowInfo(sb.ToString(), "New experiments");
             }
         }
         private void canShowProperties(object sender, CanExecuteRoutedEventArgs e)
