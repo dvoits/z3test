@@ -294,7 +294,8 @@ namespace PerformanceTest.Management
             for (int i = 0; i < numItems; i++)
             {
                 string label = experiments[i].Note.Replace(@"\", @"\textbackslash ").Replace(@"_", @"\_");
-                f.Write(@" & \multicolumn{1}{l|}{\rotatebox[origin=c]{90}{\parbox{.5\textwidth}{" + label + @"}}}");
+                if (label.Length < 40) f.Write(@" & \multicolumn{1}{l|}{\rotatebox[origin=c]{90}{" + label + @"}}");
+                else f.Write(@" & \multicolumn{1}{l|}{\rotatebox[origin=c]{90}{\parbox{.5\textwidth}{" + label + @"}}}");
             }
             f.WriteLine(@"\\\hline\hline");
             
