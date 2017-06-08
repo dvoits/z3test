@@ -11,6 +11,7 @@ using ExperimentID = System.Int32;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.Azure.Batch.Common;
 using System.IO;
+using System.Diagnostics;
 
 namespace AzurePerformanceTest
 {
@@ -79,8 +80,40 @@ namespace AzurePerformanceTest
 
         public override async Task DeleteExperiment(ExperimentID id)
         {
-            // todo: stop running experiment here
+            await StopJob(id);
+
+            // Removing experiment entity, results and outputs.
             await storage.DeleteExperiment(id);
+        }
+
+        /// If can connect to client and experiment is running, stopping the experiment job.
+        private async Task StopJob(int id)
+        {
+            var jobId = BuildJobId(id);
+            BatchClient bc;
+            try
+            {
+                bc = await BatchClient.OpenAsync(batchCreds);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("Failed to open batch client when tried to stop the job: " + ex.Message);
+                return;
+            }
+
+            
+            try
+            {
+                await bc.JobOperations.DeleteJobAsync(jobId);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("Failed to delete the job " + jobId + ": " + ex.Message);
+            }
+            finally
+            {
+                bc.Dispose();
+            }
         }
 
         public override Task DeleteExecutable(string executableName)
@@ -158,7 +191,7 @@ namespace AzurePerformanceTest
             using (var bc = BatchClient.Open(batchCreds))
             {
                 CloudJob job = bc.JobOperations.CreateJob();
-                job.Id = "exp" + id.ToString();
+                job.Id = BuildJobId(id);
                 job.OnAllTasksComplete = OnAllTasksComplete.TerminateJob;
                 job.PoolInformation = new PoolInformation { PoolId = "testPool" };
                 job.JobPreparationTask = new JobPreparationTask
@@ -192,7 +225,7 @@ namespace AzurePerformanceTest
                         benchStorage = storage.DefaultBenchmarkStorage;
                     else
                         benchStorage = new AzureBenchmarkStorage(refExp.Definition.BenchmarkContainerUri);
-                    
+
                     foreach (CloudBlockBlob blob in benchStorage.ListBlobs(refExp.Definition.BenchmarkDirectory, refExp.Definition.Category))
                     {
                         string[] parts = blob.Name.Split('/');
@@ -213,6 +246,11 @@ namespace AzurePerformanceTest
             }
 
             return id;
+        }
+
+        private static string BuildJobId(int experimentId)
+        {
+            return "exp" + experimentId.ToString();
         }
 
         public override async Task UpdateNote(int id, string note)
