@@ -20,6 +20,8 @@ namespace AzurePerformanceTest
         public const string KeyBatchAccount = "BatchAccount";
         public const string KeyBatchURL = "BatchURL";
         public const string KeyBatchAccessKey = "BatchAccessKey";
+        const int MaxTaskRetryCount = 5;
+        const string DefaultPoolID = "testPool";
 
         AzureExperimentStorage storage;
         BatchSharedKeyCredentials batchCreds;
@@ -28,12 +30,14 @@ namespace AzurePerformanceTest
         {
             this.storage = storage;
             this.batchCreds = new BatchSharedKeyCredentials(batchUrl, batchAccName, batchKey);
+            this.BatchPoolID = DefaultPoolID;
         }
 
         protected AzureExperimentManager(AzureExperimentStorage storage)
         {
             this.storage = storage;
             this.batchCreds = null;
+            this.BatchPoolID = DefaultPoolID;
         }
 
         public static async Task<AzureExperimentManager> New(AzureExperimentStorage storage, ReferenceExperiment reference, string batchUrl, string batchAccName, string batchKey)
@@ -72,6 +76,8 @@ namespace AzurePerformanceTest
         }
 
         public AzureExperimentStorage Storage { get { return storage; } }
+
+        public string BatchPoolID { get; set; }
 
         public bool CanStart
         {
@@ -194,10 +200,10 @@ namespace AzurePerformanceTest
                 CloudJob job = bc.JobOperations.CreateJob();
                 job.Id = BuildJobId(id);
                 job.OnAllTasksComplete = OnAllTasksComplete.TerminateJob;
-                job.PoolInformation = new PoolInformation { PoolId = "testPool" };
+                job.PoolInformation = new PoolInformation { PoolId = this.BatchPoolID };
                 job.JobPreparationTask = new JobPreparationTask
                 {
-                    CommandLine = "cmd /c (robocopy %AZ_BATCH_TASK_WORKING_DIR% %AZ_BATCH_NODE_SHARED_DIR% /e /purge) ^& IF %ERRORLEVEL% LEQ 1 exit 0",
+                    CommandLine = "cmd /c (robocopy %AZ_BATCH_TASK_WORKING_DIR% %AZ_BATCH_NODE_SHARED_DIR%\\" + job.Id + " /e /purge) ^& IF %ERRORLEVEL% LEQ 1 exit 0",
                     ResourceFiles = new List<ResourceFile>(),
                     WaitForSuccess = true
                 };
@@ -214,6 +220,8 @@ namespace AzurePerformanceTest
                     string blobSasUri = String.Format("{0}{1}", blob.Uri, sasBlobToken);
                     job.JobPreparationTask.ResourceFiles.Add(new ResourceFile(blobSasUri, blob.Name));
                 }
+
+                //TODO: put exec to shared dir
 
                 if (refExp != null)
                 {
@@ -235,15 +243,20 @@ namespace AzurePerformanceTest
                     }
                 }
 
-                await job.CommitAsync();
+                job.Constraints = new JobConstraints();
 
+                if (definition.ExperimentTimeout != TimeSpan.Zero)
+                    job.Constraints.MaxWallClockTime = definition.ExperimentTimeout;
+
+                job.Constraints.MaxTaskRetryCount = MaxTaskRetryCount;
                 string taskId = "taskStarter";
 
-                string taskCommandLine = string.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\AzureWorker.exe --add-tasks {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\" \"{7}\"", id, definition.BenchmarkContainerUri, definition.BenchmarkDirectory,
+                string taskCommandLine = string.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\" + job.Id + "\\AzureWorker.exe --manage-tasks {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\" \"{7}\"", id, definition.BenchmarkContainerUri, definition.BenchmarkDirectory,
                     definition.Category, definition.Executable, definition.Parameters, definition.BenchmarkTimeout.TotalSeconds.ToString(), definition.MemoryLimitMB.ToString());
-                CloudTask task = new CloudTask(taskId, taskCommandLine);
 
-                await bc.JobOperations.AddTaskAsync(job.Id, task);
+                job.JobManagerTask = new JobManagerTask(taskId, taskCommandLine);
+
+                await job.CommitAsync();
             }
 
             return id;
