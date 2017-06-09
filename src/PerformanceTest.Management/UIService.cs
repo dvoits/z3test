@@ -27,11 +27,11 @@ namespace PerformanceTest.Management
 
         string[] ChooseFiles(string initialPath, string filter, string defaultExtension);
 
-        string[] ChooseOptions(string title, string[] options, string[] selectedOptions);
+        T[] ChooseOptions<T>(string title, T[] options, T[] selectedOptions) where T : class;
 
         Task<string[]> BrowseTree(string title, string[] selected, Func<string[], Task<string[]>> getChildren);
 
-        string ChooseOption(string title, string[] options, string selectedOption);
+        T ChooseOption<T>(string title, T[] options, T selectedOption) where T : class;
 
         long StartIndicateLongOperation(string status = null);
 
@@ -152,24 +152,24 @@ namespace PerformanceTest.Management
         }
 
 
-        public string[] ChooseOptions(string title, string[] options, string[] selectedOptions)
+        public T[] ChooseOptions<T>(string title, T[] options, T[] selectedOptions) where T : class
         {
             var dlg = new ChooseOptionsWindow(options, selectedOptions);
             dlg.Title = title;
             if (dlg.ShowDialog() == true)
             {
-                return dlg.SelectedOptions;
+                return dlg.SelectedOptions.Cast<T>().ToArray();
             }
             return null;
         }
 
-        public string ChooseOption(string title, string[] options, string selectedOption)
+        public T ChooseOption<T>(string title, T[] options, T selectedOption) where T : class
         {
             var dlg = new ChooseOptionsWindow(options, selectedOption);
             dlg.Title = title;
             if (dlg.ShowDialog() == true)
             {
-                return dlg.SelectedOptions.Length > 0 ? dlg.SelectedOptions[0] : null;
+                return dlg.SelectedOptions.Length > 0 ? (T)dlg.SelectedOptions[0] : null;
             }
             return null;
         }

@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using AzurePerformanceTest;
 
 namespace PerformanceTest.Management
 {
@@ -33,6 +34,8 @@ namespace PerformanceTest.Management
         private string recentBlobDisplayName;
         private Task<string> taskRecentBlob;
 
+        private string selectedPool;
+
         public event PropertyChangedEventHandler PropertyChanged;
 
 
@@ -52,6 +55,7 @@ namespace PerformanceTest.Management
             ChooseDirectoryCommand = new DelegateCommand(ChooseDirectory);
             ChooseCategoriesCommand = new DelegateCommand(ChooseCategories);
             ChooseExecutableCommand = new DelegateCommand(ChooseExecutable);
+            ChoosePoolCommand = new DelegateCommand(ListPools);
 
             benchmarkDirectory = recentValues.BenchmarkDirectory;
             categories = recentValues.BenchmarkCategories;
@@ -64,6 +68,8 @@ namespace PerformanceTest.Management
             UseMostRecentExecutable = true;
             RecentBlobDisplayName = "searching...";
             taskRecentBlob = FindRecentExecutable();
+
+            selectedPool = recentValues.BatchPool;
         }
 
         public string BenchmarkLibaryDescription
@@ -212,7 +218,18 @@ namespace PerformanceTest.Management
                 note = value;
                 NotifyPropertyChanged();
             }
+        }        
+
+        public string Pool
+        {
+            get { return selectedPool; }
+            set
+            {
+                selectedPool = value;
+                NotifyPropertyChanged();
+            }
         }
+
 
 
         public ICommand ChooseDirectoryCommand
@@ -230,6 +247,11 @@ namespace PerformanceTest.Management
             get; private set;
         }
 
+        public ICommand ChoosePoolCommand
+        {
+            get; private set;
+        }
+
         public void SaveRecentSettings()
         {
             recentValues.BenchmarkDirectory = benchmarkDirectory;
@@ -239,6 +261,7 @@ namespace PerformanceTest.Management
             recentValues.BenchmarkTimeLimit = TimeSpan.FromSeconds(timelimit);
             recentValues.BenchmarkMemoryLimit = memlimit;
             recentValues.ExperimentNote = note;
+            recentValues.BatchPool = selectedPool;
         }
 
         public Task<string> GetRecentExecutable()
@@ -259,7 +282,7 @@ namespace PerformanceTest.Management
                 }
                 else
                 {
-                    RecentBlobDisplayName = exec.Item2 != null ? exec.Item2.Value.ToString("dd-MM-yyyy HH:mm") : exec.Item1;
+                    RecentBlobDisplayName = exec.Item2 != null ? exec.Item2.Value.ToLocalTime().ToString("dd-MM-yyyy HH:mm") : exec.Item1;
                     return exec.Item1;
                 }
             }
@@ -304,6 +327,35 @@ namespace PerformanceTest.Management
             NotifyPropertyChanged("MainExecutable");
             NotifyPropertyChanged("ExecutableFileNames");
             UseMostRecentExecutable = false;
+        }
+
+        private async void ListPools()
+        {
+            try
+            {
+                var pools = await manager.GetAvailablePools();
+                PoolDescription pool = null;
+                if(selectedPool != null)
+                {
+                    foreach (var p in pools)
+                    {
+                        if(p.Id == selectedPool)
+                        {
+                            pool = p;
+                            break;
+                        }
+                    }
+                }
+                pool = service.ChooseOption("Choose an Azure Batch Pool", pools, pool);
+                if (pool != null)
+                {
+                    Pool = pool.Id;
+                }
+            }
+            catch (Exception ex)
+            {
+                service.ShowError(ex, "Failed to get list of available Azure Batch pools");
+            }
         }
 
         private async void ChooseDirectory()

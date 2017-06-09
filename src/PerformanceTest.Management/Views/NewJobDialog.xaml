@@ -7,11 +7,13 @@
         xmlns:local="clr-namespace:PerformanceTest.Management"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        Title="New Experiment..." Height="650" Width="550" Loaded="Window_Loaded" WindowStartupLocation="CenterOwner" ShowInTaskbar="False" ResizeMode="NoResize">
+        Title="New Experiment..." Height="700" Width="550" Loaded="Window_Loaded" WindowStartupLocation="CenterOwner" ShowInTaskbar="False" ResizeMode="NoResize">
 
     <Window.Resources>
         <local:InverseBooleanConverter x:Key="InverseBooleanConverter" />
         <local:NotNullToBooleanConverter x:Key="NotNullToBoolean" />
+        <local:NotNullToVisibilityConverter x:Key="NotNullToVisibility" />
+        <local:NullToVisibilityConverter x:Key="NullToVisibility" />
         <GridLength x:Key="KeyWidth">200</GridLength>
         <Thickness x:Key="ParameterMargin" Left="5" Top="5" Right="10" Bottom="10" />
     </Window.Resources>
@@ -78,6 +80,16 @@
                     <Image Source="/PerformanceTest.Management;component/Images/taskbrowse.ico" />
                 </Button>
             </Grid>
+            <Grid Margin="{StaticResource ParameterMargin}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="{StaticResource KeyWidth}" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Label Content="Domain:" Height="28" HorizontalAlignment="Left" x:Name="labelDomain" VerticalAlignment="Center" Grid.Column="0" />
+                <ComboBox Height="24" HorizontalAlignment="Stretch" x:Name="cbSelectDomain" VerticalAlignment="Center" Grid.Column="1"
+                              ToolTip="Determines an additional analysis and process results interpretation." IsEnabled="True"
+                              SelectedItem="{Binding Domain}" ItemsSource="{Binding Domains}"/>
+            </Grid>
             <!-- Extension -->
             <Grid Margin="{StaticResource ParameterMargin}">
                 <Grid.ColumnDefinitions>
@@ -140,17 +152,6 @@
                 </StackPanel>
             </Grid>
             <!-- Domain -->
-            <Grid Margin="{StaticResource ParameterMargin}">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="{StaticResource KeyWidth}" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Label Content="Domain:" Height="28" HorizontalAlignment="Left" Name="labelDomain" VerticalAlignment="Center" Grid.Column="0" />
-                <ComboBox Height="24" HorizontalAlignment="Stretch" Name="cbSelectDomain" VerticalAlignment="Center" Grid.Column="1"
-                              ToolTip="Determines an additional analysis and process results interpretation." IsEnabled="True"
-                              SelectedItem="{Binding Domain}" ItemsSource="{Binding Domains}">
-                </ComboBox>
-            </Grid>
             <!-- DomainReplace (check-sat) -->
             <Grid Margin="{StaticResource ParameterMargin}">
                 <Grid.ColumnDefinitions>
@@ -201,8 +202,39 @@
                      MaxLines="1" MaxLength="256" Text="{Binding Note}"/>
 
             </Grid>
-
-
+            <!-- Azure Batch Pool -->
+            <Grid Margin="{StaticResource ParameterMargin}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="{StaticResource KeyWidth}" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Label Content="Azure Batch Pool:" Height="28" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="0"/>
+                <TextBox Height="24" HorizontalAlignment="Stretch"
+                             Text="{Binding Pool, Mode=TwoWay}"
+                             VerticalAlignment="Center" Width="Auto" Grid.Column="1" ToolTip="The categories to draw the benchmarks from." />
+                <Button Width="23" Height="23" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Grid.Column="2" Margin="2" 
+                            Command="{Binding ChoosePoolCommand}">
+                    <Image Source="/PerformanceTest.Management;component/Images/taskbrowse.ico" />
+                </Button>
+                <!--<ComboBox Height="23" HorizontalAlignment="Stretch" VerticalAlignment="Center" TabIndex="15" Grid.Column="1" 
+                          Visibility="{Binding AvailablePools, Converter={StaticResource NotNullToVisibility}}"
+                          SelectedItem="{Binding Pool}"
+                          ItemsSource="{Binding AvailablePools}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Vertical">
+                                <TextBlock Text="{Binding Id, Mode=OneWay}" Margin="0,0,0,5"/>
+                                <TextBlock Text="{Binding VirtualMachineSize, Mode=OneWay, StringFormat=Virtual machine size: {0}}" FontWeight="Light" />
+                                <TextBlock Text="{Binding AllocationState, Mode=OneWay, StringFormat=Allocation State: {0}}" FontWeight="Light" />
+                                <TextBlock Text="{Binding PoolState, Mode=OneWay, StringFormat=State: {0}}" FontWeight="Light" />
+                                <TextBlock Text="{Binding DedicatedNodes, Mode=OneWay, StringFormat=Current dedicated nodes: {0}}" FontWeight="Light" />
+                                <TextBlock Text="{Binding RunningJobs, Mode=OneWay, StringFormat=Running jobs: {0}}" FontWeight="Light" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>-->
+            </Grid>
         </StackPanel>
 
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,0,10">

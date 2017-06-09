@@ -16,7 +16,7 @@ namespace PerformanceTest.Management
 {
     public partial class ChooseOptionsWindow : Window
     {
-        public ChooseOptionsWindow(string[] options, string[] selected)
+        public ChooseOptionsWindow(object[] options, object[] selected)
         {
             InitializeComponent();
 
@@ -30,7 +30,7 @@ namespace PerformanceTest.Management
             listBox.Focus();
         }
 
-        public ChooseOptionsWindow(string[] options, string selected)
+        public ChooseOptionsWindow(object[] options, object selected)
         {
             InitializeComponent();
 
@@ -43,15 +43,15 @@ namespace PerformanceTest.Management
             listBox.Focus();
         }
 
-        public string[] SelectedOptions
+        public object[] SelectedOptions
         {
             get
             {
                 int n = listBox.SelectedItems.Count;
-                string[] items = new string[n];
+                object[] items = new object[n];
                 for (int i = 0; i < n; i++)
                 {
-                    items[i] = listBox.SelectedItems[i].ToString();
+                    items[i] = listBox.SelectedItems[i];
                 }
                 return items;
             }

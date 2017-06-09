@@ -85,6 +85,14 @@ namespace PerformanceTest.Management
             set { WriteString("ExperimentNote", value); }
         }
 
+        public string BatchPool
+        {
+            get { return ReadString("BatchPool"); }
+            set { WriteString("BatchPool", value); }
+        }
+
+
+
         private void WriteBool(string key, bool value)
         {
             Registry.SetValue(keyName, key, value ? 1 : 0, RegistryValueKind.DWord);
@@ -103,6 +111,7 @@ namespace PerformanceTest.Management
 
         private void WriteString(string key, string value)
         {
+            if (value == null) value = "";
             Registry.SetValue(keyName, key, value, RegistryValueKind.String);
         }
 

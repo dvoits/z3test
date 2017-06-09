@@ -4,8 +4,21 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PerformanceTest.Management"
+        xmlns:azurePerf="clr-namespace:AzurePerformanceTest;assembly=AzurePerformanceTest"
         mc:Ignorable="d"
-        Title="Choose" Height="300" Width="400">
+        Title="Choose" Height="500" Width="400">
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type azurePerf:PoolDescription}">
+            <StackPanel Orientation="Vertical">
+                <TextBlock Text="{Binding Id, Mode=OneWay}" Margin="0,0,0,5"/>
+                <TextBlock Text="{Binding VirtualMachineSize, Mode=OneWay, StringFormat=Virtual machine size: {0}}" FontWeight="Light" />
+                <TextBlock Text="{Binding AllocationState, Mode=OneWay, StringFormat=Allocation State: {0}}" FontWeight="Light" />
+                <TextBlock Text="{Binding PoolState, Mode=OneWay, StringFormat=State: {0}}" FontWeight="Light" />
+                <TextBlock Text="{Binding DedicatedNodes, Mode=OneWay, StringFormat=Current dedicated nodes: {0}}" FontWeight="Light" />
+                <TextBlock Text="{Binding RunningJobs, Mode=OneWay, StringFormat=Running jobs: {0}}" FontWeight="Light" />
+            </StackPanel>
+        </DataTemplate>
+    </Window.Resources>
     <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
