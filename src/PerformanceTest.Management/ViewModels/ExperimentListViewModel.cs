@@ -11,14 +11,15 @@ namespace PerformanceTest.Management
 {
     public class ExperimentListViewModel : INotifyPropertyChanged
     {
-
-        private IEnumerable<ExperimentStatusViewModel> experiments;
         private readonly ExperimentManager manager;
         private readonly IUIService ui;
+        private ExperimentStatusViewModel[] allExperiments;
+        private ExperimentStatusViewModel[] filteredExperiments;
 
+        private string keyword;
+        private bool filterPending, isFiltering;
 
         public event PropertyChangedEventHandler PropertyChanged;
-
 
         public ExperimentListViewModel(ExperimentManager manager, IUIService ui)
         {
@@ -30,60 +31,153 @@ namespace PerformanceTest.Management
             RefreshItemsAsync();
         }
 
-        public IEnumerable<ExperimentStatusViewModel> Items
+        public ExperimentStatusViewModel[] Items
         {
-            get { return experiments; }
-            private set { experiments = value; NotifyPropertyChanged(); }
+            get { return filteredExperiments; }
+            private set
+            {
+                filteredExperiments = value;
+                NotifyPropertyChanged();
+            }
         }
-        
+
+        public string FilterKeyword
+        {
+            get { return keyword; }
+            set
+            {
+                if (keyword == value) return;
+                keyword = value;
+                NotifyPropertyChanged();
+                FilterExperiments(keyword);
+            }
+        }
+
+
         public void Refresh()
         {
             RefreshItemsAsync();
         }
 
-        public void DeleteExperiment(int id)
+        public async void DeleteExperiment(int id)
         {
-            var items = Items.Where(st => st.ID != id).ToArray();
-            manager.DeleteExperiment(id);
-            Items = items;
-        }
+            if (allExperiments == null) return;
 
-        public double GetRuntime(int id)
-        {
-            var res = manager.GetResults(id);
-            if (!res.IsCompleted)
-                return 0;
-            return res.Result.Sum(r => r.NormalizedRuntime);
-        }
+            var expr = allExperiments.First(e => e.ID == id);
+            string executable = expr.Definition.Executable;
 
-        public void FindExperiments(string filter)
-        {
-            RefreshItemsAsync(filter);
-        }
-        private async void RefreshItemsAsync(string filter = null)
-        {
-            var handle = ui.StartIndicateLongOperation("Loading table of experiments...");
+            bool deleteExecutable = false;
+            int n = allExperiments.Count(e => e.Definition.Executable == executable);
+            if (n == 1)
+            {
+                var ans = ui.AskYesNoCancel(string.Format("Would you like to delete the executable that was used by the experiment {0}?", id), "Deleting the experiment");
+                if (ans == null) return;
+                deleteExecutable = ans.Value;
+            }
+
+            var handle = ui.StartIndicateLongOperation("Deleting the experiment...");
             try
             {
-                Items = null;
-
-                ExperimentManager.ExperimentFilter? f = null;
-                if (!String.IsNullOrEmpty(filter))
-                {
-                    f = new ExperimentManager.ExperimentFilter
-                    {
-                        NotesEquals = filter,
-                        CategoryEquals = filter,
-                        CreatorEquals = filter
-                    };
-                }
-                var experiments = await Task.Run(() => manager.FindExperiments(f));
-                Items = experiments.Select(e => new ExperimentStatusViewModel(e, manager, ui)).ToArray();
+                Items = filteredExperiments.Where(st => st.ID != id).ToArray();
+                await Task.Run(() => manager.DeleteExperiment(id));
+                await Task.Run(() => manager.DeleteExecutable(executable));
+            }
+            catch (Exception ex)
+            {
+                Refresh();
+                ui.ShowError(ex, "Error occured when tried to delete the experiment " + id.ToString());
             }
             finally
             {
                 ui.StopIndicateLongOperation(handle);
             }
+        }
+
+        public Task<double> GetRuntimes(int[] ids)
+        {
+            return Task.Run(async () =>
+            {
+                var res = await manager.GetStatus(ids);
+                return res.Sum(r => r.TotalRuntime.TotalSeconds);
+            });
+        }
+
+        private async void RefreshItemsAsync()
+        {
+            var handle = ui.StartIndicateLongOperation("Loading table of experiments...");
+            try
+            {
+                Items = null;
+                var exp = await Task.Run(() => manager.FindExperiments());
+                allExperiments = exp.Select(e => new ExperimentStatusViewModel(e, manager, ui)).ToArray();
+                Items = FilterExperiments(allExperiments, keyword);
+            }
+            catch (Exception ex)
+            {
+                ui.ShowError(ex, "Failed to load experiments list");
+            }
+            finally
+            {
+                ui.StopIndicateLongOperation(handle);
+            }
+        }
+
+        private async void FilterExperiments(string keyword)
+        {
+            if (allExperiments == null) return;
+            if (isFiltering)
+            {
+                filterPending = true;
+                return;
+            }
+
+            var handle = ui.StartIndicateLongOperation("Filtering experiments...");
+            isFiltering = true;
+            try
+            {
+                do
+                {
+                    filterPending = false;
+
+                    var old = allExperiments;
+                    var filtered = await Task.Run(() => FilterExperiments(old, keyword).ToArray());
+
+                    if (allExperiments == old)
+                        Items = filtered;
+                } while (filterPending);
+            }
+            catch (Exception ex)
+            {
+                ui.ShowError(ex, "Failed to filter experiments list");
+            }
+            finally
+            {
+                ui.StopIndicateLongOperation(handle);
+                isFiltering = false;
+            }
+        }
+
+        private static ExperimentStatusViewModel[] FilterExperiments(ExperimentStatusViewModel[] source, string keyword)
+        {
+            if (String.IsNullOrEmpty(keyword)) return source;
+
+            List<ExperimentStatusViewModel> dest = new List<ExperimentStatusViewModel>(source.Length);
+            for (int i = 0; i < source.Length; i++)
+            {
+                var e = source[i];
+                if (Contains(e.Category, keyword) ||
+                    Contains(e.Creator, keyword) ||
+                    Contains(e.ID.ToString(), keyword) ||
+                    Contains(e.Note, keyword))
+                    dest.Add(e);
+            }
+            return dest.ToArray();
+        }
+
+        private static bool Contains(string str, string keyword)
+        {
+            if (str == null) return String.IsNullOrEmpty(keyword);
+            return keyword == null || str.Contains(keyword);
         }
 
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
@@ -95,7 +189,7 @@ namespace PerformanceTest.Management
     public class ExperimentStatusViewModel : INotifyPropertyChanged
     {
         private readonly ExperimentStatus status;
-        private readonly ExperimentDefinition definition; 
+        private readonly ExperimentDefinition definition;
         private readonly ExperimentManager manager;
         private readonly IUIService uiService;
 
@@ -140,9 +234,9 @@ namespace PerformanceTest.Management
 
         public string WorkerInformation { get { return status.WorkerInformation; } }
 
-        public int BenchmarksDone { get { return status.BenchmarksDone; } }
-        public int BenchmarksTotal { get { return status.BenchmarksTotal; } }
-        public int BenchmarksQueued { get { return status.BenchmarksQueued; } }
+        public int? BenchmarksDone { get { return status.BenchmarksTotal == 0 ? null : (int?)status.BenchmarksDone; } }
+        public int? BenchmarksTotal { get { return status.BenchmarksTotal == 0 ? null : (int?)status.BenchmarksTotal; } }
+        public int? BenchmarksQueued { get { return status.BenchmarksTotal == 0 ? null : (int?)status.BenchmarksQueued; } }
 
         public bool Flag
         {
@@ -159,6 +253,7 @@ namespace PerformanceTest.Management
                 }
             }
         }
+
         private async void UpdateNote()
         {
             try

@@ -5,145 +5,205 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:local="clr-namespace:PerformanceTest.Management"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        Title="New Experiment..." Height="531" Width="510" Loaded="Window_Loaded" WindowStartupLocation="CenterOwner" ShowInTaskbar="False" ResizeMode="NoResize">
+        Title="New Experiment..." Height="650" Width="550" Loaded="Window_Loaded" WindowStartupLocation="CenterOwner" ShowInTaskbar="False" ResizeMode="NoResize">
 
     <Window.Resources>
         <local:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+        <GridLength x:Key="KeyWidth">200</GridLength>
+        <Thickness x:Key="ParameterMargin" Left="5" Top="5" Right="10" Bottom="10" />
     </Window.Resources>
 
-    <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="5,5,5,5">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="485" />
-        </Grid.ColumnDefinitions>
-
-        <TabControl Grid.Row="0" Grid.ColumnSpan="3" HorizontalAlignment="Stretch" VerticalAlignment="Top">
-            <TabItem Name="tiES" Header="Experiment settings">
-
-                <Grid Name="grdData"  VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="180" />
-                        <ColumnDefinition MinWidth="160" />
-                        <ColumnDefinition Width="30" />
-                    </Grid.ColumnDefinitions>
-
-                    <Label Content="Shared directory:" Height="28" HorizontalAlignment="Left" Name="label3" VerticalAlignment="Center" Grid.Row="0" />
-                    <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtSharedDir" VerticalAlignment="Center" Grid.Row="0"  Grid.Column="1" TabIndex="1" 
+        <StackPanel Orientation="Vertical">
+            <!-- Container URI -->
+            <Grid Margin="{StaticResource ParameterMargin}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="{StaticResource KeyWidth}" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Label Content="Benchmark container:" Height="28" HorizontalAlignment="Left" Name="label3" VerticalAlignment="Center" Grid.Row="0" />
+                <StackPanel Orientation="Vertical" Grid.Row="0" Grid.Column="1">
+                    <RadioButton GroupName="groupContainer" IsChecked="True">Default</RadioButton>
+                    <RadioButton GroupName="groupContainer" HorizontalContentAlignment="Stretch">
+                        <Grid Margin="0,0,0,0" IsEnabled="False">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Margin="0,0,10,0" Grid.Column="0">Connection string:</TextBlock>
+                            <TextBox Height="24" Grid.Column="1" />
+                        </Grid>
+                    </RadioButton>
+                </StackPanel>
+            </Grid>
+            <!-- Directory -->
+            <Grid Margin="{StaticResource ParameterMargin}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="{StaticResource KeyWidth}" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Label Content="Directory:" Height="28" HorizontalAlignment="Left"  VerticalAlignment="Center" Grid.Row="0" />
+                <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtSharedDir" VerticalAlignment="Center" Grid.Row="0"  Grid.Column="1" 
                              ToolTip="{Binding BenchmarkLibaryDescription}"
-                             Text="{Binding BenchmarkLibrary, Mode=TwoWay}"
-                             Margin="0,2" />
-                    <Button Height="23" Width="Auto" HorizontalAlignment="Stretch" Name="btnSelectSharedDir" VerticalAlignment="Stretch" Grid.Row="0" Grid.Column="2" TabIndex="2"  Margin="0,2" 
-                            Command="{Binding ChooseContainerCommand}">
-                        <Image Source="/PerformanceTest.Management;component/Images/taskbrowse.ico" />
-                    </Button>
+                             Text="{Binding BenchmarkDirectory, Mode=TwoWay}" />
+                <Button Width="23" Height="23" HorizontalAlignment="Stretch" Name="btnSelectSharedDir" VerticalAlignment="Stretch" Grid.Row="0" Grid.Column="2"  Margin="2" 
+                            Command="{Binding ChooseDirectoryCommand}">
+                    <Image Source="/PerformanceTest.Management;component/Images/taskbrowse.ico" />
+                </Button>
+            </Grid>
+            <!-- Categories -->
+            <Grid Margin="{StaticResource ParameterMargin}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="{StaticResource KeyWidth}" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-                    <Label Content="Benchmark extension:" Height="28" HorizontalAlignment="Left" Name="label14" VerticalAlignment="Center" Grid.Row="1" Grid.Column="0"/>
-                    <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtExtension" VerticalAlignment="Center" Grid.Row="1" Grid.Column="1" TabIndex="3" ToolTip="The extension of benchmark files, e.g., smt2 for SMT-Lib version 2 files." Margin="0,2"
-                             Text="{Binding Extension}"/>
 
-                    <Label Content="Categories:" Height="28" HorizontalAlignment="Left" Name="label8" VerticalAlignment="Center" Grid.Row="2" Grid.Column="0"/>
-                    <TextBox Height="23" HorizontalAlignment="Stretch" Name="txtCategories" 
+                <Label Content="Categories:" Height="28" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="0"/>
+                <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtCategories" 
                              Text="{Binding Categories, Mode=TwoWay}"
-                             VerticalAlignment="Top" Width="Auto" Grid.Row="2" Grid.Column="1" TabIndex="9" ToolTip="The categories to draw the benchmarks from." />
-                    <Button Height="23" Width="Auto" HorizontalAlignment="Stretch" Name="btnSelectCategories" VerticalAlignment="Stretch" Grid.Row="2" Grid.Column="2" TabIndex="10"  Margin="0,0,0,5"
+                             VerticalAlignment="Center" Width="Auto" Grid.Column="1" ToolTip="The categories to draw the benchmarks from." />
+                <Button Width="23" Height="23" HorizontalAlignment="Stretch" Name="btnSelectCategories" VerticalAlignment="Stretch" Grid.Column="2" Margin="2" 
                             Command="{Binding ChooseCategoriesCommand}">
-                        <Image Source="/PerformanceTest.Management;component/Images/taskbrowse.ico" />
-                    </Button>
-
-                    <Label Content="Executable:" Height="28" HorizontalAlignment="Left" Name="label9" VerticalAlignment="Center" Grid.Row="3" Grid.Column="0" Margin="0,6,0,5"/>
-                    <Grid Grid.Row="3" Grid.Column="1">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <RadioButton Content="Use most recent" Name="chkMostRecentBinary" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" 
-                                     IsChecked="{Binding UseMostRecentExecutable}" />
-                        <RadioButton Content="New:" Name="chkNewBinary" Grid.Row="1" Grid.Column="0" Margin="0,5,10,-5" 
-                                     IsChecked="{Binding UseNewExecutable}"  />
-                        <TextBox Height="23" HorizontalAlignment="Stretch" Name="txtExecutable" VerticalAlignment="Center" TabIndex="11" Grid.Row="1" Grid.Column="1" ToolTip="The target executable." 
-                                 IsEnabled="{Binding UseNewExecutable}"
-                                 Text="{Binding Executable}"/>
-                    </Grid>
-                    <Button Height="23" HorizontalAlignment="Stretch" Name="btnSelectExecutable" VerticalAlignment="Stretch" TabIndex="12" Grid.Row="3" Grid.Column="2"  Margin="0,16,0,0"
-                            Command="{Binding ChooseExecutableCommand}">
-                        <Image Source="/PerformanceTest.Management;component/Images/taskbrowse.ico" />
-                    </Button>
-
-                    <Label Content="Parameters:" Height="28" HorizontalAlignment="Left" Name="labelParameters" VerticalAlignment="Center" Grid.Row="4" Grid.Column="0" />
-                    <StackPanel Orientation="Vertical" VerticalAlignment="Center"  Grid.Row="4" Grid.Column="1">
-                        <TextBox Height="24" Margin="0,5,0,0" HorizontalAlignment="Stretch" Name="txtParameters" TabIndex="14" ToolTip="Parameters for the executable." 
-                                 Text="{Binding Parameters}"/>
-                        <TextBlock Margin="0,5,10,10">
-                            Use {0} a placeholder for an input file name.
-                        </TextBlock>
-                    </StackPanel>
-
-                    <Label Content="Domain:" Height="28" HorizontalAlignment="Left" Name="labelDomain" VerticalAlignment="Center" Grid.Row="5" Grid.Column="0" />
-                    <ComboBox Height="24" HorizontalAlignment="Stretch" Name="cbSelectDomain" VerticalAlignment="Center" TabIndex="14"  Grid.Row="5" Grid.Column="1"
-                              ToolTip="Determines an additional analysis and process results interpretation." IsEnabled="True"
-                              SelectedItem="{Binding Domain}" ItemsSource="{Binding Domains}">                        
-                    </ComboBox>
-
-                    <Label Content="Replace (check-sat):" Height="28" HorizontalAlignment="Left" Name="labelReplaceCheckSat" VerticalAlignment="Center" Grid.Row="6" Grid.Column="0" Grid.RowSpan="2" />
-                    <GroupBox Grid.RowSpan="2" Grid.Row="6" Grid.Column="1">
-                        <GroupBox.Header>
-                            <CheckBox Name="chkReplaceCheckSat" Content="Enable"  IsChecked="False" />
-                        </GroupBox.Header>
-                        <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtReplaceCheckSat" VerticalAlignment="Center" TabIndex="14" ToolTip="(check-sat) will be replace by this." IsEnabled="False" Width="250" />
-                    </GroupBox>
-
-                    <Label Content="Memory limit:" Height="28" HorizontalAlignment="Left" Name="labelMemout" VerticalAlignment="Center" Grid.Row="8" Grid.Column="0"/>
-                    <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtMemout" VerticalAlignment="Center" TabIndex="15" Grid.Row="8" Grid.Column="1" ToolTip="The memory limit (per benchmark)." Margin="0,2" 
-                             Text="{Binding BenchmarkMemoryLimitMb}"/>
-                    <Label Content="MB" HorizontalAlignment="Left" Grid.Row="8" Grid.Column="2"/>
-
-                    <Label Content="Timeout:" Height="28" HorizontalAlignment="Left" Name="label12" VerticalAlignment="Center" Grid.Row="9" Grid.Column="0"/>
-                    <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtTimeout" VerticalAlignment="Center" TabIndex="15" Grid.Row="9" Grid.Column="1" ToolTip="The time limit (per benchmark)." Margin="0,2"
-                             Text="{Binding BenchmarkTimeoutSec}"/>
-                    <Label Content="sec" HorizontalAlignment="Left" Grid.Row="9" Grid.Column="2"/>
-                </Grid>
-            </TabItem>
-
-            <TabItem Name="tiOS" Header="Other settings">
-                <Grid Grid.Row="3" Grid.Column="1" Height="28">
+                    <Image Source="/PerformanceTest.Management;component/Images/taskbrowse.ico" />
+                </Button>
+            </Grid>
+            <!-- Extension -->
+            <Grid Margin="{StaticResource ParameterMargin}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="{StaticResource KeyWidth}" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Label Content="Benchmark extension:" Height="28" HorizontalAlignment="Left" Name="label14" VerticalAlignment="Center" Grid.Column="0"/>
+                <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtExtension" VerticalAlignment="Center" Grid.Column="1" TabIndex="3" ToolTip="The extension of benchmark files, e.g., smt2 for SMT-Lib version 2 files." Margin="0,2"
+                             Text="{Binding Extension}"/>
+            </Grid>
+            <!-- Executable -->
+            <Grid Margin="{StaticResource ParameterMargin}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="{StaticResource KeyWidth}" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Label Content="Executable:" Height="28" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="0"/>
+                <Grid Grid.Column="1">
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="180" />
-                        <ColumnDefinition MinWidth="160" />
-                        <ColumnDefinition Width="30" />
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Label Content="Note:" Height="28" HorizontalAlignment="Left" Name="labelNote" VerticalAlignment="Center" Grid.Row="0" Grid.Column="0"/>
-                    <TextBox Height="23" HorizontalAlignment="Stretch" Name="txtNote" VerticalAlignment="Center" TabIndex="15" Grid.Row="0" Grid.Column="1" ToolTip="A descriptive note, if you like." MaxLines="1" MaxLength="256" Text="{Binding Note}"/>
+                    <RadioButton Content="Use most recent" Name="chkMostRecentBinary" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" 
+                                     IsChecked="{Binding UseMostRecentExecutable}" />
+                    <RadioButton Content="New:" Name="chkNewBinary" Grid.Row="1" Grid.Column="0" Margin="0,5,10,-5" 
+                                     IsChecked="{Binding UseNewExecutable}"  />
+                    <Grid Grid.Column="1" Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Height="23" HorizontalAlignment="Stretch" Name="txtExecutable" VerticalAlignment="Center" Grid.Column="0" ToolTip="The target executable." 
+                                 IsEnabled="{Binding UseNewExecutable}" IsReadOnly="True"
+                                 Text="{Binding MainExecutable, Mode=OneWay}"/>
+                        <Button Width="23" Height="23" HorizontalAlignment="Stretch" Name="btnSelectExecutable" VerticalAlignment="Stretch" Grid.Column="1" Margin="2"
+                            Command="{Binding ChooseExecutableCommand}">
+                            <Image Source="/PerformanceTest.Management;component/Images/taskbrowse.ico" />
+                        </Button>
+                    </Grid>
                 </Grid>
-            </TabItem>
-        </TabControl>
+            </Grid>
+            <!-- Parameters -->
+            <Grid Margin="{StaticResource ParameterMargin}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="{StaticResource KeyWidth}" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Label Content="Parameters:" Height="28" HorizontalAlignment="Left" Name="labelParameters" VerticalAlignment="Center" Grid.Column="0" />
+                <StackPanel Orientation="Vertical" VerticalAlignment="Center"  Grid.Column="1">
+                    <TextBox Height="24" Margin="0,5,0,0" HorizontalAlignment="Stretch" Name="txtParameters" ToolTip="Parameters for the executable." 
+                                 Text="{Binding Parameters}"/>
+                    <TextBlock Margin="0,5,10,10">Use {0} a placeholder for an input file name.</TextBlock>
+                </StackPanel>
+            </Grid>
+            <!-- Domain -->
+            <Grid Margin="{StaticResource ParameterMargin}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="{StaticResource KeyWidth}" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Label Content="Domain:" Height="28" HorizontalAlignment="Left" Name="labelDomain" VerticalAlignment="Center" Grid.Column="0" />
+                <ComboBox Height="24" HorizontalAlignment="Stretch" Name="cbSelectDomain" VerticalAlignment="Center" Grid.Column="1"
+                              ToolTip="Determines an additional analysis and process results interpretation." IsEnabled="True"
+                              SelectedItem="{Binding Domain}" ItemsSource="{Binding Domains}">
+                </ComboBox>
+            </Grid>
+            <!-- DomainReplace (check-sat) -->
+            <Grid Margin="{StaticResource ParameterMargin}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="{StaticResource KeyWidth}" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Column="1" Grid.Row="2" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
-            <Button Name="okButton" IsDefault="True" Width="80" Click="okButton_Click" TabIndex="16">OK</Button>
-            <Button Name="cancelButton" IsCancel="True" Width="80" Click="cancelButton_Click" Margin="10,0,10,0" TabIndex="17">Cancel</Button>
+                <Label Content="Replace (check-sat):" Height="28" HorizontalAlignment="Left" Name="labelReplaceCheckSat" VerticalAlignment="Center" Grid.Column="0" />
+                <GroupBox Grid.RowSpan="2" Grid.Column="1">
+                    <GroupBox.Header>
+                        <CheckBox Name="chkReplaceCheckSat" Content="Enable"  IsChecked="False" />
+                    </GroupBox.Header>
+                    <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtReplaceCheckSat" VerticalAlignment="Center" ToolTip="(check-sat) will be replace by this." IsEnabled="False" Width="250" />
+                </GroupBox>
+            </Grid>
+            <!-- Memory limit -->
+            <Grid Margin="{StaticResource ParameterMargin}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="{StaticResource KeyWidth}" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Label Content="Memory limit:" Height="28" HorizontalAlignment="Left" Name="labelMemout" VerticalAlignment="Center" Grid.Column="0"/>
+                <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtMemout" VerticalAlignment="Center" TabIndex="15" Grid.Row="9" Grid.Column="1" ToolTip="The memory limit (per benchmark)." Margin="0,2" 
+                             Text="{Binding BenchmarkMemoryLimitMb}"/>
+                <Label Content="MB" HorizontalAlignment="Left" Grid.Column="2"/>
+            </Grid>
+            <!-- Timeout -->
+            <Grid Margin="{StaticResource ParameterMargin}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="{StaticResource KeyWidth}" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Label Content="Timeout:" Height="28" HorizontalAlignment="Left" Name="label12" VerticalAlignment="Center" Grid.Column="0"/>
+                <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtTimeout" VerticalAlignment="Center" TabIndex="15" Grid.Column="1" ToolTip="The time limit (per benchmark)." Margin="0,2"
+                             Text="{Binding BenchmarkTimeoutSec}"/>
+                <Label Content="sec" HorizontalAlignment="Left" Grid.Column="2"/>
+            </Grid>
+            <!-- Note -->
+            <Grid Margin="{StaticResource ParameterMargin}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="{StaticResource KeyWidth}" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Label Content="Note:" Height="28" HorizontalAlignment="Left" Name="labelNote" VerticalAlignment="Center" Grid.Column="0"/>
+                <TextBox Height="23" HorizontalAlignment="Stretch" Name="txtNote" VerticalAlignment="Center" TabIndex="15" Grid.Column="1" ToolTip="A descriptive note, if you like."
+                     MaxLines="1" MaxLength="256" Text="{Binding Note}"/>
+
+            </Grid>
+
+
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,0,10">
+            <Button Name="okButton" IsDefault="True" Width="80" Click="okButton_Click">OK</Button>
+            <Button Name="cancelButton" IsCancel="True" Width="80" Click="cancelButton_Click" Margin="10,0,10,0">Cancel</Button>
         </StackPanel>
     </Grid>
 </Window>

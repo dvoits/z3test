@@ -23,7 +23,7 @@ namespace PerformanceTest.Management
         private readonly IUIService uiService;
         private readonly RecentValuesStorage recentValues;
 
-        private ExperimentManagerViewModel managerVm;
+        private AzureExperimentManagerViewModel managerVm;
         private ExperimentListViewModel experimentsVm;
 
         public static RoutedCommand SaveMetaCSVCommand = new RoutedCommand();
@@ -57,20 +57,12 @@ namespace PerformanceTest.Management
             uiService = new UIService(statusVm);
         }
 
-        private Task<ExperimentManagerViewModel> ConnectAsync(string connectionString)
+        private Task<AzureExperimentManagerViewModel> ConnectAsync(string connectionString)
         {
             return Task.Run(() => // run in thread pool
             {
-                if (Directory.Exists(connectionString))
-                {
-                    LocalExperimentManager manager = LocalExperimentManager.OpenExperiments(connectionString, domainResolver);
-                    return new LocalExperimentManagerViewModel(manager, uiService, domainResolver) as ExperimentManagerViewModel;
-                }
-                else
-                {
-                    AzureExperimentManager azureManager = AzureExperimentManager.Open(connectionString);
-                    return new AzureExperimentManagerViewModel(azureManager, uiService, domainResolver) as ExperimentManagerViewModel;
-                }
+                AzureExperimentManager azureManager = AzureExperimentManager.Open(connectionString);
+                return new AzureExperimentManagerViewModel(azureManager, uiService, domainResolver);
             });
         }
 
@@ -92,7 +84,7 @@ namespace PerformanceTest.Management
                         uiService.StopIndicateLongOperation(handle);
                     }
 
-                    dataGrid.DataContext = experimentsVm;
+                    DataContext = experimentsVm;
                     recentValues.ConnectionString = connectionString.Text;
                     connectionString.IsReadOnly = true;
                     btnConnect.Content = "Disconnect";
@@ -109,7 +101,7 @@ namespace PerformanceTest.Management
                     connectionString.IsReadOnly = false;
                     btnConnect.Content = "Connect";
                     btnConnect.IsEnabled = true;
-                    dataGrid.DataContext = null;
+                    DataContext = null;
                     btnNewJob.IsEnabled = false;
                     btnUpdate.IsEnabled = false;
                     menuNewJob.IsEnabled = false;
@@ -164,15 +156,7 @@ namespace PerformanceTest.Management
                 for (int i = 0; i < count; i++)
                 {
                     int id = ids[i];
-                    try
-                    {
-                        experimentsVm.DeleteExperiment(id);
-                    }
-                    catch (Exception ex)
-                    {
-                        string msg = String.Format("Error: could not delete experiment #{0} because of: {1} ", id, ex.Message);
-                        r = MessageBox.Show(msg, "Error", MessageBoxButton.OK, MessageBoxImage.Error, MessageBoxResult.OK);
-                    }
+                    experimentsVm.DeleteExperiment(id);
                 }
             }
         }
@@ -191,25 +175,9 @@ namespace PerformanceTest.Management
 
             if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                StreamWriter f = new StreamWriter(dlg.FileName, false);
-                //not implemented 
-
-
-                f.WriteLine();
-                f.Close();
+                var experiments = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().ToArray();
+                managerVm.SaveCSVData(dlg.FileName, experiments);
             }
-        }
-        private List<int> computeUnique()
-        {
-            List<int> ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToList();
-            List<int> res = new List<int>();
-            for (int i = 0; i < ids.Count; i++)
-            {
-                //what is a filename
-                List<string> filenames = new List<string>();
-                res.Add(filenames.Count);
-            }
-            return res;
         }
 
         private void canSaveMetaCSV(object sender, CanExecuteRoutedEventArgs e)
@@ -227,45 +195,10 @@ namespace PerformanceTest.Management
 
             if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                throw new NotImplementedException();
-                //StreamWriter f = new StreamWriter(dlg.FileName, false);
-                //f.WriteLine("\"ID\",\"# Total\",\"# SAT\",\"# UNSAT\",\"# UNKNOWN\",\"# Timeout\",\"# Memout\",\"# Bug\",\"# Error\",\"# Unique\",\"Parameters\",\"Note\""); 
-                //var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
-                //var count = ids.Length;
-                //var unique = computeUnique();
-                //for (var i = 0; i < count; i++)
-                //{
-                //    //not implemented 
-                //    var experiment = experimentsVm.Items.Where(st => st.ID == ids[i]).ToArray()[0];
-                //    var def = managerVm.GetDefinition(ids[i]).Result;
-                //    string ps = def.Parameters;
-                //    string note = experiment.Note;
-                //    int total =  0;
-                //    int sat = 0;
-                //    int unsat = 0;
-                //    int unknown = 0;
-                //    int timeouts = 0;
-                //    int memouts = 0;
-                //    int bugs = 0;
-                //    int errors = 0;
 
-                //    f.WriteLine(ids[i] + "," +
-                //                total + "," +
-                //                sat + "," +
-                //                unsat + "," +
-                //                unknown + "," +
-                //                timeouts + "," +
-                //                memouts + "," +
-                //                bugs + "," +
-                //                errors + "," +
-                //                unique[i] + "," +
-                //                "\"" + ps + "\"," +
-                //                "\"" + note + "\"");
-                //}
-                //f.WriteLine();
-                //f.Close();
+                var experiments = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().ToArray();
+                managerVm.SaveMetaData(dlg.FileName, experiments);
             }
-
         }
 
         private void canToggleFlag(object sender, CanExecuteRoutedEventArgs e)
@@ -287,25 +220,32 @@ namespace PerformanceTest.Management
             e.CanExecute = dataGrid.SelectedItems.Count > 0;
         }
 
-        private void showTally(object target, ExecutedRoutedEventArgs e)
+        private async void showTally(object target, ExecutedRoutedEventArgs e)
         {
-            Mouse.OverrideCursor = Cursors.Wait;
-
-            double total = 0.0;
-            var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
-            var count = ids.Length;
-            for (var i = 0; i < count; i++)
+            try
             {
-                int id = ids[i];
-                total += experimentsVm.GetRuntime(id);
-            }
-            TimeSpan ts = TimeSpan.FromSeconds(total);
-            MessageBox.Show(this,
-                           "The total amount of runtime spent computing the selected results is " + ts.ToString() + ".", "Tally",
-                           MessageBoxButton.OK,
-                           MessageBoxImage.Information);
+                double total;
+                var handle = uiService.StartIndicateLongOperation("Computing run time for the selected experiments...");
+                var ids = (dataGrid.SelectedItems).Cast<ExperimentStatusViewModel>().Select(st => st.ID).ToArray();
+                try
+                {
+                    total = await experimentsVm.GetRuntimes(ids);
+                }
+                finally
+                {
+                    uiService.StopIndicateLongOperation(handle);
+                }
+                TimeSpan ts = TimeSpan.FromSeconds(total);
+                MessageBox.Show(this,
+                               "The total amount of runtime spent computing the selected results is " + ts.ToString() + ".", "Tally",
+                               MessageBoxButton.OK,
+                               MessageBoxImage.Information);
 
-            Mouse.OverrideCursor = null;
+            }
+            catch (Exception ex)
+            {
+                uiService.ShowError(ex, "Failed to compute run time");
+            }
         }
 
         private void canCopy(object sender, CanExecuteRoutedEventArgs e)
@@ -360,11 +300,7 @@ namespace PerformanceTest.Management
                 }
             }
         }
-        private void filter_KeyUp(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter)
-                experimentsVm.FindExperiments(txtFilter.Text);
-        }
+
         private void MenuItemExit_Click(object sender, RoutedEventArgs e)
         {
             Close();
@@ -373,24 +309,50 @@ namespace PerformanceTest.Management
         private async void btnNewJob_Click(object sender, RoutedEventArgs e)
         {
             NewJobDialog dlg = new NewJobDialog();
-            var vm = new NewExperimentViewModel(managerVm, uiService);
+            var vm = new NewExperimentViewModel(managerVm, uiService, recentValues);
             dlg.DataContext = vm;
             dlg.Owner = this;
             if (dlg.ShowDialog() == true)
             {
-                ExperimentDefinition def =
-                    ExperimentDefinition.Create(
-                        vm.Executable, vm.BenchmarkContainerUri, vm.BenchmarkLibrary, vm.Extension, vm.Parameters,
-                        TimeSpan.FromSeconds(vm.BenchmarkTimeoutSec), vm.Domain,
-                        vm.Categories, vm.BenchmarkMemoryLimitMb);
+                var handle = uiService.StartIndicateLongOperation("Submitting new experiment...");
                 try
                 {
-                    await managerVm.SubmitExperiment(def, System.Security.Principal.WindowsIdentity.GetCurrent().Name, vm.Note);
+                    vm.SaveRecentSettings();
+                }
+                catch (Exception ex)
+                {
+                    uiService.ShowWarning(ex.Message, "Failed to save recent settings");
+                }
+
+                Tuple<string, int?, Exception>[] result;
+                try
+                {
+                    result = await managerVm.SubmitExperiments(vm, System.Security.Principal.WindowsIdentity.GetCurrent().Name);
                 }
                 catch (Exception ex)
                 {
                     uiService.ShowError(ex, "Failed to submit an experiment");
+                    return;
                 }
+                finally
+                {
+                    uiService.StopIndicateLongOperation(handle);
+                }
+
+                experimentsVm.Refresh();
+
+                StringBuilder sb = new StringBuilder();
+                for(int i = 0; i < result.Length; i++)
+                {
+                    if (i > 0) sb.AppendLine();
+
+                    var r = result[i];
+                    if (r.Item2.HasValue) 
+                        sb.AppendFormat("Experiment for category {0} successfully submitted with id {1}.", r.Item1, r.Item2.Value);
+                    if(r.Item3 != null)
+                        sb.AppendFormat("Experiment for category {0} could not be submitted: {1}.", r.Item1, r.Item3.Message);
+                }
+                uiService.ShowInfo(sb.ToString(), "New experiments");
             }
         }
         private void canShowProperties(object sender, CanExecuteRoutedEventArgs e)
@@ -464,7 +426,7 @@ namespace PerformanceTest.Management
                 string note = dlg.txtNote.Text;
                 //for (var i = 0; i < ids.Length; i++)
                 //{
-                //    ExperimentDefinition def = managerVm.GetDefinition(ids[i].ID).Result;
+                //    ExperimentDefinition def = ids[i].Definition;
                 //    //change groupName
                 //    //change note
                 //}
@@ -524,9 +486,36 @@ namespace PerformanceTest.Management
         {
             e.CanExecute = dataGrid.SelectedItems.Count == 1;
         }
-        private void saveBinary(object target, ExecutedRoutedEventArgs e)
+        private async void saveBinary(object target, ExecutedRoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            System.Windows.Forms.SaveFileDialog dlg = new System.Windows.Forms.SaveFileDialog();
+            dlg.Filter = "Executable files (*.zip)|*.zip|All files (*.*)|*.*";
+            dlg.FilterIndex = 1;
+            dlg.RestoreDirectory = true;
+
+            var handle = uiService.StartIndicateLongOperation("Save binary...");
+            try
+            {
+                var experiment = (ExperimentStatusViewModel)dataGrid.SelectedItem;
+                dlg.FileName = "binary_" + experiment.ID + ".zip";
+
+                if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    Stream result = await managerVm.SaveExecutable(dlg.FileName, experiment.Definition.Executable);
+                    string fn = dlg.FileName;
+                    FileStream file = File.Open(fn, FileMode.OpenOrCreate, FileAccess.Write);
+                    result.CopyTo(file);
+                    file.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                uiService.ShowError(ex, "Failed to save binary");
+            }
+            finally
+            {
+                uiService.StopIndicateLongOperation(handle);
+            }
         }
         private void canSaveOutput(object sender, CanExecuteRoutedEventArgs e)
         {
@@ -534,7 +523,13 @@ namespace PerformanceTest.Management
         }
         private void saveOutput(object target, ExecutedRoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            System.Windows.Forms.FolderBrowserDialog dlg = new System.Windows.Forms.FolderBrowserDialog();
+            dlg.ShowNewFolderButton = true;
+            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                var experiment = (ExperimentStatusViewModel)dataGrid.SelectedItem;
+                managerVm.SaveOutput(dlg.SelectedPath, experiment);
+            }
         }
         private void canSaveMatrix(object sender, CanExecuteRoutedEventArgs e)
         {
@@ -561,7 +556,17 @@ namespace PerformanceTest.Management
         }
         private void saveMatrix(object target, ExecutedRoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            System.Windows.Forms.SaveFileDialog dlg = new System.Windows.Forms.SaveFileDialog();
+            dlg.Filter = "LaTeX files (*.tex)|*.tex|All files (*.*)|*.*";
+            dlg.FilterIndex = 1;
+            dlg.RestoreDirectory = true;
+            dlg.FileName = "matrix.tex";
+
+            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                var experiments = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().ToArray();
+                managerVm.SaveMatrix(dlg.FileName, experiments);
+            }
         }
         private void canShowReinforcements(object sender, CanExecuteRoutedEventArgs e)
         {
@@ -612,6 +617,42 @@ namespace PerformanceTest.Management
             catch (Exception ex)
             {
                 uiService.ShowError(ex, "Failed to edit the connection string");
+            }
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            try
+            {
+                recentValues.ShowProgress = mnuOptProgress.IsChecked;
+            }
+            catch (Exception ex)
+            {
+                uiService.ShowError(ex, "Failed to save recent values");
+            }
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                mnuOptProgress.IsChecked = recentValues.ShowProgress;
+            }
+            catch (Exception ex)
+            {
+                uiService.ShowError(ex, "Failed to restore recent values");
+            }
+        }
+
+        private void txtFilter_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                var vm = DataContext as ExperimentListViewModel;
+                if (vm != null)
+                {
+                    vm.FilterKeyword = txtFilter.Text;
+                }
             }
         }
     }

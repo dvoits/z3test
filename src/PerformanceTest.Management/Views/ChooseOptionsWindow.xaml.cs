@@ -43,10 +43,10 @@ namespace PerformanceTest.Management
             listBox.Focus();
         }
 
-
         public string[] SelectedOptions
         {
-            get {
+            get
+            {
                 int n = listBox.SelectedItems.Count;
                 string[] items = new string[n];
                 for (int i = 0; i < n; i++)

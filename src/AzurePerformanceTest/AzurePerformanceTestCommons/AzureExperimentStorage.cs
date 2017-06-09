@@ -2,6 +2,7 @@
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.Queue;
+using Microsoft.WindowsAzure.Storage.RetryPolicies;
 using Microsoft.WindowsAzure.Storage.Table;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -12,6 +13,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading;
@@ -34,6 +36,8 @@ namespace AzurePerformanceTest
         private CloudTable experimentsTable;
         private CloudTable resultsTable;
         private CloudQueueClient queueClient;
+
+        private readonly IRetryPolicy retryPolicy = new ExponentialRetry(TimeSpan.FromMilliseconds(250), 7);
 
 
 
@@ -75,11 +79,10 @@ namespace AzurePerformanceTest
             Task.WaitAll(cloudEntityCreationTasks);
 
             DefaultBenchmarkStorage = new AzureBenchmarkStorage(storageConnectionString, AzureBenchmarkStorage.DefaultContainerName);
-
-            InitializeCache();
         }
 
         public AzureBenchmarkStorage DefaultBenchmarkStorage { get; private set; }
+
 
         public IEnumerable<CloudBlockBlob> ListAzureWorkerBlobs()
         {
@@ -188,6 +191,44 @@ namespace AzurePerformanceTest
             return blob.Uri + signature;
         }
 
+        /// <summary>
+        /// If the blob was successfully uploaded, returns true.
+        /// If the blob already exists, returns false.
+        /// Otherwise throws an exception.
+        /// </summary>
+        public async Task<bool> TryUploadNewExecutable(Stream source, string blobName)
+        {
+            if (source == null) throw new ArgumentNullException("source");
+            if (blobName == null) throw new ArgumentNullException("blobName");
+
+            CloudBlockBlob blob = binContainer.GetBlockBlobReference(blobName);
+            try
+            {
+                await blob.UploadFromStreamAsync(source, AccessCondition.GenerateIfNotExistsCondition(),
+                    new BlobRequestOptions() { RetryPolicy = retryPolicy }, null);
+                return true;
+            }
+            catch (StorageException ex) when (ex.RequestInformation?.HttpStatusCode == (int)HttpStatusCode.Conflict)
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> DeleteExecutable(string executableName)
+        {
+            if (executableName == null) throw new ArgumentNullException("executableName");
+            CloudBlockBlob blob = binContainer.GetBlockBlobReference(executableName);
+            try
+            {
+                return await blob.DeleteIfExistsAsync(DeleteSnapshotsOption.IncludeSnapshots, AccessCondition.GenerateEmptyCondition(),
+                    new BlobRequestOptions() { RetryPolicy = retryPolicy }, null);
+            }
+            catch (StorageException ex) when (ex.RequestInformation?.HttpStatusCode == (int)HttpStatusCode.Conflict)
+            {
+                return false;
+            }
+        }
+
         private static string GetResultsFileName(int expId)
         {
             return String.Format("{0}.csv", expId);
@@ -263,6 +304,59 @@ namespace AzurePerformanceTest
             TableOperation insertOperation = TableOperation.Insert(row);
             await experimentsTable.ExecuteAsync(insertOperation);
             return id;
+        }
+
+        /// <summary>
+        /// Deletes experiments table entry, output blobs, results blob.
+        /// </summary>
+        public async Task DeleteExperiment(ExperimentID id)
+        {
+            // Removes the output blobs
+            var removeOutputs = Task.Run(async () =>
+            {
+                string prefix = BlobNamePrefix(id);
+                BlobContinuationToken token = null;
+
+                do
+                {
+                    var segment = await outputContainer.ListBlobsSegmentedAsync(prefix, true, BlobListingDetails.None, null,
+                        token, new BlobRequestOptions { RetryPolicy = retryPolicy }, null);
+
+                    segment.Results
+                        .AsParallel()
+                        .ForAll(r =>
+                        {
+                            CloudBlob blob = r as CloudBlob;
+                            if (blob != null)
+                            {
+                                blob.DeleteIfExists(DeleteSnapshotsOption.IncludeSnapshots, options: new BlobRequestOptions { RetryPolicy = retryPolicy });
+                            }
+                        });
+
+                    token = segment.ContinuationToken;
+                } while (token != null);
+            });
+
+            // Removes the results table blob
+            var removeResults = Task.Run(async () =>
+            {
+                string resultsBlobName = GetResultBlobName(id);
+                var resultsBlob = resultsContainer.GetBlobReference(resultsBlobName);
+                await resultsBlob.DeleteIfExistsAsync(
+                      DeleteSnapshotsOption.IncludeSnapshots, AccessCondition.GenerateEmptyCondition(),
+                      new BlobRequestOptions { RetryPolicy = retryPolicy }, null);
+            });
+
+
+            // Removes the row from the experiments table
+            var removeEntity = Task.Run(async () =>
+            {
+                var exp = await GetExperiment(id);
+                TableOperation deleteOperation = TableOperation.Delete(exp);
+                await experimentsTable.ExecuteAsync(deleteOperation, new TableRequestOptions { RetryPolicy = retryPolicy }, null);
+            });
+
+            await Task.WhenAll(removeOutputs, removeResults, removeEntity);
         }
 
         private static TableQuery<NextExperimentIDEntity> QueryForNextId()
@@ -368,7 +462,7 @@ namespace AzurePerformanceTest
 
         private async Task<ExperimentEntity> FirstExperimentInQuery(TableQuery<ExperimentEntity> query)
         {
-            var list = (await experimentsTable.ExecuteQuerySegmentedAsync(query, null)).ToList();
+            var list = (await experimentsTable.ExecuteQuerySegmentedAsync(query, null, new TableRequestOptions { RetryPolicy = retryPolicy }, null)).ToList();
 
             if (list.Count == 0)
                 throw new ArgumentException("Experiment with given ID not found");
@@ -440,6 +534,11 @@ namespace AzurePerformanceTest
                         opsBatch.Replace(item);
                     return table.ExecuteBatchAsync(opsBatch);
                 }));
+        }
+        public Stream DownloadExecutable(string exBlobName)
+        {
+            var blob = binContainer.GetBlobReference(exBlobName);
+            return new LazyBlobStream(blob);
         }
     }
 
