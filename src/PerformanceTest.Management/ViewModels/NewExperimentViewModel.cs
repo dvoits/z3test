@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -14,6 +15,7 @@ namespace PerformanceTest.Management
         private readonly AzureExperimentManagerViewModel manager;
         private readonly IUIService service;
         private readonly RecentValuesStorage recentValues;
+        private readonly string creator;
 
         private string benchmarkContainerUri;
         private string benchmarkDirectory;
@@ -26,12 +28,15 @@ namespace PerformanceTest.Management
         private string note;
 
         private bool useMostRecentExecutable;
+
         private string[] fileNames;
+        private string recentBlobDisplayName;
+        private Task<string> taskRecentBlob;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
 
-        public NewExperimentViewModel(AzureExperimentManagerViewModel manager, IUIService service, RecentValuesStorage recentValues)
+        public NewExperimentViewModel(AzureExperimentManagerViewModel manager, IUIService service, RecentValuesStorage recentValues, string creator)
         {
             if (manager == null) throw new ArgumentNullException("manager");
             if (service == null) throw new ArgumentNullException("service");
@@ -39,6 +44,7 @@ namespace PerformanceTest.Management
             this.manager = manager;
             this.service = service;
             this.recentValues = recentValues;
+            this.creator = creator;
 
             domain = "Z3";
             benchmarkContainerUri = ExperimentDefinition.DefaultContainerUri;
@@ -56,6 +62,8 @@ namespace PerformanceTest.Management
             note = recentValues.ExperimentNote;
 
             UseMostRecentExecutable = true;
+            RecentBlobDisplayName = "searching...";
+            taskRecentBlob = FindRecentExecutable();
         }
 
         public string BenchmarkLibaryDescription
@@ -137,6 +145,17 @@ namespace PerformanceTest.Management
                 useMostRecentExecutable = !value;
                 NotifyPropertyChanged("UseMostRecentExecutable");
                 NotifyPropertyChanged("UseNewExecutable");
+            }
+        }
+
+        public string RecentBlobDisplayName
+        {
+            get { return recentBlobDisplayName; }
+            set
+            {
+                if (recentBlobDisplayName == value) return;
+                recentBlobDisplayName = value;
+                NotifyPropertyChanged();
             }
         }
 
@@ -222,6 +241,37 @@ namespace PerformanceTest.Management
             recentValues.ExperimentNote = note;
         }
 
+        public Task<string> GetRecentExecutable()
+        {
+            return taskRecentBlob;
+        }
+
+        private async Task<string> FindRecentExecutable()
+        {
+            try
+            {
+                var exec = await manager.GetRecentExecutable(creator);
+                if (exec == null)
+                {
+                    RecentBlobDisplayName = "not available";
+                    UseNewExecutable = true;
+                    return null;
+                }
+                else
+                {
+                    RecentBlobDisplayName = exec.Item2 != null ? exec.Item2.Value.ToString("dd-MM-yyyy HH:mm") : exec.Item1;
+                    return exec.Item1;
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("Failed to find most recent executable: " + ex);
+                RecentBlobDisplayName = "failed to find";
+                UseNewExecutable = true;
+                return null;
+            }
+        }
+
         private void ChooseExecutable()
         {
             string[] files = service.ChooseFiles(null, "Executable files (*.exe;*.dll)|*.exe;*.dll|All Files (*.*)|*.*", "exe");
@@ -241,7 +291,7 @@ namespace PerformanceTest.Management
                 else
                 {
                     mainFile = service.ChooseOption("Select main executable", exeFiles, exeFiles[0]);
-                    if (mainFile == null) return;                    
+                    if (mainFile == null) return;
                 }
 
                 // First element of the file names array must be main executable

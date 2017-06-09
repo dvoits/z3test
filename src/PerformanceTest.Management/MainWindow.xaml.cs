@@ -305,53 +305,61 @@ namespace PerformanceTest.Management
             Close();
         }
 
-        private async void btnNewJob_Click(object sender, RoutedEventArgs e)
+        private async void btnNewJob_Click(object sender, RoutedEventArgs args)
         {
-            NewJobDialog dlg = new NewJobDialog();
-            var vm = new NewExperimentViewModel(managerVm, uiService, recentValues);
-            dlg.DataContext = vm;
-            dlg.Owner = this;
-            if (dlg.ShowDialog() == true)
+            try
             {
-                var handle = uiService.StartIndicateLongOperation("Submitting new experiment...");
-                try
+                NewJobDialog dlg = new NewJobDialog();
+                string creator = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
+                var vm = new NewExperimentViewModel(managerVm, uiService, recentValues, creator);
+                dlg.DataContext = vm;
+                dlg.Owner = this;
+                if (dlg.ShowDialog() == true)
                 {
-                    vm.SaveRecentSettings();
-                }
-                catch (Exception ex)
-                {
-                    uiService.ShowWarning(ex.Message, "Failed to save recent settings");
-                }
+                    var handle = uiService.StartIndicateLongOperation("Submitting new experiment...");
+                    try
+                    {
+                        vm.SaveRecentSettings();
+                    }
+                    catch (Exception ex)
+                    {
+                        uiService.ShowWarning(ex.Message, "Failed to save recent settings");
+                    }
 
-                Tuple<string, int?, Exception>[] result;
-                try
-                {
-                    result = await managerVm.SubmitExperiments(vm, System.Security.Principal.WindowsIdentity.GetCurrent().Name);
-                }
-                catch (Exception ex)
-                {
-                    uiService.ShowError(ex, "Failed to submit an experiment");
-                    return;
-                }
-                finally
-                {
-                    uiService.StopIndicateLongOperation(handle);
-                }
+                    Tuple<string, int?, Exception>[] result;
+                    try
+                    {
+                        result = await managerVm.SubmitExperiments(vm, creator);
+                    }
+                    catch (Exception ex)
+                    {
+                        uiService.ShowError(ex, "Failed to submit an experiment");
+                        return;
+                    }
+                    finally
+                    {
+                        uiService.StopIndicateLongOperation(handle);
+                    }
 
-                experimentsVm.Refresh();
+                    experimentsVm.Refresh();
 
-                StringBuilder sb = new StringBuilder();
-                for(int i = 0; i < result.Length; i++)
-                {
-                    if (i > 0) sb.AppendLine();
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < result.Length; i++)
+                    {
+                        if (i > 0) sb.AppendLine();
 
-                    var r = result[i];
-                    if (r.Item2.HasValue) 
-                        sb.AppendFormat("Experiment for category {0} successfully submitted with id {1}.", r.Item1, r.Item2.Value);
-                    if(r.Item3 != null)
-                        sb.AppendFormat("Experiment for category {0} could not be submitted: {1}.", r.Item1, r.Item3.Message);
+                        var r = result[i];
+                        if (r.Item2.HasValue)
+                            sb.AppendFormat("Experiment for category {0} successfully submitted with id {1}.", r.Item1, r.Item2.Value);
+                        if (r.Item3 != null)
+                            sb.AppendFormat("Experiment for category {0} could not be submitted: {1}.", r.Item1, r.Item3.Message);
+                    }
+                    uiService.ShowInfo(sb.ToString(), "New experiments");
                 }
-                uiService.ShowInfo(sb.ToString(), "New experiments");
+            }
+            catch (Exception e)
+            {
+                uiService.ShowError(e, "New experiment");
             }
         }
         private void canShowProperties(object sender, CanExecuteRoutedEventArgs e)

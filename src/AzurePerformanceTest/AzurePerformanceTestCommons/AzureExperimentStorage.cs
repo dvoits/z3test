@@ -16,6 +16,7 @@ using System.Linq;
 using System.Net;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -40,13 +41,14 @@ namespace AzurePerformanceTest
         private readonly IRetryPolicy retryPolicy = new ExponentialRetry(TimeSpan.FromMilliseconds(250), 7);
 
 
+        private const string keyCreator = "creator";
 
-        const string resultsContainerName = "results";
-        const string binContainerName = "bin";
-        const string outputContainerName = "output";
-        const string configContainerName = "config";
-        const string experimentsTableName = "experiments";
-        const string resultsTableName = "data";
+        private const string resultsContainerName = "results";
+        private const string binContainerName = "bin";
+        private const string outputContainerName = "output";
+        private const string configContainerName = "config";
+        private const string experimentsTableName = "experiments";
+        private const string resultsTableName = "data";
 
 
         public AzureExperimentStorage(string storageAccountName, string storageAccountKey) : this(String.Format("DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}", storageAccountName, storageAccountKey))
@@ -196,7 +198,7 @@ namespace AzurePerformanceTest
         /// If the blob already exists, returns false.
         /// Otherwise throws an exception.
         /// </summary>
-        public async Task<bool> TryUploadNewExecutable(Stream source, string blobName)
+        public async Task<bool> TryUploadNewExecutable(Stream source, string blobName, string creator)
         {
             if (source == null) throw new ArgumentNullException("source");
             if (blobName == null) throw new ArgumentNullException("blobName");
@@ -206,12 +208,64 @@ namespace AzurePerformanceTest
             {
                 await blob.UploadFromStreamAsync(source, AccessCondition.GenerateIfNotExistsCondition(),
                     new BlobRequestOptions() { RetryPolicy = retryPolicy }, null);
+
+                blob.Metadata.Add(keyCreator, StripNonAscii(creator));
+                await blob.SetMetadataAsync(AccessCondition.GenerateEmptyCondition(), new BlobRequestOptions { RetryPolicy = retryPolicy }, null);
+
                 return true;
             }
             catch (StorageException ex) when (ex.RequestInformation?.HttpStatusCode == (int)HttpStatusCode.Conflict)
             {
                 return false;
             }
+        }
+
+        public async Task<Tuple<string, DateTimeOffset?>> TryFindRecentExecutableBlob(string prefix, string creator)
+        {
+            if (prefix == null) prefix = "";
+            string asciiCreator = StripNonAscii(creator);
+
+            BlobContinuationToken token = null;
+            List<CloudBlob> best = new List<CloudBlob>();
+            do
+            {
+                var segment = await binContainer.ListBlobsSegmentedAsync(prefix, true, BlobListingDetails.Metadata, null,
+                    token, new BlobRequestOptions { RetryPolicy = retryPolicy }, null);
+
+                CloudBlob bestBlob = null;
+                foreach (var item in segment.Results)
+                {
+                    CloudBlob blob = item as CloudBlob;
+                    if (blob == null) continue;
+
+                    string blobCreator;
+                    if (!blob.Metadata.TryGetValue(keyCreator, out blobCreator) || blobCreator != asciiCreator) continue;
+
+
+                    if (bestBlob == null || bestBlob.Properties.LastModified < blob.Properties.LastModified)
+                        bestBlob = blob;
+                }
+
+                if (bestBlob != null) best.Add(bestBlob);
+                token = segment.ContinuationToken;
+            } while (token != null);
+
+            if (best.Count == 0) return null;
+            CloudBlob resultBlob = best[0];
+            for (int i = 1; i < best.Count; i++)
+            {
+                var blob = best[i];
+                if (resultBlob.Properties.LastModified < blob.Properties.LastModified)
+                    resultBlob = blob;
+            }
+            return Tuple.Create(resultBlob.Name, resultBlob.Properties.LastModified);
+        }
+
+        private static string StripNonAscii(string s)
+        {
+            if (s == null) return null;
+            string s2 = Regex.Replace(s, @"[^\u0000-\u007F]+", string.Empty);
+            return s2;
         }
 
         public async Task<bool> DeleteExecutable(string executableName)

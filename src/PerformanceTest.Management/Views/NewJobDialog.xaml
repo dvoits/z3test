@@ -11,6 +11,7 @@
 
     <Window.Resources>
         <local:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+        <local:NotNullToBooleanConverter x:Key="NotNullToBoolean" />
         <GridLength x:Key="KeyWidth">200</GridLength>
         <Thickness x:Key="ParameterMargin" Left="5" Top="5" Right="10" Bottom="10" />
     </Window.Resources>
@@ -103,8 +104,11 @@
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <RadioButton Content="Use most recent" Name="chkMostRecentBinary" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" 
-                                     IsChecked="{Binding UseMostRecentExecutable}" />
+                    <RadioButton Name="chkMostRecentBinary" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" 
+                                 IsChecked="{Binding UseMostRecentExecutable}"
+                                 IsEnabled="{Binding RecentBlobDate, Mode=OneWay, Converter={StaticResource NotNullToBoolean}}">
+                        <TextBlock>Use most recent <Run Text="{Binding RecentBlobDisplayName, Mode=OneWay, StringFormat=({0})}"/></TextBlock>
+                    </RadioButton>
                     <RadioButton Content="New:" Name="chkNewBinary" Grid.Row="1" Grid.Column="0" Margin="0,5,10,-5" 
                                      IsChecked="{Binding UseNewExecutable}"  />
                     <Grid Grid.Column="1" Grid.Row="1">

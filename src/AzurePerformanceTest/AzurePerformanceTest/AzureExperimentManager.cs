@@ -86,7 +86,7 @@ namespace AzurePerformanceTest
             await storage.DeleteExperiment(id);
         }
 
-        /// If can connect to client and experiment is running, stopping the experiment job.
+        /// If connection to the batch client is established and experiment is running, deletes the experiment job.
         private async Task StopJob(int id)
         {
             var jobId = BuildJobId(id);
@@ -180,6 +180,7 @@ namespace AzurePerformanceTest
             var exps = await Task.WhenAll(req);
             return exps.Select(entity => ExperimentFromEntity(int.Parse(entity.RowKey), entity).Status);
         }
+
         public override async Task<ExperimentID> StartExperiment(ExperimentDefinition definition, string creator = null, string note = null)
         {
             if (!CanStart) throw new InvalidOperationException("Cannot start experiment since the manager is in read mode");

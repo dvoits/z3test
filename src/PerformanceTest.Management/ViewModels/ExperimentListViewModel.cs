@@ -80,7 +80,8 @@ namespace PerformanceTest.Management
             {
                 Items = filteredExperiments.Where(st => st.ID != id).ToArray();
                 await Task.Run(() => manager.DeleteExperiment(id));
-                await Task.Run(() => manager.DeleteExecutable(executable));
+                if (deleteExecutable)
+                    await Task.Run(() => manager.DeleteExecutable(executable));
             }
             catch (Exception ex)
             {

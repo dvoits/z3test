@@ -82,21 +82,24 @@ namespace PerformanceTest.Management
             // Uploading package with binaries
             string packageName;
             if (newExperiment.UseMostRecentExecutable)
-                throw new NotImplementedException();
+            {
+                packageName = await newExperiment.GetRecentExecutable();
+                if (String.IsNullOrEmpty(packageName)) throw new InvalidOperationException("Executable package is not available");
+            }
             else // upload new executable
             {
                 using (MemoryStream stream = new MemoryStream(20 << 20))
                 {
                     Measurement.ExecutablePackage.PackToStream(newExperiment.ExecutableFileNames, newExperiment.MainExecutable, stream);
 
-                    string extension = Path.GetExtension(newExperiment.MainExecutable);
                     string fileName = Path.GetFileNameWithoutExtension(newExperiment.MainExecutable);
+                    string esc_creator = ToBinaryPackBlobName(creator);
 
                     do
                     {
                         stream.Position = 0;
-                        packageName = string.Format("{0}.{1:yyyy-MM-ddTHH-mm-ss-ffff}.zip", fileName, DateTime.UtcNow);
-                    } while (!await manager.Storage.TryUploadNewExecutable(stream, packageName));
+                        packageName = string.Format("{0}.{1}.{2:yyyy-MM-ddTHH-mm-ss-ffff}.zip", esc_creator, fileName, DateTime.UtcNow);
+                    } while (!await manager.Storage.TryUploadNewExecutable(stream, packageName, creator));
                 }
             }
 
@@ -127,11 +130,28 @@ namespace PerformanceTest.Management
         }
 
 
+        private static string invalidChars = System.Text.RegularExpressions.Regex.Escape("." + new string(Path.GetInvalidFileNameChars()));
+        private static string invalidRegStr = string.Format(@"([{0}]*\.+$)|([{0}]+)", invalidChars);
+
+        private static string ToBinaryPackBlobName(string name)
+        {
+            string name2 = System.Text.RegularExpressions.Regex.Replace(name, invalidRegStr, "_");
+            if (name2.Length > 1024) name2 = name2.Substring(0, 1024);
+            else if (name2.Length == 0) name2 = "_";
+            return name2;
+        }
+
+
         public Task<Stream> SaveExecutable(string filename, string exBlobName)
         {
             if (filename == null) throw new ArgumentNullException("filename");
             if (exBlobName == null) throw new ArgumentNullException("exBlobName");
             return Task.Run(() => manager.Storage.DownloadExecutable(exBlobName));
+        }
+
+        public Task<Tuple<string, DateTimeOffset?>> GetRecentExecutable(string creator)
+        {
+            return Task.Run(() => manager.Storage.TryFindRecentExecutableBlob(ToBinaryPackBlobName(creator), creator));
         }
 
         public void SaveMetaData(string filename, ExperimentStatusViewModel[] experiments)
