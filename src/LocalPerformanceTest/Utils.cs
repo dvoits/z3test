@@ -20,7 +20,7 @@ namespace PerformanceTest
 
         public static string StreamToString(Stream s, bool resetPosition)
         {
-            long pos = s.Position;
+            long pos = resetPosition ? s.Position : 0;
             StreamReader r = new StreamReader(s, Encoding.UTF8);
             string str = r.ReadToEnd();
             if (resetPosition)
