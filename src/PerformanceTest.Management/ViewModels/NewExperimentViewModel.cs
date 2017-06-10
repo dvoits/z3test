@@ -35,6 +35,7 @@ namespace PerformanceTest.Management
         private Task<string> taskRecentBlob;
 
         private string selectedPool;
+        private bool canUseMostRecent;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -142,6 +143,18 @@ namespace PerformanceTest.Management
             }
         }
 
+        public bool CanUseMostRecent
+        {
+            get { return canUseMostRecent; }
+            private set
+            {
+                if (canUseMostRecent == value) return;
+                canUseMostRecent = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+
         public bool UseNewExecutable
         {
             get { return !useMostRecentExecutable; }
@@ -153,6 +166,7 @@ namespace PerformanceTest.Management
                 NotifyPropertyChanged("UseNewExecutable");
             }
         }
+
 
         public string RecentBlobDisplayName
         {
@@ -218,7 +232,7 @@ namespace PerformanceTest.Management
                 note = value;
                 NotifyPropertyChanged();
             }
-        }        
+        }
 
         public string Pool
         {
@@ -282,6 +296,7 @@ namespace PerformanceTest.Management
                 }
                 else
                 {
+                    CanUseMostRecent = true;
                     RecentBlobDisplayName = exec.Item2 != null ? exec.Item2.Value.ToLocalTime().ToString("dd-MM-yyyy HH:mm") : exec.Item1;
                     return exec.Item1;
                 }
@@ -313,7 +328,9 @@ namespace PerformanceTest.Management
                     mainFile = exeFiles[0];
                 else
                 {
-                    mainFile = service.ChooseOption("Select main executable", exeFiles, exeFiles[0]);
+                    mainFile = service.ChooseOption("Select main executable", 
+                        new AsyncLazy<string[]>(() => Task.FromResult(exeFiles)), 
+                        new Predicate<string>(file => file == exeFiles[0]));
                     if (mainFile == null) return;
                 }
 
@@ -329,24 +346,13 @@ namespace PerformanceTest.Management
             UseMostRecentExecutable = false;
         }
 
-        private async void ListPools()
+        private void ListPools()
         {
             try
             {
-                var pools = await manager.GetAvailablePools();
-                PoolDescription pool = null;
-                if(selectedPool != null)
-                {
-                    foreach (var p in pools)
-                    {
-                        if(p.Id == selectedPool)
-                        {
-                            pool = p;
-                            break;
-                        }
-                    }
-                }
-                pool = service.ChooseOption("Choose an Azure Batch Pool", pools, pool);
+                PoolDescription pool = service.ChooseOption("Choose an Azure Batch Pool", 
+                    new AsyncLazy<PoolDescription[]>(() => manager.GetAvailablePools()), 
+                    new Predicate<PoolDescription>(p => p.Id == selectedPool));
                 if (pool != null)
                 {
                     Pool = pool.Id;
@@ -378,24 +384,15 @@ namespace PerformanceTest.Management
             }
         }
 
-        private async void ChooseCategories()
+        private void ChooseCategories()
         {
             try
             {
-                string[] allCategories;
-                var handle = service.StartIndicateLongOperation("Loading categories...");
-                try
-                {
-                    allCategories = await manager.GetAvailableCategories(BenchmarkDirectory);
-                }
-                finally
-                {
-                    service.StopIndicateLongOperation(handle);
-                }
-
                 string[] selected = Categories == null ? new string[0] : Categories.Split(',').Select(s => s.Trim()).ToArray();
 
-                selected = service.ChooseOptions("Choose categories", allCategories, selected);
+                selected = service.ChooseOptions("Choose categories", 
+                    new AsyncLazy<string[]>(() => manager.GetAvailableCategories(BenchmarkDirectory)), 
+                    new Predicate<string>(c => selected.Contains(c)));
                 if (selected != null)
                 {
                     Categories = String.Join(",", selected);
@@ -406,8 +403,6 @@ namespace PerformanceTest.Management
                 service.ShowError(ex);
             }
         }
-
-
 
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
         {

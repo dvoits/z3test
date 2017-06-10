@@ -118,7 +118,7 @@
                     </Grid.ColumnDefinitions>
                     <RadioButton Name="chkMostRecentBinary" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" 
                                  IsChecked="{Binding UseMostRecentExecutable}"
-                                 IsEnabled="{Binding RecentBlobDate, Mode=OneWay, Converter={StaticResource NotNullToBoolean}}">
+                                 IsEnabled="{Binding CanUseMostRecent, Mode=OneWay}">
                         <TextBlock>Use most recent <Run Text="{Binding RecentBlobDisplayName, Mode=OneWay, StringFormat=({0})}"/></TextBlock>
                     </RadioButton>
                     <RadioButton Content="New:" Name="chkNewBinary" Grid.Row="1" Grid.Column="0" Margin="0,5,10,-5" 

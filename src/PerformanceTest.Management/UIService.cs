@@ -27,11 +27,11 @@ namespace PerformanceTest.Management
 
         string[] ChooseFiles(string initialPath, string filter, string defaultExtension);
 
-        T[] ChooseOptions<T>(string title, T[] options, T[] selectedOptions) where T : class;
+        T[] ChooseOptions<T>(string title, AsyncLazy<T[]> options, Predicate<T> selectedOptions) where T : class;
+
+        T ChooseOption<T>(string title, AsyncLazy<T[]> options, Predicate<T> selectedOption) where T : class;
 
         Task<string[]> BrowseTree(string title, string[] selected, Func<string[], Task<string[]>> getChildren);
-
-        T ChooseOption<T>(string title, T[] options, T selectedOption) where T : class;
 
         long StartIndicateLongOperation(string status = null);
 
@@ -152,9 +152,10 @@ namespace PerformanceTest.Management
         }
 
 
-        public T[] ChooseOptions<T>(string title, T[] options, T[] selectedOptions) where T : class
+        public T[] ChooseOptions<T>(string title, AsyncLazy<T[]> options, Predicate<T> selectedOptions) where T : class
         {
-            var dlg = new ChooseOptionsWindow(options, selectedOptions);
+            var dlg = new ChooseOptionsWindow(this);
+            dlg.SetMultipleSelection(options, selectedOptions);
             dlg.Title = title;
             if (dlg.ShowDialog() == true)
             {
@@ -163,9 +164,10 @@ namespace PerformanceTest.Management
             return null;
         }
 
-        public T ChooseOption<T>(string title, T[] options, T selectedOption) where T : class
+        public T ChooseOption<T>(string title, AsyncLazy<T[]> options, Predicate<T> selectedOptions) where T : class
         {
-            var dlg = new ChooseOptionsWindow(options, selectedOption);
+            var dlg = new ChooseOptionsWindow(this);
+            dlg.SetSingleSelection(options, selectedOptions);
             dlg.Title = title;
             if (dlg.ShowDialog() == true)
             {
