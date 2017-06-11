@@ -2,6 +2,11 @@
 
 This repository holds test infrastructure and benchmarks used to test Z3. 
 
+Performance test is measurement of execution of a target command line executable file for specific input file
+with certain command line parameters.
+For example, a performance test for Z3 is execution of `z3.exe` for the given parameters and certain smt2 file.
+
+An experiment is a set of performance tests for a single target executable and same command line parameters run for multiple input files located in the predefined directory.
 
 
 # Structure of the repository
