@@ -32,7 +32,6 @@
             System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
             System.Windows.Forms.DataVisualization.Charting.Title title1 = new System.Windows.Forms.DataVisualization.Charting.Title();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Scatterplot));
-
             this.chart = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.cbFancy = new System.Windows.Forms.CheckBox();
             this.lblAvgSpeedupTxt = new System.Windows.Forms.Label();
@@ -52,15 +51,22 @@
             this.lblDatapoints = new System.Windows.Forms.Label();
             this.ckTIME = new System.Windows.Forms.CheckBox();
             this.ckUNKNOWN = new System.Windows.Forms.CheckBox();
+            this.rbNormalized = new System.Windows.Forms.RadioButton();
+            this.rbNonNormalized = new System.Windows.Forms.RadioButton();
+            this.rbWallClock = new System.Windows.Forms.RadioButton();
+            this.rbMemoryUsed = new System.Windows.Forms.RadioButton();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.gbStatistics = new System.Windows.Forms.GroupBox();
+            this.panel1 = new System.Windows.Forms.Panel();
             ((System.ComponentModel.ISupportInitialize)(this.chart)).BeginInit();
             this.gpOptions.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
+            this.gbStatistics.SuspendLayout();
+            this.panel1.SuspendLayout();
             this.SuspendLayout();
-
             // 
             // chart
             // 
@@ -73,7 +79,7 @@
             series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastPoint;
             series1.Name = "Series1";
             this.chart.Series.Add(series1);
-            this.chart.Size = new System.Drawing.Size(515, 529);
+            this.chart.Size = new System.Drawing.Size(681, 529);
             this.chart.TabIndex = 0;
             this.chart.Text = "Scatterplot";
             title1.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F);
@@ -95,7 +101,7 @@
             // lblAvgSpeedupTxt
             // 
             this.lblAvgSpeedupTxt.AutoSize = true;
-            this.lblAvgSpeedupTxt.Location = new System.Drawing.Point(301, 20);
+            this.lblAvgSpeedupTxt.Location = new System.Drawing.Point(6, 19);
             this.lblAvgSpeedupTxt.Name = "lblAvgSpeedupTxt";
             this.lblAvgSpeedupTxt.Size = new System.Drawing.Size(130, 13);
             this.lblAvgSpeedupTxt.TabIndex = 2;
@@ -103,7 +109,7 @@
             // 
             // lblAvgSpeedup
             // 
-            this.lblAvgSpeedup.Location = new System.Drawing.Point(437, 20);
+            this.lblAvgSpeedup.Location = new System.Drawing.Point(171, 19);
             this.lblAvgSpeedup.Name = "lblAvgSpeedup";
             this.lblAvgSpeedup.Size = new System.Drawing.Size(72, 16);
             this.lblAvgSpeedup.TabIndex = 3;
@@ -138,27 +144,20 @@
             // 
             // gpOptions
             // 
+            this.gpOptions.Controls.Add(this.panel1);
+            this.gpOptions.Controls.Add(this.gbStatistics);
             this.gpOptions.Controls.Add(this.ckMEMORY);
             this.gpOptions.Controls.Add(this.ckBUG);
             this.gpOptions.Controls.Add(this.ckERROR);
-            this.gpOptions.Controls.Add(this.lblSlower);
-            this.gpOptions.Controls.Add(this.label5);
-            this.gpOptions.Controls.Add(this.lblFaster);
-            this.gpOptions.Controls.Add(this.label3);
-            this.gpOptions.Controls.Add(this.lblTotal);
-            this.gpOptions.Controls.Add(this.label1);
-            this.gpOptions.Controls.Add(this.lblDatapoints);
             this.gpOptions.Controls.Add(this.ckTIME);
             this.gpOptions.Controls.Add(this.ckUNKNOWN);
             this.gpOptions.Controls.Add(this.cbFancy);
-            this.gpOptions.Controls.Add(this.lblAvgSpeedup);
             this.gpOptions.Controls.Add(this.ckUNSAT);
-            this.gpOptions.Controls.Add(this.lblAvgSpeedupTxt);
             this.gpOptions.Controls.Add(this.ckSAT);
             this.gpOptions.Dock = System.Windows.Forms.DockStyle.Fill;
             this.gpOptions.Location = new System.Drawing.Point(0, 0);
             this.gpOptions.Name = "gpOptions";
-            this.gpOptions.Size = new System.Drawing.Size(515, 116);
+            this.gpOptions.Size = new System.Drawing.Size(681, 116);
             this.gpOptions.TabIndex = 6;
             this.gpOptions.TabStop = false;
             this.gpOptions.Text = "Options";
@@ -204,7 +203,7 @@
             // 
             // lblSlower
             // 
-            this.lblSlower.Location = new System.Drawing.Point(418, 69);
+            this.lblSlower.Location = new System.Drawing.Point(152, 73);
             this.lblSlower.Name = "lblSlower";
             this.lblSlower.Size = new System.Drawing.Size(91, 13);
             this.lblSlower.TabIndex = 25;
@@ -214,7 +213,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(366, 69);
+            this.label5.Location = new System.Drawing.Point(73, 73);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(49, 13);
             this.label5.TabIndex = 24;
@@ -222,7 +221,7 @@
             // 
             // lblFaster
             // 
-            this.lblFaster.Location = new System.Drawing.Point(418, 56);
+            this.lblFaster.Location = new System.Drawing.Point(152, 58);
             this.lblFaster.Name = "lblFaster";
             this.lblFaster.Size = new System.Drawing.Size(91, 13);
             this.lblFaster.TabIndex = 23;
@@ -232,7 +231,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(366, 56);
+            this.label3.Location = new System.Drawing.Point(73, 58);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(46, 13);
             this.label3.TabIndex = 22;
@@ -240,7 +239,7 @@
             // 
             // lblTotal
             // 
-            this.lblTotal.Location = new System.Drawing.Point(418, 43);
+            this.lblTotal.Location = new System.Drawing.Point(152, 42);
             this.lblTotal.Name = "lblTotal";
             this.lblTotal.Size = new System.Drawing.Size(91, 16);
             this.lblTotal.TabIndex = 21;
@@ -250,7 +249,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(366, 43);
+            this.label1.Location = new System.Drawing.Point(73, 43);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(31, 13);
             this.label1.TabIndex = 20;
@@ -259,7 +258,7 @@
             // lblDatapoints
             // 
             this.lblDatapoints.AutoSize = true;
-            this.lblDatapoints.Location = new System.Drawing.Point(299, 42);
+            this.lblDatapoints.Location = new System.Drawing.Point(6, 42);
             this.lblDatapoints.Name = "lblDatapoints";
             this.lblDatapoints.Size = new System.Drawing.Size(61, 13);
             this.lblDatapoints.TabIndex = 19;
@@ -291,6 +290,48 @@
             this.ckUNKNOWN.UseVisualStyleBackColor = true;
             this.ckUNKNOWN.CheckedChanged += new System.EventHandler(this.ckCheckedChanged);
             // 
+            // rbNormalized
+            // 
+            this.rbNormalized.AutoSize = true;
+            this.rbNormalized.Checked = true;
+            this.rbNormalized.Location = new System.Drawing.Point(3, 6);
+            this.rbNormalized.Name = "rbNormalized";
+            this.rbNormalized.Size = new System.Drawing.Size(114, 17);
+            this.rbNormalized.TabIndex = 0;
+            this.rbNormalized.TabStop = true;
+            this.rbNormalized.Text = "Normalized runtime";
+            this.rbNormalized.CheckedChanged += new System.EventHandler(this.ckCheckedChanged);
+            // 
+            // rbNonNormalized
+            // 
+            this.rbNonNormalized.AutoSize = true;
+            this.rbNonNormalized.Location = new System.Drawing.Point(3, 25);
+            this.rbNonNormalized.Name = "rbNonNormalized";
+            this.rbNonNormalized.Size = new System.Drawing.Size(135, 17);
+            this.rbNonNormalized.TabIndex = 0;
+            this.rbNonNormalized.Text = "Non-normalized runtime";
+            this.rbNonNormalized.CheckedChanged += new System.EventHandler(this.ckCheckedChanged);
+            // 
+            // rbWallClock
+            // 
+            this.rbWallClock.AutoSize = true;
+            this.rbWallClock.Location = new System.Drawing.Point(3, 43);
+            this.rbWallClock.Name = "rbWallClock";
+            this.rbWallClock.Size = new System.Drawing.Size(97, 17);
+            this.rbWallClock.TabIndex = 0;
+            this.rbWallClock.Text = "Wall clock time";
+            this.rbWallClock.CheckedChanged += new System.EventHandler(this.ckCheckedChanged);
+            // 
+            // rbMemoryUsed
+            // 
+            this.rbMemoryUsed.AutoSize = true;
+            this.rbMemoryUsed.Location = new System.Drawing.Point(3, 60);
+            this.rbMemoryUsed.Name = "rbMemoryUsed";
+            this.rbMemoryUsed.Size = new System.Drawing.Size(88, 17);
+            this.rbMemoryUsed.TabIndex = 0;
+            this.rbMemoryUsed.Text = "Memory used";
+            this.rbMemoryUsed.CheckedChanged += new System.EventHandler(this.ckCheckedChanged);
+            // 
             // splitContainer1
             // 
             this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -307,17 +348,45 @@
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.gpOptions);
-            this.splitContainer1.Size = new System.Drawing.Size(515, 649);
+            this.splitContainer1.Size = new System.Drawing.Size(681, 649);
             this.splitContainer1.SplitterDistance = 529;
             this.splitContainer1.TabIndex = 7;
+            // 
+            // gbStatistics
+            // 
+            this.gbStatistics.Controls.Add(this.lblAvgSpeedupTxt);
+            this.gbStatistics.Controls.Add(this.lblDatapoints);
+            this.gbStatistics.Controls.Add(this.label1);
+            this.gbStatistics.Controls.Add(this.label3);
+            this.gbStatistics.Controls.Add(this.label5);
+            this.gbStatistics.Controls.Add(this.lblSlower);
+            this.gbStatistics.Controls.Add(this.lblAvgSpeedup);
+            this.gbStatistics.Controls.Add(this.lblFaster);
+            this.gbStatistics.Controls.Add(this.lblTotal);
+            this.gbStatistics.Location = new System.Drawing.Point(281, 0);
+            this.gbStatistics.Name = "gbStatistics";
+            this.gbStatistics.Size = new System.Drawing.Size(252, 116);
+            this.gbStatistics.TabIndex = 30;
+            this.gbStatistics.TabStop = false;
+            // 
+            // panel1
+            // 
+            this.panel1.Controls.Add(this.rbMemoryUsed);
+            this.panel1.Controls.Add(this.rbWallClock);
+            this.panel1.Controls.Add(this.rbNonNormalized);
+            this.panel1.Controls.Add(this.rbNormalized);
+            this.panel1.Location = new System.Drawing.Point(536, 13);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(142, 91);
+            this.panel1.TabIndex = 31;
             // 
             // Scatterplot
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(515, 649);
+            this.ClientSize = new System.Drawing.Size(681, 649);
             this.Controls.Add(this.splitContainer1);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("servers")));
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "Scatterplot";
             this.Text = "ScatterPlot";
             this.Load += new System.EventHandler(this.scatterTest_Load);
@@ -328,6 +397,10 @@
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
+            this.gbStatistics.ResumeLayout(false);
+            this.gbStatistics.PerformLayout();
+            this.panel1.ResumeLayout(false);
+            this.panel1.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -354,5 +427,11 @@
         private System.Windows.Forms.CheckBox ckERROR;
         private System.Windows.Forms.CheckBox ckMEMORY;
         private System.Windows.Forms.CheckBox ckBUG;
+        private System.Windows.Forms.RadioButton rbNormalized;
+        private System.Windows.Forms.RadioButton rbNonNormalized;
+        private System.Windows.Forms.RadioButton rbWallClock;
+        private System.Windows.Forms.RadioButton rbMemoryUsed;
+        private System.Windows.Forms.GroupBox gbStatistics;
+        private System.Windows.Forms.Panel panel1;
     }
 }

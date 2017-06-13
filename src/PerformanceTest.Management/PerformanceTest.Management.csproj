@@ -95,6 +95,11 @@
     <Compile Include="Views\Scatterplot.Designer.cs">
       <DependentUpon>Scatterplot.cs</DependentUpon>
     </Compile>
+    <Compile Include="Views\Scatterplot1.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Scatterplot.resx</DependentUpon>
+    </Compile>
     <Compile Include="Views\ShowOutput.xaml.cs">
       <DependentUpon>ShowOutput.xaml</DependentUpon>
     </Compile>

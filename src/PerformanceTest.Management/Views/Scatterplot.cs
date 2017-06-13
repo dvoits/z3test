@@ -25,10 +25,12 @@ namespace PerformanceTest.Management
         private uint errorLine = 100;
         private uint timeoutX = 1800;
         private uint timeoutY = 1800;
+        private uint memoutX = 1800;
+        private uint memoutY = 1800;
         private Dictionary<string, int> classes = new Dictionary<string, int>();
 
 
-        public Scatterplot(CompareExperimentsViewModel vm, ExperimentStatusViewModel exp1, ExperimentStatusViewModel exp2, double timeout1, double timeout2, IUIService uiService)
+        public Scatterplot(CompareExperimentsViewModel vm, ExperimentStatusViewModel exp1, ExperimentStatusViewModel exp2, double timeout1, double timeout2, double memout1, double memout2,  IUIService uiService)
         {
             if (vm == null) throw new ArgumentNullException("vm");
             if (exp1 == null) throw new ArgumentNullException("exp1");
@@ -47,7 +49,8 @@ namespace PerformanceTest.Management
             category = (category1 == category2) ? category1 : category1 + " -vs- " + category2;
             timeoutX = (uint)timeout1;
             timeoutY = (uint)timeout2;
-
+            memoutX = (uint)memout1;
+            memoutY = (uint)memout2;
             UpdateStatus(true);
 
 
@@ -90,8 +93,9 @@ namespace PerformanceTest.Management
             chart.Legends.Clear();
             chart.Titles.Clear();
 
-            axisMaximum = timeoutX;
-            if (timeoutY > axisMaximum) axisMaximum = timeoutY;
+            axisMaximum = rbMemoryUsed.Checked ? memoutX : timeoutX;
+            if (rbMemoryUsed.Checked && memoutY > axisMaximum) axisMaximum = memoutY;
+            else if (!rbMemoryUsed.Checked && timeoutY > axisMaximum) axisMaximum = timeoutY;
             // Round max up to next order of magnitude.
             {
                 uint orders = 0;
@@ -149,9 +153,18 @@ namespace PerformanceTest.Management
             chart.Series[0].ChartType = SeriesChartType.FastLine;
             chart.Series[0].Color = Color.Green;
             chart.Series[0].BorderDashStyle = ChartDashStyle.Dash;
-            chart.Series[0].Points.AddXY(axisMinimum, timeoutY);
-            chart.Series[0].Points.AddXY(timeoutX, timeoutY);
-            chart.Series[0].Points.AddXY(timeoutX, axisMinimum);
+            if (rbMemoryUsed.Checked)
+            {
+                chart.Series[0].Points.AddXY(axisMinimum, memoutY);
+                chart.Series[0].Points.AddXY(memoutX, memoutY);
+                chart.Series[0].Points.AddXY(memoutX, axisMinimum);
+            }
+            else
+            {
+                chart.Series[0].Points.AddXY(axisMinimum, timeoutY);
+                chart.Series[0].Points.AddXY(timeoutX, timeoutY);
+                chart.Series[0].Points.AddXY(timeoutX, axisMinimum);
+            }
 
             chart.Series.Add("Error Markers");
             chart.Series[1].ChartType = SeriesChartType.FastLine;
@@ -189,7 +202,11 @@ namespace PerformanceTest.Management
                 int m3 = inx % 3;
                 int d3 = inx / 3;
                 newSeries.ChartType = SeriesChartType.Point;
-                newSeries.MarkerStyle = MarkerStyle.Cross;
+                if (rbNormalized.Checked) newSeries.MarkerStyle = MarkerStyle.Cross;
+                else if (rbNonNormalized.Checked) newSeries.MarkerStyle = MarkerStyle.Star4;
+                else if (rbWallClock.Checked) newSeries.MarkerStyle = MarkerStyle.Star6;
+                else newSeries.MarkerStyle = MarkerStyle.Triangle;
+                
                 newSeries.MarkerSize = 6;
                 switch (m3)
                 {
@@ -205,7 +222,11 @@ namespace PerformanceTest.Management
                 chart.Series.Add(title);
                 Series newSeries = chart.Series.Last();
                 newSeries.ChartType = SeriesChartType.FastPoint;
-                newSeries.MarkerStyle = MarkerStyle.Cross;
+                if (rbNormalized.Checked) newSeries.MarkerStyle = MarkerStyle.Cross;
+                else if (rbNonNormalized.Checked) newSeries.MarkerStyle = MarkerStyle.Star4;
+                else if (rbWallClock.Checked) newSeries.MarkerStyle = MarkerStyle.Star6;
+                else newSeries.MarkerStyle = MarkerStyle.Triangle;
+                
                 newSeries.MarkerSize = 6;
                 newSeries.MarkerColor = Color.Blue;
                 newSeries.XAxisType = AxisType.Primary;
@@ -214,7 +235,11 @@ namespace PerformanceTest.Management
                 chart.Series.Add("Winners");
                 newSeries = chart.Series.Last();
                 newSeries.ChartType = SeriesChartType.FastPoint;
-                newSeries.MarkerStyle = MarkerStyle.Cross;
+                if (rbNormalized.Checked) newSeries.MarkerStyle = MarkerStyle.Cross;
+                else if (rbNonNormalized.Checked) newSeries.MarkerStyle = MarkerStyle.Star4;
+                else if (rbWallClock.Checked) newSeries.MarkerStyle = MarkerStyle.Star6;
+                else newSeries.MarkerStyle = MarkerStyle.Triangle;
+                
                 newSeries.MarkerSize = 6;
                 newSeries.MarkerColor = Color.Green;
                 newSeries.XAxisType = AxisType.Primary;
@@ -223,7 +248,11 @@ namespace PerformanceTest.Management
                 chart.Series.Add("Losers");
                 newSeries = chart.Series.Last();
                 newSeries.ChartType = SeriesChartType.FastPoint;
-                newSeries.MarkerStyle = MarkerStyle.Cross;
+                if (rbNormalized.Checked) newSeries.MarkerStyle = MarkerStyle.Cross;
+                else if (rbNonNormalized.Checked) newSeries.MarkerStyle = MarkerStyle.Star4;
+                else if (rbWallClock.Checked) newSeries.MarkerStyle = MarkerStyle.Star6;
+                else newSeries.MarkerStyle = MarkerStyle.Triangle;
+               
                 newSeries.MarkerSize = 6;
                 newSeries.MarkerColor = Color.OrangeRed;
                 newSeries.XAxisType = AxisType.Primary;
@@ -253,8 +282,24 @@ namespace PerformanceTest.Management
                 {
                     foreach (var item in vm.CompareItems)
                     {
-                        double x = item.Results1.NormalizedRuntime;
-                        double y = item.Results2.NormalizedRuntime;
+                        double x = 0.0, y = 0.0;
+                        if (rbNonNormalized.Checked)
+                        {
+                            x = item.Results1.TotalProcessorTime;
+                            y = item.Results2.TotalProcessorTime;
+                        } else if (rbWallClock.Checked)
+                        {
+                            x = item.Results1.WallClockTime;
+                            y = item.Results2.WallClockTime;
+                        } else if (rbMemoryUsed.Checked)
+                        {
+                            x = item.Results1.MemorySizeMB;
+                            y = item.Results2.MemorySizeMB;
+                        } else 
+                        {
+                            x = item.Results1.NormalizedRuntime;
+                            y = item.Results2.NormalizedRuntime;
+                        }
 
                         if (x < axisMinimum) x = axisMinimum;
                         if (y < axisMinimum) y = axisMinimum;
@@ -278,7 +323,7 @@ namespace PerformanceTest.Management
                         if ((rc2 != ResultStatus.Success && rc2 != ResultStatus.Timeout) || (y != timeoutY && res2 == 0))
                             y = errorLine;
 
-                        if (x < timeoutX && y < timeoutY)
+                        if (rbMemoryUsed.Checked && x < memoutX && y < memoutY || !rbMemoryUsed.Checked && x < timeoutX && y < timeoutY)
                         {
                             totalX += x;
                             totalY += y;
@@ -349,6 +394,18 @@ namespace PerformanceTest.Management
         {
             fancy = cbFancy.Checked;
             SetupChart();
+            if (rbMemoryUsed.Checked)
+            {
+                lblAvgSpeedupTxt.Text = "Avg.memory loss:";
+                label3.Text = "Y Losing More";
+                label5.Text = "Y Losing Less";
+            }
+            else
+            {
+                lblAvgSpeedupTxt.Text = "Avg.speedup(excl.T / O):";
+                label3.Text = "Y Faster";
+                label5.Text = "Y Slower";
+            }
             RefreshChart();
         }
         private void addSpeedupLine(Chart chart, double f, Color c)
