@@ -31,10 +31,11 @@ namespace PerformanceTest.Management
                 int id = experiments[i].ID;
                 for (int j = 0; j < b[i].Length; j++)
                 {
-                    BenchmarkResult bij = b[i][j]; 
-                    if (!data.ContainsKey(bij.BenchmarkFileName)) data.Add(bij.BenchmarkFileName, new Dictionary<int, int>());
-                    if (!data[bij.BenchmarkFileName].ContainsKey(id))
-                        data[bij.BenchmarkFileName].Add(id, bij.ExitCode);
+                    BenchmarkResult bij = b[i][j];
+                    string filename = bij.BenchmarkFileName.Contains("/") ? experiments[i].Category + "/" + bij.BenchmarkFileName : experiments[i].Category + @"\" + bij.BenchmarkFileName;
+                    if (!data.ContainsKey(filename)) data.Add(filename, new Dictionary<int, int>());
+                    if (!data[filename].ContainsKey(id))
+                        data[filename].Add(id, bij.ExitCode);
                 }
             }
             //find similar for all experiments benchmarks and check exitCode. 
@@ -165,11 +166,12 @@ namespace PerformanceTest.Management
                         if (cur.sat == 0 && cur.unsat == 0 && !rv_ok) cur.runtime = error_line;
                         if (cur.runtime < 0.01) cur.runtime = 0.01;
 
-                        if (!data.ContainsKey(b.BenchmarkFileName)) data.Add(b.BenchmarkFileName, new Dictionary<int, CSVDatum>());
-                        if (data[b.BenchmarkFileName].ContainsKey(id))
+                        string Benchmarkfilename = b.BenchmarkFileName.Contains("/") ? experiments[i].Category + "/" + b.BenchmarkFileName : experiments[i].Category + @"\" + b.BenchmarkFileName;
+                        if (!data.ContainsKey(Benchmarkfilename)) data.Add(Benchmarkfilename, new Dictionary<int, CSVDatum>());
+                        if (data[Benchmarkfilename].ContainsKey(id))
                             HasDuplicates = true;
                         else
-                            data[b.BenchmarkFileName].Add(id, cur);
+                            data[Benchmarkfilename].Add(id, cur);
                     }
                     if (HasDuplicates)
                         uiService.ShowWarning(String.Format("Duplicates in experiment #{0} ignored", id), "Duplicate warning");
@@ -235,38 +237,42 @@ namespace PerformanceTest.Management
             if (manager == null) throw new ArgumentNullException("manager");
             if (uiService == null) throw new ArgumentNullException("uiService");
 
-            var handle = uiService.StartIndicateLongOperation("Save output...");
+            var handle = uiService.StartIndicateLongOperation("Saving output...");
             try
             {
                 string drctry = string.Format(@"{0}\{1}", selectedPath, experiment.ID.ToString());
-                double total = 0.0;
-                Directory.CreateDirectory(drctry);
-                var benchs = await Task.Run(() => manager.GetResults(experiment.ID));
-                var benchsVm = benchs.Select(e => new BenchmarkResultViewModel(e, manager, uiService)).ToArray();
-                total = benchsVm.Length;
-
-                for (int i = 0; i < total; i++)
+                await Task.Run(async () =>
                 {
-                    UTF8Encoding enc = new UTF8Encoding();
-                    string stdout = await benchsVm[i].GetStdOutAsync(false);
-                    string stderr = await benchsVm[i].GetStdErrAsync(false);
-                    string path = drctry + @"\" + benchsVm[i].Filename;
-                    Directory.CreateDirectory(path.Substring(0, path.LastIndexOf(@"\")));
-                    if (stdout != null && stdout.Length > 0)
-                    {
-                        FileStream stdoutf = File.Open(path + ".out.txt", FileMode.OpenOrCreate);
-                        stdoutf.Write(enc.GetBytes(stdout), 0, enc.GetByteCount(stdout));
-                        stdoutf.Close();
-                    }
+                    double total = 0.0;
+                    Directory.CreateDirectory(drctry);
+                    var benchs = await manager.GetResults(experiment.ID);
+                    var benchsVm = benchs.Select(e => new BenchmarkResultViewModel(e, manager, uiService)).ToArray();
+                    total = benchsVm.Length;
 
-                    if (stderr != null && stderr.Length > 0)
+                    for (int i = 0; i < total; i++)
                     {
-                        FileStream stderrf = File.Open(path + ".err.txt", FileMode.OpenOrCreate);
-                        stderrf.Write(enc.GetBytes(stderr), 0, enc.GetByteCount(stderr));
-                        stderrf.Close();
-                    }
-                }
+                        UTF8Encoding enc = new UTF8Encoding();
+                        string stdout = await benchsVm[i].GetStdOutAsync(false);
+                        string stderr = await benchsVm[i].GetStdErrAsync(false);
+                        string path = drctry + @"\" + experiment.Category + @"\" + benchsVm[i].Filename;
+                        path = path.Replace("/", @"\");
+                        Directory.CreateDirectory(path.Substring(0, path.LastIndexOf(@"\")));
+                        if (stdout != null && stdout.Length > 0)
+                        {
+                            FileStream stdoutf = File.Open(path + ".out.txt", FileMode.OpenOrCreate);
+                            stdoutf.Write(enc.GetBytes(stdout), 0, enc.GetByteCount(stdout));
+                            stdoutf.Close();
+                        }
 
+                        if (stderr != null && stderr.Length > 0)
+                        {
+                            FileStream stderrf = File.Open(path + ".err.txt", FileMode.OpenOrCreate);
+                            stderrf.Write(enc.GetBytes(stderr), 0, enc.GetByteCount(stderr));
+                            stderrf.Close();
+                        }
+                    }
+                });
+                uiService.ShowInfo("Output saved to " + drctry);
             }
             catch (Exception ex)
             {

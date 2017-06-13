@@ -89,23 +89,7 @@ namespace PerformanceTest.Management
         }
         private void Requeue(object target, ExecutedRoutedEventArgs e)
         {
-            Mouse.OverrideCursor = Cursors.Wait;
-
-            var elems = dataGrid.SelectedItems.Cast<BenchmarkResultViewModel>();
-            try
-            {
-                //foreach (var vm in elems)
-                //{
-                //    //delete selected results
-                //}
-
-                Console.WriteLine();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(this, "Exception: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            Mouse.OverrideCursor = null;
+            throw new NotImplementedException();
         }
         private void canCopyFilename(object sender, CanExecuteRoutedEventArgs e)
         {

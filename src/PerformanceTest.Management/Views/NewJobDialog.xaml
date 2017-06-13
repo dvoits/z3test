@@ -7,13 +7,16 @@
         xmlns:local="clr-namespace:PerformanceTest.Management"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        Title="New Experiment..." Height="700" Width="550" Loaded="Window_Loaded" WindowStartupLocation="CenterOwner" ShowInTaskbar="False" ResizeMode="NoResize">
+        Title="New Experiment..." Height="750" Width="550" Loaded="Window_Loaded" WindowStartupLocation="CenterOwner" ShowInTaskbar="False" ResizeMode="NoResize">
 
     <Window.Resources>
         <local:InverseBooleanConverter x:Key="InverseBooleanConverter" />
         <local:NotNullToBooleanConverter x:Key="NotNullToBoolean" />
         <local:NotNullToVisibilityConverter x:Key="NotNullToVisibility" />
         <local:NullToVisibilityConverter x:Key="NullToVisibility" />
+        <local:BoolToVisibilityConverter x:Key="BoolToVisibility" />
+        <local:AreEqualToFontWeightConverter x:Key="AreEqual" />
+
         <GridLength x:Key="KeyWidth">200</GridLength>
         <Thickness x:Key="ParameterMargin" Left="5" Top="5" Right="10" Bottom="10" />
     </Window.Resources>
@@ -111,27 +114,43 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <RadioButton Name="chkMostRecentBinary" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" 
+                                 Margin="0,0,0,7"
                                  IsChecked="{Binding UseMostRecentExecutable}"
                                  IsEnabled="{Binding CanUseMostRecent, Mode=OneWay}">
                         <TextBlock>Use most recent <Run Text="{Binding RecentBlobDisplayName, Mode=OneWay, StringFormat=({0})}"/></TextBlock>
                     </RadioButton>
-                    <RadioButton Content="New:" Name="chkNewBinary" Grid.Row="1" Grid.Column="0" Margin="0,5,10,-5" 
-                                     IsChecked="{Binding UseNewExecutable}"  />
-                    <Grid Grid.Column="1" Grid.Row="1">
+                    <RadioButton Content="New" Name="chkNewBinary" Grid.Row="1" Grid.Column="0" Margin="0,0,0,2" 
+                                IsChecked="{Binding UseNewExecutable}"  />
+                    <Grid Grid.Column="0" Grid.Row="2"
+                        Visibility="{Binding IsChecked, Converter={StaticResource BoolToVisibility}, ElementName=chkNewBinary}">
+
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBox Height="23" HorizontalAlignment="Stretch" Name="txtExecutable" VerticalAlignment="Center" Grid.Column="0" ToolTip="The target executable." 
-                                 IsEnabled="{Binding UseNewExecutable}" IsReadOnly="True"
-                                 Text="{Binding MainExecutable, Mode=OneWay}"/>
-                        <Button Width="23" Height="23" HorizontalAlignment="Stretch" Name="btnSelectExecutable" VerticalAlignment="Stretch" Grid.Column="1" Margin="2"
+                        <ListBox Height="75" HorizontalAlignment="Stretch" Name="txtExecutable" VerticalAlignment="Center" Grid.Column="0" ToolTip="The target executable." 
+                                 IsEnabled="{Binding UseNewExecutable}" 
+                                 ItemsSource="{Binding ExecutableFileNames, Mode=OneWay}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding .}" FontSize="11">
+                                        <TextBlock.FontWeight>
+                                            <MultiBinding ConverterParameter="Bold" Converter="{StaticResource AreEqual}">
+                                                <Binding Path="." />
+                                                <Binding Path="DataContext.MainExecutable" ElementName="txtExecutable" />
+                                            </MultiBinding>
+                                        </TextBlock.FontWeight>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <Button Width="23" Height="23" HorizontalAlignment="Stretch" Name="btnSelectExecutable" VerticalAlignment="Top" Grid.Column="1" Margin="2"
                             Command="{Binding ChooseExecutableCommand}">
                             <Image Source="/PerformanceTest.Management;component/Images/taskbrowse.ico" />
                         </Button>

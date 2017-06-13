@@ -378,10 +378,34 @@ namespace PerformanceTest.Management
             try
             {
                 var vm = await managerVm.BuildProperties(item.ID);
+                System.ComponentModel.PropertyChangedEventHandler onPropertyChanded = (s, args) =>
+                {
+                    try
+                    {
+                        if (args.PropertyName == nameof(vm.Status))
+                        {
+                            item.NewStatus(vm.Status);
+                        }
+                        else if (args.PropertyName == nameof(vm.ExecutionStatus) && vm.ExecutionStatus != null)
+                        {
+                            item.JobStatus = vm.ExecutionStatus;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        uiService.ShowError(ex, "Failed to refresh experiment status");
+                    }
+                };
+                vm.PropertyChanged += onPropertyChanded;
 
                 ExperimentProperties dlg = new ExperimentProperties();
                 dlg.DataContext = vm;
                 dlg.Owner = this;
+                dlg.Closed += (s, args) =>
+                {
+                    vm.PropertyChanged -= onPropertyChanded;
+                };
+
                 dlg.Show();
             }
             finally
@@ -487,7 +511,14 @@ namespace PerformanceTest.Management
 
             var st = (ExperimentStatusViewModel)dataGrid.SelectedItem;
             ShowResults dlg = new ShowResults();
-            var vm = managerVm.BuildResultsView(st.ID, st.Definition.BenchmarkDirectory);
+            string sharedDirectory = "";
+            if (st.Definition.BenchmarkDirectory != null && st.Definition.BenchmarkDirectory != "") {
+                if (st.Definition.BenchmarkDirectory.Contains("/")) sharedDirectory = st.Definition.BenchmarkDirectory + "/" + st.Definition.Category;
+                else sharedDirectory = st.Definition.BenchmarkDirectory + @"\" + st.Definition.Category;
+            }
+            else sharedDirectory = st.Definition.Category;
+           
+            var vm = managerVm.BuildResultsView(st.ID, sharedDirectory);
             dlg.DataContext = vm;
             dlg.Owner = this;
             dlg.Show();

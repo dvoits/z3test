@@ -24,7 +24,7 @@ namespace PerformanceTest
         /// </summary>
         public abstract Task<IEnumerable<ExperimentStatus>> GetStatus(IEnumerable<ExperimentID> ids);
 
-        public abstract Task<ExperimentExecutionState?[]> GetExperimentJobState(IEnumerable<ExperimentID> ids);
+        public abstract Task<ExperimentExecutionState[]> GetExperimentJobState(IEnumerable<ExperimentID> ids);
 
         /// <summary>
         /// Allows to get a result of each of the experiment's benchmarks.

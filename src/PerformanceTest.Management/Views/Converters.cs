@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -95,6 +96,53 @@ namespace PerformanceTest.Management
             System.Globalization.CultureInfo culture)
         {
             throw new NotSupportedException();
+        }
+
+        #endregion
+    }
+
+    [ValueConversion(typeof(bool), typeof(Visibility))]
+    public class BoolToVisibilityConverter : IValueConverter
+    {
+        #region IValueConverter Members
+
+        public object Convert(object value, Type targetType, object parameter,
+            System.Globalization.CultureInfo culture)
+        {
+            if (targetType != typeof(Visibility))
+                throw new InvalidOperationException("The target must be Visibility");
+
+            return value is bool && (bool)value ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter,
+            System.Globalization.CultureInfo culture)
+        {
+            throw new NotSupportedException();
+        }
+
+        #endregion
+    }
+
+
+    public class AreEqualToFontWeightConverter : IMultiValueConverter
+    {
+        #region IValueConverter Members
+
+        public object Convert(object[] values, Type targetType, object parameter,
+            System.Globalization.CultureInfo culture)
+        {
+            if (values == null) return null;
+            for (int i = 1; i < values.Length; i++)
+            {
+                if (!Object.Equals(values[i], values[i - 1])) return FontWeights.Normal;
+            }
+            return FontWeights.Bold;
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
         }
 
         #endregion

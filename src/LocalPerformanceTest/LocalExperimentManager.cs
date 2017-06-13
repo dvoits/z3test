@@ -250,7 +250,7 @@ namespace PerformanceTest
             throw new NotImplementedException();
         }
 
-        public override Task<ExperimentExecutionState?[]> GetExperimentJobState(IEnumerable<int> ids)
+        public override Task<ExperimentExecutionState[]> GetExperimentJobState(IEnumerable<int> ids)
         {
             throw new NotImplementedException();
         }

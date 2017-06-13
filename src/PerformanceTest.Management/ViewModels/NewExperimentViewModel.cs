@@ -312,7 +312,7 @@ namespace PerformanceTest.Management
 
         private void ChooseExecutable()
         {
-            string[] files = service.ChooseFiles(null, "Executable files (*.exe;*.dll)|*.exe;*.dll|All Files (*.*)|*.*", "exe");
+            string[] files = service.ChooseFiles(null, "Executable files (*.exe;*.dll)|*.exe;*.dll|ZIP files (*.zip)|*.zip|All Files (*.*)|*.*", "exe");
             if (files == null || files.Length == 0) return;
 
             if (files.Length > 1)

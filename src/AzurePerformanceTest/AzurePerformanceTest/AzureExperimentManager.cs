@@ -161,7 +161,7 @@ namespace AzurePerformanceTest
             return new Experiment { Definition = def, Status = status };
         }
 
-        public override async Task<ExperimentExecutionState?[]> GetExperimentJobState(IEnumerable<int> ids)
+        public override async Task<ExperimentExecutionState[]> GetExperimentJobState(IEnumerable<int> ids)
         {
             if (!CanStart) return null;
 
@@ -169,14 +169,14 @@ namespace AzurePerformanceTest
             {
                 using (var bc = BatchClient.Open(batchCreds))
                 {
-                    List<ExperimentExecutionState?> states = new List<ExperimentExecutionState?>();
+                    List<ExperimentExecutionState> states = new List<ExperimentExecutionState>();
                     foreach (var expId in ids)
                     {
                         var jobId = BuildJobId(expId);
                         try
                         {
                             var job = await bc.JobOperations.GetJobAsync(jobId);
-                            if (job.State == null) states.Add(null);
+                            if (job.State == null) states.Add(ExperimentExecutionState.NotFound);
                             switch (job.State.Value)
                             {
                                 case JobState.Active:
@@ -193,13 +193,12 @@ namespace AzurePerformanceTest
                                     states.Add(ExperimentExecutionState.Terminated);
                                     break;
                                 default:
-                                    states.Add(null);
-                                    break;
+                                    throw new InvalidOperationException("Unexpected job status");
                             }
                         }
                         catch (BatchException batchExc) when (batchExc.RequestInformation != null && batchExc.RequestInformation.HttpStatusCode.HasValue && batchExc.RequestInformation.HttpStatusCode == System.Net.HttpStatusCode.NotFound)
                         {
-                            states.Add(null);
+                            states.Add(ExperimentExecutionState.NotFound);
                         }
                     }
                     return states.ToArray();
