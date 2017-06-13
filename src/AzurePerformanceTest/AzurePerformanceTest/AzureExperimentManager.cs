@@ -107,7 +107,7 @@ namespace AzurePerformanceTest
                 return;
             }
 
-            
+
             try
             {
                 await bc.JobOperations.DeleteJobAsync(jobId);
@@ -155,9 +155,61 @@ namespace AzurePerformanceTest
         {
             var totalRuntime = TimeSpan.FromSeconds(entity.TotalRuntime);
             ExperimentDefinition def = DefinitionFromEntity(entity);
-            ExperimentStatus status = new ExperimentStatus(id, def.Category, entity.Submitted, entity.Creator, entity.Note,
+            ExperimentStatus status = new ExperimentStatus(
+                id, def.Category, entity.Submitted, entity.Creator, entity.Note,
                 entity.Flag, entity.CompletedBenchmarks, entity.TotalBenchmarks, totalRuntime);
             return new Experiment { Definition = def, Status = status };
+        }
+
+        public override async Task<ExperimentExecutionState?[]> GetExperimentJobState(IEnumerable<int> ids)
+        {
+            if (!CanStart) return null;
+
+            try
+            {
+                using (var bc = BatchClient.Open(batchCreds))
+                {
+                    List<ExperimentExecutionState?> states = new List<ExperimentExecutionState?>();
+                    foreach (var expId in ids)
+                    {
+                        var jobId = BuildJobId(expId);
+                        try
+                        {
+                            var job = await bc.JobOperations.GetJobAsync(jobId);
+                            if (job.State == null) states.Add(null);
+                            switch (job.State.Value)
+                            {
+                                case JobState.Active:
+                                case JobState.Disabling:
+                                case JobState.Disabled:
+                                case JobState.Enabling:
+                                    states.Add(ExperimentExecutionState.Active);
+                                    break;
+                                case JobState.Completed:
+                                    states.Add(ExperimentExecutionState.Completed);
+                                    break;
+                                case JobState.Terminating:
+                                case JobState.Deleting:
+                                    states.Add(ExperimentExecutionState.Terminated);
+                                    break;
+                                default:
+                                    states.Add(null);
+                                    break;
+                            }
+                        }
+                        catch (BatchException batchExc) when (batchExc.RequestInformation != null && batchExc.RequestInformation.HttpStatusCode.HasValue && batchExc.RequestInformation.HttpStatusCode == System.Net.HttpStatusCode.NotFound)
+                        {
+                            states.Add(null);
+                        }
+                    }
+                    return states.ToArray();
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceWarning("Failed to get job status: " + ex);
+                return null;
+            }
         }
 
         private ExperimentDefinition DefinitionFromEntity(ExperimentEntity experimentEntity)
@@ -185,6 +237,53 @@ namespace AzurePerformanceTest
             var req = ids.Select(id => storage.GetExperiment(id));
             var exps = await Task.WhenAll(req);
             return exps.Select(entity => ExperimentFromEntity(int.Parse(entity.RowKey), entity).Status);
+        }
+
+        public async Task<PoolDescription[]> GetAvailablePools()
+        {
+            if (!CanStart) throw new InvalidOperationException("Cannot start experiment since the manager is in read mode");
+
+            var result = await Task.Run(() =>
+            {
+                using (var bc = BatchClient.Open(batchCreds))
+                {
+                    var pools = bc.PoolOperations.ListPools();
+                    var descr = pools.Select(p => new PoolDescription
+                    {
+                        Id = p.Id,
+                        AllocationState = p.AllocationState,
+                        PoolState = p.State,
+                        DedicatedNodes = p.CurrentDedicatedComputeNodes ?? 0,
+                        VirtualMachineSize = p.VirtualMachineSize,
+                        RunningJobs = 0
+                    }).ToArray();
+
+                    var jobPools =
+                        bc.JobOperations.ListJobs()
+                        .Where(j => j.State != null && (j.State == JobState.Enabling || j.State == JobState.Active))
+                        .Select(j => j.PoolInformation.PoolId);
+
+                    Dictionary<string, int> count = new Dictionary<string, ExperimentID>();
+                    foreach (var poolId in jobPools)
+                    {
+                        int n;
+                        if (count.TryGetValue(poolId, out n))
+                            count[poolId] = n + 1;
+                        else
+                            count[poolId] = 1;
+                    }
+
+                    foreach (var pool in descr)
+                    {
+                        int n;
+                        if (count.TryGetValue(pool.Id, out n))
+                            pool.RunningJobs = n;
+                    }
+
+                    return descr;
+                }
+            });
+            return result;
         }
 
         public override async Task<ExperimentID> StartExperiment(ExperimentDefinition definition, string creator = null, string note = null)
@@ -286,5 +385,20 @@ namespace AzurePerformanceTest
         {
             throw new NotImplementedException();
         }
+    }
+
+    public sealed class PoolDescription
+    {
+        public string Id { get; set; }
+
+        public AllocationState? AllocationState { get; set; }
+
+        public PoolState? PoolState { get; set; }
+
+        public string VirtualMachineSize { get; set; }
+
+        public int DedicatedNodes { get; set; }
+
+        public int RunningJobs { get; set; }
     }
 }

@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using AzurePerformanceTest;
 
 namespace PerformanceTest.Management
 {
@@ -33,6 +34,9 @@ namespace PerformanceTest.Management
         private string recentBlobDisplayName;
         private Task<string> taskRecentBlob;
 
+        private string selectedPool;
+        private bool canUseMostRecent;
+
         public event PropertyChangedEventHandler PropertyChanged;
 
 
@@ -52,6 +56,7 @@ namespace PerformanceTest.Management
             ChooseDirectoryCommand = new DelegateCommand(ChooseDirectory);
             ChooseCategoriesCommand = new DelegateCommand(ChooseCategories);
             ChooseExecutableCommand = new DelegateCommand(ChooseExecutable);
+            ChoosePoolCommand = new DelegateCommand(ListPools);
 
             benchmarkDirectory = recentValues.BenchmarkDirectory;
             categories = recentValues.BenchmarkCategories;
@@ -64,6 +69,8 @@ namespace PerformanceTest.Management
             UseMostRecentExecutable = true;
             RecentBlobDisplayName = "searching...";
             taskRecentBlob = FindRecentExecutable();
+
+            selectedPool = recentValues.BatchPool;
         }
 
         public string BenchmarkLibaryDescription
@@ -136,6 +143,18 @@ namespace PerformanceTest.Management
             }
         }
 
+        public bool CanUseMostRecent
+        {
+            get { return canUseMostRecent; }
+            private set
+            {
+                if (canUseMostRecent == value) return;
+                canUseMostRecent = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+
         public bool UseNewExecutable
         {
             get { return !useMostRecentExecutable; }
@@ -147,6 +166,7 @@ namespace PerformanceTest.Management
                 NotifyPropertyChanged("UseNewExecutable");
             }
         }
+
 
         public string RecentBlobDisplayName
         {
@@ -214,6 +234,17 @@ namespace PerformanceTest.Management
             }
         }
 
+        public string Pool
+        {
+            get { return selectedPool; }
+            set
+            {
+                selectedPool = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+
 
         public ICommand ChooseDirectoryCommand
         {
@@ -230,6 +261,11 @@ namespace PerformanceTest.Management
             get; private set;
         }
 
+        public ICommand ChoosePoolCommand
+        {
+            get; private set;
+        }
+
         public void SaveRecentSettings()
         {
             recentValues.BenchmarkDirectory = benchmarkDirectory;
@@ -239,6 +275,7 @@ namespace PerformanceTest.Management
             recentValues.BenchmarkTimeLimit = TimeSpan.FromSeconds(timelimit);
             recentValues.BenchmarkMemoryLimit = memlimit;
             recentValues.ExperimentNote = note;
+            recentValues.BatchPool = selectedPool;
         }
 
         public Task<string> GetRecentExecutable()
@@ -259,7 +296,8 @@ namespace PerformanceTest.Management
                 }
                 else
                 {
-                    RecentBlobDisplayName = exec.Item2 != null ? exec.Item2.Value.ToString("dd-MM-yyyy HH:mm") : exec.Item1;
+                    CanUseMostRecent = true;
+                    RecentBlobDisplayName = exec.Item2 != null ? exec.Item2.Value.ToLocalTime().ToString("dd-MM-yyyy HH:mm") : exec.Item1;
                     return exec.Item1;
                 }
             }
@@ -290,7 +328,9 @@ namespace PerformanceTest.Management
                     mainFile = exeFiles[0];
                 else
                 {
-                    mainFile = service.ChooseOption("Select main executable", exeFiles, exeFiles[0]);
+                    mainFile = service.ChooseOption("Select main executable", 
+                        new AsyncLazy<string[]>(() => Task.FromResult(exeFiles)), 
+                        new Predicate<string>(file => file == exeFiles[0]));
                     if (mainFile == null) return;
                 }
 
@@ -304,6 +344,24 @@ namespace PerformanceTest.Management
             NotifyPropertyChanged("MainExecutable");
             NotifyPropertyChanged("ExecutableFileNames");
             UseMostRecentExecutable = false;
+        }
+
+        private void ListPools()
+        {
+            try
+            {
+                PoolDescription pool = service.ChooseOption("Choose an Azure Batch Pool", 
+                    new AsyncLazy<PoolDescription[]>(() => manager.GetAvailablePools()), 
+                    new Predicate<PoolDescription>(p => p.Id == selectedPool));
+                if (pool != null)
+                {
+                    Pool = pool.Id;
+                }
+            }
+            catch (Exception ex)
+            {
+                service.ShowError(ex, "Failed to get list of available Azure Batch pools");
+            }
         }
 
         private async void ChooseDirectory()
@@ -326,24 +384,15 @@ namespace PerformanceTest.Management
             }
         }
 
-        private async void ChooseCategories()
+        private void ChooseCategories()
         {
             try
             {
-                string[] allCategories;
-                var handle = service.StartIndicateLongOperation("Loading categories...");
-                try
-                {
-                    allCategories = await manager.GetAvailableCategories(BenchmarkDirectory);
-                }
-                finally
-                {
-                    service.StopIndicateLongOperation(handle);
-                }
-
                 string[] selected = Categories == null ? new string[0] : Categories.Split(',').Select(s => s.Trim()).ToArray();
 
-                selected = service.ChooseOptions("Choose categories", allCategories, selected);
+                selected = service.ChooseOptions("Choose categories", 
+                    new AsyncLazy<string[]>(() => manager.GetAvailableCategories(BenchmarkDirectory)), 
+                    new Predicate<string>(c => selected.Contains(c)));
                 if (selected != null)
                 {
                     Categories = String.Join(",", selected);
@@ -354,8 +403,6 @@ namespace PerformanceTest.Management
                 service.ShowError(ex);
             }
         }
-
-
 
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
         {

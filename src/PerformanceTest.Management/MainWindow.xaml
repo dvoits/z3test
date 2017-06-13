@@ -88,7 +88,7 @@
                     </DataGrid.Resources>
                     <DataGrid.Columns>
                         <DataGridTextColumn Binding="{Binding Path=ID, Mode=OneWay}" Header="ID" />
-                        <DataGridTextColumn Binding="{Binding Path=Submitted, Mode=OneWay}" Header="Submitted"/>
+                        <DataGridTextColumn Binding="{Binding Path=Submitted, Mode=OneWay, StringFormat={}{0:dd/MM/yyyy HH:mm}}" Header="Submitted"/>
                         <DataGridTextColumn Binding="{Binding Path=Category, Mode=OneWay}" Header="Category" />
                         <DataGridTextColumn Binding="{Binding Path=Creator, Mode=OneWay}" Header="Creator" />
                         <DataGridTextColumn Binding="{Binding Path=Note, Mode=OneWay}" Header="Note" />
@@ -98,6 +98,7 @@
                         <DataGridTextColumn Binding="{Binding Path=BenchmarksDone, Mode=OneWay}" Header="Done" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
                         <DataGridTextColumn Binding="{Binding Path=BenchmarksQueued, Mode=OneWay}" Header="Queued" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
                         <DataGridTextColumn Binding="{Binding Path=BenchmarksTotal, Mode=OneWay}" Header="Total" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
+                        <DataGridTextColumn Binding="{Binding Path=JobStatus, Mode=OneWay}" Header="Job Status" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
                         <DataGridTextColumn Binding="{Binding Path=Projection, Mode=OneWay}" Header="Projection" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
                     </DataGrid.Columns>
                     <DataGrid.CommandBindings>

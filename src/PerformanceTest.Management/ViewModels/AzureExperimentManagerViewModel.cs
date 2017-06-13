@@ -170,5 +170,10 @@ namespace PerformanceTest.Management
         {
             SaveData.SaveOutput(selectedPath, experiment, manager, uiService);
         }
+
+        public Task<PoolDescription[]> GetAvailablePools()
+        {
+            return manager.GetAvailablePools();
+        }
     }
 }

@@ -121,6 +121,55 @@ namespace PerformanceTest.Management
             {
                 ui.StopIndicateLongOperation(handle);
             }
+
+            List<ExperimentStatusViewModel> items = new List<ExperimentStatusViewModel>();
+            try
+            {
+                var now = DateTime.Now;
+                foreach (var vm in allExperiments)
+                {
+                    if (now.Subtract(vm.Submitted).TotalDays > 7) break;
+                    vm.JobStatus = "(loading...)";
+                    items.Add(vm);
+                }
+
+                var states = await Task.Run(() => manager.GetExperimentJobState(items.Select(item => item.ID)));
+                int n = Math.Min(states.Length, items.Count);
+                for (int i = 0; i < n; i++)
+                {
+                    var state = states[i];
+                    string status;
+                    if (state == null)
+                        status = "Job not found";
+                    else
+                    {
+                        switch (state.Value)
+                        {
+                            case ExperimentExecutionState.Completed:
+                                status = "Completed";
+                                break;
+                            case ExperimentExecutionState.Terminated:
+                                status = "Terminated";
+                                break;
+                            case ExperimentExecutionState.Active:
+                                status = "Active";
+                                break;
+                            default:
+                                status = "Unknown";
+                                break;
+                        }
+                    }
+                    items[i].JobStatus = status;
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("Failed to get status of jobs: " + ex);
+                foreach (var item in items)
+                {
+                    item.JobStatus = "(request failed)";
+                }
+            }
         }
 
         private async void FilterExperiments(string keyword)
@@ -196,6 +245,7 @@ namespace PerformanceTest.Management
 
         private bool flag;
         private string note;
+        private string jobStatus;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -217,7 +267,7 @@ namespace PerformanceTest.Management
 
         public string Category { get { return status.Category; } }
 
-        public string Submitted { get { return status.SubmissionTime.ToString(); } }
+        public DateTime Submitted { get { return status.SubmissionTime; } }
 
         public string Note
         {
@@ -252,6 +302,17 @@ namespace PerformanceTest.Management
 
                     UpdateStatusFlag();
                 }
+            }
+        }
+
+        public string JobStatus
+        {
+            get { return jobStatus; }
+            set
+            {
+                if (jobStatus == value) return;
+                jobStatus = value;
+                NotifyPropertyChanged();
             }
         }
 
