@@ -193,7 +193,6 @@ namespace AzurePerformanceTest
 
             var refExp = await storage.GetReferenceExperiment();
             var id = await storage.AddExperiment(definition, DateTime.Now, creator, note);
-            //TODO: schedule execution
 
             using (var bc = BatchClient.Open(batchCreds))
             {
@@ -222,6 +221,8 @@ namespace AzurePerformanceTest
                 }
 
                 //TODO: put exec to shared dir
+                string executableFolder = "exec";
+                job.JobPreparationTask.ResourceFiles.Add(new ResourceFile(storage.GetExecutableSasUri(definition.Executable), Path.Combine(executableFolder, definition.Executable)));
 
                 if (refExp != null)
                 {

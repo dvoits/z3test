@@ -37,17 +37,11 @@ namespace AzureWorker
             var subArgs = args.Skip(1).ToArray();
             switch (args[0])
             {
-                case "--add-tasks":
-                    AddTasks(subArgs).Wait();
-                    return 0;
                 case "--measure":
                     Measure(subArgs).Wait();
                     return 0;
                 case "--reference-run":
                     RunReference(subArgs).Wait();
-                    return 0;
-                case "--collect-results":
-                    CollectResults(subArgs).Wait();
                     return 0;
                 case "--manage-tasks":
                     ManageTasks(subArgs).Wait();
@@ -100,8 +94,8 @@ namespace AzureWorker
 
             string storageConnectionString = string.Format("DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}", Settings.Default.StorageAccountName, Settings.Default.StorageAccountKey);
 
-            var execResourceFile = new ResourceFile(storage.GetExecutableSasUri(executable), executable);
-            Console.WriteLine("Resourced executable");
+            //var execResourceFile = new ResourceFile(storage.GetExecutableSasUri(executable), executable);
+            //Console.WriteLine("Resourced executable");
 
             var queue = await storage.CreateResultsQueue(experimentId);
             Console.Write("Created queue");
@@ -148,7 +142,7 @@ namespace AzureWorker
                     {
                         resultSegment = await benchmarkStorage.ListBlobsSegmentedAsync(benchmarksPath, continuationToken);
                         Console.WriteLine("Got some blobs");
-                        starterTasks.Add(StartTasksForSegment(execResourceFile, timeout.TotalSeconds.ToString(), experimentId, executable, arguments, memoryLimit, outputLimit, errorLimit, jobId, batchClient, resultSegment.Results, totalBenchmarks, processedBlobs, benchmarkStorage));
+                        starterTasks.Add(StartTasksForSegment(timeout.TotalSeconds.ToString(), experimentId, executable, arguments, memoryLimit, outputLimit, errorLimit, jobId, batchClient, resultSegment.Results, totalBenchmarks, processedBlobs, benchmarkStorage));
 
                         continuationToken = resultSegment.ContinuationToken;
                         totalBenchmarks += resultSegment.Results.Count();
@@ -277,86 +271,6 @@ namespace AzureWorker
             Console.WriteLine("Collected all results.");
         }
 
-        static async Task AddTasks(string[] args)
-        {
-            int experimentId = int.Parse(args[0]);
-            string benchmarkContainerUri = args[1];
-            string benchmarkDirectory = args[2];
-            string benchmarkCategory = args[3];
-            string executable = args[4];
-            string arguments = args[5];
-            TimeSpan timeout = TimeSpan.FromSeconds(double.Parse(args[6]));
-            double memoryLimit = 0; // no limit
-            long? outputLimit = null;
-            long? errorLimit = null;
-            if (args.Length > 7)
-            {
-                memoryLimit = double.Parse(args[7]);
-                if (args.Length > 8)
-                {
-                    outputLimit = args[8] == "null" ? null : (long?)long.Parse(args[8]);
-                    if (args.Length > 9)
-                    {
-                        errorLimit = args[9] == "null" ? null : (long?)long.Parse(args[9]);
-                    }
-                }
-            }
-            Trace.WriteLine(String.Format("Params are:\n id: {0}\ncontainer: {8}\ndirectory:{9}\ncategory: {1}\nexec: {2}\nargs: {3}\ntimeout: {4}\nmemlimit: {5}\noutlimit: {6}\nerrlimit: {7}", experimentId, benchmarkCategory, executable, arguments, timeout, memoryLimit, outputLimit, errorLimit, benchmarkContainerUri, benchmarkDirectory));
-
-            string jobId = "exp" + experimentId.ToString();
-
-            var batchCred = new BatchSharedKeyCredentials(Settings.Default.BatchAccountUrl, Settings.Default.BatchAccountName, Settings.Default.BatchAccountKey);
-
-            var storage = new AzureExperimentStorage(Settings.Default.StorageAccountName, Settings.Default.StorageAccountKey);
-            AzureBenchmarkStorage benchmarkStorage = CreateBenchmarkStorage(benchmarkContainerUri);
-
-            string storageConnectionString = string.Format("DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}", Settings.Default.StorageAccountName, Settings.Default.StorageAccountKey);
-
-            var execResourceFile = new ResourceFile(storage.GetExecutableSasUri(executable), executable);
-            Trace.WriteLine("Resourced executable");
-
-            var queue = await storage.CreateResultsQueue(experimentId);
-            Trace.Write("Created queue");
-
-            using (BatchClient batchClient = BatchClient.Open(batchCred))
-            {
-                //var job = await batchClient.JobOperations.GetJobAsync(jobId);
-                //var pool = await batchClient.PoolOperations.GetPoolAsync(job.PoolInformation.PoolId);
-                //var vmsize = pool.VirtualMachineSize;
-                //starting results collection
-                string taskCommandLine = string.Format("cmd /c %" + SharedDirEnvVariableName + "%\\AzureWorker.exe --collect-results {0}", experimentId);
-                CloudTask task = new CloudTask("resultCollection", taskCommandLine);
-                await batchClient.JobOperations.AddTaskAsync(jobId, task);
-
-                BlobContinuationToken continuationToken = null;
-                BlobResultSegment resultSegment = null;
-
-                List<Task> starterTasks = new List<Task>();
-                int totalBenchmarks = 0;
-                string benchmarksPath = CombineBlobPath(benchmarkDirectory, benchmarkCategory);
-                do
-                {
-                    resultSegment = await benchmarkStorage.ListBlobsSegmentedAsync(benchmarksPath, continuationToken);
-                    Trace.WriteLine("Got some blobs");
-                    starterTasks.Add(StartTasksForSegment(execResourceFile, timeout.TotalSeconds.ToString(), experimentId, executable, arguments, memoryLimit, outputLimit, errorLimit, jobId, batchClient, resultSegment.Results, totalBenchmarks, null, benchmarkStorage));
-
-                    continuationToken = resultSegment.ContinuationToken;
-                    totalBenchmarks += resultSegment.Results.Count();
-                }
-                while (continuationToken != null);
-
-                using (var ms = new MemoryStream())
-                {
-                    ms.WriteByte(2);//This is number of benchmarks
-                    (new BinaryFormatter()).Serialize(ms, totalBenchmarks);
-                    await queue.AddMessageAsync(new CloudQueueMessage(ms.ToArray()));
-                }
-                //await queue.AddMessageAsync(new CloudQueueMessage(totalBenchmarksPrefix + totalBenchmarks.ToString()));
-
-                await Task.WhenAll(starterTasks.ToArray());
-            }
-        }
-
         private static string CombineBlobPath(string benchmarkDirectory, string benchmarkCategory)
         {
             string benchmarksPath;
@@ -373,7 +287,7 @@ namespace AzureWorker
             return benchmarksPath;
         }
 
-        private static async Task StartTasksForSegment(ResourceFile execResourceFile, string timeout, int experimentId, string executable, string arguments, double memoryLimit, long? outputLimit, long? errorLimit, string jobId, BatchClient batchClient, IEnumerable<IListBlobItem> segmentResults, int startTaskId, ICollection<string> processedBlobs, AzureBenchmarkStorage benchmarkStorage)
+        private static async Task StartTasksForSegment(string timeout, int experimentId, string executable, string arguments, double memoryLimit, long? outputLimit, long? errorLimit, string jobId, BatchClient batchClient, IEnumerable<IListBlobItem> segmentResults, int startTaskId, ICollection<string> processedBlobs, AzureBenchmarkStorage benchmarkStorage)
         {
             List<CloudTask> tasks = new List<CloudTask>();
             int blobNo = startTaskId;
@@ -389,8 +303,7 @@ namespace AzureWorker
                     string taskCommandLine = String.Format("cmd /c %" + SharedDirEnvVariableName + "%\\%" + JobIdEnvVariableName + "%\\AzureWorker.exe --measure {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\" \"{7}\" \"{8}\"", experimentId, blobItem.Name, executable, arguments, shortName, timeout, memoryLimit, NullableLongToString(outputLimit), NullableLongToString(errorLimit));
                     var resourceFile = new ResourceFile(benchmarkStorage.GetBlobSASUri(blobItem), shortName);
                     CloudTask task = new CloudTask(taskId, taskCommandLine);
-                    // we put benchmark file first. We rely on that.
-                    task.ResourceFiles = new List<ResourceFile> { resourceFile, execResourceFile };
+                    task.ResourceFiles = new List<ResourceFile> { resourceFile };
                     task.Constraints = new TaskConstraints();
                     task.Constraints.MaxWallClockTime = TimeSpan.FromSeconds(double.Parse(timeout)) + ExtraTimeForOverhead;
                     task.DisplayName = blobItem.Name;
@@ -416,7 +329,7 @@ namespace AzureWorker
         {
             int experimentId = int.Parse(args[0]);
             string benchmarkId = args[1];
-            string executable = Path.GetFullPath(args[2]);
+            string executable = args[2];
             string arguments = args[3];
             string targetFile = args[4];
             TimeSpan timeout = TimeSpan.FromSeconds(double.Parse(args[5]));
@@ -438,6 +351,7 @@ namespace AzureWorker
             double normal = 1.0;
 
             string workerDir = Environment.GetEnvironmentVariable(SharedDirEnvVariableName);
+            executable = Path.Combine(workerDir, "exec", executable);
             string normalFilePath = Path.Combine(workerDir, PerformanceCoefficientFileName);
             if (File.Exists(normalFilePath))
             {
