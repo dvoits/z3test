@@ -279,10 +279,10 @@ namespace PerformanceTest.Management
             {
                 string filename1 = r1[i1].BenchmarkFileName;
                 string filename2 = r2[i2].BenchmarkFileName;
-                if (param.IsCategoryChecked)
+                if (!param.IsCategoryChecked)
                 {
-                    filename1 = filename1.Substring(param.Category1.Length + 1);
-                    filename2 = filename2.Substring(param.Category2.Length + 1);
+                    filename1 = filename1.Contains("/") ? param.Category1 + "/" + filename1 : param.Category1 + @"\" + filename1;
+                    filename2 = filename2.Contains("/") ? param.Category2 + "/" + filename2: param.Category2 + @"\" + filename2;
                 }
                 if (param.IsPostfixChecked)
                 {

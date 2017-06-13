@@ -511,7 +511,14 @@ namespace PerformanceTest.Management
 
             var st = (ExperimentStatusViewModel)dataGrid.SelectedItem;
             ShowResults dlg = new ShowResults();
-            var vm = managerVm.BuildResultsView(st.ID, st.Definition.BenchmarkDirectory);
+            string sharedDirectory = "";
+            if (st.Definition.BenchmarkDirectory != null && st.Definition.BenchmarkDirectory != "") {
+                if (st.Definition.BenchmarkDirectory.Contains("/")) sharedDirectory = st.Definition.BenchmarkDirectory + "/" + st.Definition.Category;
+                else sharedDirectory = st.Definition.BenchmarkDirectory + @"\" + st.Definition.Category;
+            }
+            else sharedDirectory = st.Definition.Category;
+           
+            var vm = managerVm.BuildResultsView(st.ID, sharedDirectory);
             dlg.DataContext = vm;
             dlg.Owner = this;
             dlg.Show();

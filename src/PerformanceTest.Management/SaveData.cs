@@ -31,10 +31,11 @@ namespace PerformanceTest.Management
                 int id = experiments[i].ID;
                 for (int j = 0; j < b[i].Length; j++)
                 {
-                    BenchmarkResult bij = b[i][j]; 
-                    if (!data.ContainsKey(bij.BenchmarkFileName)) data.Add(bij.BenchmarkFileName, new Dictionary<int, int>());
-                    if (!data[bij.BenchmarkFileName].ContainsKey(id))
-                        data[bij.BenchmarkFileName].Add(id, bij.ExitCode);
+                    BenchmarkResult bij = b[i][j];
+                    string filename = bij.BenchmarkFileName.Contains("/") ? experiments[i].Category + "/" + bij.BenchmarkFileName : experiments[i].Category + @"\" + bij.BenchmarkFileName;
+                    if (!data.ContainsKey(filename)) data.Add(filename, new Dictionary<int, int>());
+                    if (!data[filename].ContainsKey(id))
+                        data[filename].Add(id, bij.ExitCode);
                 }
             }
             //find similar for all experiments benchmarks and check exitCode. 
@@ -165,11 +166,12 @@ namespace PerformanceTest.Management
                         if (cur.sat == 0 && cur.unsat == 0 && !rv_ok) cur.runtime = error_line;
                         if (cur.runtime < 0.01) cur.runtime = 0.01;
 
-                        if (!data.ContainsKey(b.BenchmarkFileName)) data.Add(b.BenchmarkFileName, new Dictionary<int, CSVDatum>());
-                        if (data[b.BenchmarkFileName].ContainsKey(id))
+                        string Benchmarkfilename = b.BenchmarkFileName.Contains("/") ? experiments[i].Category + "/" + b.BenchmarkFileName : experiments[i].Category + @"\" + b.BenchmarkFileName;
+                        if (!data.ContainsKey(Benchmarkfilename)) data.Add(Benchmarkfilename, new Dictionary<int, CSVDatum>());
+                        if (data[Benchmarkfilename].ContainsKey(id))
                             HasDuplicates = true;
                         else
-                            data[b.BenchmarkFileName].Add(id, cur);
+                            data[Benchmarkfilename].Add(id, cur);
                     }
                     if (HasDuplicates)
                         uiService.ShowWarning(String.Format("Duplicates in experiment #{0} ignored", id), "Duplicate warning");
@@ -250,7 +252,7 @@ namespace PerformanceTest.Management
                     UTF8Encoding enc = new UTF8Encoding();
                     string stdout = await benchsVm[i].GetStdOutAsync(false);
                     string stderr = await benchsVm[i].GetStdErrAsync(false);
-                    string path = drctry + @"\" + benchsVm[i].Filename;
+                    string path = drctry + @"\" + experiment.Category + @"\" + benchsVm[i].Filename;
                     Directory.CreateDirectory(path.Substring(0, path.LastIndexOf(@"\")));
                     if (stdout != null && stdout.Length > 0)
                     {
