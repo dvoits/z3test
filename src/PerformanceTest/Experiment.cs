@@ -104,8 +104,7 @@ namespace PerformanceTest
     }
 
     /// <summary>
-    /// Represents the experiment that runs multiple performance measurements jobs.
-    /// Aka "TitleScreen"; used in ClusterExperiments for the main table.
+    /// Contains execution status of an experiment.
     /// </summary>
     public class ExperimentStatus
     {
@@ -144,6 +143,13 @@ namespace PerformanceTest
         public TimeSpan TotalRuntime { get; private set; }
 
         public string WorkerInformation { get; private set; }
+    }
+
+    public enum ExperimentExecutionState
+    {
+        Active,
+        Completed,
+        Terminated
     }
 
 

@@ -10,7 +10,7 @@ An input file is called *benchmark*.
 
 An *experiment* is a set of performance tests for a single target executable, same command line parameters and run for multiple benchmarks located in the predefined directory.
 
-Regular experiments allow to track how changes in the source codes affect the target executable performance. 
+Regular experiments allow to track how changes in the source codes affect the target executable performance on same set of benchmarks. 
 
 # Azure-based performance tests
 

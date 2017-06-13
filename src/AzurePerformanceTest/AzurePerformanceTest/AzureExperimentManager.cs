@@ -155,9 +155,61 @@ namespace AzurePerformanceTest
         {
             var totalRuntime = TimeSpan.FromSeconds(entity.TotalRuntime);
             ExperimentDefinition def = DefinitionFromEntity(entity);
-            ExperimentStatus status = new ExperimentStatus(id, def.Category, entity.Submitted, entity.Creator, entity.Note,
+            ExperimentStatus status = new ExperimentStatus(
+                id, def.Category, entity.Submitted, entity.Creator, entity.Note,
                 entity.Flag, entity.CompletedBenchmarks, entity.TotalBenchmarks, totalRuntime);
             return new Experiment { Definition = def, Status = status };
+        }
+
+        public override async Task<ExperimentExecutionState?[]> GetExperimentJobState(IEnumerable<int> ids)
+        {
+            if (!CanStart) return null;
+
+            try
+            {
+                using (var bc = BatchClient.Open(batchCreds))
+                {
+                    List<ExperimentExecutionState?> states = new List<ExperimentExecutionState?>();
+                    foreach (var expId in ids)
+                    {
+                        var jobId = BuildJobId(expId);
+                        try
+                        {
+                            var job = await bc.JobOperations.GetJobAsync(jobId);
+                            if (job.State == null) states.Add(null);
+                            switch (job.State.Value)
+                            {
+                                case JobState.Active:
+                                case JobState.Disabling:
+                                case JobState.Disabled:
+                                case JobState.Enabling:
+                                    states.Add(ExperimentExecutionState.Active);
+                                    break;
+                                case JobState.Completed:
+                                    states.Add(ExperimentExecutionState.Completed);
+                                    break;
+                                case JobState.Terminating:
+                                case JobState.Deleting:
+                                    states.Add(ExperimentExecutionState.Terminated);
+                                    break;
+                                default:
+                                    states.Add(null);
+                                    break;
+                            }
+                        }
+                        catch (BatchException batchExc) when (batchExc.RequestInformation != null && batchExc.RequestInformation.HttpStatusCode.HasValue && batchExc.RequestInformation.HttpStatusCode == System.Net.HttpStatusCode.NotFound)
+                        {
+                            states.Add(null);
+                        }
+                    }
+                    return states.ToArray();
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceWarning("Failed to get job status: " + ex);
+                return null;
+            }
         }
 
         private ExperimentDefinition DefinitionFromEntity(ExperimentEntity experimentEntity)
@@ -195,8 +247,7 @@ namespace AzurePerformanceTest
             {
                 using (var bc = BatchClient.Open(batchCreds))
                 {
-
-                    var pools = bc.PoolOperations.ListPools(new ODATADetailLevel { ExpandClause = "stats"  } );
+                    var pools = bc.PoolOperations.ListPools();
                     var descr = pools.Select(p => new PoolDescription
                     {
                         Id = p.Id,
