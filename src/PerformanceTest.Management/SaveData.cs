@@ -253,6 +253,7 @@ namespace PerformanceTest.Management
                     string stdout = await benchsVm[i].GetStdOutAsync(false);
                     string stderr = await benchsVm[i].GetStdErrAsync(false);
                     string path = drctry + @"\" + experiment.Category + @"\" + benchsVm[i].Filename;
+                    path = path.Replace("/", @"\");
                     Directory.CreateDirectory(path.Substring(0, path.LastIndexOf(@"\")));
                     if (stdout != null && stdout.Length > 0)
                     {
