@@ -28,9 +28,9 @@ namespace PerformanceTest.Management
         private async void closeButton_Click(object sender, RoutedEventArgs e)
         {
             ExperimentPropertiesViewModel vm = DataContext as ExperimentPropertiesViewModel;
-            if(vm != null)
+            if (vm != null)
             {
-                if (vm.NoteChanged) await vm.SubmitNote();
+                await vm.SaveNote();
             }
             Close();
         }
@@ -40,7 +40,7 @@ namespace PerformanceTest.Management
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is bool && (bool) value)
+            if (value is bool && (bool)value)
             {
                 return "*";
             }
@@ -71,11 +71,45 @@ namespace PerformanceTest.Management
 
             if (count == 0)
             {
-                if(parameter != null && parameter is string && (string)parameter == "Green")
+                if (parameter != null && parameter is string && (string)parameter == "Green")
                     return Brushes.Green;
                 return Brushes.Black;
             }
             return Brushes.Red;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class ExecutionStatusToStringConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            ExperimentExecutionState? state = value as ExperimentExecutionState?;
+            if (value == null)
+            {
+                if (parameter is string && parameter != null) return parameter;
+                return "(loading...)";
+            }
+            else
+            {
+                switch (state)
+                {
+                    case ExperimentExecutionState.NotFound:
+                        return "Not found";
+                    case ExperimentExecutionState.Completed:
+                        return "Completed";
+                    case ExperimentExecutionState.Terminated:
+                        return "Terminated";
+                    case ExperimentExecutionState.Active:
+                        return "Active";
+                    default:
+                        return "Unknown";
+                }
+            }
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

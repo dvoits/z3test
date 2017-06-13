@@ -45,6 +45,8 @@ namespace PerformanceTest.Management
         private string currentNote;
         private bool isSyncing;
 
+        private ExperimentExecutionState? executionStatus;
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         public ExperimentPropertiesViewModel(ExperimentDefinition def, ExperimentStatus status, Domain domain, ExperimentManager manager, IUIService ui)
@@ -90,6 +92,7 @@ namespace PerformanceTest.Management
 
         private async void Initialize()
         {
+            await RefreshExecutionStatus();
             await BuildStatistics();
             isSyncing = false;
             Sync.RaiseCanExecuteChanged();
@@ -98,6 +101,7 @@ namespace PerformanceTest.Management
         private async Task Refresh()
         {
             await RefreshStatus();
+            await RefreshExecutionStatus();
             await BuildStatistics();
         }
 
@@ -116,6 +120,7 @@ namespace PerformanceTest.Management
                 ui.StopIndicateLongOperation(handle);
             }
 
+            NotifyPropertyChanged("Status");
             NotifyPropertyChanged("NoteChanged");
             NotifyPropertyChanged("SubmissionTime");
             NotifyPropertyChanged("BenchmarksTotal");
@@ -144,6 +149,23 @@ namespace PerformanceTest.Management
             NotifyPropertyChanged("ProblemNonZero");
             NotifyPropertyChanged("ProblemTimeout");
             NotifyPropertyChanged("ProblemMemoryout");
+        }
+
+        private async Task RefreshExecutionStatus()
+        {
+            var state = await Task.Run(() => manager.GetExperimentJobState(new[] { id }));
+            executionStatus = state[0];
+            NotifyPropertyChanged("ExecutionStatus");
+        }
+
+        public ExperimentExecutionState? ExecutionStatus
+        {
+            get { return executionStatus; }
+        }
+
+        public ExperimentStatus Status
+        {
+            get { return status; }
         }
 
         public bool NoteChanged
@@ -295,8 +317,7 @@ namespace PerformanceTest.Management
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-
-        public async Task SubmitNote()
+        private async Task SubmitNote()
         {
             try
             {
@@ -314,6 +335,15 @@ namespace PerformanceTest.Management
                 NotifyPropertyChanged("NoteChanged");
 
                 ui.ShowError(ex, "Failed to update experiment note");
+            }
+        }
+
+        public async Task SaveNote()
+        {
+            if (NoteChanged)
+            {
+                await SubmitNote();
+                NotifyPropertyChanged("Status");
             }
         }
     }

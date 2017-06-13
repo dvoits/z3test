@@ -149,7 +149,8 @@ namespace PerformanceTest
     {
         Active,
         Completed,
-        Terminated
+        Terminated,
+        NotFound
     }
 
 

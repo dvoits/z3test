@@ -129,7 +129,7 @@ namespace PerformanceTest.Management
                 foreach (var vm in allExperiments)
                 {
                     if (now.Subtract(vm.Submitted).TotalDays > 7) break;
-                    vm.JobStatus = "(loading...)";
+                    vm.JobStatus = null;
                     items.Add(vm);
                 }
 
@@ -137,29 +137,7 @@ namespace PerformanceTest.Management
                 int n = Math.Min(states.Length, items.Count);
                 for (int i = 0; i < n; i++)
                 {
-                    var state = states[i];
-                    string status;
-                    if (state == null)
-                        status = "Job not found";
-                    else
-                    {
-                        switch (state.Value)
-                        {
-                            case ExperimentExecutionState.Completed:
-                                status = "Completed";
-                                break;
-                            case ExperimentExecutionState.Terminated:
-                                status = "Terminated";
-                                break;
-                            case ExperimentExecutionState.Active:
-                                status = "Active";
-                                break;
-                            default:
-                                status = "Unknown";
-                                break;
-                        }
-                    }
-                    items[i].JobStatus = status;
+                    items[i].JobStatus = states[i];
                 }
             }
             catch (Exception ex)
@@ -167,7 +145,7 @@ namespace PerformanceTest.Management
                 Trace.WriteLine("Failed to get status of jobs: " + ex);
                 foreach (var item in items)
                 {
-                    item.JobStatus = "(request failed)";
+                    item.JobStatus = null;
                 }
             }
         }
@@ -238,14 +216,14 @@ namespace PerformanceTest.Management
 
     public class ExperimentStatusViewModel : INotifyPropertyChanged
     {
-        private readonly ExperimentStatus status;
         private readonly ExperimentDefinition definition;
         private readonly ExperimentManager manager;
         private readonly IUIService uiService;
 
+        private ExperimentStatus status;
+
         private bool flag;
-        private string note;
-        private string jobStatus;
+        private ExperimentExecutionState? jobStatus;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -257,7 +235,6 @@ namespace PerformanceTest.Management
             this.status = exp.Status;
             this.definition = exp.Definition;
             this.flag = status.Flag;
-            this.note = status.Note;
             this.manager = manager;
             this.uiService = message;
         }
@@ -271,14 +248,7 @@ namespace PerformanceTest.Management
 
         public string Note
         {
-            get { return note; }
-            set
-            {
-                note = value;
-                NotifyPropertyChanged();
-                UpdateNote();
-            }
-
+            get { return status.Note; }
         }
 
         public string Creator { get { return status.Creator; } }
@@ -305,7 +275,7 @@ namespace PerformanceTest.Management
             }
         }
 
-        public string JobStatus
+        public ExperimentExecutionState? JobStatus
         {
             get { return jobStatus; }
             set
@@ -316,21 +286,23 @@ namespace PerformanceTest.Management
             }
         }
 
-        private async void UpdateNote()
+        public void NewStatus(ExperimentStatus newStatus)
         {
-            try
-            {
-                await manager.UpdateNote(status.ID, note);
-                status.Note = note;
-                Trace.WriteLine("Note changed to '" + note + "' for " + status.ID);
-            }
-            catch (Exception ex)
-            {
-                note = status.Note;
-                NotifyPropertyChanged("Note");
-                uiService.ShowError(ex, "Failed to update experiment note");
-            }
+            if (newStatus == null) throw new ArgumentNullException("newStatus");
+            if (newStatus.ID != status.ID) throw new InvalidOperationException("Invalid experiment id");
+
+            status = newStatus;
+
+            NotifyPropertyChanged(nameof(Category));
+            NotifyPropertyChanged(nameof(Submitted));
+            NotifyPropertyChanged(nameof(Note));
+            NotifyPropertyChanged(nameof(Creator));
+            NotifyPropertyChanged(nameof(WorkerInformation));
+            NotifyPropertyChanged(nameof(BenchmarksDone));
+            NotifyPropertyChanged(nameof(BenchmarksTotal));
+            NotifyPropertyChanged(nameof(BenchmarksQueued));
         }
+
         private async void UpdateStatusFlag()
         {
             try

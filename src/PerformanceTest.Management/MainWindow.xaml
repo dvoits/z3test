@@ -10,6 +10,9 @@
         ResizeMode="CanResizeWithGrip"
         Icon="/PerformanceTest.Management;component/Images/servers.ico"
         Loaded="Window_Loaded" Closing="Window_Closing">
+    <Window.Resources>
+        <local:ExecutionStatusToStringConverter x:Key="executionStatus" />
+    </Window.Resources>
 
     <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,0,0" Name="gridOuter" >
         <Grid.RowDefinitions>
@@ -98,7 +101,7 @@
                         <DataGridTextColumn Binding="{Binding Path=BenchmarksDone, Mode=OneWay}" Header="Done" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
                         <DataGridTextColumn Binding="{Binding Path=BenchmarksQueued, Mode=OneWay}" Header="Queued" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
                         <DataGridTextColumn Binding="{Binding Path=BenchmarksTotal, Mode=OneWay}" Header="Total" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
-                        <DataGridTextColumn Binding="{Binding Path=JobStatus, Mode=OneWay}" Header="Job Status" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
+                        <DataGridTextColumn Binding="{Binding Path=JobStatus, Mode=OneWay, Converter={StaticResource executionStatus}, ConverterParameter={}}" Header="Job Status" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
                         <DataGridTextColumn Binding="{Binding Path=Projection, Mode=OneWay}" Header="Projection" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
                     </DataGrid.Columns>
                     <DataGrid.CommandBindings>

@@ -11,6 +11,7 @@
     <Window.Resources>
         <local:BoolToAsteriskConverter x:Key="boolToAsterisk" />
         <local:CountToBrushConverter x:Key="countToBrush" />
+        <local:ExecutionStatusToStringConverter x:Key="executionStatus" />
     </Window.Resources>
     <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10">
         <Grid.RowDefinitions>
@@ -56,12 +57,24 @@
             <Label Content="Total" Grid.Row="0" Grid.Column="0" />
             <Label Content="Finished" Grid.Row="0" Grid.Column="1"/>
             <Label Content="Queued" Grid.Row="0" Grid.Column="2"/>
-            <Label Name="lblTotal" Grid.Row="1" Grid.Column="0" HorizontalContentAlignment="Right" Content="{Binding BenchmarksTotal, Mode=OneWay}"/>
-            <Label Name="lblFinished" Grid.Row="1" Grid.Column="1" HorizontalContentAlignment="Right" Content="{Binding BenchmarksDone, Mode=OneWay}"/>
+            <Label Name="lblTotal" Grid.Row="1" Grid.Column="0" HorizontalContentAlignment="Right" Content="{Binding BenchmarksTotal, Mode=OneWay, FallbackValue=?}"/>
+            <Label Name="lblFinished" Grid.Row="1" Grid.Column="1" HorizontalContentAlignment="Right" Content="{Binding BenchmarksDone, Mode=OneWay, FallbackValue=?}"/>
             <Label Name="lblRunning" Grid.Row="1" Grid.Column="2" HorizontalContentAlignment="Right" 
-                   Foreground="{Binding BenchmarksQueued, Mode=OneWay, Converter={StaticResource countToBrush}, ConverterParameter=Green}" Content="{Binding BenchmarksQueued, Mode=OneWay}"/>
+                   Foreground="{Binding BenchmarksQueued, Mode=OneWay, Converter={StaticResource countToBrush}, ConverterParameter=Green}" Content="{Binding BenchmarksQueued, Mode=OneWay, FallbackValue=?}"/>
         </Grid>
-        <Label Name="lblInfrastructureErrors" Foreground="Red" Content="" Grid.Row="4" Grid.Column="1" HorizontalAlignment="Left"/>
+
+        <TextBlock Name="lblInfrastructureErrors" Foreground="Red" Text="" Grid.Row="4" Grid.Column="0" HorizontalAlignment="Left"/>
+        <Grid Grid.Row="4" Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Stretch">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Label Content="Execution status:" Grid.Row="0" Grid.Column="0"/>
+            <Label Name="lblClusterStatus" Content="{Binding ExecutionStatus, Mode=OneWay, Converter={StaticResource executionStatus}, FallbackValue=?}" Grid.Row="1" Grid.Column="0" HorizontalContentAlignment="Right" />
+        </Grid>
 
         <TextBlock Text="Statistics:" Grid.Row="5" Grid.Column="0" />
         <StackPanel Grid.Row="5" Grid.Column="1" >
