@@ -94,9 +94,6 @@ namespace AzureWorker
 
             string storageConnectionString = string.Format("DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}", Settings.Default.StorageAccountName, Settings.Default.StorageAccountKey);
 
-            //var execResourceFile = new ResourceFile(storage.GetExecutableSasUri(executable), executable);
-            //Console.WriteLine("Resourced executable");
-
             var queue = await storage.CreateResultsQueue(experimentId);
             Console.Write("Created queue");
 
@@ -350,7 +347,7 @@ namespace AzureWorker
             }
             double normal = 1.0;
 
-            string workerDir = Environment.GetEnvironmentVariable(SharedDirEnvVariableName);
+            string workerDir = Path.Combine(Environment.GetEnvironmentVariable(SharedDirEnvVariableName), Environment.GetEnvironmentVariable(JobIdEnvVariableName));
             executable = Path.Combine(workerDir, "exec", executable);
             string normalFilePath = Path.Combine(workerDir, PerformanceCoefficientFileName);
             if (File.Exists(normalFilePath))
@@ -388,8 +385,6 @@ namespace AzureWorker
         {
             string workerDir = Path.Combine(Environment.GetEnvironmentVariable(SharedDirEnvVariableName), Environment.GetEnvironmentVariable(JobIdEnvVariableName));
             string normalFilePath = Path.Combine(workerDir, PerformanceCoefficientFileName);
-            //var random = new Random();
-            //System.Threading.Thread.Sleep(random.Next(60000));
             var storage = new AzureExperimentStorage(Settings.Default.StorageAccountName, Settings.Default.StorageAccountKey);
             //var exp = await storage.GetReferenceExperiment();
             //if (exp == null)
@@ -407,33 +402,9 @@ namespace AzureWorker
                 return 1.0;
             }
             var exp = ParseReferenceExperiment(refJsonPath);
-
-            //var benchmarkStorage = CreateBenchmarkStorage(exp.Definition.BenchmarkContainerUri);
-            //var benchPath = CombineBlobPath(exp.Definition.BenchmarkDirectory, exp.Definition.Category);
+            
             var pathForBenchmarks = Path.Combine(workerDir, "refdata", "data");
-            //Directory.CreateDirectory(pathForBenchmarks);
-            //var execBlob = storage.GetExecutableReference(exp.Definition.Executable);
             var execPath = Path.Combine(workerDir, "refdata", exp.Definition.Executable);
-            //await execBlob.DownloadToFileAsync(execPath, FileMode.Create);
-
-            //BlobContinuationToken continuationToken = null;
-            //BlobResultSegment resultSegment = null;
-
-            //List<Task> dlTasks = new List<Task>();
-            //int no = 0;
-            //do
-            //{
-            //    resultSegment = await benchmarkStorage.ListBlobsSegmentedAsync(benchPath, continuationToken);
-            //    foreach (CloudBlockBlob blob in resultSegment.Results)
-            //    {
-            //        dlTasks.Add(blob.DownloadToFileAsync(Path.Combine(pathForBenchmarks, no.ToString() + ".test"), FileMode.Create));
-            //        ++no;
-            //    }
-
-            //    continuationToken = resultSegment.ContinuationToken;
-            //}
-            //while (continuationToken != null);
-            //await Task.WhenAll(dlTasks);
 
             Domain domain = new Z3Domain(); // todo: take custom domain name from `args`
             string[] benchmarks = Directory.EnumerateFiles(pathForBenchmarks).Select(fn => Path.Combine(pathForBenchmarks, fn)).ToArray();
