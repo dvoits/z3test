@@ -139,7 +139,7 @@ namespace AzureWorker
                     {
                         resultSegment = await benchmarkStorage.ListBlobsSegmentedAsync(benchmarksPath, continuationToken);
                         Console.WriteLine("Got some blobs");
-                        starterTasks.Add(StartTasksForSegment(timeout.TotalSeconds.ToString(), experimentId, executable, arguments, vmsize, memoryLimit, outputLimit, errorLimit, jobId, batchClient, resultSegment.Results, totalBenchmarks, processedBlobs, benchmarkStorage));
+                        starterTasks.Add(StartTasksForSegment(timeout.TotalSeconds.ToString(), experimentId, executable, arguments, vmsize, memoryLimit, outputLimit, errorLimit, jobId, batchClient, resultSegment.Results, benchmarksPath, totalBenchmarks, processedBlobs, benchmarkStorage));
 
                         continuationToken = resultSegment.ContinuationToken;
                         totalBenchmarks += resultSegment.Results.Count();
@@ -278,18 +278,19 @@ namespace AzureWorker
             else
             {
                 var benchmarksDirClear = benchmarkDirectory.TrimEnd('/');
-                var benchmarksCatClear = benchmarkCategory.TrimStart('/');
-                benchmarksPath = benchmarksDirClear + "/" + benchmarksCatClear;
+                var benchmarksCatClear = benchmarkCategory.Trim('/');
+                benchmarksPath = benchmarksDirClear + "/" + benchmarksCatClear + "/";
             }
             return benchmarksPath;
         }
 
-        private static async Task StartTasksForSegment(string timeout, int experimentId, string executable, string arguments, string workerInfo, double memoryLimit, long? outputLimit, long? errorLimit, string jobId, BatchClient batchClient, IEnumerable<IListBlobItem> segmentResults, int startTaskId, ICollection<string> processedBlobs, AzureBenchmarkStorage benchmarkStorage)
+        private static async Task StartTasksForSegment(string timeout, int experimentId, string executable, string arguments, string workerInfo, double memoryLimit, long? outputLimit, long? errorLimit, string jobId, BatchClient batchClient, IEnumerable<IListBlobItem> segmentResults, string blobFolderPath, int startTaskId, ICollection<string> processedBlobs, AzureBenchmarkStorage benchmarkStorage)
         {
             List<CloudTask> tasks = new List<CloudTask>();
             int blobNo = startTaskId;
             if (processedBlobs == null)
                 processedBlobs = new string[] { };
+            int blobFolderPathLength = blobFolderPath.Length;
             foreach (CloudBlockBlob blobItem in segmentResults)
             {
                 string taskId = blobNo.ToString();
@@ -297,7 +298,7 @@ namespace AzureWorker
                 {
                     string[] parts = blobItem.Name.Split('/');
                     string shortName = parts[parts.Length - 1];
-                    string taskCommandLine = String.Format("cmd /c %" + SharedDirEnvVariableName + "%\\%" + JobIdEnvVariableName + "%\\AzureWorker.exe --measure {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\" \"{7}\" \"{8}\" \"{9}\"", experimentId, blobItem.Name, executable, arguments, shortName, timeout, workerInfo, memoryLimit, NullableLongToString(outputLimit), NullableLongToString(errorLimit));
+                    string taskCommandLine = String.Format("cmd /c %" + SharedDirEnvVariableName + "%\\%" + JobIdEnvVariableName + "%\\AzureWorker.exe --measure {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\" \"{7}\" \"{8}\" \"{9}\"", experimentId, blobItem.Name.Substring(blobFolderPathLength), executable, arguments, shortName, timeout, workerInfo, memoryLimit, NullableLongToString(outputLimit), NullableLongToString(errorLimit));
                     var resourceFile = new ResourceFile(benchmarkStorage.GetBlobSASUri(blobItem), shortName);
                     CloudTask task = new CloudTask(taskId, taskCommandLine);
                     task.ResourceFiles = new List<ResourceFile> { resourceFile };
