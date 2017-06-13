@@ -237,39 +237,42 @@ namespace PerformanceTest.Management
             if (manager == null) throw new ArgumentNullException("manager");
             if (uiService == null) throw new ArgumentNullException("uiService");
 
-            var handle = uiService.StartIndicateLongOperation("Save output...");
+            var handle = uiService.StartIndicateLongOperation("Saving output...");
             try
             {
                 string drctry = string.Format(@"{0}\{1}", selectedPath, experiment.ID.ToString());
-                double total = 0.0;
-                Directory.CreateDirectory(drctry);
-                var benchs = await Task.Run(() => manager.GetResults(experiment.ID));
-                var benchsVm = benchs.Select(e => new BenchmarkResultViewModel(e, manager, uiService)).ToArray();
-                total = benchsVm.Length;
-
-                for (int i = 0; i < total; i++)
+                await Task.Run(async () =>
                 {
-                    UTF8Encoding enc = new UTF8Encoding();
-                    string stdout = await benchsVm[i].GetStdOutAsync(false);
-                    string stderr = await benchsVm[i].GetStdErrAsync(false);
-                    string path = drctry + @"\" + experiment.Category + @"\" + benchsVm[i].Filename;
-                    path = path.Replace("/", @"\");
-                    Directory.CreateDirectory(path.Substring(0, path.LastIndexOf(@"\")));
-                    if (stdout != null && stdout.Length > 0)
-                    {
-                        FileStream stdoutf = File.Open(path + ".out.txt", FileMode.OpenOrCreate);
-                        stdoutf.Write(enc.GetBytes(stdout), 0, enc.GetByteCount(stdout));
-                        stdoutf.Close();
-                    }
+                    double total = 0.0;
+                    Directory.CreateDirectory(drctry);
+                    var benchs = await manager.GetResults(experiment.ID);
+                    var benchsVm = benchs.Select(e => new BenchmarkResultViewModel(e, manager, uiService)).ToArray();
+                    total = benchsVm.Length;
 
-                    if (stderr != null && stderr.Length > 0)
+                    for (int i = 0; i < total; i++)
                     {
-                        FileStream stderrf = File.Open(path + ".err.txt", FileMode.OpenOrCreate);
-                        stderrf.Write(enc.GetBytes(stderr), 0, enc.GetByteCount(stderr));
-                        stderrf.Close();
-                    }
-                }
+                        UTF8Encoding enc = new UTF8Encoding();
+                        string stdout = await benchsVm[i].GetStdOutAsync(false);
+                        string stderr = await benchsVm[i].GetStdErrAsync(false);
+                        string path = drctry + @"\" + experiment.Category + @"\" + benchsVm[i].Filename;
+                        path = path.Replace("/", @"\");
+                        Directory.CreateDirectory(path.Substring(0, path.LastIndexOf(@"\")));
+                        if (stdout != null && stdout.Length > 0)
+                        {
+                            FileStream stdoutf = File.Open(path + ".out.txt", FileMode.OpenOrCreate);
+                            stdoutf.Write(enc.GetBytes(stdout), 0, enc.GetByteCount(stdout));
+                            stdoutf.Close();
+                        }
 
+                        if (stderr != null && stderr.Length > 0)
+                        {
+                            FileStream stderrf = File.Open(path + ".err.txt", FileMode.OpenOrCreate);
+                            stderrf.Write(enc.GetBytes(stderr), 0, enc.GetByteCount(stderr));
+                            stderrf.Close();
+                        }
+                    }
+                });
+                uiService.ShowInfo("Output saved to " + drctry);
             }
             catch (Exception ex)
             {
