@@ -278,9 +278,12 @@ namespace AzureWorker
             else
             {
                 var benchmarksDirClear = benchmarkDirectory.TrimEnd('/');
-                var benchmarksCatClear = benchmarkCategory.Trim('/');
-                benchmarksPath = benchmarksDirClear + "/" + benchmarksCatClear + "/";
+                var benchmarksCatClear = benchmarkCategory.TrimStart('/');
+                benchmarksPath = benchmarksDirClear + "/" + benchmarksCatClear;
             }
+            benchmarksPath = benchmarksPath.TrimEnd('/');
+            if (benchmarksPath.Length > 0)
+                benchmarksPath = benchmarksPath + "/";
             return benchmarksPath;
         }
 
