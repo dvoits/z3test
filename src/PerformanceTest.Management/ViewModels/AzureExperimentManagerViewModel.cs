@@ -88,18 +88,42 @@ namespace PerformanceTest.Management
             }
             else // upload new executable
             {
-                using (MemoryStream stream = new MemoryStream(20 << 20))
-                {
-                    Measurement.ExecutablePackage.PackToStream(newExperiment.ExecutableFileNames, newExperiment.MainExecutable, stream);
+                if (newExperiment.ExecutableFileNames == null || newExperiment.ExecutableFileNames.Length == 0)
+                    throw new InvalidOperationException("New executable should be uploaded but no files selected");
 
-                    string fileName = Path.GetFileNameWithoutExtension(newExperiment.MainExecutable);
+                const string packageNameFormat = "{0}.{1}.{2:yyyy-MM-ddTHH-mm-ss-ffff}{3}";
+                if (newExperiment.ExecutableFileNames.Length == 1) // single file will be uploaded as is
+                {
+                    string fileName = Path.GetFileNameWithoutExtension(newExperiment.ExecutableFileNames[0]);
+                    string extension = Path.GetExtension(newExperiment.ExecutableFileNames[0]);
                     string esc_creator = ToBinaryPackBlobName(creator);
 
-                    do
+                    using (Stream stream = File.Open(newExperiment.ExecutableFileNames[0], FileMode.Open, FileAccess.Read, FileShare.Read))
                     {
-                        stream.Position = 0;
-                        packageName = string.Format("{0}.{1}.{2:yyyy-MM-ddTHH-mm-ss-ffff}.zip", esc_creator, fileName, DateTime.UtcNow);
-                    } while (!await manager.Storage.TryUploadNewExecutable(stream, packageName, creator));
+                        do
+                        {
+                            packageName = string.Format(packageNameFormat, esc_creator, fileName, DateTime.UtcNow, extension);
+                        } while (!await manager.Storage.TryUploadNewExecutable(stream, packageName, creator));
+                    }
+                }
+                else // multiple files are packed into zip
+                {
+                    if (String.IsNullOrEmpty(newExperiment.MainExecutable))
+                        throw new InvalidOperationException("There is no main executable selected");
+
+                    using (MemoryStream stream = new MemoryStream(20 << 20))
+                    {
+                        Measurement.ExecutablePackage.PackToStream(newExperiment.ExecutableFileNames, newExperiment.MainExecutable, stream);
+
+                        string fileName = Path.GetFileNameWithoutExtension(newExperiment.MainExecutable);
+                        string esc_creator = ToBinaryPackBlobName(creator);
+
+                        do
+                        {
+                            stream.Position = 0;
+                            packageName = string.Format(packageNameFormat, esc_creator, fileName, DateTime.UtcNow, ".zip");
+                        } while (!await manager.Storage.TryUploadNewExecutable(stream, packageName, creator));
+                    }
                 }
             }
 
