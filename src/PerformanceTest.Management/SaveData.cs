@@ -23,8 +23,8 @@ namespace PerformanceTest.Management
             int[] res = new int[experiments.Length];
             for (int i = 0; i < experiments.Length; i++) res[i] = 0;
 
-            Dictionary<string, Dictionary<int, int>> data =
-                    new Dictionary<string, Dictionary<int, int>>();
+            Dictionary<string, Dictionary<int, int?>> data =
+                    new Dictionary<string, Dictionary<int, int?>>();
             //create dictionary for all benchmarks
             for (int i = 0; i < experiments.Length; i++)
             {
@@ -32,14 +32,15 @@ namespace PerformanceTest.Management
                 for (int j = 0; j < b[i].Length; j++)
                 {
                     BenchmarkResult bij = b[i][j];
-                    string filename = bij.BenchmarkFileName.Contains("/") ? experiments[i].Category + "/" + bij.BenchmarkFileName : experiments[i].Category + @"\" + bij.BenchmarkFileName;
-                    if (!data.ContainsKey(filename)) data.Add(filename, new Dictionary<int, int>());
+                    string filename = experiments[i].Category + "/" + bij.BenchmarkFileName;
+                    if (!data.ContainsKey(filename))
+                        data.Add(filename, new Dictionary<int, int?>());
                     if (!data[filename].ContainsKey(id))
                         data[filename].Add(id, bij.ExitCode);
                 }
             }
-            //find similar for all experiments benchmarks and check exitCode. 
-            foreach (KeyValuePair<string, Dictionary<int, int>> d in data.OrderBy(x => x.Key))
+            // find similar for all experiments benchmarks and check exitCode. 
+            foreach (KeyValuePair<string, Dictionary<int, int?>> d in data.OrderBy(x => x.Key))
             {
                 int count = d.Value.Count();
                 if (count == experiments.Length)

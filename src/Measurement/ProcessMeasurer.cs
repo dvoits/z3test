@@ -96,7 +96,7 @@ namespace Measurement
             maxmem = Math.Max(maxmem, Memory(p));
             TimeSpan processorTime = exhausted_time ? timeout : p.TotalProcessorTime;
             TimeSpan wallClockTime = exhausted_time ? timeout : (DateTime.Now - p.StartTime);
-            int exitCode = p.ExitCode;        
+            int processExitCode = p.ExitCode;
 
             p.Close();
 
@@ -112,13 +112,24 @@ namespace Measurement
                 Directory.Delete(tempFolder, true);
             }
 
+            var status = 
+                exhausted_time ? 
+                    Measurement.Measure.LimitsStatus.TimeOut :
+                        (exhausted_memory || processExitCode == -1073741571) ? 
+                            Measurement.Measure.LimitsStatus.MemoryOut : // .NET StackOverflowException
+                            Measurement.Measure.LimitsStatus.WithinLimits;
+
+            int? exitCode;
+            if (status == Measurement.Measure.LimitsStatus.MemoryOut || status == Measurement.Measure.LimitsStatus.TimeOut)
+                exitCode = null;
+            else
+                exitCode = processExitCode;
+
             return new ProcessRunMeasure(
                 processorTime,
                 wallClockTime,
                 (maxmem / 1024.0 / 1024.0),
-                exhausted_time ? Measurement.Measure.LimitsStatus.TimeOut : 
-                    (exhausted_memory || exitCode == -1073741571) ? Measurement.Measure.LimitsStatus.MemoryOut : // .NET StackOverflowException
-                            Measurement.Measure.LimitsStatus.WithinLimits,
+                status,
                 exitCode,
                 stdOut,
                 stdErr);
@@ -136,7 +147,7 @@ namespace Measurement
             p.StartInfo.UseShellExecute = false;
             p.OutputDataReceived += (sender, args) => { if (args != null && args.Data != null) stdOut(args.Data); };
             p.ErrorDataReceived += (sender, args) => { if (args != null && args.Data != null) stdErr(args.Data); };
-            
+
             if (fileName.EndsWith(".cmd") || fileName.EndsWith(".bat"))
             {
                 p.StartInfo.FileName = System.IO.Path.Combine(Environment.SystemDirectory, "cmd.exe");

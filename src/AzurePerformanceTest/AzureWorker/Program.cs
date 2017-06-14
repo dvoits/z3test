@@ -411,7 +411,7 @@ namespace AzureWorker
             await storage.PutResult(experimentId, result);
         }
 
-        static async Task<double> RunReference(string[] args)
+        static Task<double> RunReference(string[] args)
         {
             string workerDir = Path.Combine(Environment.GetEnvironmentVariable(SharedDirEnvVariableName), Environment.GetEnvironmentVariable(JobIdEnvVariableName));
             string normalFilePath = Path.Combine(workerDir, PerformanceCoefficientFileName);
@@ -429,7 +429,7 @@ namespace AzureWorker
                 //no reference experiment
                 Trace.WriteLine("Reference.json not found, assuming normal 1.0.");
                 File.WriteAllText(normalFilePath, "1.0");
-                return 1.0;
+                return Task.FromResult(1.0);
             }
             var exp = ParseReferenceExperiment(refJsonPath);
             
@@ -462,7 +462,7 @@ namespace AzureWorker
             double normal = exp.ReferenceValue / totalRuntime;
 
             File.WriteAllText(normalFilePath, normal.ToString());
-            return normal;
+            return Task.FromResult(normal);
         }
 
         static AzureBenchmarkStorage CreateBenchmarkStorage(string uri)

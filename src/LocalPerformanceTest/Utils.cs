@@ -50,7 +50,7 @@ namespace PerformanceTest
         {
             if (measures.Length == 0) throw new ArgumentException("measures", "At least one element expected");
             if (measures.Length == 1) return measures[0];
-            int exitCode = measures[0].ExitCode;
+            int? exitCode = measures[0].ExitCode;
             foreach(ProcessRunMeasure m in measures)
             {
                 if (m.Limits != Measure.LimitsStatus.WithinLimits || m.ExitCode != exitCode) return m;

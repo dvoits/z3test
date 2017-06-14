@@ -37,7 +37,7 @@ namespace Measurement
 
     public class ProcessRunMeasure : Measure
     {
-        public ProcessRunMeasure(TimeSpan totalProcessorTime, TimeSpan wallClockTime, double peakMemorySizeMB, LimitsStatus status, int exitCode, Stream stdOut, Stream stdErr) :
+        public ProcessRunMeasure(TimeSpan totalProcessorTime, TimeSpan wallClockTime, double peakMemorySizeMB, LimitsStatus status, int? exitCode, Stream stdOut, Stream stdErr) :
             base(totalProcessorTime, wallClockTime, peakMemorySizeMB, status)
         {
             ExitCode = exitCode;
@@ -45,7 +45,7 @@ namespace Measurement
             StdErr = stdErr;
         }
 
-        public int ExitCode { get; private set; }
+        public int? ExitCode { get; private set; }
         public Stream StdOut { get; private set; }
         public Stream StdErr { get; private set; }
 
