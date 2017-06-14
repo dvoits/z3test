@@ -121,6 +121,9 @@ namespace AzurePerformanceTest
                 var benchmarksCatClear = part2.TrimStart('/');
                 benchmarksPath = benchmarksDirClear + "/" + benchmarksCatClear;
             }
+            benchmarksPath = benchmarksPath.TrimEnd('/');
+            if (benchmarksPath.Length > 0)
+                benchmarksPath = benchmarksPath + "/";
             return benchmarksPath;
         }
 

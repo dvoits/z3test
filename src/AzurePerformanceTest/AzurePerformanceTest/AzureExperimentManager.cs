@@ -336,10 +336,29 @@ namespace AzurePerformanceTest
                     else
                         benchStorage = new AzureBenchmarkStorage(refExp.Definition.BenchmarkContainerUri);
 
+                    Domain refdomain;
+                    if (refExp.Definition.DomainName == "Z3")
+                        refdomain = new Z3Domain();
+                    else
+                        throw new InvalidOperationException("Reference experiment uses unknown domain.");
+
+                    SortedSet<string> extensions;
+                    if (string.IsNullOrEmpty(refExp.Definition.BenchmarkFileExtension))
+                        extensions = new SortedSet<string>(refdomain.BenchmarkExtensions.Distinct());
+                    else
+                        extensions = new SortedSet<string>(refExp.Definition.BenchmarkFileExtension.Split('|').Select(s => s.Trim().TrimStart('.')).Distinct());
+
                     foreach (CloudBlockBlob blob in benchStorage.ListBlobs(refExp.Definition.BenchmarkDirectory, refExp.Definition.Category))
                     {
                         string[] parts = blob.Name.Split('/');
                         string shortName = parts[parts.Length - 1];
+                        var shortnameParts = shortName.Split('.');
+                        if (shortnameParts.Length == 1 && !extensions.Contains(""))
+                            continue;
+                        var ext = shortnameParts[shortnameParts.Length - 1];
+                        if (!extensions.Contains(ext))
+                            continue;
+
                         job.JobPreparationTask.ResourceFiles.Add(new ResourceFile(benchStorage.GetBlobSASUri(blob), Path.Combine(refBenchFolder, shortName)));
                     }
                 }

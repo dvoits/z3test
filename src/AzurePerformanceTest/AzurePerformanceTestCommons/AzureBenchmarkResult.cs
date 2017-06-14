@@ -115,7 +115,7 @@ namespace AzurePerformanceTest
             info.AddValue(nameof(StdOut), this.StdOut);
             info.AddValue(nameof(StdErr), this.StdErr);
             info.AddValue(nameof(StdOutExtStorageIdx), this.StdOutExtStorageIdx);
-            info.AddValue(nameof(StdOutExtStorageIdx), this.StdOutExtStorageIdx);
+            info.AddValue(nameof(StdErrExtStorageIdx), this.StdErrExtStorageIdx);
         }
 
         public static void SaveBenchmarks(AzureBenchmarkResult[] benchmarks, Stream stream)

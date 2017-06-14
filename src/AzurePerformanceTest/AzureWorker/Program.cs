@@ -196,19 +196,18 @@ namespace AzureWorker
                         {
                             AcquireTime = task.ExecutionInformation.StartTime ?? DateTime.MinValue,
                             BenchmarkFileName = task.DisplayName,
-                            ExitCode = task.ExecutionInformation.ExitCode ?? int.MinValue,
+                            ExitCode = task.ExecutionInformation.ExitCode,
                             ExperimentID = experimentId,
                             StdErr = InfrastructureErrorPrefix + task.ExecutionInformation.FailureInformation.Message,
                             StdErrExtStorageIdx = "",
                             StdOut = "",
                             StdOutExtStorageIdx = "",
-                            NormalizedRuntime = -1,
-                            PeakMemorySizeMB = -1,
+                            NormalizedRuntime = 0,
+                            PeakMemorySizeMB = 0,
                             Properties = new Dictionary<string, string>(),
                             Status = ResultStatus.Error,
                             TotalProcessorTime = TimeSpan.Zero,
-                            WallClockTime = TimeSpan.Zero//,
-                            //WorkerInformation = vmsize
+                            WallClockTime = TimeSpan.Zero
                         }).ToList();
                     Console.WriteLine("Done fetching failed tasks. Got {0}.", badResults.Count);
                 }
