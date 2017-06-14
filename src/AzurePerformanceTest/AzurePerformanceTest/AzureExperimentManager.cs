@@ -157,7 +157,7 @@ namespace AzurePerformanceTest
             ExperimentDefinition def = DefinitionFromEntity(entity);
             ExperimentStatus status = new ExperimentStatus(
                 id, def.Category, entity.Submitted, entity.Creator, entity.Note,
-                entity.Flag, entity.CompletedBenchmarks, entity.TotalBenchmarks, totalRuntime);
+                entity.Flag, entity.CompletedBenchmarks, entity.TotalBenchmarks, totalRuntime, entity.WorkerInformation);
             return new Experiment { Definition = def, Status = status };
         }
 
@@ -290,14 +290,17 @@ namespace AzurePerformanceTest
             if (!CanStart) throw new InvalidOperationException("Cannot start experiment since the manager is in read mode");
 
             var refExp = await storage.GetReferenceExperiment();
-            var id = await storage.AddExperiment(definition, DateTime.Now, creator, note);
+            var poolId = this.BatchPoolID;
+            int id;
 
             using (var bc = BatchClient.Open(batchCreds))
             {
+                var pool = await bc.PoolOperations.GetPoolAsync(poolId);
+                id = await storage.AddExperiment(definition, DateTime.Now, creator, note, pool.VirtualMachineSize);
                 CloudJob job = bc.JobOperations.CreateJob();
                 job.Id = BuildJobId(id);
                 job.OnAllTasksComplete = OnAllTasksComplete.TerminateJob;
-                job.PoolInformation = new PoolInformation { PoolId = this.BatchPoolID };
+                job.PoolInformation = new PoolInformation { PoolId = poolId };
                 job.JobPreparationTask = new JobPreparationTask
                 {
                     CommandLine = "cmd /c (robocopy %AZ_BATCH_TASK_WORKING_DIR% %AZ_BATCH_NODE_SHARED_DIR%\\" + job.Id + " /e /purge) ^& IF %ERRORLEVEL% LEQ 1 exit 0",

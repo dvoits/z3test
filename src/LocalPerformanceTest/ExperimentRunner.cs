@@ -48,8 +48,7 @@ namespace PerformanceTest
             if (Path.IsPathRooted(experiment.Executable)) executable = experiment.Executable;
             else executable = Path.Combine(rootFolder, experiment.Executable);
             if (!File.Exists(executable)) throw new ArgumentException("Executable not found");
-
-            var workerInfo = GetWorkerInfo();
+            
             string benchmarkFolder = string.IsNullOrEmpty(experiment.Category) ? experiment.BenchmarkDirectory : Path.Combine(experiment.BenchmarkDirectory, experiment.Category);
             if (!Path.IsPathRooted(benchmarkFolder))
             {
@@ -70,7 +69,7 @@ namespace PerformanceTest
                         string args = experiment.Parameters;
                         return RunBenchmark(id, executable, experiment.Parameters, inputRelativePath, inputFullPath, 
                             repetitions, experiment.BenchmarkTimeout, experiment.MemoryLimitMB, null, null, domain, 
-                            normal, workerInfo);
+                            normal);
                     }, benchmarkFile, TaskCreationOptions.LongRunning);
                 results.Add(task);
             }
@@ -78,7 +77,7 @@ namespace PerformanceTest
             return results.ToArray();
         }
 
-        public static BenchmarkResult RunBenchmark(int experimentId, string executable, string args, string inputDisplayName, string inputFullPath, int repetitions, TimeSpan timeOut, double memLimitMB, long? ouputLimit, long? errorLimit, Domain domain, double normal, string workerInfo)
+        public static BenchmarkResult RunBenchmark(int experimentId, string executable, string args, string inputDisplayName, string inputFullPath, int repetitions, TimeSpan timeOut, double memLimitMB, long? ouputLimit, long? errorLimit, Domain domain, double normal)
         {
             if (domain == null) throw new ArgumentNullException("domain");
             if (args != null)
@@ -114,18 +113,13 @@ namespace PerformanceTest
 
             var performanceIndex = normal * finalMeasure.TotalProcessorTime.TotalSeconds;
             var result = new BenchmarkResult(
-                experimentId, inputDisplayName, workerInfo,
+                experimentId, inputDisplayName,
                 acq, performanceIndex,
                 finalMeasure.TotalProcessorTime, finalMeasure.WallClockTime, finalMeasure.PeakMemorySizeMB,
                 analysis.Status,
                 finalMeasure.ExitCode, finalMeasure.StdOut, finalMeasure.StdErr,
                 analysis.OutputProperties);
             return result;
-        }
-
-        private static string GetWorkerInfo()
-        {
-            return "";
         }
     }
 }

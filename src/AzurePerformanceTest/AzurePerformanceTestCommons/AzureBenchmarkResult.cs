@@ -57,8 +57,6 @@ namespace AzurePerformanceTest
 
         public string StdErrExtStorageIdx { get; set; }
 
-        public string WorkerInformation { get; set; }
-
         /// <summary>
         /// Domain-specific properties of the result.
         /// </summary>
@@ -68,7 +66,6 @@ namespace AzurePerformanceTest
         {
             this.ExperimentID = info.GetInt32("ExperimentID");
             this.BenchmarkFileName = info.GetString("BenchmarkFileName");
-            this.WorkerInformation = info.GetString("WorkerInformation");
             this.NormalizedRuntime = info.GetDouble("NormalizedRuntime");
             this.TotalProcessorTime = (TimeSpan)info.GetValue("TotalProcessorTime", typeof(TimeSpan));
             this.WallClockTime = (TimeSpan)info.GetValue("WallClockTime", typeof(TimeSpan));
@@ -87,7 +84,6 @@ namespace AzurePerformanceTest
         {
             info.AddValue("ExperimentID", this.ExperimentID);
             info.AddValue("BenchmarkFileName", this.BenchmarkFileName, typeof(string));
-            info.AddValue("WorkerInformation", this.WorkerInformation, typeof(string));
             info.AddValue("NormalizedRuntime", this.NormalizedRuntime);
             info.AddValue("TotalProcessorTime", this.TotalProcessorTime, typeof(TimeSpan));
             info.AddValue("WallClockTime", this.WallClockTime, typeof(TimeSpan));
@@ -118,8 +114,7 @@ namespace AzurePerformanceTest
                 Column.Create("StdOut", benchmarks.Select(b => b.StdOut), length),
                 Column.Create("StdOutExtStorageIdx", benchmarks.Select(b => b.StdOutExtStorageIdx), length),
                 Column.Create("StdErr", benchmarks.Select(b => b.StdErr), length),
-                Column.Create("StdErrExtStorageIdx", benchmarks.Select(b => b.StdErrExtStorageIdx), length),
-                Column.Create("WorkerInformation", benchmarks.Select(b => b.WorkerInformation), length),
+                Column.Create("StdErrExtStorageIdx", benchmarks.Select(b => b.StdErrExtStorageIdx), length)
             };
 
             HashSet<string> props = new HashSet<string>();
@@ -158,7 +153,6 @@ namespace AzurePerformanceTest
             var stdoutext = table["StdOutExtStorageIdx"].Rows.AsString;
             var stderr = table["StdErr"].Rows.AsString;
             var stderrext = table["StdErrExtStorageIdx"].Rows.AsString;
-            var worker = table["WorkerInformation"].Rows.AsString;
 
             var propColumns =
                 (from c in table
@@ -174,8 +168,7 @@ namespace AzurePerformanceTest
                     c.Name != "StdOut" &&
                     c.Name != "StdErr" &&
                     c.Name != "StdOutExtStorageIdx" &&
-                    c.Name != "StdErrExtStorageIdx" &&
-                    c.Name != "WorkerInformation"
+                    c.Name != "StdErrExtStorageIdx"
                  select Tuple.Create(c.Name, c.Rows.AsString))
                 .ToArray();
 
@@ -206,7 +199,6 @@ namespace AzurePerformanceTest
                 results[i].StdOutExtStorageIdx = stdoutext[i];
                 results[i].TotalProcessorTime = TimeSpan.FromSeconds(double.Parse(runtime[i]));
                 results[i].WallClockTime = TimeSpan.FromSeconds(double.Parse(wctime[i]));
-                results[i].WorkerInformation = worker[i];
             }
             return results;
         }

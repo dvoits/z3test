@@ -108,7 +108,7 @@ namespace PerformanceTest
     /// </summary>
     public class ExperimentStatus
     {
-        public ExperimentStatus(ExperimentID id, string category, DateTime submitted, string creator, string note, bool flag, int done, int total, TimeSpan totalRuntime)
+        public ExperimentStatus(ExperimentID id, string category, DateTime submitted, string creator, string note, bool flag, int done, int total, TimeSpan totalRuntime, string workerInformation)
         {
             ID = id;
             Category = category;
@@ -119,6 +119,7 @@ namespace PerformanceTest
             BenchmarksDone = done;
             BenchmarksTotal = total;
             TotalRuntime = totalRuntime;
+            WorkerInformation = workerInformation;
         }
 
         public ExperimentID ID { get; private set; }
@@ -160,7 +161,7 @@ namespace PerformanceTest
     [Serializable]
     public class BenchmarkResult : ISerializable
     {
-        public BenchmarkResult(int experimentId, string benchmarkFileName, string workerInformation, DateTime acquireTime, double normalizedRuntime,
+        public BenchmarkResult(int experimentId, string benchmarkFileName, DateTime acquireTime, double normalizedRuntime,
             TimeSpan totalProcessorTime, TimeSpan wallClockTime, double memorySizeMB, ResultStatus status, int exitCode, Stream stdout, Stream stderr, 
             IReadOnlyDictionary<string, string> props)
         {
@@ -168,7 +169,6 @@ namespace PerformanceTest
 
             this.ExperimentID = experimentId;
             this.BenchmarkFileName = benchmarkFileName;
-            this.WorkerInformation = workerInformation;
             this.NormalizedRuntime = normalizedRuntime;
             this.TotalProcessorTime = totalProcessorTime;
             this.WallClockTime = wallClockTime;
@@ -216,8 +216,6 @@ namespace PerformanceTest
 
         public Stream StdErr { get; private set; }
 
-        public string WorkerInformation { get; private set; }
-
         /// <summary>
         /// Domain-specific properties of the result.
         /// </summary>
@@ -230,7 +228,6 @@ namespace PerformanceTest
 
             info.AddValue("ExperimentID", this.ExperimentID);
             info.AddValue("BenchmarkFileName", this.BenchmarkFileName, typeof(string));
-            info.AddValue("WorkerInformation", this.WorkerInformation, typeof(string));
             info.AddValue("NormalizedRuntime", this.NormalizedRuntime);
             info.AddValue("TotalProcessorTime", this.TotalProcessorTime, typeof(TimeSpan));
             info.AddValue("WallClockTime", this.WallClockTime, typeof(TimeSpan));
@@ -271,7 +268,6 @@ namespace PerformanceTest
         {
             this.ExperimentID = info.GetInt32("ExperimentID");
             this.BenchmarkFileName = info.GetString("BenchmarkFileName");
-            this.WorkerInformation = info.GetString("WorkerInformation");
             this.NormalizedRuntime = info.GetDouble("NormalizedRuntime");
             this.TotalProcessorTime = (TimeSpan)info.GetValue("TotalProcessorTime", typeof(TimeSpan));
             this.WallClockTime = (TimeSpan)info.GetValue("WallClockTime", typeof(TimeSpan));

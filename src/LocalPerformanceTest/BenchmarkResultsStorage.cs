@@ -27,8 +27,7 @@ namespace PerformanceTest
                 Column.Create("Status", benchmarks.Select(b => StatusToString(b.Status)), length),
                 Column.Create("ExitCode", benchmarks.Select(b => b.ExitCode), length),
                 Column.Create("StdOut", benchmarks.Select(b => Utils.StreamToString(b.StdOut, true)), length),
-                Column.Create("StdErr", benchmarks.Select(b => Utils.StreamToString(b.StdErr, true)), length),
-                Column.Create("WorkerInformation", benchmarks.Select(b => b.WorkerInformation), length),
+                Column.Create("StdErr", benchmarks.Select(b => Utils.StreamToString(b.StdErr, true)), length)
             };
 
             HashSet<string> props = new HashSet<string>();
@@ -65,7 +64,6 @@ namespace PerformanceTest
             var exitcode = table["ExitCode"].Rows.AsString;
             var stdout = table["StdOut"].Rows.AsString;
             var stderr = table["StdErr"].Rows.AsString;
-            var worker = table["WorkerInformation"].Rows.AsString;
 
             var propColumns =
                 (from c in table
@@ -79,8 +77,7 @@ namespace PerformanceTest
                     c.Name != "Status" &&
                     c.Name != "ExitCode" &&
                     c.Name != "StdOut" &&
-                    c.Name != "StdErr" &&
-                    c.Name != "WorkerInformation"
+                    c.Name != "StdErr"
                  select Tuple.Create(c.Name, c.Rows.AsString))
                 .ToArray();
 
@@ -96,7 +93,7 @@ namespace PerformanceTest
                 }
 
                 results[i] = new BenchmarkResult(
-                    expId, fileName[i], worker[i], DateTime.Parse(acq[i], System.Globalization.CultureInfo.InvariantCulture),
+                    expId, fileName[i], DateTime.Parse(acq[i], System.Globalization.CultureInfo.InvariantCulture),
                     double.Parse(norm[i]), TimeSpan.FromSeconds(double.Parse(runtime[i])), TimeSpan.FromSeconds(double.Parse(wctime[i])), double.Parse(mem[i]),
                     StatusFromString(stat[i]), int.Parse(exitcode[i]), Utils.StringToStream(stdout[i]), Utils.StringToStream(stderr[i]),
                     props);

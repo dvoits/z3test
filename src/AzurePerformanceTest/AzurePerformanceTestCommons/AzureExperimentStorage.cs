@@ -306,7 +306,7 @@ namespace AzurePerformanceTest
         /// <param name="creator"></param>
         /// <param name="note"></param>
         /// <returns>ID of newly created entry</returns>
-        public async Task<int> AddExperiment(ExperimentDefinition experiment, DateTime submitted, string creator, string note)
+        public async Task<int> AddExperiment(ExperimentDefinition experiment, DateTime submitted, string creator, string note, string workerInformation)
         {
             TableQuery<NextExperimentIDEntity> idEntityQuery = QueryForNextId();
 
@@ -354,6 +354,7 @@ namespace AzurePerformanceTest
             row.GroupName = experiment.GroupName;
             row.Note = note;
             row.Creator = creator;
+            row.WorkerInformation = workerInformation;
 
             TableOperation insertOperation = TableOperation.Insert(row);
             await experimentsTable.ExecuteAsync(insertOperation);
@@ -746,6 +747,7 @@ namespace AzurePerformanceTest
         public double ExperimentTimeout { get; set; }
         public string Note { get; set; }
         public string Creator { get; set; }
+        public string WorkerInformation { get; set; }
         public bool Flag { get; set; }
         public string GroupName { get; set; }
         public int TotalBenchmarks { get; set; }

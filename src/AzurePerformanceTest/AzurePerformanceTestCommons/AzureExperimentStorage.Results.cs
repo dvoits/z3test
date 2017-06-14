@@ -138,7 +138,6 @@ namespace AzurePerformanceTest
             }
             azureResult.TotalProcessorTime = result.TotalProcessorTime;
             azureResult.WallClockTime = result.WallClockTime;
-            azureResult.WorkerInformation = result.WorkerInformation;
 
             return azureResult;
         }
@@ -148,7 +147,6 @@ namespace AzurePerformanceTest
             return new BenchmarkResult(
                 azureResult.ExperimentID,
                 azureResult.BenchmarkFileName,
-                azureResult.WorkerInformation,
                 azureResult.AcquireTime,
                 azureResult.NormalizedRuntime,
                 azureResult.TotalProcessorTime,
