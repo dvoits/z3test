@@ -314,7 +314,7 @@ namespace PerformanceTest.Management
             {
                 NewJobDialog dlg = new NewJobDialog();
                 string creator = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
-                var vm = new NewExperimentViewModel(managerVm, uiService, recentValues, creator);
+                var vm = new NewExperimentViewModel(managerVm, uiService, recentValues, creator, domainResolver);
                 dlg.DataContext = vm;
                 dlg.Owner = this;
                 if (dlg.ShowDialog() == true)

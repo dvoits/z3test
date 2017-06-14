@@ -22,6 +22,8 @@ namespace Measurement
 
         public string Name { get { return name; } }
 
+        public virtual string[] BenchmarkExtensions { get { return new string[0]; } }
+
 
         public abstract ProcessRunAnalysis Analyze(string inputFile, ProcessRunMeasure measure);
 
