@@ -512,9 +512,8 @@ namespace PerformanceTest.Management
             var st = (ExperimentStatusViewModel)dataGrid.SelectedItem;
             ShowResults dlg = new ShowResults();
             string sharedDirectory = "";
-            if (st.Definition.BenchmarkDirectory != null && st.Definition.BenchmarkDirectory != "") {
-                if (st.Definition.BenchmarkDirectory.Contains("/")) sharedDirectory = st.Definition.BenchmarkDirectory + "/" + st.Definition.Category;
-                else sharedDirectory = st.Definition.BenchmarkDirectory + @"\" + st.Definition.Category;
+            if (st.Definition.BenchmarkDirectory != null && st.Definition.BenchmarkDirectory != "") {                
+                sharedDirectory = st.Definition.BenchmarkDirectory + "/" + st.Definition.Category;
             }
             else sharedDirectory = st.Definition.Category;
            

@@ -225,7 +225,7 @@ namespace PerformanceTest.Management
             statuses.Add(Tuple.Create(opsId, status));
             if (statuses.Count == 1)
             {
-                Mouse.OverrideCursor = Cursors.Wait;
+                Mouse.OverrideCursor = Cursors.AppStarting;
             }
 
             statusVm.Status = status;
