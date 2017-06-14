@@ -320,8 +320,7 @@ namespace AzurePerformanceTest
                     string blobSasUri = String.Format("{0}{1}", blob.Uri, sasBlobToken);
                     job.JobPreparationTask.ResourceFiles.Add(new ResourceFile(blobSasUri, blob.Name));
                 }
-
-                //TODO: put exec to shared dir
+                
                 string executableFolder = "exec";
                 job.JobPreparationTask.ResourceFiles.Add(new ResourceFile(storage.GetExecutableSasUri(definition.Executable), Path.Combine(executableFolder, definition.Executable)));
 
@@ -337,10 +336,29 @@ namespace AzurePerformanceTest
                     else
                         benchStorage = new AzureBenchmarkStorage(refExp.Definition.BenchmarkContainerUri);
 
+                    Domain refdomain;
+                    if (refExp.Definition.DomainName == "Z3")
+                        refdomain = new Z3Domain();
+                    else
+                        throw new InvalidOperationException("Reference experiment uses unknown domain.");
+
+                    SortedSet<string> extensions;
+                    if (string.IsNullOrEmpty(refExp.Definition.BenchmarkFileExtension))
+                        extensions = new SortedSet<string>(refdomain.BenchmarkExtensions.Distinct());
+                    else
+                        extensions = new SortedSet<string>(refExp.Definition.BenchmarkFileExtension.Split('|').Select(s => s.Trim().TrimStart('.')).Distinct());
+
                     foreach (CloudBlockBlob blob in benchStorage.ListBlobs(refExp.Definition.BenchmarkDirectory, refExp.Definition.Category))
                     {
                         string[] parts = blob.Name.Split('/');
                         string shortName = parts[parts.Length - 1];
+                        var shortnameParts = shortName.Split('.');
+                        if (shortnameParts.Length == 1 && !extensions.Contains(""))
+                            continue;
+                        var ext = shortnameParts[shortnameParts.Length - 1];
+                        if (!extensions.Contains(ext))
+                            continue;
+
                         job.JobPreparationTask.ResourceFiles.Add(new ResourceFile(benchStorage.GetBlobSASUri(blob), Path.Combine(refBenchFolder, shortName)));
                     }
                 }
@@ -353,8 +371,8 @@ namespace AzurePerformanceTest
                 job.Constraints.MaxTaskRetryCount = MaxTaskRetryCount;
                 string taskId = "taskStarter";
 
-                string taskCommandLine = string.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\" + job.Id + "\\AzureWorker.exe --manage-tasks {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\" \"{7}\"", id, definition.BenchmarkContainerUri, definition.BenchmarkDirectory,
-                    definition.Category, definition.Executable, definition.Parameters, definition.BenchmarkTimeout.TotalSeconds.ToString(), definition.MemoryLimitMB.ToString());
+                string taskCommandLine = string.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\" + job.Id + "\\AzureWorker.exe --manage-tasks {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\" \"{7}\" \"{8}\" \"{9}\"", id, definition.BenchmarkContainerUri, definition.BenchmarkDirectory,
+                    definition.Category, definition.BenchmarkFileExtension, definition.DomainName, definition.Executable, definition.Parameters, definition.BenchmarkTimeout.TotalSeconds.ToString(), definition.MemoryLimitMB.ToString());
 
                 job.JobManagerTask = new JobManagerTask(taskId, taskCommandLine);
 

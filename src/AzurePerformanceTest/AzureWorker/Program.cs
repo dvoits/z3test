@@ -63,25 +63,30 @@ namespace AzureWorker
             string benchmarkContainerUri = args[1];
             string benchmarkDirectory = args[2];
             string benchmarkCategory = args[3];
-            string executable = args[4];
-            string arguments = args[5];
-            TimeSpan timeout = TimeSpan.FromSeconds(double.Parse(args[6]));
+            string extensionsString = args[4];
+            string domainString = args[5];
+            string executable = args[6];
+            string arguments = args[7];
+            TimeSpan timeout = TimeSpan.FromSeconds(double.Parse(args[8]));
             double memoryLimit = 0; // no limit
             long? outputLimit = null;
             long? errorLimit = null;
-            if (args.Length > 7)
+            if (args.Length > 9)
             {
-                memoryLimit = double.Parse(args[7]);
-                if (args.Length > 8)
+                memoryLimit = double.Parse(args[9]);
+                if (args.Length > 10)
                 {
-                    outputLimit = args[8] == "null" ? null : (long?)long.Parse(args[8]);
-                    if (args.Length > 9)
+                    outputLimit = args[10] == "null" ? null : (long?)long.Parse(args[10]);
+                    if (args.Length > 11)
                     {
-                        errorLimit = args[9] == "null" ? null : (long?)long.Parse(args[9]);
+                        errorLimit = args[11] == "null" ? null : (long?)long.Parse(args[11]);
                     }
                 }
             }
-            Console.WriteLine(String.Format("Params are:\n id: {0}\ncontainer: {8}\ndirectory:{9}\ncategory: {1}\nexec: {2}\nargs: {3}\ntimeout: {4}\nmemlimit: {5}\noutlimit: {6}\nerrlimit: {7}", experimentId, benchmarkCategory, executable, arguments, timeout, memoryLimit, outputLimit, errorLimit, benchmarkContainerUri, benchmarkDirectory));
+            Console.WriteLine(String.Format("Params are:\n id: {0}\ncontainer: {8}\ndirectory:{9}\ncategory: {1}\nextensions: {10}\ndomain: {11}\nexec: {2}\nargs: {3}\ntimeout: {4}\nmemlimit: {5}\noutlimit: {6}\nerrlimit: {7}", experimentId, benchmarkCategory, executable, arguments, timeout, memoryLimit, outputLimit, errorLimit, benchmarkContainerUri, benchmarkDirectory, extensionsString, domainString));
+
+            if (domainString != "Z3")
+                throw new ArgumentException("Unknown domain");
 
             string jobId = "exp" + experimentId.ToString();
 
@@ -101,6 +106,12 @@ namespace AzureWorker
             Console.WriteLine("Fetched existing results");
             var collectionTask = CollectResults(experimentId);
             Console.WriteLine("Started collection thread.");
+            Domain domain = new Z3Domain();
+            SortedSet<string> extensions;
+            if (string.IsNullOrEmpty(extensionsString))
+                extensions = new SortedSet<string>(domain.BenchmarkExtensions.Distinct());
+            else
+                extensions = new SortedSet<string>(extensionsString.Split('|').Select(s => s.Trim().TrimStart('.')).Distinct());
 
             using (BatchClient batchClient = BatchClient.Open(batchCred))
             {
@@ -139,10 +150,26 @@ namespace AzureWorker
                     {
                         resultSegment = await benchmarkStorage.ListBlobsSegmentedAsync(benchmarksPath, continuationToken);
                         Console.WriteLine("Got some blobs");
-                        starterTasks.Add(StartTasksForSegment(timeout.TotalSeconds.ToString(), experimentId, executable, arguments, memoryLimit, outputLimit, errorLimit, jobId, batchClient, resultSegment.Results, benchmarksPath, totalBenchmarks, processedBlobs, benchmarkStorage));
+                        CloudBlockBlob[] blobsToProcess = resultSegment.Results.SelectMany(item =>
+                        {
+                            var blob = item as CloudBlockBlob;
+                            if (blob == null || processedBlobs.Contains(blob.Name))
+                                return new CloudBlockBlob[] { };
+
+                            var nameParts = blob.Name.Split('/');
+                            var shortnameParts = nameParts[nameParts.Length - 1].Split('.');
+                            if (shortnameParts.Length == 1 && !extensions.Contains(""))
+                                return new CloudBlockBlob[] { };
+                            var ext = shortnameParts[shortnameParts.Length - 1];
+                            if (!extensions.Contains(ext))
+                                return new CloudBlockBlob[] { };
+
+                            return new CloudBlockBlob[] { blob };
+                        }).ToArray();
+                        starterTasks.Add(StartTasksForSegment(timeout.TotalSeconds.ToString(), experimentId, executable, arguments, memoryLimit, outputLimit, errorLimit, jobId, batchClient, blobsToProcess, benchmarksPath, totalBenchmarks, benchmarkStorage));
 
                         continuationToken = resultSegment.ContinuationToken;
-                        totalBenchmarks += resultSegment.Results.Count();
+                        totalBenchmarks += blobsToProcess.Length;
                     }
                     while (continuationToken != null);
 
@@ -169,19 +196,18 @@ namespace AzureWorker
                         {
                             AcquireTime = task.ExecutionInformation.StartTime ?? DateTime.MinValue,
                             BenchmarkFileName = task.DisplayName,
-                            ExitCode = task.ExecutionInformation.ExitCode ?? int.MinValue,
+                            ExitCode = task.ExecutionInformation.ExitCode,
                             ExperimentID = experimentId,
                             StdErr = InfrastructureErrorPrefix + task.ExecutionInformation.FailureInformation.Message,
                             StdErrExtStorageIdx = "",
                             StdOut = "",
                             StdOutExtStorageIdx = "",
-                            NormalizedRuntime = -1,
-                            PeakMemorySizeMB = -1,
+                            NormalizedRuntime = 0,
+                            PeakMemorySizeMB = 0,
                             Properties = new Dictionary<string, string>(),
                             Status = ResultStatus.Error,
                             TotalProcessorTime = TimeSpan.Zero,
-                            WallClockTime = TimeSpan.Zero//,
-                            //WorkerInformation = vmsize
+                            WallClockTime = TimeSpan.Zero
                         }).ToList();
                     Console.WriteLine("Done fetching failed tasks. Got {0}.", badResults.Count);
                 }
@@ -287,29 +313,24 @@ namespace AzureWorker
             return benchmarksPath;
         }
 
-        private static async Task StartTasksForSegment(string timeout, int experimentId, string executable, string arguments, double memoryLimit, long? outputLimit, long? errorLimit, string jobId, BatchClient batchClient, IEnumerable<IListBlobItem> segmentResults, string blobFolderPath, int startTaskId, ICollection<string> processedBlobs, AzureBenchmarkStorage benchmarkStorage)
+        private static async Task StartTasksForSegment(string timeout, int experimentId, string executable, string arguments, double memoryLimit, long? outputLimit, long? errorLimit, string jobId, BatchClient batchClient, IEnumerable<CloudBlockBlob> blobsToProcess, string blobFolderPath, int startTaskId, AzureBenchmarkStorage benchmarkStorage)
         {
             List<CloudTask> tasks = new List<CloudTask>();
             int blobNo = startTaskId;
-            if (processedBlobs == null)
-                processedBlobs = new string[] { };
             int blobFolderPathLength = blobFolderPath.Length;
-            foreach (CloudBlockBlob blobItem in segmentResults)
+            foreach (CloudBlockBlob blobItem in blobsToProcess)
             {
                 string taskId = blobNo.ToString();
-                if (!processedBlobs.Contains(blobItem.Name))
-                {
-                    string[] parts = blobItem.Name.Split('/');
-                    string shortName = parts[parts.Length - 1];
-                    string taskCommandLine = String.Format("cmd /c %" + SharedDirEnvVariableName + "%\\%" + JobIdEnvVariableName + "%\\AzureWorker.exe --measure {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\" \"{7}\" \"{8}\"", experimentId, blobItem.Name.Substring(blobFolderPathLength), executable, arguments, shortName, timeout, memoryLimit, NullableLongToString(outputLimit), NullableLongToString(errorLimit));
-                    var resourceFile = new ResourceFile(benchmarkStorage.GetBlobSASUri(blobItem), shortName);
-                    CloudTask task = new CloudTask(taskId, taskCommandLine);
-                    task.ResourceFiles = new List<ResourceFile> { resourceFile };
-                    task.Constraints = new TaskConstraints();
-                    task.Constraints.MaxWallClockTime = TimeSpan.FromSeconds(double.Parse(timeout)) + ExtraTimeForOverhead;
-                    task.DisplayName = blobItem.Name;
-                    tasks.Add(task);
-                }
+                string[] parts = blobItem.Name.Split('/');
+                string shortName = parts[parts.Length - 1];
+                string taskCommandLine = String.Format("cmd /c %" + SharedDirEnvVariableName + "%\\%" + JobIdEnvVariableName + "%\\AzureWorker.exe --measure {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\" \"{7}\" \"{8}\"", experimentId, blobItem.Name.Substring(blobFolderPathLength), executable, arguments, shortName, timeout, memoryLimit, NullableLongToString(outputLimit), NullableLongToString(errorLimit));
+                var resourceFile = new ResourceFile(benchmarkStorage.GetBlobSASUri(blobItem), shortName);
+                CloudTask task = new CloudTask(taskId, taskCommandLine);
+                task.ResourceFiles = new List<ResourceFile> { resourceFile };
+                task.Constraints = new TaskConstraints();
+                task.Constraints.MaxWallClockTime = TimeSpan.FromSeconds(double.Parse(timeout)) + ExtraTimeForOverhead;
+                task.DisplayName = blobItem.Name;
+                tasks.Add(task);
 
                 ++blobNo;
             }
