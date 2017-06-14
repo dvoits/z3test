@@ -93,9 +93,9 @@ namespace AzurePerformanceTest
                     case nameof(StdErr):
                         StdErr = (string)entry.Value; break;
                     case nameof(StdOutExtStorageIdx):
-                        StdOutExtStorageIdx = (bool)entry.Value; break;
+                        StdOutExtStorageIdx = (string)entry.Value; break;
                     case nameof(StdErrExtStorageIdx):
-                        StdErrExtStorageIdx = (bool)entry.Value; break;
+                        StdErrExtStorageIdx = (string)entry.Value; break;
                 }
             }
         }
