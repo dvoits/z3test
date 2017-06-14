@@ -15,6 +15,14 @@ namespace Measurement
         {
         }
 
+        public override string[] BenchmarkExtensions
+        {
+            get
+            {
+                return new[] { "smt2", "smt" };
+            }
+        }
+
         public override ProcessRunAnalysis Analyze(string inputFile, ProcessRunMeasure measure)
         {
             if (!measure.StdOut.CanSeek) throw new NotSupportedException("Standard output stream doesn't support seeking");

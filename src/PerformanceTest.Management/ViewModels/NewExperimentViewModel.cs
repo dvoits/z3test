@@ -15,6 +15,7 @@ namespace PerformanceTest.Management
     {
         private readonly AzureExperimentManagerViewModel manager;
         private readonly IUIService service;
+        private readonly IDomainResolver domainResolver;
         private readonly RecentValuesStorage recentValues;
         private readonly string creator;
 
@@ -40,17 +41,18 @@ namespace PerformanceTest.Management
         public event PropertyChangedEventHandler PropertyChanged;
 
 
-        public NewExperimentViewModel(AzureExperimentManagerViewModel manager, IUIService service, RecentValuesStorage recentValues, string creator)
+        public NewExperimentViewModel(AzureExperimentManagerViewModel manager, IUIService service, RecentValuesStorage recentValues, string creator, IDomainResolver domainResolver)
         {
-            if (manager == null) throw new ArgumentNullException("manager");
-            if (service == null) throw new ArgumentNullException("service");
-            if (recentValues == null) throw new ArgumentNullException("recentValues");
+            if (manager == null) throw new ArgumentNullException(nameof(manager));
+            if (service == null) throw new ArgumentNullException(nameof(service));
+            if (recentValues == null) throw new ArgumentNullException(nameof(recentValues));
+            if (domainResolver == null) throw new ArgumentNullException(nameof(domainResolver));
             this.manager = manager;
             this.service = service;
             this.recentValues = recentValues;
             this.creator = creator;
-
-            domain = "Z3";
+            this.domainResolver = domainResolver;
+                        
             benchmarkContainerUri = ExperimentDefinition.DefaultContainerUri;
 
             ChooseDirectoryCommand = new DelegateCommand(ChooseDirectory);
@@ -59,12 +61,18 @@ namespace PerformanceTest.Management
             ChoosePoolCommand = new DelegateCommand(ListPools);
 
             benchmarkDirectory = recentValues.BenchmarkDirectory;
-            categories = recentValues.BenchmarkCategories;
-            extension = recentValues.BenchmarkExtension;
+            categories = recentValues.BenchmarkCategories;            
             parameters = recentValues.ExperimentExecutableParameters;
             timelimit = recentValues.BenchmarkTimeLimit.TotalSeconds;
             memlimit = recentValues.BenchmarkMemoryLimit;
             note = recentValues.ExperimentNote;
+
+            Domain = Domains[0];
+            string storedExt = recentValues.BenchmarkExtension;
+            if (!string.IsNullOrEmpty(storedExt))
+            {
+                extension = storedExt;
+            }
 
             UseMostRecentExecutable = true;
             RecentBlobDisplayName = "searching...";
@@ -118,12 +126,25 @@ namespace PerformanceTest.Management
                 if (domain == value) return;
                 domain = value;
                 NotifyPropertyChanged();
+
+                string ext = extension;
+                try
+                {
+                    string[] newExt = domainResolver.GetDomain(domain).BenchmarkExtensions;
+                    if (newExt == null || newExt.Length == 0) return;
+                    Extension = string.Join("|", newExt);
+                }
+                catch (Exception ex)
+                {
+                    Extension = ext;
+                    service.ShowWarning(ex.Message, "Couldn't set extensions of the selected domain");
+                }
             }
         }
 
         public string[] Domains
         {
-            get { return new[] { "Z3", "default" }; }
+            get { return new[] { "Z3" }; }
         }
 
         public string MainExecutable
@@ -328,8 +349,8 @@ namespace PerformanceTest.Management
                     mainFile = exeFiles[0];
                 else
                 {
-                    mainFile = service.ChooseOption("Select main executable", 
-                        new AsyncLazy<string[]>(() => Task.FromResult(exeFiles)), 
+                    mainFile = service.ChooseOption("Select main executable",
+                        new AsyncLazy<string[]>(() => Task.FromResult(exeFiles)),
                         new Predicate<string>(file => file == exeFiles[0]));
                     if (mainFile == null) return;
                 }
@@ -350,8 +371,8 @@ namespace PerformanceTest.Management
         {
             try
             {
-                PoolDescription pool = service.ChooseOption("Choose an Azure Batch Pool", 
-                    new AsyncLazy<PoolDescription[]>(() => manager.GetAvailablePools()), 
+                PoolDescription pool = service.ChooseOption("Choose an Azure Batch Pool",
+                    new AsyncLazy<PoolDescription[]>(() => manager.GetAvailablePools()),
                     new Predicate<PoolDescription>(p => p.Id == selectedPool));
                 if (pool != null)
                 {
@@ -390,8 +411,8 @@ namespace PerformanceTest.Management
             {
                 string[] selected = Categories == null ? new string[0] : Categories.Split(',').Select(s => s.Trim()).ToArray();
 
-                selected = service.ChooseOptions("Choose categories", 
-                    new AsyncLazy<string[]>(() => manager.GetAvailableCategories(BenchmarkDirectory)), 
+                selected = service.ChooseOptions("Choose categories",
+                    new AsyncLazy<string[]>(() => manager.GetAvailableCategories(BenchmarkDirectory)),
                     new Predicate<string>(c => selected.Contains(c)));
                 if (selected != null)
                 {
