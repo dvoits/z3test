@@ -123,6 +123,7 @@ namespace PerformanceTest.Management
             get { return domain; }
             set
             {
+                if (value == null) throw new ArgumentNullException(nameof(Domain));
                 if (domain == value) return;
                 domain = value;
                 NotifyPropertyChanged();
@@ -302,6 +303,53 @@ namespace PerformanceTest.Management
         public Task<string> GetRecentExecutable()
         {
             return taskRecentBlob;
+        }
+
+        /// <summary>
+        /// Returns true, if validation succeded and the new experiment may be submitted.
+        /// Returns false, if validation failed and new experiment shouldn't be submitted.
+        /// Validation can interact with the user and modify the values.
+        /// </summary>
+        /// <returns></returns>
+        public bool Validate()
+        {
+            bool isValid = true;
+
+            if(UseNewExecutable && (fileNames == null || fileNames.Length == 0))
+            {
+                isValid = false;
+                service.ShowWarning("No files are selected as new executable", "Validation failed");
+            }
+
+            if(string.IsNullOrEmpty(Extension))
+            {
+                isValid = false;
+                service.ShowWarning("Benchmark extension is not specified", "Validation failed");
+            }
+
+            if (string.IsNullOrEmpty(Pool))
+            {
+                isValid = false;
+                service.ShowWarning("Azure Batch Pool is not specified", "Validation failed");
+            }
+
+            if (Parameters == null)
+            {
+                isValid = false;
+                service.ShowWarning("Parameters value is null", "Validation failed");
+            }
+            else if (!Parameters.Contains("{0}"))
+            {
+                string suggestion = string.IsNullOrWhiteSpace(Parameters) ? "{0}" + Parameters : "{0} " + Parameters;
+                string message = string.Format("Parameters do not contain a placeholder for an input file name. Suggested parameters are:\n\n{0}\n\nUse the suggested parameters?", suggestion);
+                bool? result = service.AskYesNoCancel(message, "Validation");
+                if (result == null)
+                    isValid = false;
+                else if (result.Value)
+                    Parameters = suggestion;
+            }
+
+            return isValid;
         }
 
         private async Task<string> FindRecentExecutable()

@@ -99,9 +99,10 @@
                     <ColumnDefinition Width="{StaticResource KeyWidth}" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <Label Content="Benchmark extension:" Height="28" HorizontalAlignment="Left" Name="label14" VerticalAlignment="Center" Grid.Column="0"/>
-                <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtExtension" VerticalAlignment="Center" Grid.Column="1" TabIndex="3" ToolTip="The extension of benchmark files, e.g., smt2 for SMT-Lib version 2 files." Margin="0,2"
-                             Text="{Binding Extension}"/>
+                <Label Content="Benchmark extension(s):" Height="28" HorizontalAlignment="Left" Name="label14" VerticalAlignment="Center" Grid.Column="0"/>
+                <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtExtension" VerticalAlignment="Center" Grid.Column="1" TabIndex="3" 
+                         ToolTip="The extension of benchmark files, e.g., smt2 for SMT-Lib version 2 files.\nMultiple extensions can be provided through pipe, e.g. smt2 | smt." Margin="0,2"
+                         Text="{Binding Extension}"/>
             </Grid>
             <!-- Executable -->
             <Grid Margin="{StaticResource ParameterMargin}">
@@ -167,7 +168,7 @@
                 <StackPanel Orientation="Vertical" VerticalAlignment="Center"  Grid.Column="1">
                     <TextBox Height="24" Margin="0,5,0,0" HorizontalAlignment="Stretch" Name="txtParameters" ToolTip="Parameters for the executable." 
                                  Text="{Binding Parameters}"/>
-                    <TextBlock Margin="0,5,10,10">Use {0} a placeholder for an input file name.</TextBlock>
+                    <TextBlock Margin="0,5,10,10">Use {0} as a placeholder for an input file name.</TextBlock>
                 </StackPanel>
             </Grid>
             <!-- Domain -->

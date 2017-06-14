@@ -31,7 +31,16 @@ namespace PerformanceTest.Management
 
         private void okButton_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = true;
+            NewExperimentViewModel vm = DataContext as NewExperimentViewModel;
+            if (vm != null)
+            {
+                if (vm.Validate())
+                    DialogResult = true;
+            }
+            else
+            {
+                DialogResult = true;
+            }
         }
 
         private void cancelButton_Click(object sender, RoutedEventArgs e)
