@@ -47,7 +47,7 @@ namespace AzurePerformanceTest
         /// </summary>
         public double PeakMemorySizeMB { get; set; }
 
-        public int ExitCode { get; set; }
+        public int? ExitCode { get; set; }
 
         public string StdOut { get; set; }
 
@@ -66,40 +66,64 @@ namespace AzurePerformanceTest
 
         public AzureBenchmarkResult(SerializationInfo info, StreamingContext context)
         {
-            this.ExperimentID = info.GetInt32("ExperimentID");
-            this.BenchmarkFileName = info.GetString("BenchmarkFileName");
-            this.WorkerInformation = info.GetString("WorkerInformation");
-            this.NormalizedRuntime = info.GetDouble("NormalizedRuntime");
-            this.TotalProcessorTime = (TimeSpan)info.GetValue("TotalProcessorTime", typeof(TimeSpan));
-            this.WallClockTime = (TimeSpan)info.GetValue("WallClockTime", typeof(TimeSpan));
-            this.PeakMemorySizeMB = info.GetDouble("PeakMemorySizeMB");
-            this.ExitCode = info.GetInt32("ExitCode");
-            this.AcquireTime = info.GetDateTime("AcquireTime");
-            this.Status = (ResultStatus)info.GetInt32("Status");
-            this.Properties = (Dictionary<string, string>)info.GetValue("Properties", typeof(Dictionary<string, string>));
-            this.StdOut = info.GetString("StdOut");
-            this.StdErr = info.GetString("StdErr");
-            this.StdOutStoredExternally = info.GetBoolean("StdOutStoredExternally");
-            this.StdErrStoredExternally = info.GetBoolean("StdErrStoredExternally");
+            foreach (SerializationEntry entry in info)
+            {
+                switch (entry.Name)
+                {
+                    case nameof(ExperimentID):
+                        ExperimentID = (int)entry.Value; break;
+                    case nameof(BenchmarkFileName):
+                        BenchmarkFileName = (string)entry.Value; break;
+                    case nameof(WorkerInformation):
+                        WorkerInformation = (string)entry.Value; break;
+                    case nameof(NormalizedRuntime):
+                        NormalizedRuntime = (double)entry.Value; break;
+                    case nameof(TotalProcessorTime):
+                        TotalProcessorTime = (TimeSpan)entry.Value; break;
+                    case nameof(WallClockTime):
+                        WallClockTime = (TimeSpan)entry.Value; break;
+                    case nameof(PeakMemorySizeMB):
+                        PeakMemorySizeMB = (double)entry.Value; break;
+                    case nameof(ExitCode):
+                        ExitCode = (int)entry.Value; break;
+                    case nameof(AcquireTime):
+                        AcquireTime = (DateTime)entry.Value; break;
+                    case nameof(Status):
+                        Status = (ResultStatus)(int)entry.Value; break;
+                    case nameof(Properties):
+                        Properties = (Dictionary<string, string>)entry.Value; break;
+                    case nameof(StdOut):
+                        StdOut = (string)entry.Value; break;
+                    case nameof(StdErr):
+                        StdErr = (string)entry.Value; break;
+                    case nameof(StdOutStoredExternally):
+                        StdOutStoredExternally = (bool)entry.Value; break;
+                    case nameof(StdErrStoredExternally):
+                        StdErrStoredExternally = (bool)entry.Value; break;
+                }
+            }
         }
 
         public void GetObjectData(SerializationInfo info, StreamingContext context)
         {
-            info.AddValue("ExperimentID", this.ExperimentID);
-            info.AddValue("BenchmarkFileName", this.BenchmarkFileName, typeof(string));
-            info.AddValue("WorkerInformation", this.WorkerInformation, typeof(string));
-            info.AddValue("NormalizedRuntime", this.NormalizedRuntime);
-            info.AddValue("TotalProcessorTime", this.TotalProcessorTime, typeof(TimeSpan));
-            info.AddValue("WallClockTime", this.WallClockTime, typeof(TimeSpan));
-            info.AddValue("PeakMemorySizeMB", this.PeakMemorySizeMB);
-            info.AddValue("ExitCode", this.ExitCode);
-            info.AddValue("AcquireTime", this.AcquireTime);
-            info.AddValue("Status", (int)this.Status);
-            info.AddValue("Properties", this.Properties, typeof(Dictionary<string, string>));
-            info.AddValue("StdOut", this.StdOut);
-            info.AddValue("StdErr", this.StdErr);
-            info.AddValue("StdOutStoredExternally", this.StdOutStoredExternally);
-            info.AddValue("StdErrStoredExternally", this.StdErrStoredExternally);
+            info.AddValue(nameof(ExperimentID), this.ExperimentID);
+            info.AddValue(nameof(BenchmarkFileName), this.BenchmarkFileName, typeof(string));
+            info.AddValue(nameof(WorkerInformation), this.WorkerInformation, typeof(string));
+            info.AddValue(nameof(NormalizedRuntime), this.NormalizedRuntime);
+            info.AddValue(nameof(TotalProcessorTime), this.TotalProcessorTime, typeof(TimeSpan));
+            info.AddValue(nameof(WallClockTime), this.WallClockTime, typeof(TimeSpan));
+            info.AddValue(nameof(PeakMemorySizeMB), this.PeakMemorySizeMB);
+            if (this.ExitCode.HasValue) info.AddValue(nameof(ExitCode), this.ExitCode);
+            info.AddValue(nameof(AcquireTime), this.AcquireTime);
+            info.AddValue(nameof(Status), (int)this.Status);
+            var props = new Dictionary<string, string>(this.Properties.Count);
+            foreach (var prop in this.Properties)
+                props.Add(prop.Key, prop.Value);
+            info.AddValue(nameof(Properties), props, typeof(Dictionary<string, string>));
+            info.AddValue(nameof(StdOut), this.StdOut);
+            info.AddValue(nameof(StdErr), this.StdErr);
+            info.AddValue(nameof(StdOutStoredExternally), this.StdOutStoredExternally);
+            info.AddValue(nameof(StdErrStoredExternally), this.StdErrStoredExternally);
         }
 
         public static void SaveBenchmarks(AzureBenchmarkResult[] benchmarks, Stream stream)
@@ -114,7 +138,7 @@ namespace AzurePerformanceTest
                 Column.Create("WallClockTime", benchmarks.Select(b => b.WallClockTime.TotalSeconds), length),
                 Column.Create("PeakMemorySizeMB", benchmarks.Select(b => b.PeakMemorySizeMB), length),
                 Column.Create("Status", benchmarks.Select(b => StatusToString(b.Status)), length),
-                Column.Create("ExitCode", benchmarks.Select(b => b.ExitCode), length),
+                Column.Create("ExitCode", benchmarks.Select(b => b.ExitCode.HasValue ? b.ExitCode.ToString() : null), length),
                 Column.Create("StdOut", benchmarks.Select(b => b.StdOut), length),
                 Column.Create("StdOutStoredExternally", benchmarks.Select(b => b.StdOutStoredExternally), length),
                 Column.Create("StdErr", benchmarks.Select(b => b.StdErr), length),
@@ -192,7 +216,7 @@ namespace AzurePerformanceTest
                 results[i] = new AzureBenchmarkResult();
                 results[i].AcquireTime = DateTime.Parse(acq[i], System.Globalization.CultureInfo.InvariantCulture);
                 results[i].BenchmarkFileName = fileName[i];
-                results[i].ExitCode = int.Parse(exitcode[i]);
+                results[i].ExitCode = string.IsNullOrEmpty(exitcode[i]) ? null : (int?)int.Parse(exitcode[i]);
                 results[i].ExperimentID = expId;
                 results[i].NormalizedRuntime = double.Parse(norm[i]);
                 results[i].PeakMemorySizeMB = double.Parse(mem[i]);

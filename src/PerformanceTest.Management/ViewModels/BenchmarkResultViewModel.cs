@@ -41,7 +41,7 @@ namespace PerformanceTest.Management
         {
             get { return result.BenchmarkFileName; }
         }
-        public int ExitCode
+        public int? ExitCode
         {
             get { return result.ExitCode; }
         }

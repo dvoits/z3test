@@ -46,7 +46,7 @@ namespace Measurement
             Counts countsResults = CountResults(measure.StdOut);
 
 
-            int exitCode = measure.ExitCode;
+            int? exitCode = measure.ExitCode;
             LimitsStatus limits = measure.Limits;
             ResultStatus status;
 
