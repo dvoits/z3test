@@ -92,8 +92,16 @@ namespace PerformanceTest.Management
 
         private async void Initialize()
         {
-            await RefreshExecutionStatus();
-            await BuildStatistics();
+            try
+            {
+                await RefreshExecutionStatus();
+                await BuildStatistics();
+            }
+            catch (Exception ex)
+            {
+                ui.ShowError(ex, "Failed to get properties of the experiment");
+            }
+
             isSyncing = false;
             Sync.RaiseCanExecuteChanged();
         }

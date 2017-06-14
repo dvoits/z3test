@@ -178,7 +178,12 @@ namespace Measurement
             {
                 p.BeginOutputReadLine();
                 p.BeginErrorReadLine();
-                p.ProcessorAffinity = (IntPtr)1L;
+
+                int pn = Environment.ProcessorCount;
+                if (pn > 1)
+                {
+                    p.ProcessorAffinity = (IntPtr)((1L << pn) - 1L);
+                }
                 p.PriorityClass = ProcessPriorityClass.RealTime;
             }
             catch (InvalidOperationException ex)
