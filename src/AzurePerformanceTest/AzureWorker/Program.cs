@@ -172,9 +172,9 @@ namespace AzureWorker
                             ExitCode = task.ExecutionInformation.ExitCode ?? int.MinValue,
                             ExperimentID = experimentId,
                             StdErr = InfrastructureErrorPrefix + task.ExecutionInformation.FailureInformation.Message,
-                            StdErrStoredExternally = false,
+                            StdErrExtStorageIdx = "",
                             StdOut = "",
-                            StdOutStoredExternally = false,
+                            StdOutExtStorageIdx = "",
                             NormalizedRuntime = -1,
                             PeakMemorySizeMB = -1,
                             Properties = new Dictionary<string, string>(),
@@ -202,7 +202,7 @@ namespace AzureWorker
             badResults = new List<AzureBenchmarkResult>();
             foreach (var r in results)
             {
-                if (r.StdErr.StartsWith(InfrastructureErrorPrefix) || (r.StdErrStoredExternally && Utils.StreamToString(storage.ParseAzureBenchmarkResult(r).StdErr, false).StartsWith(InfrastructureErrorPrefix)))
+                if (r.StdErr.StartsWith(InfrastructureErrorPrefix) || (!string.IsNullOrEmpty(r.StdErrExtStorageIdx) && Utils.StreamToString(storage.ParseAzureBenchmarkResult(r).StdErr, false).StartsWith(InfrastructureErrorPrefix)))
                     badResults.Add(r);
                 else
                     goodResults.Add(r);

@@ -53,9 +53,9 @@ namespace AzurePerformanceTest
 
         public string StdErr { get; set; }
 
-        public bool StdOutStoredExternally { get; set; }
+        public string StdOutExtStorageIdx { get; set; }
 
-        public bool StdErrStoredExternally { get; set; }
+        public string StdErrExtStorageIdx { get; set; }
 
         public string WorkerInformation { get; set; }
 
@@ -79,8 +79,8 @@ namespace AzurePerformanceTest
             this.Properties = (Dictionary<string, string>)info.GetValue("Properties", typeof(Dictionary<string, string>));
             this.StdOut = info.GetString("StdOut");
             this.StdErr = info.GetString("StdErr");
-            this.StdOutStoredExternally = info.GetBoolean("StdOutStoredExternally");
-            this.StdErrStoredExternally = info.GetBoolean("StdErrStoredExternally");
+            this.StdOutExtStorageIdx = info.GetString("StdOutExtStorageIdx");
+            this.StdErrExtStorageIdx = info.GetString("StdErrExtStorageIdx");
         }
 
         public void GetObjectData(SerializationInfo info, StreamingContext context)
@@ -98,8 +98,8 @@ namespace AzurePerformanceTest
             info.AddValue("Properties", this.Properties, typeof(Dictionary<string, string>));
             info.AddValue("StdOut", this.StdOut);
             info.AddValue("StdErr", this.StdErr);
-            info.AddValue("StdOutStoredExternally", this.StdOutStoredExternally);
-            info.AddValue("StdErrStoredExternally", this.StdErrStoredExternally);
+            info.AddValue("StdOutExtStorageIdx", this.StdOutExtStorageIdx);
+            info.AddValue("StdErrExtStorageIdx", this.StdErrExtStorageIdx);
         }
 
         public static void SaveBenchmarks(AzureBenchmarkResult[] benchmarks, Stream stream)
@@ -116,9 +116,9 @@ namespace AzurePerformanceTest
                 Column.Create("Status", benchmarks.Select(b => StatusToString(b.Status)), length),
                 Column.Create("ExitCode", benchmarks.Select(b => b.ExitCode), length),
                 Column.Create("StdOut", benchmarks.Select(b => b.StdOut), length),
-                Column.Create("StdOutStoredExternally", benchmarks.Select(b => b.StdOutStoredExternally), length),
+                Column.Create("StdOutExtStorageIdx", benchmarks.Select(b => b.StdOutExtStorageIdx), length),
                 Column.Create("StdErr", benchmarks.Select(b => b.StdErr), length),
-                Column.Create("StdErrStoredExternally", benchmarks.Select(b => b.StdErrStoredExternally), length),
+                Column.Create("StdErrExtStorageIdx", benchmarks.Select(b => b.StdErrExtStorageIdx), length),
                 Column.Create("WorkerInformation", benchmarks.Select(b => b.WorkerInformation), length),
             };
 
@@ -155,9 +155,9 @@ namespace AzurePerformanceTest
             var stat = table["Status"].Rows.AsString;
             var exitcode = table["ExitCode"].Rows.AsString;
             var stdout = table["StdOut"].Rows.AsString;
-            var stdoutext = table["StdOutStoredExternally"].Rows.AsString;
+            var stdoutext = table["StdOutExtStorageIdx"].Rows.AsString;
             var stderr = table["StdErr"].Rows.AsString;
-            var stderrext = table["StdErrStoredExternally"].Rows.AsString;
+            var stderrext = table["StdErrExtStorageIdx"].Rows.AsString;
             var worker = table["WorkerInformation"].Rows.AsString;
 
             var propColumns =
@@ -173,6 +173,8 @@ namespace AzurePerformanceTest
                     c.Name != "ExitCode" &&
                     c.Name != "StdOut" &&
                     c.Name != "StdErr" &&
+                    c.Name != "StdOutExtStorageIdx" &&
+                    c.Name != "StdErrExtStorageIdx" &&
                     c.Name != "WorkerInformation"
                  select Tuple.Create(c.Name, c.Rows.AsString))
                 .ToArray();
@@ -199,9 +201,9 @@ namespace AzurePerformanceTest
                 results[i].Properties = props;
                 results[i].Status = StatusFromString(stat[i]);
                 results[i].StdErr = stderr[i];
-                results[i].StdErrStoredExternally = bool.Parse(stderrext[i]);
+                results[i].StdErrExtStorageIdx = stderrext[i];
                 results[i].StdOut = stdout[i];
-                results[i].StdOutStoredExternally = bool.Parse(stdoutext[i]);
+                results[i].StdOutExtStorageIdx = stdoutext[i];
                 results[i].TotalProcessorTime = TimeSpan.FromSeconds(double.Parse(runtime[i]));
                 results[i].WallClockTime = TimeSpan.FromSeconds(double.Parse(wctime[i]));
                 results[i].WorkerInformation = worker[i];

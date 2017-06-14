@@ -62,11 +62,18 @@ namespace AzurePerformanceTest
             azureResult.Status = result.Status;
             if (result.StdOut.Length > MaxStdOutLength)
             {
-                string stdoutBlobId = BlobNameForStdOut(result.ExperimentID, result.BenchmarkFileName);
-                await UploadOutput(stdoutBlobId, result.StdOut, true);
+                int i = -1;
+                string stdoutBlobId;
+                do
+                {
+                    ++i;
+                    stdoutBlobId = BlobNameForStdOut(result.ExperimentID, result.BenchmarkFileName, i.ToString());
+                }
+                while (!await UploadOutput(stdoutBlobId, result.StdOut, false));
+
                 Trace.WriteLine(string.Format("Uploaded stdout for experiment {0}", result.ExperimentID));
                 azureResult.StdOut = null;
-                azureResult.StdOutStoredExternally = true;
+                azureResult.StdOutExtStorageIdx = i.ToString();
             }
             else
             {
@@ -89,15 +96,22 @@ namespace AzurePerformanceTest
                 }
                 else
                     azureResult.StdOut = "";
-                azureResult.StdOutStoredExternally = false;
+                azureResult.StdOutExtStorageIdx = "";
             }
             if (result.StdErr.Length > MaxStdErrLength)
             {
-                string stderrBlobId = BlobNameForStdErr(result.ExperimentID, result.BenchmarkFileName);
-                await UploadOutput(stderrBlobId, result.StdErr, true);
+                int i = -1;
+                string stderrBlobId;
+                do
+                {
+                    ++i;
+                    stderrBlobId = BlobNameForStdErr(result.ExperimentID, result.BenchmarkFileName, i.ToString());
+                }
+                while (!await UploadOutput(stderrBlobId, result.StdErr, true));
+
                 Trace.WriteLine(string.Format("Uploaded stderr for experiment {0}", result.ExperimentID));
                 azureResult.StdErr = null;
-                azureResult.StdErrStoredExternally = true;
+                azureResult.StdErrExtStorageIdx = i.ToString();
             }
             else
             {
@@ -120,7 +134,7 @@ namespace AzurePerformanceTest
                 }
                 else
                     azureResult.StdErr = "";
-                azureResult.StdErrStoredExternally = false;
+                azureResult.StdErrExtStorageIdx = "";
             }
             azureResult.TotalProcessorTime = result.TotalProcessorTime;
             azureResult.WallClockTime = result.WallClockTime;
@@ -142,29 +156,10 @@ namespace AzurePerformanceTest
                 azureResult.PeakMemorySizeMB,
                 azureResult.Status,
                 azureResult.ExitCode,
-                azureResult.StdOutStoredExternally ? new LazyBlobStream(outputContainer.GetBlobReference(BlobNameForStdOut(azureResult.ExperimentID, azureResult.BenchmarkFileName))) : Utils.StringToStream(azureResult.StdOut),
-                azureResult.StdErrStoredExternally ? new LazyBlobStream(outputContainer.GetBlobReference(BlobNameForStdErr(azureResult.ExperimentID, azureResult.BenchmarkFileName))) : Utils.StringToStream(azureResult.StdErr),
+                string.IsNullOrEmpty(azureResult.StdOutExtStorageIdx) ? Utils.StringToStream(azureResult.StdOut) : new LazyBlobStream(outputContainer.GetBlobReference(BlobNameForStdOut(azureResult.ExperimentID, azureResult.BenchmarkFileName, azureResult.StdOutExtStorageIdx))),
+                string.IsNullOrEmpty(azureResult.StdErrExtStorageIdx) ? Utils.StringToStream(azureResult.StdErr) : new LazyBlobStream(outputContainer.GetBlobReference(BlobNameForStdErr(azureResult.ExperimentID, azureResult.BenchmarkFileName, azureResult.StdErrExtStorageIdx))),
                 new ReadOnlyDictionary<string, string>(azureResult.Properties)
                 );
-        }
-
-        private async Task<Tuple<string, string>> PutStdOutput(BenchmarkResult result)
-        {
-            string stdoutBlobId = "";
-            string stderrBlobId = "";
-            if (result.StdOut.Length > 0)
-            {
-                stdoutBlobId = BlobNameForStdOut(result.ExperimentID, result.BenchmarkFileName);
-                await UploadOutput(stdoutBlobId, result.StdOut, true);
-                Trace.WriteLine(string.Format("Uploaded stdout for experiment {0}", result.ExperimentID));
-            }
-            if (result.StdErr.Length > 0)
-            {
-                stderrBlobId = BlobNameForStdErr(result.ExperimentID, result.BenchmarkFileName);
-                await UploadOutput(stderrBlobId, result.StdErr, true);
-                Trace.WriteLine(string.Format("Uploaded stderr for experiment {0}", result.ExperimentID));
-            }
-            return Tuple.Create(stdoutBlobId, stderrBlobId);
         }
 
         private static string BlobNamePrefix(int experimentID)
@@ -172,23 +167,23 @@ namespace AzurePerformanceTest
             return String.Concat("E", experimentID.ToString(), "F");
         }
 
-        private static string BlobNameForStdErr(int experimentID, string benchmarkFileName)
+        private static string BlobNameForStdErr(int experimentID, string benchmarkFileName, string index)
         {
-            return String.Concat(BlobNamePrefix(experimentID), benchmarkFileName, "-stderr");
+            return String.Concat(BlobNamePrefix(experimentID), benchmarkFileName, "-stderr", index);
         }
 
-        private static string BlobNameForStdOut(int experimentID, string benchmarkFileName)
+        private static string BlobNameForStdOut(int experimentID, string benchmarkFileName, string index)
         {
-            return String.Concat(BlobNamePrefix(experimentID), benchmarkFileName, "-stdout");
+            return String.Concat(BlobNamePrefix(experimentID), benchmarkFileName, "-stdout", index);
         }
 
-        public Task UploadOutput(string blobName, Stream content, bool replaceIfExists)
+        public async Task<bool> UploadOutput(string blobName, Stream content, bool replaceIfExists)
         {
-            return UploadBlobAsync(outputContainer, blobName, content, replaceIfExists);
+            return await UploadBlobAsync(outputContainer, blobName, content, replaceIfExists);
         }
 
 
-        private async Task UploadBlobAsync(CloudBlobContainer container, string blobName, Stream content, bool replaceIfExists)
+        private async Task<bool> UploadBlobAsync(CloudBlobContainer container, string blobName, Stream content, bool replaceIfExists)
         {
             try
             {
@@ -196,7 +191,7 @@ namespace AzurePerformanceTest
                 if (!replaceIfExists && await stdoutBlob.ExistsAsync())
                 {
                     Trace.WriteLine(string.Format("Blob {0} already exists", blobName));
-                    return;
+                    return false;
                 }
 
                 await stdoutBlob.UploadFromStreamAsync(content,
@@ -206,9 +201,13 @@ namespace AzurePerformanceTest
                         RetryPolicy = new Microsoft.WindowsAzure.Storage.RetryPolicies.ExponentialRetry(TimeSpan.FromMilliseconds(100), 14)
                     },
                     null);
+                return true;
             }
             catch (StorageException ex)
             {
+                if (ex.RequestInformation.HttpStatusCode == 412) // The update condition specified in the request was not satisfied.
+                    return false;
+
                 var requestInfo = ex.RequestInformation;
                 Trace.WriteLine(string.Format("Failed to upload text to the blob: {0}, blob name: {1}, response code: {2}", ex.Message, blobName, requestInfo.HttpStatusCode));
                 throw;
