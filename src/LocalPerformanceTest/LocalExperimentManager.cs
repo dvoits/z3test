@@ -225,7 +225,7 @@ namespace PerformanceTest
                 done = total = results.Length;
                 totalRuntime = done > 0 ? TimeSpan.FromTicks(results.Sum(r => r.TotalProcessorTime.Ticks)) : TimeSpan.FromSeconds(0);
             }
-            return new ExperimentStatus(id, expRow.Category, expRow.Submitted, expRow.Creator, expRow.Note, expRow.Flag, done, total, totalRuntime);
+            return new ExperimentStatus(id, expRow.Category, expRow.Submitted, expRow.Creator, expRow.Note, expRow.Flag, done, total, totalRuntime, GetWorkerInformation());
         }
         private async Task<double> ComputeNormal()
         {
@@ -254,6 +254,12 @@ namespace PerformanceTest
         {
             throw new NotImplementedException();
         }
+
+        private string GetWorkerInformation()
+        {
+            return "";
+        }
+
     }
     
 

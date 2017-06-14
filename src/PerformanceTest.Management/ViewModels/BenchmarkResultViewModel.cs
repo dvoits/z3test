@@ -102,10 +102,6 @@ namespace PerformanceTest.Management
         {
             get { return result.PeakMemorySizeMB; }
         }
-        public string Worker
-        {
-            get { return result.WorkerInformation; }
-        }
 
         public Task<string> GetStdOutAsync(bool useDefaultIfMissing)
         {
@@ -143,7 +139,7 @@ namespace PerformanceTest.Management
             {
                 if (status == ResultStatus.Timeout) UpdateRuntime();
                 await manager.UpdateResultStatus(result.ExperimentID, status);
-                BenchmarkResult newResult = new BenchmarkResult(result.ExperimentID, result.BenchmarkFileName, result.WorkerInformation,
+                BenchmarkResult newResult = new BenchmarkResult(result.ExperimentID, result.BenchmarkFileName,
                     result.AcquireTime, runtime, result.TotalProcessorTime, result.WallClockTime, result.PeakMemorySizeMB,
                     status, result.ExitCode, result.StdOut, result.StdErr, result.Properties);
                 result = newResult;

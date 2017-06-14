@@ -53,11 +53,9 @@ namespace AzurePerformanceTest
 
         public string StdErr { get; set; }
 
-        public bool StdOutStoredExternally { get; set; }
+        public string StdOutExtStorageIdx { get; set; }
 
-        public bool StdErrStoredExternally { get; set; }
-
-        public string WorkerInformation { get; set; }
+        public string StdErrExtStorageIdx { get; set; }
 
         /// <summary>
         /// Domain-specific properties of the result.
@@ -73,9 +71,7 @@ namespace AzurePerformanceTest
                     case nameof(ExperimentID):
                         ExperimentID = (int)entry.Value; break;
                     case nameof(BenchmarkFileName):
-                        BenchmarkFileName = (string)entry.Value; break;
-                    case nameof(WorkerInformation):
-                        WorkerInformation = (string)entry.Value; break;
+                        BenchmarkFileName = (string)entry.Value; break;                    
                     case nameof(NormalizedRuntime):
                         NormalizedRuntime = (double)entry.Value; break;
                     case nameof(TotalProcessorTime):
@@ -96,10 +92,10 @@ namespace AzurePerformanceTest
                         StdOut = (string)entry.Value; break;
                     case nameof(StdErr):
                         StdErr = (string)entry.Value; break;
-                    case nameof(StdOutStoredExternally):
-                        StdOutStoredExternally = (bool)entry.Value; break;
-                    case nameof(StdErrStoredExternally):
-                        StdErrStoredExternally = (bool)entry.Value; break;
+                    case nameof(StdOutExtStorageIdx):
+                        StdOutExtStorageIdx = (bool)entry.Value; break;
+                    case nameof(StdErrExtStorageIdx):
+                        StdErrExtStorageIdx = (bool)entry.Value; break;
                 }
             }
         }
@@ -108,22 +104,18 @@ namespace AzurePerformanceTest
         {
             info.AddValue(nameof(ExperimentID), this.ExperimentID);
             info.AddValue(nameof(BenchmarkFileName), this.BenchmarkFileName, typeof(string));
-            info.AddValue(nameof(WorkerInformation), this.WorkerInformation, typeof(string));
             info.AddValue(nameof(NormalizedRuntime), this.NormalizedRuntime);
             info.AddValue(nameof(TotalProcessorTime), this.TotalProcessorTime, typeof(TimeSpan));
             info.AddValue(nameof(WallClockTime), this.WallClockTime, typeof(TimeSpan));
             info.AddValue(nameof(PeakMemorySizeMB), this.PeakMemorySizeMB);
             if (this.ExitCode.HasValue) info.AddValue(nameof(ExitCode), this.ExitCode);
             info.AddValue(nameof(AcquireTime), this.AcquireTime);
-            info.AddValue(nameof(Status), (int)this.Status);
-            var props = new Dictionary<string, string>(this.Properties.Count);
-            foreach (var prop in this.Properties)
-                props.Add(prop.Key, prop.Value);
-            info.AddValue(nameof(Properties), props, typeof(Dictionary<string, string>));
+            info.AddValue(nameof(Status), (int)this.Status);            
+            info.AddValue(nameof(Properties), this.Properties, typeof(Dictionary<string, string>));
             info.AddValue(nameof(StdOut), this.StdOut);
             info.AddValue(nameof(StdErr), this.StdErr);
-            info.AddValue(nameof(StdOutStoredExternally), this.StdOutStoredExternally);
-            info.AddValue(nameof(StdErrStoredExternally), this.StdErrStoredExternally);
+            info.AddValue(nameof(StdOutExtStorageIdx), this.StdOutExtStorageIdx);
+            info.AddValue(nameof(StdOutExtStorageIdx), this.StdOutExtStorageIdx);
         }
 
         public static void SaveBenchmarks(AzureBenchmarkResult[] benchmarks, Stream stream)
@@ -140,10 +132,9 @@ namespace AzurePerformanceTest
                 Column.Create("Status", benchmarks.Select(b => StatusToString(b.Status)), length),
                 Column.Create("ExitCode", benchmarks.Select(b => b.ExitCode.HasValue ? b.ExitCode.ToString() : null), length),
                 Column.Create("StdOut", benchmarks.Select(b => b.StdOut), length),
-                Column.Create("StdOutStoredExternally", benchmarks.Select(b => b.StdOutStoredExternally), length),
+                Column.Create("StdOutExtStorageIdx", benchmarks.Select(b => b.StdOutExtStorageIdx), length),
                 Column.Create("StdErr", benchmarks.Select(b => b.StdErr), length),
-                Column.Create("StdErrStoredExternally", benchmarks.Select(b => b.StdErrStoredExternally), length),
-                Column.Create("WorkerInformation", benchmarks.Select(b => b.WorkerInformation), length),
+                Column.Create("StdErrExtStorageIdx", benchmarks.Select(b => b.StdErrExtStorageIdx), length)
             };
 
             HashSet<string> props = new HashSet<string>();
@@ -179,10 +170,9 @@ namespace AzurePerformanceTest
             var stat = table["Status"].Rows.AsString;
             var exitcode = table["ExitCode"].Rows.AsString;
             var stdout = table["StdOut"].Rows.AsString;
-            var stdoutext = table["StdOutStoredExternally"].Rows.AsString;
+            var stdoutext = table["StdOutExtStorageIdx"].Rows.AsString;
             var stderr = table["StdErr"].Rows.AsString;
-            var stderrext = table["StdErrStoredExternally"].Rows.AsString;
-            var worker = table["WorkerInformation"].Rows.AsString;
+            var stderrext = table["StdErrExtStorageIdx"].Rows.AsString;
 
             var propColumns =
                 (from c in table
@@ -197,7 +187,8 @@ namespace AzurePerformanceTest
                     c.Name != "ExitCode" &&
                     c.Name != "StdOut" &&
                     c.Name != "StdErr" &&
-                    c.Name != "WorkerInformation"
+                    c.Name != "StdOutExtStorageIdx" &&
+                    c.Name != "StdErrExtStorageIdx"
                  select Tuple.Create(c.Name, c.Rows.AsString))
                 .ToArray();
 
@@ -223,12 +214,11 @@ namespace AzurePerformanceTest
                 results[i].Properties = props;
                 results[i].Status = StatusFromString(stat[i]);
                 results[i].StdErr = stderr[i];
-                results[i].StdErrStoredExternally = bool.Parse(stderrext[i]);
+                results[i].StdErrExtStorageIdx = stderrext[i];
                 results[i].StdOut = stdout[i];
-                results[i].StdOutStoredExternally = bool.Parse(stdoutext[i]);
+                results[i].StdOutExtStorageIdx = stdoutext[i];
                 results[i].TotalProcessorTime = TimeSpan.FromSeconds(double.Parse(runtime[i]));
                 results[i].WallClockTime = TimeSpan.FromSeconds(double.Parse(wctime[i]));
-                results[i].WorkerInformation = worker[i];
             }
             return results;
         }
