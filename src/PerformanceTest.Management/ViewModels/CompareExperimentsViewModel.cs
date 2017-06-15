@@ -44,7 +44,7 @@ namespace PerformanceTest.Management
             this.category2 = def2.Category;
             this.sharedDirectory1 = def1.BenchmarkDirectory;
             this.sharedDirectory2 = def2.BenchmarkDirectory;
-            
+            this.isFiltering = false;
             DownloadResultsAsync();
         }
 
@@ -233,6 +233,7 @@ namespace PerformanceTest.Management
             }
             finally
             {
+                IsFiltering = false;
                 uiService.StopIndicateLongOperation(handle);
             }
         }
