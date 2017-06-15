@@ -77,10 +77,11 @@ namespace PerformanceTest.Management
             });
         }
 
-        public async Task<Tuple<string, int?, Exception>[]> SubmitExperiments(NewExperimentViewModel newExperiment, string creator)
+        public async Task<Tuple<string, int?, Exception>[]> SubmitExperiments(NewExperimentViewModel newExperiment)
         {
             // Uploading package with binaries
-            string packageName;
+            string creator = newExperiment.Creator;
+            string packageName;            
             if (newExperiment.UseMostRecentExecutable)
             {
                 packageName = await newExperiment.GetRecentExecutable();

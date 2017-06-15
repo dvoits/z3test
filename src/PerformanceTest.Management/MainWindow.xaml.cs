@@ -308,63 +308,115 @@ namespace PerformanceTest.Management
             Close();
         }
 
-        private async void btnNewJob_Click(object sender, RoutedEventArgs args)
+        private void canRestartCommand(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = dataGrid.SelectedItems.Count > 0;
+        }
+
+        private void Restart(object target, ExecutedRoutedEventArgs e)
+        {
+            var handle = uiService.StartIndicateLongOperation("Restarting selected experiments...");
+            try
+            {
+                string creator = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
+                int n = dataGrid.SelectedItems.Count;
+                var experiments = new ExperimentStatusViewModel[n];
+                for (int i = 0; i < n; i++)
+                {
+                    experiments[i] = (ExperimentStatusViewModel)dataGrid.SelectedItems[i];
+                }
+
+                for (int i = 0; i < n; i++)
+                {
+                    var experiment = experiments[i];
+                    var vm = new NewExperimentViewModel(managerVm, uiService, recentValues, creator, domainResolver);
+                    vm.Note = experiment.Note;
+                    vm.BenchmarkContainerUri = experiment.Definition.BenchmarkContainerUri;
+                    vm.BenchmarkDirectory = experiment.Definition.BenchmarkDirectory;
+                    vm.Categories = experiment.Category;
+                    vm.Extension = experiment.Definition.BenchmarkFileExtension;
+                    vm.BenchmarkTimeoutSec = experiment.Definition.BenchmarkTimeout.TotalSeconds;
+                    vm.BenchmarkMemoryLimitMb = experiment.Definition.MemoryLimitMB;
+                    vm.Domain = experiment.Definition.DomainName;
+                    vm.Parameters = experiment.Definition.Parameters;
+                    // experiment.Definition.Executable;
+
+                    SubmitNewJob(vm);
+                }
+            }
+            catch (Exception ex)
+            {
+                uiService.ShowError(ex, "Failed to restart experiments");
+            }
+            finally
+            {
+                uiService.StopIndicateLongOperation(handle);
+            }
+        }
+
+        private async void SubmitNewJob(NewExperimentViewModel vm)
+        {
+            NewJobDialog dlg = new NewJobDialog();
+            dlg.DataContext = vm;
+            dlg.Owner = this;
+            if (dlg.ShowDialog() == true)
+            {
+                var handle = uiService.StartIndicateLongOperation("Submitting new experiment...");
+                try
+                {
+                    vm.SaveRecentSettings();
+                }
+                catch (Exception ex)
+                {
+                    uiService.ShowWarning(ex.Message, "Failed to save recent settings");
+                }
+
+                Tuple<string, int?, Exception>[] result;
+                try
+                {
+                    result = await managerVm.SubmitExperiments(vm);
+                }
+                catch (Exception ex)
+                {
+                    uiService.ShowError(ex, "Failed to submit an experiment");
+                    return;
+                }
+                finally
+                {
+                    uiService.StopIndicateLongOperation(handle);
+                }
+
+                experimentsVm.Refresh();
+
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < result.Length; i++)
+                {
+                    if (i > 0) sb.AppendLine();
+
+                    var r = result[i];
+                    if (r.Item2.HasValue)
+                        sb.AppendFormat("Experiment for category {0} successfully submitted with id {1}.", r.Item1, r.Item2.Value);
+                    if (r.Item3 != null)
+                        sb.AppendFormat("Experiment for category {0} could not be submitted: {1}.", r.Item1, r.Item3.Message);
+                }
+                uiService.ShowInfo(sb.ToString(), "New experiments");
+            }
+        }
+
+        private void btnNewJob_Click(object sender, RoutedEventArgs args)
         {
             try
             {
-                NewJobDialog dlg = new NewJobDialog();
                 string creator = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
                 var vm = new NewExperimentViewModel(managerVm, uiService, recentValues, creator, domainResolver);
-                dlg.DataContext = vm;
-                dlg.Owner = this;
-                if (dlg.ShowDialog() == true)
-                {
-                    var handle = uiService.StartIndicateLongOperation("Submitting new experiment...");
-                    try
-                    {
-                        vm.SaveRecentSettings();
-                    }
-                    catch (Exception ex)
-                    {
-                        uiService.ShowWarning(ex.Message, "Failed to save recent settings");
-                    }
-
-                    Tuple<string, int?, Exception>[] result;
-                    try
-                    {
-                        result = await managerVm.SubmitExperiments(vm, creator);
-                    }
-                    catch (Exception ex)
-                    {
-                        uiService.ShowError(ex, "Failed to submit an experiment");
-                        return;
-                    }
-                    finally
-                    {
-                        uiService.StopIndicateLongOperation(handle);
-                    }
-
-                    experimentsVm.Refresh();
-
-                    StringBuilder sb = new StringBuilder();
-                    for (int i = 0; i < result.Length; i++)
-                    {
-                        if (i > 0) sb.AppendLine();
-
-                        var r = result[i];
-                        if (r.Item2.HasValue)
-                            sb.AppendFormat("Experiment for category {0} successfully submitted with id {1}.", r.Item1, r.Item2.Value);
-                        if (r.Item3 != null)
-                            sb.AppendFormat("Experiment for category {0} could not be submitted: {1}.", r.Item1, r.Item3.Message);
-                    }
-                    uiService.ShowInfo(sb.ToString(), "New experiments");
-                }
+                SubmitNewJob(vm);
             }
             catch (Exception e)
             {
                 uiService.ShowError(e, "New experiment");
             }
         }
+
         private void canShowProperties(object sender, CanExecuteRoutedEventArgs e)
         {
             e.CanExecute = dataGrid.SelectedItems.Count == 1;
@@ -413,21 +465,6 @@ namespace PerformanceTest.Management
                 uiService.StopIndicateLongOperation(handle);
             }
 
-        }
-        private void canRestartCommand(object sender, CanExecuteRoutedEventArgs e)
-        {
-            e.CanExecute = dataGrid.SelectedItems.Count > 0;
-        }
-        private void Restart(object target, ExecutedRoutedEventArgs e)
-        {
-            try
-            {
-                throw new NotImplementedException();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(this, "Exception: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
         }
         private void canCreateGroup(object sender, CanExecuteRoutedEventArgs e)
         {
@@ -512,11 +549,12 @@ namespace PerformanceTest.Management
             var st = (ExperimentStatusViewModel)dataGrid.SelectedItem;
             ShowResults dlg = new ShowResults();
             string sharedDirectory = "";
-            if (st.Definition.BenchmarkDirectory != null && st.Definition.BenchmarkDirectory != "") {                
+            if (st.Definition.BenchmarkDirectory != null && st.Definition.BenchmarkDirectory != "")
+            {
                 sharedDirectory = st.Definition.BenchmarkDirectory + "/" + st.Definition.Category;
             }
             else sharedDirectory = st.Definition.Category;
-           
+
             var vm = managerVm.BuildResultsView(st.ID, sharedDirectory);
             dlg.DataContext = vm;
             dlg.Owner = this;

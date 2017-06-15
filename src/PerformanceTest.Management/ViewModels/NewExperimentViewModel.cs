@@ -81,6 +81,11 @@ namespace PerformanceTest.Management
             selectedPool = recentValues.BatchPool;
         }
 
+        public string Creator
+        {
+            get { return creator; }
+        }
+
         public string BenchmarkLibaryDescription
         {
             get { return manager.BenchmarkLibraryDescription; }
