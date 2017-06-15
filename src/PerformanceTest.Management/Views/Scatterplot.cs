@@ -77,7 +77,7 @@ namespace PerformanceTest.Management
             if (isBusy)
             {
                 this.Text = string.Format("Plot: {0} vs {1} (working...)", experiment1.ID, experiment2.ID);
-                Cursor = System.Windows.Forms.Cursors.WaitCursor;
+                Cursor = System.Windows.Forms.Cursors.AppStarting;
                 gpOptions.Enabled = false;
             }
             else

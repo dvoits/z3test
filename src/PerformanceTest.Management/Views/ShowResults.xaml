@@ -8,6 +8,7 @@
         Title="{Binding Title}" Height="518" Width="877" WindowStartupLocation="CenterOwner">
     <Window.Resources>
         <local:InverseBooleanConverter x:Key="inverseBool" />
+        <local:ResultStatusToStringConverter x:Key="statusToString" />
     </Window.Resources>
     <Grid>
         <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,0,0" Name="gridOuter">
@@ -51,7 +52,7 @@
                     <DataGrid.Columns>
                         <DataGridTextColumn Binding="{Binding Path=Filename, Mode=OneWay}" Header="Filename" Width="SizeToCells"/>
                         <DataGridTextColumn Binding="{Binding Path=ExitCode, Mode=OneWay}" Header="Exitcode" />
-                        <DataGridTextColumn Binding="{Binding Path=Status, Mode=OneWay}" Header="Status"/>
+                        <DataGridTextColumn Binding="{Binding Path=Status, Mode=OneWay, Converter={StaticResource statusToString}}" Header="Status"/>
                         <DataGridTextColumn Binding="{Binding Path=Sat, Mode=OneWay}" Header="SAT" />
                         <DataGridTextColumn Binding="{Binding Path=Unsat, Mode=OneWay}" Header="UNSAT"/>
                         <DataGridTextColumn Binding="{Binding Path=Unknown, Mode=OneWay}" Header="UNKNOWN" />

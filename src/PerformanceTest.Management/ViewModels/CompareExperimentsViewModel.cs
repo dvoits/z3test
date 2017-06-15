@@ -227,10 +227,13 @@ namespace PerformanceTest.Management
 
                 JoinResults();
             }
+            catch(Exception ex)
+            {
+                uiService.ShowError(ex, "Failed to get results for the experiments");
+            }
             finally
             {
                 uiService.StopIndicateLongOperation(handle);
-                IsFiltering = false;
             }
         }
 

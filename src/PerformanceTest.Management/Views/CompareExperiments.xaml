@@ -8,6 +8,7 @@
         Title="{Binding Title}" Height="440" Width="791" WindowStartupLocation="CenterOwner" Icon="/PerformanceTest.Management;component/Images/taskbrowse.ico">
     <Window.Resources>
         <local:InverseBooleanConverter x:Key="inverse" />
+        <local:ResultStatusToStringConverter x:Key="statusToString" />
     </Window.Resources>
     <Grid>
         <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,0,0" Name="gridOuter">
@@ -42,14 +43,14 @@
                             </DataTemplate>
                         </DataGridTextColumn.HeaderTemplate>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Binding="{Binding Path=Results1.Status, Mode=OneWay}" >
+                    <DataGridTextColumn Binding="{Binding Path=Results1.Status, Mode=OneWay, Converter={StaticResource statusToString}}" >
                         <DataGridTextColumn.HeaderTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding DataContext.Status1Title, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
                             </DataTemplate>
                         </DataGridTextColumn.HeaderTemplate>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Binding="{Binding Path=Results2.Status, Mode=OneWay}" >
+                    <DataGridTextColumn Binding="{Binding Path=Results2.Status, Mode=OneWay, Converter={StaticResource statusToString}}" >
                         <DataGridTextColumn.HeaderTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding DataContext.Status2Title, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>

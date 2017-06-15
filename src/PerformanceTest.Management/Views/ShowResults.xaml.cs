@@ -12,6 +12,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using System.Globalization;
 
 namespace PerformanceTest.Management
 {
@@ -192,6 +193,38 @@ namespace PerformanceTest.Management
             {
                 MessageBox.Show(ex.Message, "Failed to load output");
             }
+        }
+    }
+
+    public class ResultStatusToStringConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if(value is ResultStatus)
+            {
+                ResultStatus st = (ResultStatus)value;
+                switch (st)
+                {
+                    case ResultStatus.Success:
+                        return "Success";
+                    case ResultStatus.OutOfMemory:
+                        return "Memory out";
+                    case ResultStatus.Timeout:
+                        return "Timeout";
+                    case ResultStatus.Error:
+                        return "Error";
+                    case ResultStatus.Bug:
+                        return "Bug";
+                    default:
+                        return null;
+                }
+            }
+            return null;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
         }
     }
 }
