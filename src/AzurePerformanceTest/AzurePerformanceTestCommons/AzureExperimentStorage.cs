@@ -194,11 +194,34 @@ namespace AzurePerformanceTest
         }
 
         /// <summary>
+        /// Returns the uploaded blob name.
+        /// </summary>
+        public async Task<string> UploadNewExecutable(Stream source, string fileName, string creator)
+        {
+            if (!source.CanSeek) throw new ArgumentException("Source stream must allow seeking", nameof(source));
+
+            string fileNameNoExt = Path.GetFileNameWithoutExtension(fileName);
+            string extension = Path.GetExtension(fileName);
+            string esc_creator = ToBinaryPackBlobName(creator);
+            string packageName;
+
+            const string packageNameFormat = "{0}.{1}.{2:yyyy-MM-ddTHH-mm-ss-ffff}{3}";
+
+            do
+            {
+                source.Position = 0;
+                packageName = string.Format(packageNameFormat, esc_creator, fileNameNoExt, DateTime.UtcNow, extension);
+            } while (!await TryUploadNewExecutableAsBlob(source, packageName, creator));
+
+            return packageName;
+        }
+
+        /// <summary>
         /// If the blob was successfully uploaded, returns true.
         /// If the blob already exists, returns false.
         /// Otherwise throws an exception.
         /// </summary>
-        public async Task<bool> TryUploadNewExecutable(Stream source, string blobName, string creator)
+        private async Task<bool> TryUploadNewExecutableAsBlob(Stream source, string blobName, string creator)
         {
             if (source == null) throw new ArgumentNullException("source");
             if (blobName == null) throw new ArgumentNullException("blobName");
@@ -220,9 +243,19 @@ namespace AzurePerformanceTest
             }
         }
 
-        public async Task<Tuple<string, DateTimeOffset?>> TryFindRecentExecutableBlob(string prefix, string creator)
+        private static string invalidChars = System.Text.RegularExpressions.Regex.Escape("." + new string(Path.GetInvalidFileNameChars()));
+        private static string invalidRegStr = string.Format(@"([{0}]*\.+$)|([{0}]+)", invalidChars);
+        private static string ToBinaryPackBlobName(string name)
         {
-            if (prefix == null) prefix = "";
+            string name2 = System.Text.RegularExpressions.Regex.Replace(name, invalidRegStr, "_");
+            if (name2.Length > 1024) name2 = name2.Substring(0, 1024);
+            else if (name2.Length == 0) name2 = "_";
+            return name2;
+        }
+
+        public async Task<Tuple<string, DateTimeOffset?>> TryFindRecentExecutableBlob(string creator)
+        {
+            string prefix = ToBinaryPackBlobName(creator);
             string asciiCreator = StripNonAscii(creator);
 
             BlobContinuationToken token = null;

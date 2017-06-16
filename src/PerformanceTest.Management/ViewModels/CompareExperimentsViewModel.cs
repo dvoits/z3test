@@ -226,6 +226,7 @@ namespace PerformanceTest.Management
                 allResults2 = await t2;
 
                 JoinResults();
+                IsFiltering = false;
             }
             catch(Exception ex)
             {

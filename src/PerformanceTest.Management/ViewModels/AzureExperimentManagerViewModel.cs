@@ -92,19 +92,12 @@ namespace PerformanceTest.Management
                 if (newExperiment.ExecutableFileNames == null || newExperiment.ExecutableFileNames.Length == 0)
                     throw new InvalidOperationException("New executable should be uploaded but no files selected");
 
-                const string packageNameFormat = "{0}.{1}.{2:yyyy-MM-ddTHH-mm-ss-ffff}{3}";
                 if (newExperiment.ExecutableFileNames.Length == 1) // single file will be uploaded as is
                 {
-                    string fileName = Path.GetFileNameWithoutExtension(newExperiment.ExecutableFileNames[0]);
-                    string extension = Path.GetExtension(newExperiment.ExecutableFileNames[0]);
-                    string esc_creator = ToBinaryPackBlobName(creator);
-
+                    string fileName = Path.GetFileName(newExperiment.ExecutableFileNames[0]);                    
                     using (Stream stream = File.Open(newExperiment.ExecutableFileNames[0], FileMode.Open, FileAccess.Read, FileShare.Read))
                     {
-                        do
-                        {
-                            packageName = string.Format(packageNameFormat, esc_creator, fileName, DateTime.UtcNow, extension);
-                        } while (!await manager.Storage.TryUploadNewExecutable(stream, packageName, creator));
+                        packageName = await manager.Storage.UploadNewExecutable(stream, fileName, creator);
                     }
                 }
                 else // multiple files are packed into zip
@@ -112,18 +105,11 @@ namespace PerformanceTest.Management
                     if (String.IsNullOrEmpty(newExperiment.MainExecutable))
                         throw new InvalidOperationException("There is no main executable selected");
 
+                    string fileName = Path.GetFileNameWithoutExtension(newExperiment.MainExecutable) + ".zip";
                     using (MemoryStream stream = new MemoryStream(20 << 20))
                     {
                         Measurement.ExecutablePackage.PackToStream(newExperiment.ExecutableFileNames, newExperiment.MainExecutable, stream);
-
-                        string fileName = Path.GetFileNameWithoutExtension(newExperiment.MainExecutable);
-                        string esc_creator = ToBinaryPackBlobName(creator);
-
-                        do
-                        {
-                            stream.Position = 0;
-                            packageName = string.Format(packageNameFormat, esc_creator, fileName, DateTime.UtcNow, ".zip");
-                        } while (!await manager.Storage.TryUploadNewExecutable(stream, packageName, creator));
+                        packageName = await manager.Storage.UploadNewExecutable(stream, fileName, creator);
                     }
                 }
             }
@@ -157,18 +143,6 @@ namespace PerformanceTest.Management
         }
 
 
-        private static string invalidChars = System.Text.RegularExpressions.Regex.Escape("." + new string(Path.GetInvalidFileNameChars()));
-        private static string invalidRegStr = string.Format(@"([{0}]*\.+$)|([{0}]+)", invalidChars);
-
-        private static string ToBinaryPackBlobName(string name)
-        {
-            string name2 = System.Text.RegularExpressions.Regex.Replace(name, invalidRegStr, "_");
-            if (name2.Length > 1024) name2 = name2.Substring(0, 1024);
-            else if (name2.Length == 0) name2 = "_";
-            return name2;
-        }
-
-
         public Task<Stream> SaveExecutable(string filename, string exBlobName)
         {
             if (filename == null) throw new ArgumentNullException("filename");
@@ -178,7 +152,7 @@ namespace PerformanceTest.Management
 
         public Task<Tuple<string, DateTimeOffset?>> GetRecentExecutable(string creator)
         {
-            return Task.Run(() => manager.Storage.TryFindRecentExecutableBlob(ToBinaryPackBlobName(creator), creator));
+            return Task.Run(() => manager.Storage.TryFindRecentExecutableBlob(creator));
         }
 
         public void SaveMetaData(string filename, ExperimentStatusViewModel[] experiments)
