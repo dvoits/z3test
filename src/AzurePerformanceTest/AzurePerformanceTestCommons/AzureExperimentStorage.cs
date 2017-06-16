@@ -41,8 +41,8 @@ namespace AzurePerformanceTest
         private readonly IRetryPolicy retryPolicy = new ExponentialRetry(TimeSpan.FromMilliseconds(250), 7);
 
 
-        private const string keyCreator = "creator";
-        private const string keyFileName = "fileName";
+        public const string KeyCreator = "creator";
+        public const string KeyFileName = "fileName";
 
         private const string resultsContainerName = "results";
         private const string binContainerName = "bin";
@@ -240,8 +240,8 @@ namespace AzurePerformanceTest
                 await blob.UploadFromStreamAsync(source, AccessCondition.GenerateIfNotExistsCondition(),
                     new BlobRequestOptions() { RetryPolicy = retryPolicy }, null);
 
-                blob.Metadata.Add(keyCreator, StripNonAscii(creator));
-                blob.Metadata.Add(keyFileName, StripNonAscii(originalFileName));
+                blob.Metadata.Add(KeyCreator, StripNonAscii(creator));
+                blob.Metadata.Add(KeyFileName, StripNonAscii(originalFileName));
                 await blob.SetMetadataAsync(AccessCondition.GenerateEmptyCondition(), new BlobRequestOptions { RetryPolicy = retryPolicy }, null);
 
                 return true;
@@ -281,7 +281,7 @@ namespace AzurePerformanceTest
                     if (blob == null) continue;
 
                     string blobCreator;
-                    if (!blob.Metadata.TryGetValue(keyCreator, out blobCreator) || blobCreator != asciiCreator) continue;
+                    if (!blob.Metadata.TryGetValue(KeyCreator, out blobCreator) || blobCreator != asciiCreator) continue;
 
 
                     if (bestBlob == null || bestBlob.Properties.LastModified < blob.Properties.LastModified)

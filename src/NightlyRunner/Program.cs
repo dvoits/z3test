@@ -26,13 +26,23 @@ namespace NightlyRunner
 
         const string githubNightlyFolder = "nightly";
         const string executableFileName = @"^z3-(\d+\.\d+\.\d+).([\d\w]+)-x86-win.zip$";
+        const int regexGroup_Commit = 2;
 
         const string batchPool = "small_pool";
 
 
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
-            Run(ReadConnectionString()).Wait();
+            try
+            {
+                Run(ReadConnectionString()).Wait();
+                return 0;
+            }
+            catch(Exception ex)
+            {
+                Trace.WriteLine("ERROR: " + ex);
+                return 1;
+            }
         }
 
         static async Task Run(string connectionString)
@@ -43,9 +53,15 @@ namespace NightlyRunner
                 Trace.WriteLine("Repository has no new build.");
                 return;
             }
+            Trace.WriteLine("Last nightly build contains " + binary.Name);
 
             AzureExperimentManager manager = AzureExperimentManager.Open(connectionString);
-            string lastNightly = await GetLastNightlyExperiment(manager);
+            string lastNightlyExecutable = await GetLastNightlyExperiment(manager);
+            if(lastNightlyExecutable == binary.Name)
+            {
+                Trace.WriteLine("No changes found since last nightly experiment.");
+                return;
+            }
 
             using (MemoryStream stream = new MemoryStream(binary.Size))
             {
@@ -104,11 +120,15 @@ namespace NightlyRunner
             var experiments = await manager.FindExperiments(new ExperimentManager.ExperimentFilter() { CreatorEquals = creator });
             var mostRecent = experiments.FirstOrDefault();
             if (mostRecent == null) return null;
-
+                        
             var metadata = await manager.Storage.GetExecutableMetadata(mostRecent.Definition.Executable);
+            string fileName = null;
+            if(metadata.TryGetValue(AzureExperimentStorage.KeyFileName, out fileName))
+            {
+                Trace.WriteLine("Last nightly experiment was run for " + fileName);
+            }
 
-            Trace.WriteLine("Last nightly experiment was run for " + mostRecent.Definition.Executable);
-            return mostRecent.Definition.Executable;
+            return fileName;
         }
 
         static async Task<RepositoryContent> GetRecentNightlyBuild()
@@ -118,15 +138,27 @@ namespace NightlyRunner
             var nightly = await github.Repository.Content.GetAllContents("Z3Prover", "bin", githubNightlyFolder);
 
             Regex regex = new Regex(executableFileName, RegexOptions.Singleline | RegexOptions.IgnoreCase);
-            foreach (var file in nightly) // todo: choose one most recent of potentially mutliple matching files using git log
+
+            var files = nightly.Select(f => Tuple.Create(f, regex.Match(f.Name))).Where(fm => fm.Item2.Success).ToArray();
+            if (files.Length == 0) return null; // no matching files found
+            if (files.Length == 1) return files[0].Item1; // single matching file
+
+            // Multiple matching files, should take the most recent
+            DateTimeOffset max = DateTimeOffset.MinValue;
+            RepositoryContent recent = null; 
+
+            foreach (var fm in files)
             {
-                if (regex.IsMatch(file.Name))
+                string sha = fm.Item2.Groups[regexGroup_Commit].Value;
+                var commit = await github.Repository.Commit.Get("Z3Prover", "z3", sha);
+                var date = commit.Commit.Committer.Date;
+                if(date > max)
                 {
-                    return file;
+                    max = date;
+                    recent = fm.Item1;
                 }
             }
-
-            return null;
+            return recent;
         }
 
         static string ReadConnectionString()
