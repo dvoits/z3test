@@ -370,17 +370,19 @@ namespace PerformanceTest.Management
                              (!ckmemory && (rc1 == ResultStatus.OutOfMemory || rc2 == ResultStatus.OutOfMemory)))
                             continue;
 
-                        if (rbMemoryUsed.Checked && (rc1 != ResultStatus.Success && rc1 != ResultStatus.OutOfMemory || x <= memoutX && res1 == 0) 
+                        if (rbMemoryUsed.Checked && (rc1 != ResultStatus.Success && rc1 != ResultStatus.OutOfMemory || x < memoutX && res1 == 0) 
                             || (rbNonNormalized.Checked || rbWallClock.Checked) && (rc1 != ResultStatus.Success && rc1 != ResultStatus.Timeout || x != timeoutX && res1 == 0)
                             || rbNormalized.Checked && (rc1 != ResultStatus.Success && rc1 != ResultStatus.Timeout || res1 == 0 && (x < timeoutXmin || x > timeoutXmax)))
                             x = errorLine;
-                        if (rbMemoryUsed.Checked && (rc2 != ResultStatus.Success && rc2 != ResultStatus.OutOfMemory || y <= memoutY && res2 == 0) 
+                        if (rbMemoryUsed.Checked && (rc2 != ResultStatus.Success && rc2 != ResultStatus.OutOfMemory || y < memoutY && res2 == 0) 
                             || (rbNonNormalized.Checked || rbWallClock.Checked) && (rc2 != ResultStatus.Success && rc2 != ResultStatus.Timeout || y != timeoutY && res2 == 0)
                             || rbNormalized.Checked && (rc2 != ResultStatus.Success && rc2 != ResultStatus.Timeout || res2 == 0 && (y < timeoutYmin || y > timeoutYmax)))
                             y = errorLine;
-                        
-                        if (rbMemoryUsed.Checked && rc1 != ResultStatus.OutOfMemory && rc2 != ResultStatus.OutOfMemory 
-                            || !rbMemoryUsed.Checked && rc1 != ResultStatus.Timeout && rc2 != ResultStatus.Timeout)
+                        if (rbMemoryUsed.Checked && (rc1 == ResultStatus.OutOfMemory)) x = memoutX;
+                        if (rbMemoryUsed.Checked && (rc2 == ResultStatus.OutOfMemory)) y = memoutY;
+                        if (rbMemoryUsed.Checked && rc1 != ResultStatus.OutOfMemory && rc2 != ResultStatus.OutOfMemory && x < memoutX && y < memoutY 
+                            || (rbNonNormalized.Checked || rbWallClock.Checked) && rc1 != ResultStatus.Timeout && rc2 != ResultStatus.Timeout && x < timeoutX && y < timeoutY
+                            || rbNormalized.Checked && rc1 != ResultStatus.Timeout && rc2 != ResultStatus.Timeout && x < timeoutXmax && y < timeoutYmax)
                         {
                             totalX += x;
                             totalY += y;
@@ -468,13 +470,13 @@ namespace PerformanceTest.Management
             SetupChart();
             if (rbMemoryUsed.Checked)
             {
-                lblAvgSpeedupTxt.Text = "Avg.memory used(excl.OOM):";
+                lblAvgSpeedupTxt.Text = "Avg.memory used(excl.OOM) (Mb):";
                 label3.Text = "Y Less Memory";
                 label5.Text = "Y More Memory";
             }
             else
             {
-                lblAvgSpeedupTxt.Text = "Avg.speedup(excl.T / O):";
+                lblAvgSpeedupTxt.Text = "Avg.speedup(excl. T/O) (sec):";
                 label3.Text = "Y Faster";
                 label5.Text = "Y Slower";
             }
