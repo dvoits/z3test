@@ -107,7 +107,7 @@ namespace NightlyRunner
             var nightly = await github.Repository.Content.GetAllContents("Z3Prover", "bin", githubNightlyFolder);
 
             Regex regex = new Regex(executableFileName, RegexOptions.Singleline | RegexOptions.IgnoreCase);
-            foreach (var file in nightly)
+            foreach (var file in nightly) // todo: choose one most recent of potentially mutliple matching files using git log
             {
                 if (regex.IsMatch(file.Name))
                 {

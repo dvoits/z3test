@@ -62,7 +62,7 @@ namespace PerformanceTest.Management
 
             vm.PropertyChanged += (s, a) =>
             {
-                if (a.PropertyName == "CompareItems")
+                if (a.PropertyName == nameof(vm.CompareItems))
                 {
                     updateTimeouts();
                     SetupChart();
@@ -73,13 +73,15 @@ namespace PerformanceTest.Management
         }
         private void updateTimeouts()
         {
-            timeoutXmin = vm.CompareItems == null ? timeoutX : vm.CompareItems.Min(item => item.Results1.Status == ResultStatus.Timeout ? (uint)item.Results1.NormalizedRuntime : UInt32.MaxValue);
-            timeoutXmax = vm.CompareItems == null ? timeoutX : vm.CompareItems.Max(item => item.Results1.Status == ResultStatus.Timeout ? (uint)item.Results1.NormalizedRuntime : UInt32.MinValue);
+            bool empty = vm.CompareItems == null || vm.CompareItems.Length == 0;
+
+            timeoutXmin = empty ? timeoutX : vm.CompareItems.Min(item => item.Results1.Status == ResultStatus.Timeout ? (uint)item.Results1.NormalizedRuntime : UInt32.MaxValue);
+            timeoutXmax = empty ? timeoutX : vm.CompareItems.Max(item => item.Results1.Status == ResultStatus.Timeout ? (uint)item.Results1.NormalizedRuntime : UInt32.MinValue);
             if (timeoutXmin == UInt32.MaxValue && timeoutXmax == UInt32.MinValue)
                 timeoutXmin = timeoutXmax = timeoutX;
             
-            timeoutYmin = vm.CompareItems == null ? timeoutY : vm.CompareItems.Min(item => item.Results2.Status == ResultStatus.Timeout ? (uint)item.Results2.NormalizedRuntime : UInt32.MaxValue);
-            timeoutYmax = vm.CompareItems == null ? timeoutY : vm.CompareItems.Max(item => item.Results2.Status == ResultStatus.Timeout ? (uint)item.Results2.NormalizedRuntime : UInt32.MinValue);
+            timeoutYmin = empty ? timeoutY : vm.CompareItems.Min(item => item.Results2.Status == ResultStatus.Timeout ? (uint)item.Results2.NormalizedRuntime : UInt32.MaxValue);
+            timeoutYmax = empty ? timeoutY : vm.CompareItems.Max(item => item.Results2.Status == ResultStatus.Timeout ? (uint)item.Results2.NormalizedRuntime : UInt32.MinValue);
             if (timeoutYmin == UInt32.MaxValue && timeoutYmax == UInt32.MinValue)
                 timeoutYmin = timeoutYmax = timeoutY;
         }
