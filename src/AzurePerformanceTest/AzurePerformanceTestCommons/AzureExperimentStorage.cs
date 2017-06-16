@@ -42,6 +42,7 @@ namespace AzurePerformanceTest
 
 
         private const string keyCreator = "creator";
+        private const string keyFileName = "fileName";
 
         private const string resultsContainerName = "results";
         private const string binContainerName = "bin";
@@ -181,6 +182,13 @@ namespace AzurePerformanceTest
             return binContainer.GetBlockBlobReference(name);
         }
 
+        public async Task<IReadOnlyDictionary<string,string>> GetExecutableMetadata(string name)
+        {
+            var blob = binContainer.GetBlobReference(name);
+            await blob.FetchAttributesAsync(AccessCondition.GenerateEmptyCondition(), new BlobRequestOptions { RetryPolicy = retryPolicy }, null);
+            return new System.Collections.ObjectModel.ReadOnlyDictionary<string, string>(blob.Metadata);
+        }
+
         public string GetExecutableSasUri(string name)
         {
             var blob = binContainer.GetBlobReference(name);
@@ -211,7 +219,7 @@ namespace AzurePerformanceTest
             {
                 source.Position = 0;
                 packageName = string.Format(packageNameFormat, esc_creator, fileNameNoExt, DateTime.UtcNow, extension);
-            } while (!await TryUploadNewExecutableAsBlob(source, packageName, creator));
+            } while (!await TryUploadNewExecutableAsBlob(source, packageName, creator, fileName));
 
             return packageName;
         }
@@ -221,7 +229,7 @@ namespace AzurePerformanceTest
         /// If the blob already exists, returns false.
         /// Otherwise throws an exception.
         /// </summary>
-        private async Task<bool> TryUploadNewExecutableAsBlob(Stream source, string blobName, string creator)
+        private async Task<bool> TryUploadNewExecutableAsBlob(Stream source, string blobName, string creator, string originalFileName)
         {
             if (source == null) throw new ArgumentNullException("source");
             if (blobName == null) throw new ArgumentNullException("blobName");
@@ -233,6 +241,7 @@ namespace AzurePerformanceTest
                     new BlobRequestOptions() { RetryPolicy = retryPolicy }, null);
 
                 blob.Metadata.Add(keyCreator, StripNonAscii(creator));
+                blob.Metadata.Add(keyFileName, StripNonAscii(originalFileName));
                 await blob.SetMetadataAsync(AccessCondition.GenerateEmptyCondition(), new BlobRequestOptions { RetryPolicy = retryPolicy }, null);
 
                 return true;

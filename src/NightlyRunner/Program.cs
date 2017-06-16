@@ -32,18 +32,11 @@ namespace NightlyRunner
 
         static void Main(string[] args)
         {
-            // z3-4.5.1.d3320f8b8143-x64-win.zip
-            // z3-4.5.1.d3320f8b8143-x64-win.zip.log
-            // z3-4.5.1.d3320f8b8143-x86-win.zip
-            // z3-4.5.1.d3320f8b8143-x86-win.zip.log
-            // z3-4.5.1.d8a02bc0400e-x86-ubuntu-14.04.zip
-
             Run(ReadConnectionString()).Wait();
         }
 
         static async Task Run(string connectionString)
         {
-            Trace.WriteLine("Looking for most recent nightly build...");
             RepositoryContent binary = await GetRecentNightlyBuild();
             if (binary == null)
             {
@@ -51,13 +44,15 @@ namespace NightlyRunner
                 return;
             }
 
+            AzureExperimentManager manager = AzureExperimentManager.Open(connectionString);
+            string lastNightly = await GetLastNightlyExperiment(manager);
+
             using (MemoryStream stream = new MemoryStream(binary.Size))
             {
                 await Download(binary, stream);
                 stream.Position = 0;
 
                 Trace.WriteLine("Opening an experiment manager...");
-                AzureExperimentManager manager = AzureExperimentManager.Open(connectionString);
                 await SubmitExperiment(manager, stream, binary.Name);
             }
         }
@@ -101,8 +96,24 @@ namespace NightlyRunner
             Trace.WriteLine(string.Format("Done, experiment id {0}.", experimentId));
         }
 
+        static async Task<string> GetLastNightlyExperiment(AzureExperimentManager manager)
+        {
+            Trace.WriteLine("Looking for most recent nightly experiment...");
+
+            // Returns a list ordered by submission time
+            var experiments = await manager.FindExperiments(new ExperimentManager.ExperimentFilter() { CreatorEquals = creator });
+            var mostRecent = experiments.FirstOrDefault();
+            if (mostRecent == null) return null;
+
+            var metadata = await manager.Storage.GetExecutableMetadata(mostRecent.Definition.Executable);
+
+            Trace.WriteLine("Last nightly experiment was run for " + mostRecent.Definition.Executable);
+            return mostRecent.Definition.Executable;
+        }
+
         static async Task<RepositoryContent> GetRecentNightlyBuild()
         {
+            Trace.WriteLine("Looking for most recent nightly build...");
             var github = new GitHubClient(new ProductHeaderValue("Z3-Tests-Nightly-Runner"));
             var nightly = await github.Repository.Content.GetAllContents("Z3Prover", "bin", githubNightlyFolder);
 

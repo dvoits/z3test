@@ -39,6 +39,11 @@ namespace PerformanceTest
         public abstract Task UpdateNote(ExperimentID id, string note);
         public abstract Task UpdateResultStatus(ExperimentID id, ResultStatus status);
         public abstract Task UpdateRuntime(ExperimentID id, double runtime);
+
+        /// <summary>
+        /// Returns an ordered list of experiments satisfying the filter.
+        /// </summary>
+        /// <returns>A list of experiments ordered by submission time so that the first experiments are recent.</returns>
         public abstract Task<IEnumerable<Experiment>> FindExperiments(ExperimentFilter? filter = null);
 
         /// <summary>

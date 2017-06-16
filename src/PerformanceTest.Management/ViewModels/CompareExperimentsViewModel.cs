@@ -269,13 +269,6 @@ namespace PerformanceTest.Management
         {
             int n1 = r1.Length;
             int n2 = r2.Length;
-            if (n2 < n1)
-            {
-                BenchmarkResult[] r = r1; r1 = r2; r2 = r;
-                int n = n1; n1 = n2; n2 = n;
-            }
-
-            Debug.Assert(n1 <= n2);
             var join = new CompareBenchmarksViewModel[Math.Min(n1, n2)];
             if (!param.IsCategoryChecked && param.Category1 != param.Category2) return new CompareBenchmarksViewModel[0];
             if (!param.IsPrefixChecked && param.Dir1 != param.Dir2) return new CompareBenchmarksViewModel[0];
@@ -286,8 +279,8 @@ namespace PerformanceTest.Management
                 string filename2 = r2[i2].BenchmarkFileName;
                 if (!param.IsCategoryChecked)
                 {
-                    filename1 = filename1.Contains("/") ? param.Category1 + "/" + filename1 : param.Category1 + @"\" + filename1;
-                    filename2 = filename2.Contains("/") ? param.Category2 + "/" + filename2: param.Category2 + @"\" + filename2;
+                    filename1 = param.Category1 + "/" + filename1;
+                    filename2 = param.Category2 + "/" + filename2;
                 }
                 if (param.IsPostfixChecked)
                 {
