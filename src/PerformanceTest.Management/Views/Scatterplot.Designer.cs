@@ -79,7 +79,7 @@
             series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.FastPoint;
             series1.Name = "Series1";
             this.chart.Series.Add(series1);
-            this.chart.Size = new System.Drawing.Size(681, 529);
+            this.chart.Size = new System.Drawing.Size(681, 695);
             this.chart.TabIndex = 0;
             this.chart.Text = "Scatterplot";
             title1.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F);
@@ -105,7 +105,7 @@
             this.lblAvgSpeedupTxt.Name = "lblAvgSpeedupTxt";
             this.lblAvgSpeedupTxt.Size = new System.Drawing.Size(130, 13);
             this.lblAvgSpeedupTxt.TabIndex = 2;
-            this.lblAvgSpeedupTxt.Text = "Avg. speedup (excl. T/O):";
+            this.lblAvgSpeedupTxt.Text = "Avg. speedup (excl. T/O) (sec):";
             // 
             // lblAvgSpeedup
             // 
@@ -384,7 +384,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(681, 649);
+            this.ClientSize = new System.Drawing.Size(681, 815);
             this.Controls.Add(this.splitContainer1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "Scatterplot";
