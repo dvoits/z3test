@@ -1,4 +1,5 @@
 ﻿using AzurePerformanceTest;
+using NightlyRunner.Properties;
 using Octokit;
 using PerformanceTest;
 using System;
@@ -15,27 +16,13 @@ namespace NightlyRunner
 {
     class Program
     {
-        const string creator = "Nightly";
-        const string benchmarkDirectory = "";
-        const string benchmarkCategory = "smtlib-latest";
-        const string benchmarkFileExtension = "smt2|smt";
-        const string parameters = "model_validate=true -smt2 -file:{0}";
-        const string domainName = "Z3";
-        static readonly TimeSpan benchmarkTimeout = TimeSpan.FromSeconds(1200);
-        const double memoryLimitMB = 2048;
-
-        const string githubNightlyFolder = "nightly";
-        const string executableFileName = @"^z3-(\d+\.\d+\.\d+).([\d\w]+)-x86-win.zip$";
-        const int regexGroup_Commit = 2;
-
-        const string batchPool = "small_pool";
-
+        static Settings Settings = Settings.Default;
 
         static int Main(string[] args)
         {
             try
             {
-                Run(ReadConnectionString()).Wait();
+                Run(Settings.ConnectionString).Wait();
                 return 0;
             }
             catch(Exception ex)
@@ -90,7 +77,7 @@ namespace NightlyRunner
         static async Task SubmitExperiment(AzureExperimentManager manager, Stream source, string fileName)
         {
             Trace.WriteLine("Uploading new executable...");
-            string packageName = await manager.Storage.UploadNewExecutable(source, fileName, creator);
+            string packageName = await manager.Storage.UploadNewExecutable(source, fileName, Settings.Creator);
             Trace.WriteLine("Successfully uploaded as " + packageName);
 
 
@@ -98,17 +85,17 @@ namespace NightlyRunner
                 ExperimentDefinition.Create(
                     packageName,
                     ExperimentDefinition.DefaultContainerUri,
-                    benchmarkDirectory,
-                    benchmarkFileExtension,
-                    parameters,
-                    benchmarkTimeout,
-                    domainName,
-                    benchmarkCategory,
-                    memoryLimitMB);
+                    Settings.BenchmarkDirectory,
+                    Settings.BenchmarkFileExtension,
+                    Settings.Parameters,
+                    TimeSpan.FromSeconds(Settings.BenchmarkTimeoutSeconds),
+                    Settings.Domain,
+                    Settings.BenchmarkCategory,
+                    Settings.MemoryLimitMegabytes);
 
-            Trace.WriteLine(string.Format("Starting nightly experiment in Batch pool \"{0}\"...", batchPool));
-            manager.BatchPoolID = batchPool;
-            var experimentId = await manager.StartExperiment(definition, creator, "Nightly run");
+            Trace.WriteLine(string.Format("Starting nightly experiment in Batch pool \"{0}\"...", Settings.AzureBatchPoolId));
+            manager.BatchPoolID = Settings.AzureBatchPoolId;
+            var experimentId = await manager.StartExperiment(definition, Settings.Creator, Settings.ExperimentNote);
             Trace.WriteLine(string.Format("Done, experiment id {0}.", experimentId));
         }
 
@@ -117,7 +104,7 @@ namespace NightlyRunner
             Trace.WriteLine("Looking for most recent nightly experiment...");
 
             // Returns a list ordered by submission time
-            var experiments = await manager.FindExperiments(new ExperimentManager.ExperimentFilter() { CreatorEquals = creator });
+            var experiments = await manager.FindExperiments(new ExperimentManager.ExperimentFilter() { CreatorEquals = Settings.Creator });
             var mostRecent = experiments.FirstOrDefault();
             if (mostRecent == null) return null;
                         
@@ -127,7 +114,6 @@ namespace NightlyRunner
             {
                 Trace.WriteLine("Last nightly experiment was run for " + fileName);
             }
-
             return fileName;
         }
 
@@ -135,9 +121,9 @@ namespace NightlyRunner
         {
             Trace.WriteLine("Looking for most recent nightly build...");
             var github = new GitHubClient(new ProductHeaderValue("Z3-Tests-Nightly-Runner"));
-            var nightly = await github.Repository.Content.GetAllContents("Z3Prover", "bin", githubNightlyFolder);
+            var nightly = await github.Repository.Content.GetAllContents("Z3Prover", "bin", Settings.GitHubBinariesNightlyFolder);
 
-            Regex regex = new Regex(executableFileName, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+            Regex regex = new Regex(Settings.RegexExecutableFileName, RegexOptions.Singleline | RegexOptions.IgnoreCase);
 
             var files = nightly.Select(f => Tuple.Create(f, regex.Match(f.Name))).Where(fm => fm.Item2.Success).ToArray();
             if (files.Length == 0) return null; // no matching files found
@@ -149,7 +135,7 @@ namespace NightlyRunner
 
             foreach (var fm in files)
             {
-                string sha = fm.Item2.Groups[regexGroup_Commit].Value;
+                string sha = fm.Item2.Groups[Settings.RegexExecutableFileName_CommitGroup].Value;
                 var commit = await github.Repository.Commit.Get("Z3Prover", "z3", sha);
                 var date = commit.Commit.Committer.Date;
                 if(date > max)
