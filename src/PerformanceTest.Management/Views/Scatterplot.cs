@@ -25,6 +25,10 @@ namespace PerformanceTest.Management
         private uint errorLine = 100;
         private uint timeoutX = 1800;
         private uint timeoutY = 1800;
+        private uint timeoutXmin = 1800;
+        private uint timeoutXmax = 1800;
+        private uint timeoutYmin = 1800;
+        private uint timeoutYmax = 1800;
         private uint memoutX = 1800;
         private uint memoutY = 1800;
         private Dictionary<string, int> classes = new Dictionary<string, int>();
@@ -49,6 +53,8 @@ namespace PerformanceTest.Management
             category = (category1 == category2) ? category1 : category1 + " -vs- " + category2;
             timeoutX = (uint)timeout1;
             timeoutY = (uint)timeout2;
+            timeoutXmin = timeoutXmax = timeoutX;
+            timeoutYmin = timeoutYmax = timeoutY; 
             memoutX = (uint)memout1;
             memoutY = (uint)memout2;
             UpdateStatus(true);
@@ -58,18 +64,24 @@ namespace PerformanceTest.Management
             {
                 if (a.PropertyName == "CompareItems")
                 {
-                    if (chart.Series.Count > 0)
-                    {
-                        RefreshChart();
-                    }
-                    else
-                    {
-                        SetupChart();
-                        RefreshChart();
-                    }
+                    updateTimeouts();
+                    SetupChart();
+                    RefreshChart();
                 }
             };
 
+        }
+        private void updateTimeouts()
+        {
+            timeoutXmin = vm.CompareItems == null ? timeoutX : vm.CompareItems.Min(item => item.Results1.Status == ResultStatus.Timeout ? (uint)item.Results1.NormalizedRuntime : UInt32.MaxValue);
+            timeoutXmax = vm.CompareItems == null ? timeoutX : vm.CompareItems.Max(item => item.Results1.Status == ResultStatus.Timeout ? (uint)item.Results1.NormalizedRuntime : UInt32.MinValue);
+            if (timeoutXmin == UInt32.MaxValue && timeoutXmax == UInt32.MinValue)
+                timeoutXmin = timeoutXmax = timeoutX;
+            
+            timeoutYmin = vm.CompareItems == null ? timeoutY : vm.CompareItems.Min(item => item.Results2.Status == ResultStatus.Timeout ? (uint)item.Results2.NormalizedRuntime : UInt32.MaxValue);
+            timeoutYmax = vm.CompareItems == null ? timeoutY : vm.CompareItems.Max(item => item.Results2.Status == ResultStatus.Timeout ? (uint)item.Results2.NormalizedRuntime : UInt32.MinValue);
+            if (timeoutYmin == UInt32.MaxValue && timeoutYmax == UInt32.MinValue)
+                timeoutYmin = timeoutYmax = timeoutY;
         }
 
         private void UpdateStatus(bool isBusy)
@@ -159,6 +171,16 @@ namespace PerformanceTest.Management
                 chart.Series[0].Points.AddXY(memoutX, memoutY);
                 chart.Series[0].Points.AddXY(memoutX, axisMinimum);
             }
+            else if (rbNormalized.Checked)
+            {
+                chart.Series[0].Points.AddXY(axisMinimum, timeoutYmin);
+                chart.Series[0].Points.AddXY(timeoutXmin, timeoutYmin);
+                chart.Series[0].Points.AddXY(timeoutXmin, axisMinimum);
+
+                chart.Series[0].Points.AddXY(timeoutXmax, axisMinimum);
+                chart.Series[0].Points.AddXY(timeoutXmax, timeoutYmax);
+                chart.Series[0].Points.AddXY(axisMinimum, timeoutYmax);
+            }
             else
             {
                 chart.Series[0].Points.AddXY(axisMinimum, timeoutY);
@@ -217,10 +239,11 @@ namespace PerformanceTest.Management
                 newSeries.XAxisType = AxisType.Primary;
                 newSeries.YAxisType = AxisType.Primary;
             }
-            else if (chart.Series.Count <= 3)
+            else if (chart.Series.Count <= 6)
             {
                 chart.Series.Add(title);
                 Series newSeries = chart.Series.Last();
+
                 newSeries.ChartType = SeriesChartType.FastPoint;
                 if (rbNormalized.Checked) newSeries.MarkerStyle = MarkerStyle.Cross;
                 else if (rbNonNormalized.Checked) newSeries.MarkerStyle = MarkerStyle.Star4;
@@ -253,6 +276,33 @@ namespace PerformanceTest.Management
                 else if (rbWallClock.Checked) newSeries.MarkerStyle = MarkerStyle.Star6;
                 else newSeries.MarkerStyle = MarkerStyle.Triangle;
                
+                newSeries.MarkerSize = 6;
+                newSeries.MarkerColor = Color.OrangeRed;
+                newSeries.XAxisType = AxisType.Primary;
+                newSeries.YAxisType = AxisType.Primary;
+
+                chart.Series.Add("Timeout");
+                newSeries = chart.Series.Last();
+                newSeries.ChartType = SeriesChartType.FastPoint;
+                newSeries.MarkerStyle = MarkerStyle.Circle;
+                newSeries.MarkerSize = 6;
+                newSeries.MarkerColor = Color.Blue;
+                newSeries.XAxisType = AxisType.Primary;
+                newSeries.YAxisType = AxisType.Primary;
+
+                chart.Series.Add("Timeout Winners");
+                newSeries = chart.Series.Last();
+                newSeries.ChartType = SeriesChartType.FastPoint;
+                newSeries.MarkerStyle = MarkerStyle.Circle;
+                newSeries.MarkerSize = 6;
+                newSeries.MarkerColor = Color.Green;
+                newSeries.XAxisType = AxisType.Primary;
+                newSeries.YAxisType = AxisType.Primary;
+
+                chart.Series.Add("Timeout Losers");
+                newSeries = chart.Series.Last();
+                newSeries.ChartType = SeriesChartType.FastPoint;
+                newSeries.MarkerStyle = MarkerStyle.Circle;
                 newSeries.MarkerSize = 6;
                 newSeries.MarkerColor = Color.OrangeRed;
                 newSeries.XAxisType = AxisType.Primary;
@@ -318,12 +368,17 @@ namespace PerformanceTest.Management
                              (!ckmemory && (rc1 == ResultStatus.OutOfMemory || rc2 == ResultStatus.OutOfMemory)))
                             continue;
 
-                        if ((rc1 != ResultStatus.Success && rc1 != ResultStatus.Timeout) || (x != timeoutX && res1 == 0))
+                        if (rbMemoryUsed.Checked && (rc1 != ResultStatus.Success && rc1 != ResultStatus.OutOfMemory || x <= memoutX && res1 == 0) 
+                            || (rbNonNormalized.Checked || rbWallClock.Checked) && (rc1 != ResultStatus.Success && rc1 != ResultStatus.Timeout || x != timeoutX && res1 == 0)
+                            || rbNormalized.Checked && (rc1 != ResultStatus.Success && rc1 != ResultStatus.Timeout || res1 == 0 && (x < timeoutXmin || x > timeoutXmax)))
                             x = errorLine;
-                        if ((rc2 != ResultStatus.Success && rc2 != ResultStatus.Timeout) || (y != timeoutY && res2 == 0))
+                        if (rbMemoryUsed.Checked && (rc2 != ResultStatus.Success && rc2 != ResultStatus.OutOfMemory || y <= memoutY && res2 == 0) 
+                            || (rbNonNormalized.Checked || rbWallClock.Checked) && (rc2 != ResultStatus.Success && rc2 != ResultStatus.Timeout || y != timeoutY && res2 == 0)
+                            || rbNormalized.Checked && (rc2 != ResultStatus.Success && rc2 != ResultStatus.Timeout || res2 == 0 && (y < timeoutYmin || y > timeoutYmax)))
                             y = errorLine;
-
-                        if (rbMemoryUsed.Checked && x < memoutX && y < memoutY || !rbMemoryUsed.Checked && x < timeoutX && y < timeoutY)
+                        
+                        if (rbMemoryUsed.Checked && rc1 != ResultStatus.OutOfMemory && rc2 != ResultStatus.OutOfMemory 
+                            || !rbMemoryUsed.Checked && rc1 != ResultStatus.Timeout && rc2 != ResultStatus.Timeout)
                         {
                             totalX += x;
                             totalY += y;
@@ -354,12 +409,27 @@ namespace PerformanceTest.Management
                         {
                             if ((item.Results1.Sat < item.Results2.Sat && item.Results1.Unsat == item.Results2.Unsat) ||
                                (item.Results1.Sat == item.Results2.Sat && item.Results1.Unsat < item.Results2.Unsat))
-                                chart.Series[4].Points.AddXY(x, y);
+                            {
+                                if (rbNormalized.Checked && (rc1 == ResultStatus.Timeout || rc2 == ResultStatus.Timeout))
+                                    chart.Series[7].Points.AddXY(x, y);
+                                else
+                                    chart.Series[4].Points.AddXY(x, y);
+                            }
                             else if ((item.Results1.Sat > item.Results2.Sat && item.Results1.Unsat == item.Results2.Unsat) ||
                                 (item.Results1.Sat == item.Results2.Sat && item.Results1.Unsat > item.Results2.Unsat))
-                                chart.Series[5].Points.AddXY(x, y);
+                            {
+                                if (rbNormalized.Checked && (rc1 == ResultStatus.Timeout || rc2 == ResultStatus.Timeout))
+                                    chart.Series[8].Points.AddXY(x, y);
+                                else
+                                    chart.Series[5].Points.AddXY(x, y);
+                            }
                             else
-                                chart.Series[3].Points.AddXY(x, y);
+                            {
+                                if (rbNormalized.Checked && (rc1 == ResultStatus.Timeout || rc2 == ResultStatus.Timeout))
+                                    chart.Series[6].Points.AddXY(x, y);
+                                else
+                                    chart.Series[3].Points.AddXY(x, y);
+                            }
                         }
 
                         if (x > y) y_faster++; else if (y > x) y_slower++;
@@ -377,9 +447,9 @@ namespace PerformanceTest.Management
             double avgSpeedup = totalX / totalY;
             lblAvgSpeedup.Text = avgSpeedup.ToString("N3");
             if (avgSpeedup >= 1.0)
-                lblAvgSpeedup.ForeColor = Color.Green;
+                lblAvgSpeedup.ForeColor = rbMemoryUsed.Checked ? Color.Red : Color.Green;
             else if (avgSpeedup < 1.0)
-                lblAvgSpeedup.ForeColor = Color.Red;
+                lblAvgSpeedup.ForeColor = rbMemoryUsed.Checked ? Color.Green : Color.Red;
 
             lblTotal.Text = total.ToString();
             lblFaster.Text = y_faster.ToString();
@@ -396,9 +466,9 @@ namespace PerformanceTest.Management
             SetupChart();
             if (rbMemoryUsed.Checked)
             {
-                lblAvgSpeedupTxt.Text = "Avg.memory loss:";
-                label3.Text = "Y Losing More";
-                label5.Text = "Y Losing Less";
+                lblAvgSpeedupTxt.Text = "Avg.memory used(excl.OOM):";
+                label3.Text = "Y Less Memory";
+                label5.Text = "Y More Memory";
             }
             else
             {
