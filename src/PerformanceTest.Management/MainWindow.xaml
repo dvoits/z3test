@@ -139,7 +139,7 @@
                             <MenuItem IsEnabled="False" Name="mnuRecovery" Header="Requeue in. errors..." Command="{x:Static local:MainWindow.RequeueIErrorsCommand}" />
                             <MenuItem Name="mnuRestart" Header="Resubmit" Command="{x:Static local:MainWindow.RestartCommand}" />
                             <MenuItem IsEnabled="False" Name="mnuRequeueIE" Header="Start recovery..." Command="{x:Static local:MainWindow.RecoveryCommand}" />
-                            <MenuItem IsEnabled="False" Name="mnuDuplicates" Header="Resolve _duplicates..." Command="{x:Static local:MainWindow.DuplicatesCommand}" />
+                            <MenuItem Name="mnuDuplicates" Header="Resolve _duplicates..." Command="{x:Static local:MainWindow.DuplicatesCommand}" />
                             <MenuItem Name="mnuFlag" Header="Toggle _flag" Command="{x:Static local:MainWindow.FlagCommand}" InputGestureText="Ctrl-T" />
                             <MenuItem Name="mnuTally" Header="Ta_lly" Command="{x:Static local:MainWindow.TallyCommand}" />
                             <MenuItem Name="mnuSave" Header="Save...">

@@ -22,7 +22,21 @@ namespace PerformanceTest.Management
             get { return ReadBool("ShowProgress"); }
             set { WriteBool("ShowProgress", value); }
         }
-
+        public bool ResolveTimeoutDupes
+        {
+            get { return ReadBool("ResolveTimeoutDupes"); }
+            set { WriteBool("ResolveTimeoutDupes", value); }
+        }
+        public bool ResolveSameTimeDupes
+        {
+            get { return ReadBool("ResolveSameTimeDupes"); }
+            set { WriteBool("ResolveSameTimeDupes", value); }
+        }
+        public bool ResolveSlowestDupes
+        {
+            get { return ReadBool("ResolveSlowestDupes"); }
+            set { WriteBool("ResolveSlowestDupes", value); }
+        }
         public string ConnectionString
         {
             get { return ReadString("ConnectionString"); }
