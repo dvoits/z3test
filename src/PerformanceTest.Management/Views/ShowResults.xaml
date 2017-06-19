@@ -56,10 +56,10 @@
                         <DataGridTextColumn Binding="{Binding Path=Sat, Mode=OneWay}" Header="SAT" />
                         <DataGridTextColumn Binding="{Binding Path=Unsat, Mode=OneWay}" Header="UNSAT"/>
                         <DataGridTextColumn Binding="{Binding Path=Unknown, Mode=OneWay}" Header="UNKNOWN" />
-                        <DataGridTextColumn Binding="{Binding Path=NormalizedRuntime, Mode=OneWay, StringFormat={}{0:F6}}" Header="Normalized Runtime"/>
+                        <DataGridTextColumn Binding="{Binding Path=NormalizedRuntime, Mode=OneWay, StringFormat={}{0:F3}}" Header="Normalized Runtime"/>
                         <DataGridTextColumn Binding="{Binding Path=MemorySizeMB, Mode=OneWay, StringFormat={}{0:F2}}" Header="Memory size (MB)" />
-                        <DataGridTextColumn Binding="{Binding Path=TotalProcessorTime, Mode=OneWay, StringFormat={}{0:F6}}" Header="Total processor time"/>
-                        <DataGridTextColumn Binding="{Binding Path=WallClockTime, Mode=OneWay, StringFormat={}{0:F6}}" Header="Wall clock time"/>
+                        <DataGridTextColumn Binding="{Binding Path=TotalProcessorTime, Mode=OneWay, StringFormat={}{0:F3}}" Header="Total processor time"/>
+                        <DataGridTextColumn Binding="{Binding Path=WallClockTime, Mode=OneWay, StringFormat={}{0:F3}}" Header="Wall clock time"/>
                     </DataGrid.Columns>
                     <DataGrid.CommandBindings>
                         <CommandBinding Command="{x:Static local:ShowResults.ReclassifyOKCommand}" Executed="ReclassifyOK" CanExecute="canReclassify" />
