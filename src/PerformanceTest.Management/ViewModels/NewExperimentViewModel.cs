@@ -458,14 +458,14 @@ namespace PerformanceTest.Management
         {
             try
             {
-                string[] selected = Categories == null ? new string[0] : Categories.Split(',').Select(s => s.Trim()).ToArray();
+                string[] selected = Categories == null ? new string[0] : Categories.Split('|').Select(s => s.Trim()).ToArray();
 
                 selected = service.ChooseOptions("Choose categories",
                     new AsyncLazy<string[]>(() => manager.GetAvailableCategories(BenchmarkDirectory)),
                     new Predicate<string>(c => selected.Contains(c)));
                 if (selected != null)
                 {
-                    Categories = String.Join(",", selected);
+                    Categories = String.Join("|", selected);
                 }
             }
             catch (Exception ex)
