@@ -54,12 +54,43 @@ Regular experiments allow to track how changes in the source codes affect the ta
 The .NET application `/src/NightlyRunner` allows to submit performance tests for the latest nightly build of Z3. 
 It does the following:
 
-1. Finds most recent binary at https://github.com/Z3Prover/bin/tree/master/nightly. If there are multiple files found, takes commit sha from the file names and looks to the commit history of the Z3 repository to determine which is most recent.
+1. Finds most recent x86 binary package at https://github.com/Z3Prover/bin/tree/master/nightly. If there are multiple files found, takes commit sha from the file names and looks to the commit history of the Z3 repository to determine which is most recent.
 2. Finds the last nightly performance experiment.
 3. If the most recent build differs from the last experiment executable, does the following:
   3.1. Uploads new x86 z3 binary package to the blob container `bin` and sets its metadata attribute to the original file name of the package.
   3.2. Submits new performance experiment.
 
+
+### How to schedule nightly runs using Azure Batch Schedule
+
+1. Create Azure Batch Application for `NightlyRunner`. 
+  1.1. Open Batch account page at the Azure portal.
+  1.2. Click `Feature/Applications` and then click `Add`.
+  1.3. Compress NightlyRunner.exe, NightlyRunner.exe.config and all its \*.dll files to a zip file and select it as Application package.
+  1.4. Click `OK` to create the application.
+  
+2. Schedule execution of the application. Open PowerShell and use the following commands to create new schedule:
+
+```powershell
+
+Login-AzureRmAccount
+
+$ManagerTask = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSJobManagerTask"
+$ManagerTask.ApplicationPackageReferences = $AppRefs
+$ManagerTask.Id = "NightlyRunTask"
+$ManagerTask.CommandLine = "NightlyRunner.exe"
+
+$JobSpecification = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSJobSpecification"
+$JobSpecification.JobManagerTask = $ManagerTask
+$JobSpecification.PoolInformation = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSPoolInformation"
+$JobSpecification.PoolInformation.PoolId = ...pool id...
+
+$Schedule = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSSchedule"
+$Schedule.RecurrenceInterval = [TimeSpan]::FromDays(1)
+
+$BatchContext = Get-AzureRmBatchAccountKeys 
+New-AzureBatchJobSchedule -Id "NighlyRunSchedule" -Schedule $Schedule -JobSpecification $JobSpecification -BatchContext $BatchContext
+```
 
 
 
