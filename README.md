@@ -49,4 +49,17 @@ Regular experiments allow to track how changes in the source codes affect the ta
 
 ## Update Azure Batch worker
 
+## Setup Nightly performance tests
+
+The .NET application `/src/NightlyRunner` allows to submit performance tests for the latest nightly build of Z3. 
+It does the following:
+
+1. Finds most recent binary at https://github.com/Z3Prover/bin/tree/master/nightly. If there are multiple files found, takes commit sha from the file names and looks to the commit history of the Z3 repository to determine which is most recent.
+2. Finds the last nightly performance experiment.
+3. If the most recent build differs from the last experiment executable, does the following:
+  3.1. Uploads new x86 z3 binary package to the blob container `bin` and sets its metadata attribute to the original file name of the package.
+  3.2. Submits new performance experiment.
+
+
+
 
