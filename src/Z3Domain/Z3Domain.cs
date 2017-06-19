@@ -5,10 +5,12 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.ComponentModel.Composition;
 using static Measurement.Measure;
 
 namespace Measurement
 {
+    [Export(typeof(Domain))]
     public class Z3Domain : Domain
     {
         public Z3Domain() : base("Z3")

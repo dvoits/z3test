@@ -1,25 +1,17 @@
 ﻿using AzurePerformanceTest;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace PerformanceTest.Management
 {
     public partial class MainWindow : Window
     {
-        private readonly IDomainResolver domainResolver;
+        private IDomainResolver domainResolver;
         private readonly IUIService uiService;
         private readonly RecentValuesStorage recentValues;
 
@@ -49,9 +41,7 @@ namespace PerformanceTest.Management
 
             recentValues = new RecentValuesStorage();
             connectionString.Text = recentValues.ConnectionString;
-
-            domainResolver = new DomainResolver(new[] { Measurement.Domain.Default, new Measurement.Z3Domain() });
-
+            
             ProgramStatusViewModel statusVm = new ProgramStatusViewModel();
             statusBar.DataContext = statusVm;
             uiService = new UIService(statusVm);
@@ -719,6 +709,16 @@ namespace PerformanceTest.Management
             catch (Exception ex)
             {
                 uiService.ShowError(ex, "Failed to restore recent values");
+            }
+
+            try
+            {
+                domainResolver = new MEFDomainResolver();
+            }
+            catch (Exception ex)
+            {
+                domainResolver = new DomainResolver(new[] { new Measurement.Z3Domain() });
+                uiService.ShowError(ex, "Failed to find domains");
             }
         }
 
