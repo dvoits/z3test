@@ -17,6 +17,7 @@ namespace NightlyRunner
     class Program
     {
         static Settings Settings = Settings.Default;
+        static Regex regex = new Regex(Settings.RegexExecutableFileName, RegexOptions.Singleline | RegexOptions.IgnoreCase);
 
         static int Main(string[] args)
         {
@@ -95,7 +96,13 @@ namespace NightlyRunner
 
             Trace.WriteLine(string.Format("Starting nightly experiment in Batch pool \"{0}\"...", Settings.AzureBatchPoolId));
             manager.BatchPoolID = Settings.AzureBatchPoolId;
-            var experimentId = await manager.StartExperiment(definition, Settings.Creator, Settings.ExperimentNote);
+
+            string commitSha = GetCommitSha(fileName);
+            string note = commitSha != null ?
+                string.Format("{0} for https://github.com/{1}/{2}/commit/{3}", Settings.ExperimentNote, Settings.GitHubOwner, Settings.GitHubZ3Repository, commitSha) :
+                Settings.ExperimentNote;
+
+            var experimentId = await manager.StartExperiment(definition, Settings.Creator, note);
             Trace.WriteLine(string.Format("Done, experiment id {0}.", experimentId));
         }
 
@@ -121,9 +128,7 @@ namespace NightlyRunner
         {
             Trace.WriteLine("Looking for most recent nightly build...");
             var github = new GitHubClient(new ProductHeaderValue("Z3-Tests-Nightly-Runner"));
-            var nightly = await github.Repository.Content.GetAllContents("Z3Prover", "bin", Settings.GitHubBinariesNightlyFolder);
-
-            Regex regex = new Regex(Settings.RegexExecutableFileName, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+            var nightly = await github.Repository.Content.GetAllContents(Settings.GitHubOwner, Settings.GitHubBinariesRepository, Settings.GitHubBinariesNightlyFolder);
 
             var files = nightly.Select(f => Tuple.Create(f, regex.Match(f.Name))).Where(fm => fm.Item2.Success).ToArray();
             if (files.Length == 0) return null; // no matching files found
@@ -136,7 +141,7 @@ namespace NightlyRunner
             foreach (var fm in files)
             {
                 string sha = fm.Item2.Groups[Settings.RegexExecutableFileName_CommitGroup].Value;
-                var commit = await github.Repository.Commit.Get("Z3Prover", "z3", sha);
+                var commit = await github.Repository.Commit.Get(Settings.GitHubOwner, Settings.GitHubZ3Repository, sha);
                 var date = commit.Commit.Committer.Date;
                 if(date > max)
                 {
@@ -150,6 +155,16 @@ namespace NightlyRunner
         static string ReadConnectionString()
         {
             return File.ReadAllText("connectionString.txt");
+        }
+
+        static string GetCommitSha(string fileName)
+        {
+            if (fileName == null) return null;
+            var m = regex.Match(fileName);
+            if (!m.Success) return null;
+            var g = m.Groups[Settings.RegexExecutableFileName_CommitGroup];
+            if (!g.Success) return null;
+            return g.Value;
         }
     }
 }
