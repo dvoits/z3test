@@ -53,18 +53,45 @@ namespace AzureWorker.Properties {
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string BatchAccountKey {
+        public string BatchAccountKeyId {
             get {
-                return ((string)(this["BatchAccountKey"]));
+                return ((string)(this["BatchAccountKeyId"]));
             }
         }
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string StorageAccountKey {
+        public string StorageAccountKeyId {
             get {
-                return ((string)(this["StorageAccountKey"]));
+                return ((string)(this["StorageAccountKeyId"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string KeyVaultUrl {
+            get {
+                return ((string)(this["KeyVaultUrl"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string AADApplicationId {
+            get {
+                return ((string)(this["AADApplicationId"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string AADApplicationCertThumbprint {
+            get {
+                return ((string)(this["AADApplicationCertThumbprint"]));
             }
         }
     }
