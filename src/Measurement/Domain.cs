@@ -24,7 +24,13 @@ namespace Measurement
 
         public virtual string[] BenchmarkExtensions { get { return new string[0]; } }
 
+        public virtual string CommandLineParameters { get { return ""; } }
 
+        public virtual string AddFileNameArgument(string parameters, string fileName)
+        {
+            return string.Format("{0} {1}", parameters, fileName);
+        }
+        
         public abstract ProcessRunAnalysis Analyze(string inputFile, ProcessRunMeasure measure);
 
         public AggregatedAnalysis Aggregate(IEnumerable<ProcessRunAnalysis> benchmarkResults)

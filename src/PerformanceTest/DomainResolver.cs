@@ -6,11 +6,14 @@ using System.Text;
 using System.Threading.Tasks;
 using System.ComponentModel.Composition;
 using System.ComponentModel.Composition.Hosting;
+using System.Diagnostics;
 
 namespace PerformanceTest
 {
     public interface IDomainResolver
     {
+        string[] Domains { get; }
+
         Domain GetDomain(string domainName);
     }
 
@@ -24,12 +27,20 @@ namespace PerformanceTest
             this.domains = domains.ToList();
         }
 
+        public string[] Domains
+        {
+            get
+            {
+                return domains.Select(d => d.Name).ToArray();
+            }
+        }
+
         public Domain GetDomain(string domainName)
         {
             if (domainName == null) throw new ArgumentNullException("domainName");
             foreach (var d in domains)
             {
-                if(d.Name == domainName)
+                if (d.Name == domainName)
                 {
                     return d;
                 }
@@ -48,22 +59,38 @@ namespace PerformanceTest
             var catalog = new AggregateCatalog();
 
             string path = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            catalog.Catalogs.Add(new DirectoryCatalog(path));
+            catalog.Catalogs.Add(new DirectoryCatalog(path, "*Domain.dll"));
 
-            var container = new CompositionContainer(catalog);
-            container.ComposeParts(this);
+            try
+            {
+                var container = new CompositionContainer(catalog);
+                container.ComposeParts(this);
+            }
+            catch (CompositionException ex)
+            {
+                Trace.WriteLine("Composition exception when resolving domains: " + ex);
+            }
+        }
+
+        public string[] Domains
+        {
+            get
+            {
+                return domains != null ? domains.Select(d => d.Name).ToArray() : new string[0];
+            }
         }
 
         public Domain GetDomain(string domainName)
         {
             if (domainName == null) throw new ArgumentNullException("domainName");
-            foreach (var d in domains)
-            {
-                if (d.Name == domainName)
+            if (domains != null)
+                foreach (var d in domains)
                 {
-                    return d;
+                    if (d.Name == domainName)
+                    {
+                        return d;
+                    }
                 }
-            }
             throw new KeyNotFoundException(String.Format("Domain '{0}' not found", domainName));
         }
     }

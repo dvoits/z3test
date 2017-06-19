@@ -25,6 +25,19 @@ namespace Measurement
             }
         }
 
+        public override string CommandLineParameters
+        {
+            get
+            {
+                return "-smt2 -file:{0}";
+            }
+        }
+
+        public override string AddFileNameArgument(string parameters, string fileName)
+        {
+            return string.Format("{0} -file:{1}", parameters, fileName);
+        }
+
         public override ProcessRunAnalysis Analyze(string inputFile, ProcessRunMeasure measure)
         {
             if (!measure.StdOut.CanSeek) throw new NotSupportedException("Standard output stream doesn't support seeking");

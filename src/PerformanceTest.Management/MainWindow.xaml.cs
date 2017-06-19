@@ -364,6 +364,13 @@ namespace PerformanceTest.Management
                 Tuple<string, int?, Exception>[] result;
                 try
                 {
+                    if (!vm.Parameters.Contains("{0}"))
+                    {
+                        var domain = domainResolver.GetDomain(vm.Domain);
+                        vm.Parameters = domain.AddFileNameArgument(vm.Parameters, "{0}");
+                    }
+
+                    // Submitting the new experiment
                     result = await managerVm.SubmitExperiments(vm);
                 }
                 catch (Exception ex)
@@ -717,8 +724,12 @@ namespace PerformanceTest.Management
             }
             catch (Exception ex)
             {
-                domainResolver = new DomainResolver(new[] { new Measurement.Z3Domain() });
                 uiService.ShowError(ex, "Failed to find domains");
+            }
+            if(domainResolver == null || domainResolver.Domains.Length == 0)
+            {
+                domainResolver = new DomainResolver(new[] { new Measurement.Z3Domain() });
+                uiService.ShowWarning("No domains found; only Z3 domain will be available.");
             }
         }
 

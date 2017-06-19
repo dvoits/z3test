@@ -52,7 +52,7 @@ namespace PerformanceTest.Management
             this.recentValues = recentValues;
             this.creator = creator;
             this.domainResolver = domainResolver;
-                        
+
             benchmarkContainerUri = ExperimentDefinition.DefaultContainerUri;
 
             ChooseDirectoryCommand = new DelegateCommand(ChooseDirectory);
@@ -61,18 +61,20 @@ namespace PerformanceTest.Management
             ChoosePoolCommand = new DelegateCommand(ListPools);
 
             benchmarkDirectory = recentValues.BenchmarkDirectory;
-            categories = recentValues.BenchmarkCategories;            
-            parameters = recentValues.ExperimentExecutableParameters;
+            categories = recentValues.BenchmarkCategories;
             timelimit = recentValues.BenchmarkTimeLimit.TotalSeconds;
             memlimit = recentValues.BenchmarkMemoryLimit;
             note = recentValues.ExperimentNote;
 
             Domain = Domains[0];
+            // Following will override the defaults given when setting the Domain above.
             string storedExt = recentValues.BenchmarkExtension;
             if (!string.IsNullOrEmpty(storedExt))
-            {
                 extension = storedExt;
-            }
+            string storedParam = recentValues.ExperimentExecutableParameters;
+            if (!string.IsNullOrEmpty(storedParam))
+                parameters = storedParam;
+
 
             UseMostRecentExecutable = true;
             RecentBlobDisplayName = "searching...";
@@ -136,9 +138,13 @@ namespace PerformanceTest.Management
                 string ext = extension;
                 try
                 {
-                    string[] newExt = domainResolver.GetDomain(domain).BenchmarkExtensions;
+                    var d = domainResolver.GetDomain(domain);
+
+                    string[] newExt = d.BenchmarkExtensions;
                     if (newExt == null || newExt.Length == 0) return;
                     Extension = string.Join("|", newExt);
+
+                    Parameters = d.CommandLineParameters;
                 }
                 catch (Exception ex)
                 {
@@ -150,7 +156,7 @@ namespace PerformanceTest.Management
 
         public string[] Domains
         {
-            get { return new[] { "Z3" }; }
+            get { return domainResolver.Domains; }
         }
 
         public string MainExecutable
@@ -320,13 +326,13 @@ namespace PerformanceTest.Management
         {
             bool isValid = true;
 
-            if(UseNewExecutable && (fileNames == null || fileNames.Length == 0))
+            if (UseNewExecutable && (fileNames == null || fileNames.Length == 0))
             {
                 isValid = false;
                 service.ShowWarning("No files are selected as new executable", "Validation failed");
             }
 
-            if(string.IsNullOrEmpty(Extension))
+            if (string.IsNullOrEmpty(Extension))
             {
                 isValid = false;
                 service.ShowWarning("Benchmark extension is not specified", "Validation failed");
@@ -342,17 +348,7 @@ namespace PerformanceTest.Management
             {
                 isValid = false;
                 service.ShowWarning("Parameters value is null", "Validation failed");
-            }
-            else if (!Parameters.Contains("{0}"))
-            {
-                string suggestion = string.IsNullOrWhiteSpace(Parameters) ? "{0}" + Parameters : "{0} " + Parameters;
-                string message = string.Format("Parameters do not contain a placeholder for an input file name. Suggested parameters are:\n\n{0}\n\nUse the suggested parameters?", suggestion);
-                bool? result = service.AskYesNoCancel(message, "Validation");
-                if (result == null)
-                    isValid = false;
-                else if (result.Value)
-                    Parameters = suggestion;
-            }
+            }            
 
             return isValid;
         }
