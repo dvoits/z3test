@@ -166,7 +166,7 @@ namespace AzureWorker
 
                             return new CloudBlockBlob[] { blob };
                         }).ToArray();
-                        starterTasks.Add(StartTasksForSegment(timeout.TotalSeconds.ToString(), experimentId, executable, arguments, memoryLimit, outputLimit, errorLimit, jobId, batchClient, blobsToProcess, benchmarksPath, totalBenchmarks, benchmarkStorage));
+                        starterTasks.Add(StartTasksForSegment(timeout.TotalSeconds.ToString(), experimentId, executable, arguments, memoryLimit, domainString, outputLimit, errorLimit, jobId, batchClient, blobsToProcess, benchmarksPath, totalBenchmarks, benchmarkStorage));
 
                         continuationToken = resultSegment.ContinuationToken;
                         totalBenchmarks += blobsToProcess.Length;
@@ -313,7 +313,7 @@ namespace AzureWorker
             return benchmarksPath;
         }
 
-        private static async Task StartTasksForSegment(string timeout, int experimentId, string executable, string arguments, double memoryLimit, long? outputLimit, long? errorLimit, string jobId, BatchClient batchClient, IEnumerable<CloudBlockBlob> blobsToProcess, string blobFolderPath, int startTaskId, AzureBenchmarkStorage benchmarkStorage)
+        private static async Task StartTasksForSegment(string timeout, int experimentId, string executable, string arguments, double memoryLimit, string domainName, long? outputLimit, long? errorLimit, string jobId, BatchClient batchClient, IEnumerable<CloudBlockBlob> blobsToProcess, string blobFolderPath, int startTaskId, AzureBenchmarkStorage benchmarkStorage)
         {
             List<CloudTask> tasks = new List<CloudTask>();
             int blobNo = startTaskId;
@@ -323,7 +323,7 @@ namespace AzureWorker
                 string taskId = blobNo.ToString();
                 string[] parts = blobItem.Name.Split('/');
                 string shortName = parts[parts.Length - 1];
-                string taskCommandLine = String.Format("cmd /c %" + SharedDirEnvVariableName + "%\\%" + JobIdEnvVariableName + "%\\AzureWorker.exe --measure {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\" \"{7}\" \"{8}\"", experimentId, blobItem.Name.Substring(blobFolderPathLength), executable, arguments, shortName, timeout, memoryLimit, NullableLongToString(outputLimit), NullableLongToString(errorLimit));
+                string taskCommandLine = String.Format("cmd /c %" + SharedDirEnvVariableName + "%\\%" + JobIdEnvVariableName + "%\\AzureWorker.exe --measure {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\" \"{7}\" \"{8}\" \"{9}\"", experimentId, blobItem.Name.Substring(blobFolderPathLength), executable, arguments, shortName, timeout, domainName, memoryLimit, NullableLongToString(outputLimit), NullableLongToString(errorLimit));
                 var resourceFile = new ResourceFile(benchmarkStorage.GetBlobSASUri(blobItem), shortName);
                 CloudTask task = new CloudTask(taskId, taskCommandLine);
                 task.ResourceFiles = new List<ResourceFile> { resourceFile };
@@ -355,22 +355,22 @@ namespace AzureWorker
             string arguments = args[3];
             string targetFile = args[4];
             TimeSpan timeout = TimeSpan.FromSeconds(double.Parse(args[5]));
-            //string workerInfo = "";
+            string domainName = args[6];
             double memoryLimit = 0; // no limit
             long? outputLimit = null;
             long? errorLimit = null;
             //if (args.Length > 6)
             //{
             //    workerInfo = args[6];
-                if (args.Length > 6)
+                if (args.Length > 7)
                 {
-                    memoryLimit = double.Parse(args[6]);
-                    if (args.Length > 7)
+                    memoryLimit = double.Parse(args[7]);
+                    if (args.Length > 8)
                     {
-                        outputLimit = args[7] == "null" ? null : (long?)long.Parse(args[7]);
-                        if (args.Length > 8)
+                        outputLimit = args[8] == "null" ? null : (long?)long.Parse(args[8]);
+                        if (args.Length > 9)
                         {
-                            errorLimit = args[8] == "null" ? null : (long?)long.Parse(args[8]);
+                            errorLimit = args[9] == "null" ? null : (long?)long.Parse(args[9]);
                         }
                     }
                 }
@@ -391,6 +391,8 @@ namespace AzureWorker
                 normal = await RunReference(new string[] { });
             }
 
+            if (domainName != "Z3")
+                throw new ArgumentException("Unknown domain");
             Domain domain = new Z3Domain(); // todo: take custom domain name from `args`
             BenchmarkResult result = LocalExperimentRunner.RunBenchmark(
                 experimentId,
@@ -435,6 +437,8 @@ namespace AzureWorker
             var pathForBenchmarks = Path.Combine(workerDir, "refdata", "data");
             var execPath = Path.Combine(workerDir, "refdata", exp.Definition.Executable);
 
+            if (exp.Definition.DomainName != "Z3")
+                throw new ArgumentException("Unknown domain");
             Domain domain = new Z3Domain(); // todo: take custom domain name from `args`
             string[] benchmarks = Directory.EnumerateFiles(pathForBenchmarks).Select(fn => Path.Combine(pathForBenchmarks, fn)).ToArray();
             Trace.WriteLine(string.Format("Found {0} benchmarks in folder {1}", benchmarks.Length, pathForBenchmarks));
