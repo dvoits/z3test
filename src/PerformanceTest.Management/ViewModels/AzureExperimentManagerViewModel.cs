@@ -115,7 +115,7 @@ namespace PerformanceTest.Management
             }
 
             // Submitting experiments
-            string[] cats = newExperiment.Categories.Split(',');
+            string[] cats = newExperiment.Categories.Split('|');
             var res = new Tuple<string, int?, Exception>[cats.Length];
 
             for (int i = 0; i < cats.Length; i++)
