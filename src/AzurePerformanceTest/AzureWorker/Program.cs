@@ -85,9 +85,6 @@ namespace AzureWorker
             }
             Console.WriteLine(String.Format("Params are:\n id: {0}\ncontainer: {8}\ndirectory:{9}\ncategory: {1}\nextensions: {10}\ndomain: {11}\nexec: {2}\nargs: {3}\ntimeout: {4}\nmemlimit: {5}\noutlimit: {6}\nerrlimit: {7}", experimentId, benchmarkCategory, executable, arguments, timeout, memoryLimit, outputLimit, errorLimit, benchmarkContainerUri, benchmarkDirectory, extensionsString, domainString));
 
-            if (domainString != "Z3")
-                throw new ArgumentException("Unknown domain");
-
             string jobId = "exp" + experimentId.ToString();
 
             var batchCred = new BatchSharedKeyCredentials(Settings.Default.BatchAccountUrl, Settings.Default.BatchAccountName, Settings.Default.BatchAccountKey);
@@ -106,7 +103,7 @@ namespace AzureWorker
             Console.WriteLine("Fetched existing results");
             var collectionTask = CollectResults(experimentId);
             Console.WriteLine("Started collection thread.");
-            Domain domain = new Z3Domain();
+            Domain domain = ResolveDomain(domainString);
             SortedSet<string> extensions;
             if (string.IsNullOrEmpty(extensionsString))
                 extensions = new SortedSet<string>(domain.BenchmarkExtensions.Distinct());
@@ -391,9 +388,7 @@ namespace AzureWorker
                 normal = await RunReference(new string[] { });
             }
 
-            if (domainName != "Z3")
-                throw new ArgumentException("Unknown domain");
-            Domain domain = new Z3Domain(); // todo: take custom domain name from `args`
+            Domain domain = ResolveDomain(domainName);
             BenchmarkResult result = LocalExperimentRunner.RunBenchmark(
                 experimentId,
                 executable,
@@ -437,9 +432,7 @@ namespace AzureWorker
             var pathForBenchmarks = Path.Combine(workerDir, "refdata", "data");
             var execPath = Path.Combine(workerDir, "refdata", exp.Definition.Executable);
 
-            if (exp.Definition.DomainName != "Z3")
-                throw new ArgumentException("Unknown domain");
-            Domain domain = new Z3Domain(); // todo: take custom domain name from `args`
+            Domain domain = ResolveDomain(exp.Definition.DomainName);
             string[] benchmarks = Directory.EnumerateFiles(pathForBenchmarks).Select(fn => Path.Combine(pathForBenchmarks, fn)).ToArray();
             Trace.WriteLine(string.Format("Found {0} benchmarks in folder {1}", benchmarks.Length, pathForBenchmarks));
             BenchmarkResult[] results = new BenchmarkResult[benchmarks.Length];
@@ -485,6 +478,12 @@ namespace AzureWorker
             return reference;
         }
 
+        private static Domain ResolveDomain(string domainName)
+        {
+            MEFDomainResolver domainResolver = new MEFDomainResolver();
+            return domainResolver.GetDomain(domainName);
+        }
+
         internal class PrivatePropertiesResolver : DefaultContractResolver
         {
             protected override JsonProperty CreateProperty(System.Reflection.MemberInfo member, MemberSerialization memberSerialization)
@@ -494,6 +493,5 @@ namespace AzureWorker
                 return prop;
             }
         }
-
     }
 }
