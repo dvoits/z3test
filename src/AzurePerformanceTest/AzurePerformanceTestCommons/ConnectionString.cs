@@ -8,13 +8,11 @@ namespace AzurePerformanceTest
 {
     public class ConnectionString
     {
-        private readonly string connectionString;
-        private Dictionary<string, string> dict;
+        protected Dictionary<string, string> dict;
 
         public ConnectionString(string connectionString)
         {
             if (connectionString == null) throw new ArgumentNullException("connectionString");
-            this.connectionString = connectionString;
 
             string[] items = connectionString.Split(';');
             dict = new Dictionary<string, string>(items.Length);
@@ -24,6 +22,11 @@ namespace AzurePerformanceTest
                 var keyValue = item.Split(new[] { '=' }, 2);
                 dict.Add(keyValue[0].Trim(), keyValue[1].Trim());
             }
+        }
+
+        public ConnectionString(IDictionary<string, string> parts)
+        {
+            dict = new Dictionary<string, string>(parts);
         }
 
         public string this[string key]
@@ -99,6 +102,13 @@ namespace AzurePerformanceTest
         {
             get { return this[KeyBatchAccessKey]; }
             set { this[KeyBatchAccessKey] = value; }
+        }
+
+        public ConnectionString WithoutBatchData()
+        {
+            var copy = new ConnectionString(this.dict);
+            copy.RemoveKeys(KeyBatchAccount, KeyBatchAccessKey, KeyBatchURL);
+            return copy;
         }
     }
 }

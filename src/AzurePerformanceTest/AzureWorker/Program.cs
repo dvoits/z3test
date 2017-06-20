@@ -88,14 +88,15 @@ namespace AzureWorker
             string jobId = "exp" + experimentId.ToString();
 
             var secretStorage = new SecretStorage(Settings.Default.AADApplicationId, Settings.Default.AADApplicationCertThumbprint, Settings.Default.KeyVaultUrl);
-            var storageKey = await secretStorage.GetSecret(Settings.Default.StorageAccountKeyId);
-            var batchKey = await secretStorage.GetSecret(Settings.Default.BatchAccountKeyId);
+            BatchConnectionString credentials = new BatchConnectionString(await secretStorage.GetSecret(Settings.Default.ConnectionStringSecretId));
+            //var storageKey = cre.;
+            //var batchKey = await secretStorage.GetSecret(Settings.Default.BatchAccountKeyId);
             Console.WriteLine("Retrieved credentials.");
 
 
-            var batchCred = new BatchSharedKeyCredentials(Settings.Default.BatchAccountUrl, Settings.Default.BatchAccountName, batchKey);
+            var batchCred = new BatchSharedKeyCredentials(credentials.BatchURL, credentials.BatchAccountName, credentials.BatchAccessKey);
 
-            var storage = new AzureExperimentStorage(Settings.Default.StorageAccountName, storageKey);
+            var storage = new AzureExperimentStorage(credentials.WithoutBatchData().ToString());
             AzureBenchmarkStorage benchmarkStorage = CreateBenchmarkStorage(benchmarkContainerUri, storage);
 
             var expInfo = await storage.GetExperiment(experimentId);
@@ -401,9 +402,7 @@ namespace AzureWorker
                 errorLimit,
                 domain,
                 normal);
-
-            //var storage = new AzureExperimentStorage(Settings.Default.StorageAccountName, Settings.Default.StorageAccountKey);
-            //await storage.PutResult(experimentId, result);
+            
             await AzureExperimentStorage.PutResult(experimentId, result, new CloudQueue(outputQueueUri), new CloudBlobContainer(outputBlobContainerUri));
         }
 
