@@ -41,6 +41,7 @@ namespace PerformanceTest.Management
         /// Returns true if yes, false if no, and null if cancel.
         /// </summary>
         bool? AskYesNoCancel(string message, string caption);
+        void ShowDuplicatesWindow(DuplicatesViewModel vm);
     }
 
     public class UIService : IUIService
@@ -251,6 +252,12 @@ namespace PerformanceTest.Management
                     return;
                 }
             }
+        }
+
+        public void ShowDuplicatesWindow(DuplicatesViewModel vm)
+        {
+            Duplicates dlg = new Duplicates(vm);
+            dlg.Show();
         }
     }
 }

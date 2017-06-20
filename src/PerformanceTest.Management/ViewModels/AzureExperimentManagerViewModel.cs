@@ -46,9 +46,34 @@ namespace PerformanceTest.Management
         {
             return ExperimentPropertiesViewModel.CreateAsync(manager, id, domainResolver, uiService);
         }
-        public DuplicatesViewModel BuildDuplicatesResolverView(int id, bool resolveTimeouts, bool resolveSameTime, bool resolveSlowest)
+        public async void BuildDuplicatesResolverView(int[] ids, bool resolveTimeouts, bool resolveSameTime, bool resolveSlowest)
         {
-            return new DuplicatesViewModel(id, resolveTimeouts, resolveSameTime, resolveSlowest, manager, uiService);
+            bool zero_duplicates = true;
+            var handle = uiService.StartIndicateLongOperation("Resolving duplicates...");
+            try
+            {
+                for (int i = 0; i < ids.Length; i++)
+                {
+                    int eid = ids[i];
+                    var vm = new DuplicatesViewModel(eid, resolveTimeouts, resolveSameTime, resolveSlowest, manager, uiService);
+                    bool hadDuplicates = await vm.DownloadResultsAsync();
+                    if (hadDuplicates) zero_duplicates = false;
+                }
+
+                if (zero_duplicates)
+                {
+                    uiService.ShowInfo("There are no duplicates to resolve in experiment.", "No duplicates");
+                }
+            }
+            catch (Exception ex)
+            {
+                uiService.ShowError(ex, "Failed to resolve duplicates in experiment");
+            }
+            finally
+            {
+                uiService.StopIndicateLongOperation(handle);
+            }
+
         }
         public async Task<string[]> GetAvailableCategories(string directory)
         {

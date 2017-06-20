@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PerformanceTest.Management"
         mc:Ignorable="d"
-        Title="Duplicates..." Height="240" Width="640"
+        Title="{Binding Title}" Height="240" Width="640"
         WindowStartupLocation="CenterOwner">
     <Grid>
         <Grid.ColumnDefinitions>
@@ -17,6 +17,7 @@
         </Grid.RowDefinitions>
 
         <Label Content="Double click entry to keep; the others are discarded." Grid.Column="1" Grid.Row="0" HorizontalAlignment="Stretch" VerticalAlignment="Top"/>
-        <DataGrid Grid.Column="1" Grid.Row="1" AutoGenerateColumns="True" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,0,0" Name="dataGrid" IsReadOnly="True" RowHeight="23" SelectionUnit="FullRow" MouseDoubleClick="dataGrid_MouseDoubleClick" />
+
+        <DataGrid Grid.Column="1" Grid.Row="1" AutoGenerateColumns="True" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,0,0" Name="dataGrid" IsReadOnly="True" RowHeight="23" SelectionUnit="FullRow" ItemsSource="{Binding Duplicates}" MouseDoubleClick="dataGrid_MouseDoubleClick" />
     </Grid>
 </Window>

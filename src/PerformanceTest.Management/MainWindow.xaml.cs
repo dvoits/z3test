@@ -1,5 +1,6 @@
 ﻿using AzurePerformanceTest;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -674,60 +675,27 @@ namespace PerformanceTest.Management
                 e.CanExecute = false;
                 return;
             }
-            //else
-            //{
+            else
+            {
 
-            //    var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().ToArray();
-            //    for (var i = 0; i < sts.Length; i++)
-            //    {
-            //        var rc = sts[i].JobStatus;
-            //        if (rc != ExperimentExecutionState.Completed)
-            //        {
-            //            e.CanExecute = false;
-            //            return;
-            //        }
-            //    }
-            //}
+                var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().ToArray();
+                for (var i = 0; i < sts.Length; i++)
+                {
+                    var rc = sts[i].JobStatus;
+                    if (rc != ExperimentExecutionState.Completed)
+                    {
+                        e.CanExecute = false;
+                        return;
+                    }
+                }
+            }
             e.CanExecute = true;
-            //add jobstatus
         }
         private void showDuplicates(object target, ExecutedRoutedEventArgs e)
         {
-            var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().ToArray();
-            var total = sts.Length;
-            
-            bool zero_duplicates = true;
-
-            for (int i = 0; i < total; i++)
-            {
-                int eid = sts[i].ID;
-                //bool has_duplicates = await managerVm.HasDuplicates(eid);
-                ////search duplicates in JobQueue? 
-
-                //if (has_duplicates)
-                //{
-                var handle = uiService.StartIndicateLongOperation("Resolving duplicates in experiment #" + eid + "...");
-                try {
-                    var vm = managerVm.BuildDuplicatesResolverView(eid, mnuOptResolveTimeoutDupes.IsChecked,
-                        mnuOptResolveSameTimeDupes.IsChecked, mnuOptResolveSlowestDupes.IsChecked);
-                    Duplicates dlg = new Duplicates(vm);
-                    dlg.Owner = this;
-                    
-                    if (vm.Duplicates != null && vm.Duplicates.Count != 0) zero_duplicates = false;
-                }
-                catch (Exception ex)
-                {
-                    uiService.ShowError(ex, "Failed to resolve duplicates in experiment #" + eid);
-                }
-                finally
-                {
-                    uiService.StopIndicateLongOperation(handle);
-                }
-            }
-            if (zero_duplicates)
-            {
-                uiService.ShowInfo("There are no duplicates to resolve.", "No duplicates");
-            }
+            var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().Select(item => item.ID).ToArray();
+            managerVm.BuildDuplicatesResolverView(sts, mnuOptResolveTimeoutDupes.IsChecked,
+                 mnuOptResolveSameTimeDupes.IsChecked, mnuOptResolveSlowestDupes.IsChecked);
         }
         private void btnEdit_Click(object sender, RoutedEventArgs e)
         {
