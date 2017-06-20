@@ -16,14 +16,15 @@ namespace NightlyRunner
 {
     class Program
     {
-        static Settings Settings = Settings.Default;
+        static Settings Settings = Settings.Default;        
         static Regex regex = new Regex(Settings.RegexExecutableFileName, RegexOptions.Singleline | RegexOptions.IgnoreCase);
 
         static int Main(string[] args)
         {
             try
-            {
-                Run(Settings.ConnectionString).Wait();
+            {                
+
+                Run().Wait();
                 return 0;
             }
             catch(Exception ex)
@@ -33,8 +34,10 @@ namespace NightlyRunner
             }
         }
 
-        static async Task Run(string connectionString)
+        static async Task Run()
         {
+            string connectionString = await GetConnectionString();
+
             RepositoryContent binary = await GetRecentNightlyBuild();
             if (binary == null)
             {
@@ -59,6 +62,17 @@ namespace NightlyRunner
                 Trace.WriteLine("Opening an experiment manager...");
                 await SubmitExperiment(manager, stream, binary.Name);
             }
+        }
+
+        private static async Task<string> GetConnectionString()
+        {
+            if (!String.IsNullOrWhiteSpace(Settings.ConnectionString))
+            {
+                return Settings.ConnectionString;
+            }
+
+            var secretStorage = new SecretStorage(Settings.Default.AADApplicationId, Settings.Default.AADApplicationCertThumbprint, Settings.Default.KeyVaultUrl);
+            return await secretStorage.GetSecret(Settings.Default.ConnectionStringSecretId);
         }
 
         private static async Task Download(RepositoryContent binary, Stream stream)

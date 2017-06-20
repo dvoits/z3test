@@ -17,9 +17,6 @@ namespace AzurePerformanceTest
 {
     public class AzureExperimentManager : ExperimentManager
     {
-        public const string KeyBatchAccount = "BatchAccount";
-        public const string KeyBatchURL = "BatchURL";
-        public const string KeyBatchAccessKey = "BatchAccessKey";
         const int MaxTaskRetryCount = 5;
         const string DefaultPoolID = "testPool";
 
@@ -53,12 +50,12 @@ namespace AzurePerformanceTest
 
         public static AzureExperimentManager Open(string connectionString)
         {
-            ConnectionString cs = new ConnectionString(connectionString);
-            string batchAccountName = cs.TryGet(KeyBatchAccount);
-            string batchUrl = cs.TryGet(KeyBatchURL);
-            string batchAccessKey = cs.TryGet(KeyBatchAccessKey);
+            var cs = new BatchConnectionString(connectionString);
+            string batchAccountName = cs.BatchAccountName;
+            string batchUrl = cs.BatchURL;
+            string batchAccessKey = cs.BatchAccessKey;
 
-            cs.RemoveKeys(KeyBatchAccount, KeyBatchURL, KeyBatchAccessKey);
+            cs.RemoveKeys(BatchConnectionString.KeyBatchAccount, BatchConnectionString.KeyBatchURL, BatchConnectionString.KeyBatchAccessKey);
             string storageConnectionString = cs.ToString();
 
             AzureExperimentStorage storage = new AzureExperimentStorage(storageConnectionString);

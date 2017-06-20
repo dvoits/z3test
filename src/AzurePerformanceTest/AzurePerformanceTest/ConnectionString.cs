@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace AzurePerformanceTest
 {
-    public sealed class ConnectionString
+    public class ConnectionString
     {
         private readonly string connectionString;
         private Dictionary<string, string> dict;
@@ -28,7 +28,11 @@ namespace AzurePerformanceTest
 
         public string this[string key]
         {
-            get { return dict[key]; }
+            get
+            {
+                AssertExistence(key);
+                return dict[key];
+            }
             set { dict[key] = value; }
         }
 
@@ -43,10 +47,10 @@ namespace AzurePerformanceTest
             if (dict.TryGetValue(key, out value)) return value;
             return null;
         }
-       
+
         public void RemoveKeys(params string[] keys)
         {
-            foreach(string key in keys)
+            foreach (string key in keys)
             {
                 dict.Remove(key);
             }
@@ -60,6 +64,41 @@ namespace AzurePerformanceTest
                 sb.AppendFormat("{0}={1};", item.Key, item.Value);
             }
             return sb.ToString();
+        }
+
+        protected void AssertExistence(string key)
+        {
+            if (key == null) throw new ArgumentNullException(nameof(key));
+            if (!dict.ContainsKey(key)) throw new KeyNotFoundException("Connection string has no value for the given key '" + key + "'");
+        }
+    }
+
+    public class BatchConnectionString : ConnectionString
+    {
+        public const string KeyBatchAccount = "BatchAccount";
+        public const string KeyBatchURL = "BatchURL";
+        public const string KeyBatchAccessKey = "BatchAccessKey";
+
+        public BatchConnectionString(string connectionString) : base(connectionString)
+        {
+        }
+
+        public string BatchAccountName
+        {
+            get { return this[KeyBatchAccount]; }
+            set { this[KeyBatchAccount] = value; }
+        }
+
+        public string BatchURL
+        {
+            get { return this[KeyBatchURL]; }
+            set { this[KeyBatchURL] = value; }
+        }
+
+        public string BatchAccessKey
+        {
+            get { return this[KeyBatchAccessKey]; }
+            set { this[KeyBatchAccessKey] = value; }
         }
     }
 }

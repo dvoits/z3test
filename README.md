@@ -64,35 +64,56 @@ It does the following:
 
 ### How to schedule nightly runs using Azure Batch Schedule
 
-1. Create Azure Batch Application for `NightlyRunner`. 
+1. Prepare Azure Batch Pool and choose an approptiate certificate to be installed on Batch nodes. This is 
+required to enable access to the Azure Key Vault.
+
+1. Check `NightlyRunner` tool settings. They are located in the `NightlyRunner.exe.config` file.
+
+    * Parameters `Creator`, `BenchmarkDirectory`, `BenchmarkCategory`, `BenchmarkFileExtension`, `Parameters`, `Domain`, `ExperimentNote`, 
+    `BenchmarkTimeoutSeconds`, `MemoryLimitMegabytes` define properties of the nightly performance test experiment
+    to be submitted.
+    * `AzureBatchPoolId` defines which Azure Batch pool to be used to run the experiment.
+    * Parameters `GitHubOwner`, `GitHubZ3Repository`, `GitHubBinariesRepository`, `GitHubBinariesNightlyFolder`, `RegexExecutableFileName`, `RegexExecutableFileName_CommitGroup` define origin of the nightly build results and regular expression pattern for the built binary file name.
+    * Parameters `ConnectionString`, `ConnectionStringSecretId`, `AADApplicationId`, `AADApplicationCertThumbprint`, `KeyVaultUrl` allow to connect to Azure Performance test infrastructure. 
+        * If the `ConnectionString` is not empty, it must contain both storage account and batch account connection strings. In this case, all other parameters of this group are ignored. **Configuration file having the connection string must not be publicly available.**
+        * Otherwise, other parameters must be provided so the program could access the Azure Key Vault to take the specified connection string. The machine must have the appropriate certificate installed.
+
+
+1. Create Azure Batch Application package for `NightlyRunner`. 
 
     1. Open Batch account page at the Azure portal.
-    2. Click `Feature/Applications` and then click `Add`.
-    3. Compress NightlyRunner.exe, NightlyRunner.exe.config and all its \*.dll files to a zip file and select it as Application package.
-    4. Click `OK` to create the application.
+    1. Click `Features/Applications` and then click `Add`.
+    1. Enter application id, for instance, `NightlyRunner`.
+    1. Enter any version identifier.
+    1. Compress NightlyRunner.exe, NightlyRunner.exe.config and all its \*.dll files to a zip file and select it as the Application package.
+    1. Click `OK` to create the application.
+    1. When the application created, open its properties and select the uploaded package as default version for the application.
   
-2. Schedule execution of the application. Open PowerShell and use the following commands to create new schedule:
+1. Schedule execution of the application. Open PowerShell and use the following commands to create new schedule:
 
 ```powershell
 
 Login-AzureRmAccount
 
+$NightlyApp = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSApplicationPackageReference"
+$NightlyApp.ApplicationId = "NightlyRunner" # <-- check application id
+# $NightlyApp.Version = "..."  # <-- uncomment to select specific application version
+[Microsoft.Azure.Commands.Batch.Models.PSApplicationPackageReference[]] $AppRefs = @($NightlyApp)
+
 $ManagerTask = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSJobManagerTask"
 $ManagerTask.ApplicationPackageReferences = $AppRefs
 $ManagerTask.Id = "NightlyRunTask"
-$ManagerTask.CommandLine = "NightlyRunner.exe"
+# Following line depends on application id and version, check documentation for details.
+$ManagerTask.CommandLine = "cmd /c %AZ_BATCH_APP_PACKAGE_NIGHTLYRUNNER%\NightlyRunner.exe"
 
 $JobSpecification = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSJobSpecification"
 $JobSpecification.JobManagerTask = $ManagerTask
 $JobSpecification.PoolInformation = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSPoolInformation"
-$JobSpecification.PoolInformation.PoolId = ...pool id...
+$JobSpecification.PoolInformation.PoolId = ...pool id... # <-- enter pool id here
 
 $Schedule = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSSchedule"
 $Schedule.RecurrenceInterval = [TimeSpan]::FromDays(1)
 
 $BatchContext = Get-AzureRmBatchAccountKeys 
-New-AzureBatchJobSchedule -Id "NighlyRunSchedule" -Schedule $Schedule -JobSpecification $JobSpecification -BatchContext $BatchContext
+New-AzureBatchJobSchedule -Id "NightlyRunSchedule" -Schedule $Schedule -JobSpecification $JobSpecification -BatchContext $BatchContext
 ```
-
-
-

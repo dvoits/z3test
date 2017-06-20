@@ -11,13 +11,13 @@ namespace PerformanceTest.Management
 {
     public class ConnectionStringBuilderViewModel : INotifyPropertyChanged
     {
-        private ConnectionString cs;
+        private BatchConnectionString cs;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
         public ConnectionStringBuilderViewModel(string connectionString)
         {
-            cs = new AzurePerformanceTest.ConnectionString(connectionString);   
+            cs = new BatchConnectionString(connectionString);   
             if(cs.TryGet("DefaultEndpointsProtocol") == null)
             {
                 cs["DefaultEndpointsProtocol"] = "https";
@@ -55,30 +55,30 @@ namespace PerformanceTest.Management
         }
         public string BatchAccountName
         {
-            get { return cs.TryGet(AzureExperimentManager.KeyBatchAccount); }
+            get { return cs.TryGet(BatchConnectionString.KeyBatchAccount); }
             set
             {
-                cs[AzureExperimentManager.KeyBatchAccount] = value;
+                cs[BatchConnectionString.KeyBatchAccount] = value;
                 NotifyPropertyChanged();
                 NotifyPropertyChanged("ConnectionString");
             }
         }
         public string BatchURL
         {
-            get { return cs.TryGet(AzureExperimentManager.KeyBatchURL); }
+            get { return cs.TryGet(BatchConnectionString.KeyBatchURL); }
             set
             {
-                cs[AzureExperimentManager.KeyBatchURL] = value;
+                cs[BatchConnectionString.KeyBatchURL] = value;
                 NotifyPropertyChanged();
                 NotifyPropertyChanged("ConnectionString");
             }
         }
         public string BatchKey
         {
-            get { return cs.TryGet(AzureExperimentManager.KeyBatchAccessKey); }
+            get { return cs.TryGet(BatchConnectionString.KeyBatchAccessKey); }
             set
             {
-                cs[AzureExperimentManager.KeyBatchAccessKey] = value;
+                cs[BatchConnectionString.KeyBatchAccessKey] = value;
                 NotifyPropertyChanged();
                 NotifyPropertyChanged("ConnectionString");
             }
