@@ -81,7 +81,7 @@ namespace PerformanceTest.Management
                 for (var i = 0; i < count; i++)
                 {
                     var domain = domainResolver.GetDomain(experiments[i].Definition.DomainName ?? "Z3");
-                    var aggr = domain.Aggregate(b[i].Select(r => new Measurement.ProcessRunAnalysis(r.Status, r.Properties)));
+                    var aggr = domain.Aggregate(b[i].Select(r => new ProcessRunResults(new ProcessRunAnalysis(r.Status, r.Properties), r.NormalizedRuntime)));
                     var statistics = new ExperimentStatistics(aggr);
                     var def = experiments[i].Definition;
                     string ps = def.Parameters.Trim(' ');

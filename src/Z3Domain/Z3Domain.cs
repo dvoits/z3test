@@ -94,23 +94,32 @@ namespace Measurement
                 });
         }
 
-        protected override IReadOnlyDictionary<string, string> AggregateProperties(IEnumerable<ProcessRunAnalysis> benchmarkResults)
+        protected override IReadOnlyDictionary<string, string> AggregateProperties(IEnumerable<ProcessRunResults> results)
         {
             int sat = 0, unsat = 0, unknown = 0, overPerf = 0, underPerf = 0;
-            foreach (ProcessRunAnalysis r in benchmarkResults)
+            double timeSat = 0.0, timeUnsat = 0.0;
+
+            foreach (ProcessRunResults result in results)
             {
-                int _sat = int.Parse(r.OutputProperties["SAT"]);
-                int _unsat = int.Parse(r.OutputProperties["UNSAT"]);
-                int _unk = int.Parse(r.OutputProperties["UNKNOWN"]);
-                int _tsat = int.Parse(r.OutputProperties["TargetSAT"]);
-                int _tunsat = int.Parse(r.OutputProperties["TargetUNSAT"]);
-                int _tunk = int.Parse(r.OutputProperties["TargetUNKNOWN"]);
+                ProcessRunAnalysis analysis = result.Analysis;
+                int _sat = int.Parse(analysis.OutputProperties["SAT"]);
+                int _unsat = int.Parse(analysis.OutputProperties["UNSAT"]);
+                int _unk = int.Parse(analysis.OutputProperties["UNKNOWN"]);
+                int _tsat = int.Parse(analysis.OutputProperties["TargetSAT"]);
+                int _tunsat = int.Parse(analysis.OutputProperties["TargetUNSAT"]);
+                int _tunk = int.Parse(analysis.OutputProperties["TargetUNKNOWN"]);
 
-                sat += _sat;
-                unsat += _unsat;
-                unknown += _unk;
+                if (analysis.Status != ResultStatus.Bug)
+                {
+                    sat += _sat;
+                    unsat += _unsat;
+                    unknown += _unk;
 
-                if (r.Status == ResultStatus.Success && _sat + _unsat > _tsat + _tunsat && _unk < _tunk)
+                    if (_sat > 0) timeSat += result.Runtime;
+                    if (_unsat > 0) timeUnsat += result.Runtime;
+                }
+
+                if (analysis.Status == ResultStatus.Success && _sat + _unsat > _tsat + _tunsat && _unk < _tunk)
                     overPerf++;
                 if (_sat + _unsat < _tsat + _tunsat || _unk > _tunk)
                     underPerf++;
@@ -121,7 +130,9 @@ namespace Measurement
                     { "UNSAT", unsat.ToString() },
                     { "UNKNOWN", unknown.ToString() },
                     { "OVERPERFORMED", overPerf.ToString() },
-                    { "UNDERPERFORMED", underPerf.ToString() }
+                    { "UNDERPERFORMED", underPerf.ToString() },
+                    { "TimeSAT", timeSat.ToString() },
+                    { "TimeUNSAT", timeUnsat.ToString() }
                 };
         }
 
