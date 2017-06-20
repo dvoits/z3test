@@ -46,7 +46,10 @@ namespace PerformanceTest.Management
         {
             return ExperimentPropertiesViewModel.CreateAsync(manager, id, domainResolver, uiService);
         }
-
+        public DuplicatesViewModel BuildDuplicatesResolverView(int id, bool resolveTimeouts, bool resolveSameTime, bool resolveSlowest)
+        {
+            return new DuplicatesViewModel(id, resolveTimeouts, resolveSameTime, resolveSlowest, manager, uiService);
+        }
         public async Task<string[]> GetAvailableCategories(string directory)
         {
             if (directory == null) throw new ArgumentNullException("directory");

@@ -11,10 +11,19 @@
     <Setting Name="BatchAccountUrl" Type="System.String" Scope="Application">
       <Value Profile="(Default)" />
     </Setting>
-    <Setting Name="BatchAccountKey" Type="System.String" Scope="Application">
+    <Setting Name="BatchAccountKeyId" Type="System.String" Scope="Application">
       <Value Profile="(Default)" />
     </Setting>
-    <Setting Name="StorageAccountKey" Type="System.String" Scope="Application">
+    <Setting Name="StorageAccountKeyId" Type="System.String" Scope="Application">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="KeyVaultUrl" Type="System.String" Scope="Application">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="AADApplicationId" Type="System.String" Scope="Application">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="AADApplicationCertThumbprint" Type="System.String" Scope="Application">
       <Value Profile="(Default)" />
     </Setting>
   </Settings>

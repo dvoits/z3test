@@ -35,19 +35,52 @@ namespace AzurePerformanceTest
         }
 
 
-        public async Task PutResult(ExperimentID expId, BenchmarkResult result)
+        public Task PutResult(ExperimentID expId, BenchmarkResult result)
         {
             var queue = GetResultsQueueReference(expId);
-            var result2 = await PrepareBenchmarkResult(result);
+            return PutResult(expId, result, queue, outputContainer);
+        }
+
+        public static async Task PutResult(ExperimentID expId, BenchmarkResult result, CloudQueue resultsQueue, CloudBlobContainer outputContainer)
+        {
+            var result2 = await PrepareBenchmarkResult(result, outputContainer);
             using (MemoryStream ms = new MemoryStream())
             {
                 ms.WriteByte(1);//signalling that this message contains a result
                 (new BinaryFormatter()).Serialize(ms, result2);
-                await queue.AddMessageAsync(new CloudQueueMessage(ms.ToArray()));
+                await resultsQueue.AddMessageAsync(new CloudQueueMessage(ms.ToArray()));
             }
         }
 
-        private async Task<AzureBenchmarkResult> PrepareBenchmarkResult(BenchmarkResult result)
+        public string GetOutputQueueSASUri(ExperimentID expId, TimeSpan lifetime)
+        {
+            var queue = GetResultsQueueReference(expId);
+            SharedAccessQueuePolicy sasConstraints = new SharedAccessQueuePolicy
+            {
+                SharedAccessExpiryTime = DateTime.UtcNow + lifetime,
+                Permissions = SharedAccessQueuePermissions.Add
+            };
+            string signature = queue.GetSharedAccessSignature(sasConstraints);
+            return queue.Uri + signature;
+        }
+
+        public string GetOutputContainerSASUri(TimeSpan lifetime)
+        {
+            SharedAccessBlobPolicy sasConstraints = new SharedAccessBlobPolicy
+            {
+                SharedAccessExpiryTime = DateTime.UtcNow + lifetime,
+                Permissions = SharedAccessBlobPermissions.Read | SharedAccessBlobPermissions.List | SharedAccessBlobPermissions.Create | SharedAccessBlobPermissions.Write
+            };
+            string signature = outputContainer.GetSharedAccessSignature(sasConstraints);
+            return outputContainer.Uri + signature;
+        }
+
+        private Task<AzureBenchmarkResult> PrepareBenchmarkResult(BenchmarkResult result)
+        {
+            return PrepareBenchmarkResult(result, outputContainer);
+        }
+
+        public static async Task<AzureBenchmarkResult> PrepareBenchmarkResult(BenchmarkResult result, CloudBlobContainer outputContainer)
         {
             AzureBenchmarkResult azureResult = new AzureBenchmarkResult();
             azureResult.AcquireTime = result.AcquireTime;
@@ -69,7 +102,7 @@ namespace AzurePerformanceTest
                     ++i;
                     stdoutBlobId = BlobNameForStdOut(result.ExperimentID, result.BenchmarkFileName, i.ToString());
                 }
-                while (!await UploadOutput(stdoutBlobId, result.StdOut, false));
+                while (!await UploadBlobAsync(outputContainer, stdoutBlobId, result.StdOut, false));
 
                 Trace.WriteLine(string.Format("Uploaded stdout for experiment {0}", result.ExperimentID));
                 azureResult.StdOut = null;
@@ -107,7 +140,7 @@ namespace AzurePerformanceTest
                     ++i;
                     stderrBlobId = BlobNameForStdErr(result.ExperimentID, result.BenchmarkFileName, i.ToString());
                 }
-                while (!await UploadOutput(stderrBlobId, result.StdErr, true));
+                while (!await UploadBlobAsync(outputContainer, stderrBlobId, result.StdErr, true));
 
                 Trace.WriteLine(string.Format("Uploaded stderr for experiment {0}", result.ExperimentID));
                 azureResult.StdErr = null;
@@ -181,7 +214,7 @@ namespace AzurePerformanceTest
         }
 
 
-        private async Task<bool> UploadBlobAsync(CloudBlobContainer container, string blobName, Stream content, bool replaceIfExists)
+        private static async Task<bool> UploadBlobAsync(CloudBlobContainer container, string blobName, Stream content, bool replaceIfExists)
         {
             try
             {

@@ -669,13 +669,66 @@ namespace PerformanceTest.Management
         }
         private void canShowDuplicates(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = dataGrid.SelectedItems.Count >= 1;
+            if (managerVm == null || dataGrid.SelectedItems.Count < 1)
+            {
+                e.CanExecute = false;
+                return;
+            }
+            //else
+            //{
+
+            //    var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().ToArray();
+            //    for (var i = 0; i < sts.Length; i++)
+            //    {
+            //        var rc = sts[i].JobStatus;
+            //        if (rc != ExperimentExecutionState.Completed)
+            //        {
+            //            e.CanExecute = false;
+            //            return;
+            //        }
+            //    }
+            //}
+            e.CanExecute = true;
+            //add jobstatus
         }
         private void showDuplicates(object target, ExecutedRoutedEventArgs e)
         {
-            throw new NotImplementedException();
-        }
+            var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().ToArray();
+            var total = sts.Length;
+            
+            bool zero_duplicates = true;
 
+            for (int i = 0; i < total; i++)
+            {
+                int eid = sts[i].ID;
+                //bool has_duplicates = await managerVm.HasDuplicates(eid);
+                ////search duplicates in JobQueue? 
+
+                //if (has_duplicates)
+                //{
+                var handle = uiService.StartIndicateLongOperation("Resolving duplicates in experiment #" + eid + "...");
+                try {
+                    var vm = managerVm.BuildDuplicatesResolverView(eid, mnuOptResolveTimeoutDupes.IsChecked,
+                        mnuOptResolveSameTimeDupes.IsChecked, mnuOptResolveSlowestDupes.IsChecked);
+                    Duplicates dlg = new Duplicates(vm);
+                    dlg.Owner = this;
+                    
+                    if (vm.Duplicates != null && vm.Duplicates.Count != 0) zero_duplicates = false;
+                }
+                catch (Exception ex)
+                {
+                    uiService.ShowError(ex, "Failed to resolve duplicates in experiment #" + eid);
+                }
+                finally
+                {
+                    uiService.StopIndicateLongOperation(handle);
+                }
+            }
+            if (zero_duplicates)
+            {
+                uiService.ShowInfo("There are no duplicates to resolve.", "No duplicates");
+            }
+        }
         private void btnEdit_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -700,6 +753,9 @@ namespace PerformanceTest.Management
             try
             {
                 recentValues.ShowProgress = mnuOptProgress.IsChecked;
+                recentValues.ResolveTimeoutDupes = mnuOptResolveTimeoutDupes.IsChecked;
+                recentValues.ResolveSameTimeDupes = mnuOptResolveSameTimeDupes.IsChecked;
+                recentValues.ResolveSlowestDupes = mnuOptResolveSlowestDupes.IsChecked;
             }
             catch (Exception ex)
             {
@@ -712,6 +768,9 @@ namespace PerformanceTest.Management
             try
             {
                 mnuOptProgress.IsChecked = recentValues.ShowProgress;
+                mnuOptResolveTimeoutDupes.IsChecked = recentValues.ResolveTimeoutDupes;
+                mnuOptResolveSameTimeDupes.IsChecked = recentValues.ResolveSameTimeDupes;
+                mnuOptResolveSlowestDupes.IsChecked = recentValues.ResolveSlowestDupes;
             }
             catch (Exception ex)
             {
