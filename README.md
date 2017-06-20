@@ -80,7 +80,7 @@ Login-AzureRmAccount
 $ManagerTask = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSJobManagerTask"
 $ManagerTask.ApplicationPackageReferences = $AppRefs
 $ManagerTask.Id = "NightlyRunTask"
-$ManagerTask.CommandLine = @"cmd /c %AZ_BATCH_APP_PACKAGE_NIGHTL%\NightlyRunner.exe"
+$ManagerTask.CommandLine = "cmd /c %AZ_BATCH_APP_PACKAGE_NIGHTL%\NightlyRunner.exe"
 
 $JobSpecification = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSJobSpecification"
 $JobSpecification.JobManagerTask = $ManagerTask
