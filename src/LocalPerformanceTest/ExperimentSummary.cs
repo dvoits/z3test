@@ -10,6 +10,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
+using static Microsoft.FSharp.Core.OptimizedClosures;
 
 namespace PerformanceTest
 {
@@ -52,12 +53,12 @@ namespace PerformanceTest
         //}
 
 
-        public static Table Append(Table table, ExperimentSummaryEntity newSummary)
+        public static Table AppendOrReplace(Table table, ExperimentSummaryEntity newSummary)
         {
             Dictionary<string, string> newColumns = new Dictionary<string, string>
             {
                 { "ID", newSummary.Id.ToString() },
-                { "Date", newSummary.Date.ToUniversalTime().ToString("yyyy-MM-dd HH:hh:mm") }
+                { "Date", newSummary.Date.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss") }
             };
             foreach (var catSummary in newSummary.CategorySummary)
             {
@@ -76,6 +77,10 @@ namespace PerformanceTest
                     newColumns.Add(string.Join("|", cat, propName), propVal);
                 }
             }
+
+            // If the table already has summary for the experiment, it will be replaced
+            if(table.Count > 0) // if not empty then must contain ID
+                table = Table.Filter(new[] { "ID" }, FSharpFunc<string,bool>.FromConverter(id => int.Parse(id) != newSummary.Id), table);
 
             List<Column> finalColumns = new List<Column>();
             foreach (var existingColumn in table)
@@ -106,12 +111,12 @@ namespace PerformanceTest
             return finalTable;
         }
 
-        public static void Append(Stream source, ExperimentSummaryEntity newSummary, Stream dest)
+        public static void AppendOrReplace(Stream source, ExperimentSummaryEntity newSummary, Stream dest)
         {
             var table = Table.Load(new StreamReader(source), new ReadSettings(Delimiter.Comma, false, true, FSharpOption<int>.None,
                 FSharpOption<FSharpFunc<Tuple<int, string>, FSharpOption<Type>>>.Some(FSharpFunc<Tuple<int, string>, FSharpOption<Type>>.FromConverter(tuple => FSharpOption<Type>.Some(typeof(string))))));
-            var finalTable = Append(table, newSummary);
-            Table.Save(finalTable, new StreamWriter(dest));
+            var finalTable = AppendOrReplace(table, newSummary);
+            Table.Save(finalTable, new StreamWriter(dest, new UTF8Encoding(true)));
         }
 
         //public static ExperimentEntity[] Load(Stream stream)

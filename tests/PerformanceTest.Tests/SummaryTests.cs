@@ -73,13 +73,13 @@ namespace PerformanceTest.Tests
 
             Table table0 = Table.Empty;
             var experimentSummary1 = new ExperimentSummaryEntity(1, DateTimeOffset.Now, catSummary1);
-            Table table1 = ExperimentSummaryStorage.Append(table0, experimentSummary1);
+            Table table1 = ExperimentSummaryStorage.AppendOrReplace(table0, experimentSummary1);
 
             var benchmarkResults2 = Enumerable.Concat(BuildResults(1, 3, "b"), BuildResults(1, 2, "c"));
             var catSummary2 = ExperimentSummary.Build(benchmarkResults2, domain);
 
             var experimentSummary2 = new ExperimentSummaryEntity(2, DateTimeOffset.Now, catSummary2);
-            Table table2 = ExperimentSummaryStorage.Append(table1, experimentSummary2);
+            Table table2 = ExperimentSummaryStorage.AppendOrReplace(table1, experimentSummary2);
 
             Assert.AreEqual(2 + 3 * (4 + 8), table2.Count, "Number of columns");
             Assert.AreEqual(2, table2.RowsCount, "Number of rows");

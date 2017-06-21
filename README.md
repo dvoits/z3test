@@ -61,6 +61,13 @@ It does the following:
     1. Uploads new x86 z3 binary package to the blob container `bin` and sets its metadata attribute to the original file name of the package.
     2. Submits new performance experiment.
 
+When the experiment completes, it updates the summary table name in accordance with value of the
+parameter `SummaryName` in `NightlyRunner` configuration file (default name is `z3nightly`).
+
+Note that if afterwards you manually change the experiment results (for example, resolve duplicates using UI application), 
+you will need to manually update the summary using `Summary.exe` utility 
+(see [How to update experiment summary](#how-to-update-experiment-summary)).
+
 
 ### How to schedule nightly runs using Azure Batch Schedule
 
@@ -116,4 +123,19 @@ $Schedule.RecurrenceInterval = [TimeSpan]::FromDays(1)
 
 $BatchContext = Get-AzureRmBatchAccountKeys 
 New-AzureBatchJobSchedule -Id "NightlyRunSchedule" -Schedule $Schedule -JobSpecification $JobSpecification -BatchContext $BatchContext
+```
+
+# How to use
+
+## How to update experiment summary
+
+The .NET application `/src/Summary` allows to compute summary for an experiment and then either append or replace
+corresponding row in a given summary table.
+
+Summary tables are stored in the `summary` container as CSV files, one row per experiment.
+
+For example, following command updates or adds summary for the experiment 100 in `z3-nightly.csv` table:
+
+```
+> Summary.exe 100 z3-nightly
 ```

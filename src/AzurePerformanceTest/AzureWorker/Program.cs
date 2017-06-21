@@ -225,7 +225,11 @@ namespace AzureWorker
                 // Building summary for the benchmark results
                 if(summaryName != null)
                 {
+                    Trace.WriteLine(string.Format("Building summary for experiment {0} and summary name {1}...", experimentId, summaryName));
                     await AppendSummary(summaryName, experimentId, domain, storage);
+                }else
+                {
+                    Trace.WriteLine("No summary requested.");
                 }
 
                 Console.WriteLine("Closing.");
@@ -488,10 +492,14 @@ namespace AzureWorker
 
         private static async Task AppendSummary(string summaryName, int experimentId, Domain domain, AzureExperimentStorage storage)
         {
+            Trace.WriteLine(string.Format("Downloading results for experiment {0}...", experimentId));
             var results = await storage.GetResults(experimentId);
+            Trace.WriteLine("Building summary...");
             var catSummary = ExperimentSummary.Build(results, domain);
             var expSummary = new ExperimentSummaryEntity(experimentId, DateTimeOffset.Now, catSummary);
-            await storage.AppendSummary(summaryName, experimentId, expSummary);
+            Trace.WriteLine("Uploading new summary...");
+            await storage.AppendOrReplaceSummary(summaryName, experimentId, expSummary);
+            Trace.WriteLine("Done.");
         }
 
         internal class PrivatePropertiesResolver : DefaultContractResolver
