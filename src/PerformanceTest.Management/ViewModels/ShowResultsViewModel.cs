@@ -92,7 +92,7 @@ namespace PerformanceTest.Management
                 else if (code == 1) Results = allResults.Where(e => e.Status == ResultStatus.Success && e.Unsat > 0).ToArray();
                 else if (code == 2) Results = allResults.Where(e => e.Status == ResultStatus.Success && e.Unknown > 0).ToArray();
                 else if (code == 3) Results = allResults.Where(e => e.Status == ResultStatus.Bug).ToArray();
-                else if (code == 4) Results = allResults.Where(e => e.Status == ResultStatus.Error).ToArray();
+                else if (code == 4) Results = allResults.Where(e => e.Status == ResultStatus.Error || e.Status == ResultStatus.InfrastructureError).ToArray();
                 else if (code == 5) Results = allResults.Where(e => e.Status == ResultStatus.Timeout).ToArray();
                 else if (code == 6) Results = allResults.Where(e => e.Status == ResultStatus.OutOfMemory).ToArray();
                 else if (code == 7) Results = allResults.Where(e => e.Status == ResultStatus.Success && e.Sat + e.Unsat > e.TargetSat + e.TargetUnsat && e.Unknown < e.TargetUnknown).ToArray();

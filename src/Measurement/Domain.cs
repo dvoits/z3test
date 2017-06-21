@@ -36,8 +36,7 @@ namespace Measurement
         public AggregatedAnalysis Aggregate(IEnumerable<ProcessRunResults> runs)
         {
             var results = runs.ToArray();
-
-            int bugs = 0, errors = 0, timeouts = 0, memouts = 0;
+            int bugs = 0, errors = 0, infrErrors = 0, timeouts = 0, memouts = 0;
             for (int i = 0; i < results.Length; i++)
             {
                 var result = results[i].Analysis;
@@ -52,6 +51,9 @@ namespace Measurement
                     case ResultStatus.Error:                        
                         errors++;
                         break;
+                    case ResultStatus.InfrastructureError:
+                        infrErrors++;
+                        break;
                     case ResultStatus.Bug:
                         bugs++;
                         break;
@@ -61,7 +63,7 @@ namespace Measurement
             }
 
             var props = AggregateProperties(results);
-            return new AggregatedAnalysis(bugs, errors, timeouts, memouts, props);
+            return new AggregatedAnalysis(bugs, errors, infrErrors, timeouts, memouts, props);
         }
 
         protected abstract IReadOnlyDictionary<string, string> AggregateProperties(IEnumerable<ProcessRunResults> results);
@@ -135,18 +137,21 @@ namespace Measurement
 
     public class AggregatedAnalysis
     {
-        public AggregatedAnalysis(int bugs, int errors, int timeouts, int memouts, IReadOnlyDictionary<string, string> props)
+        public AggregatedAnalysis(int bugs, int errors, int infrastructureErrors, int timeouts, int memouts, IReadOnlyDictionary<string, string> props)
         {
             Bugs = bugs;
             Errors = errors;
             Timeouts = timeouts;
             MemoryOuts = memouts;
             Properties = props;
+            InfrastructureErrors = infrastructureErrors;
         }
 
         public int Bugs { get; private set; }
 
         public int Errors { get; private set; }
+
+        public int InfrastructureErrors { get; private set; }
 
         public int Timeouts { get; private set; }
 
@@ -162,6 +167,7 @@ namespace Measurement
         OutOfMemory,
         Timeout,
         Error,
+        InfrastructureError,
         Bug
     }
 }

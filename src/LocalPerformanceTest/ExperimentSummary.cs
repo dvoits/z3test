@@ -65,6 +65,7 @@ namespace PerformanceTest
                 var expSum = catSummary.Value;
                 newColumns.Add(string.Join("|", cat, "BUG"), expSum.Bugs.ToString());
                 newColumns.Add(string.Join("|", cat, "ERROR"), expSum.Errors.ToString());
+                newColumns.Add(string.Join("|", cat, "INFERR"), expSum.InfrastructureErrors.ToString());
                 newColumns.Add(string.Join("|", cat, "MEMORY"), expSum.MemoryOuts.ToString());
                 newColumns.Add(string.Join("|", cat, "TIMEOUT"), expSum.Timeouts.ToString());
 

@@ -172,7 +172,8 @@ namespace PerformanceTest.Management
                 else if (code == 4) CompareItems = allResults.Where(e => e.Results1.Unsat > 0 || e.Results2.Unsat > 0).ToArray(); //one unsat
                 else if (code == 5) CompareItems = allResults.Where(e => e.Results1.Unknown > 0 || e.Results2.Unknown > 0).ToArray(); //one unknown
                 else if (code == 6) CompareItems = allResults.Where(e => e.Results1.Status == ResultStatus.Bug || e.Results2.Status == ResultStatus.Bug).ToArray();
-                else if (code == 7) CompareItems = allResults.Where(e => e.Results1.Status == ResultStatus.Error || e.Results2.Status == ResultStatus.Error).ToArray();
+                else if (code == 7) CompareItems = allResults.Where(e => e.Results1.Status == ResultStatus.Error || e.Results2.Status == ResultStatus.Error ||
+                                                                          e.Results1.Status == ResultStatus.InfrastructureError || e.Results2.Status == ResultStatus.InfrastructureError).ToArray();
                 else if (code == 8) CompareItems = allResults.Where(e => e.Results1.Status == ResultStatus.Timeout || e.Results2.Status == ResultStatus.Timeout).ToArray();
                 else if (code == 9) CompareItems = allResults.Where(e => e.Results1.Status == ResultStatus.OutOfMemory || e.Results2.Status == ResultStatus.OutOfMemory).ToArray();
                 else if (code == 10) CompareItems = allResults.Where(e => e.Results1.Sat > 0 && e.Results2.Sat == 0 || e.Results1.Sat == 0 && e.Results2.Sat > 0).ToArray(); //sat star

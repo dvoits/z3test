@@ -213,6 +213,8 @@ namespace PerformanceTest.Management
                         return "Timeout";
                     case ResultStatus.Error:
                         return "Error";
+                    case ResultStatus.InfrastructureError:
+                        return "Infrastructure error";
                     case ResultStatus.Bug:
                         return "Bug";
                     default:

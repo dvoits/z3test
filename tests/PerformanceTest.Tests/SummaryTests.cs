@@ -81,7 +81,7 @@ namespace PerformanceTest.Tests
             var experimentSummary2 = new ExperimentSummaryEntity(2, DateTimeOffset.Now, catSummary2);
             Table table2 = ExperimentSummaryStorage.Append(table1, experimentSummary2);
 
-            Assert.AreEqual(2 + 3 * (4 + 7), table2.Count, "Number of columns");
+            Assert.AreEqual(2 + 3 * (4 + 8), table2.Count, "Number of columns");
             Assert.AreEqual(2, table2.RowsCount, "Number of rows");
 
             AreEqualArrays(new[] { "1", "2" }, table2["ID"].Rows.AsString.ToArray());

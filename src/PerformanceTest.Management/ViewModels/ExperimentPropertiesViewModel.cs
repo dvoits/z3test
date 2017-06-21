@@ -268,7 +268,7 @@ namespace PerformanceTest.Management
         }
         public int? ProblemNonZero
         {
-            get { return statistics == null ? null : (int?)statistics.AggregatedResults.Errors; }
+            get { return statistics == null ? null : (int?)(statistics.AggregatedResults.Errors + statistics.AggregatedResults.InfrastructureErrors); }
         }
         public int? ProblemTimeout
         {

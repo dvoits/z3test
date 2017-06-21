@@ -1,17 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using PerformanceTest;
 using Microsoft.Azure.Batch.Auth;
 using Microsoft.Azure.Batch;
-using Measurement;
 using ExperimentID = System.Int32;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.Azure.Batch.Common;
 using System.IO;
 using System.Diagnostics;
+using PerformanceTest;
+using Measurement;
 
 namespace AzurePerformanceTest
 {

@@ -214,7 +214,7 @@ namespace AzureWorker
                             NormalizedRuntime = 0,
                             PeakMemorySizeMB = 0,
                             Properties = new Dictionary<string, string>(),
-                            Status = ResultStatus.Error,
+                            Status = ResultStatus.InfrastructureError,
                             TotalProcessorTime = TimeSpan.Zero,
                             WallClockTime = TimeSpan.Zero
                         }).ToList();
@@ -491,9 +491,6 @@ namespace AzureWorker
             var results = await storage.GetResults(experimentId);
             var catSummary = ExperimentSummary.Build(results, domain);
             var expSummary = new ExperimentSummaryEntity(experimentId, DateTimeOffset.Now, catSummary);
-
-            //var summary = domain.Aggregate(results.Select(r => new ProcessRunResults(new ProcessRunAnalysis(r.Status, r.Properties), r.NormalizedRuntime)));
-
             await storage.AppendSummary(summaryName, experimentId, expSummary);
         }
 

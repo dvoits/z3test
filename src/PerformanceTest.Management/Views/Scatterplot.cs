@@ -365,7 +365,7 @@ namespace PerformanceTest.Management
                              (!ckunsat && (item.Results1.Unsat > 0 || item.Results2.Unsat > 0)) ||
                              (!ckunk && ((rc1 == ResultStatus.Success && res1 == 0) || (rc2 == ResultStatus.Success && res2 == 0))) ||
                              (!ckbug && (rc1 == ResultStatus.Bug || rc2 == ResultStatus.Bug)) ||
-                             (!ckerror && (rc1 == ResultStatus.Error || rc2 == ResultStatus.Error)) ||
+                             (!ckerror && (rc1 == ResultStatus.Error || rc2 == ResultStatus.Error || rc1 == ResultStatus.InfrastructureError || rc2 == ResultStatus.InfrastructureError)) ||
                              (!cktime && (rc1 == ResultStatus.Timeout || rc2 == ResultStatus.Timeout)) ||
                              (!ckmemory && (rc1 == ResultStatus.OutOfMemory || rc2 == ResultStatus.OutOfMemory)))
                             continue;

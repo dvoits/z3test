@@ -160,7 +160,7 @@ namespace PerformanceTest.Management
                         cur.unsat = Int32.Parse(b.Properties[Z3Domain.KeyUnsat]);
                         cur.unknown = Int32.Parse(b.Properties[Z3Domain.KeyUnknown]);
 
-                        bool rv_ok = b.Status != ResultStatus.Error &&
+                        bool rv_ok = b.Status != ResultStatus.Error && b.Status != ResultStatus.InfrastructureError &&
                                      (b.Status == ResultStatus.Timeout && cur.rv == null ||
                                      (b.Status == ResultStatus.Success && (cur.rv == 0 || cur.rv == 10 || cur.rv == 20)));
 

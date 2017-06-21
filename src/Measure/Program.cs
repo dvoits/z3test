@@ -163,7 +163,7 @@ namespace Measure
             {
                 PrintError("Timeout    " + info);
             }
-            else if (result.Status == Measurement.ResultStatus.Error)
+            else if (result.Status == Measurement.ResultStatus.Error || result.Status == Measurement.ResultStatus.InfrastructureError)
             {
                 PrintError("Error    " + info);
             }
