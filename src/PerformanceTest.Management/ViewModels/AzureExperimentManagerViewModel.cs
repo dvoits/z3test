@@ -159,7 +159,7 @@ namespace PerformanceTest.Management
                 {
                     // Starts the experiment job
                     manager.BatchPoolID = newExperiment.Pool;
-                    int id = await manager.StartExperiment(def, creator, newExperiment.Note, "test");
+                    int id = await manager.StartExperiment(def, creator, newExperiment.Note);
                     res[i] = Tuple.Create<string, int?, Exception>(category, id, null);
                 }
                 catch (Exception ex)
