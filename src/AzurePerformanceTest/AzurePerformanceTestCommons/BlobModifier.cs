@@ -34,16 +34,26 @@ namespace AzurePerformanceTest
         public static async Task<BlobModifier> Get(CloudBlockBlob blob)
         {
             Stream content = new MemoryStream();
-            await blob.DownloadToStreamAsync(content,
-                AccessCondition.GenerateEmptyCondition(),
-                new BlobRequestOptions { RetryPolicy = retryPolicy }, null);
-            string originalETag = blob.Properties.ETag;
+
+            string originalETag = null;
+            try
+            {
+                await blob.DownloadToStreamAsync(content,
+                    AccessCondition.GenerateEmptyCondition(),
+                    new BlobRequestOptions { RetryPolicy = retryPolicy }, null);
+                originalETag = blob.Properties.ETag;
+            }
+            catch (StorageException ex) when (ex.RequestInformation.HttpStatusCode == (int)HttpStatusCode.NotFound)
+            {
+                originalETag = null;
+            }
             return new BlobModifier(blob, content, originalETag);
         }
 
 
         private readonly CloudBlockBlob blob;
         private readonly Stream content;
+        /// <summary>If null, the blob didn't exist.</summary>
         private readonly string originalETag;
 
         private BlobModifier(CloudBlockBlob blob, Stream content, string etag)
@@ -64,22 +74,15 @@ namespace AzurePerformanceTest
             try
             {
                 await blob.UploadFromStreamAsync(newContent,
-                    AccessCondition.GenerateIfMatchCondition(originalETag),
+                    originalETag != null ? AccessCondition.GenerateIfMatchCondition(originalETag) : AccessCondition.GenerateIfNotExistsCondition(),
                     new BlobRequestOptions { RetryPolicy = retryPolicy },
                     null);
                 return true;
             }
-            catch (StorageException ex)
+            catch (StorageException ex) when (ex.RequestInformation.HttpStatusCode == (int)HttpStatusCode.PreconditionFailed)
             {
-                if (ex.RequestInformation.HttpStatusCode == (int)HttpStatusCode.PreconditionFailed)
-                {
-                    Trace.WriteLine("Precondition failure. Blob's orignal etag no longer matches");
-                    return false;
-                }
-                else
-                {
-                    throw;
-                }
+                Trace.WriteLine("Precondition failure. Blob's orignal etag no longer matches");
+                return false;
             }
         }
 
