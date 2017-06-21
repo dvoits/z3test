@@ -130,6 +130,25 @@ namespace AzurePerformanceTest
             }
         }
 
+        public async Task AppendSummary(string summaryName, int epxerimentId, ExperimentSummaryEntity experimentSummary)
+        {
+            if (summaryName == null) throw new ArgumentNullException(nameof(summaryName));
+            if (experimentSummary == null) throw new ArgumentNullException(nameof(experimentSummary));
+
+            string blobName = string.Format("summary_{0}.csv", ToBinaryPackBlobName(summaryName));
+            var blob = resultsContainer.GetBlockBlobReference(blobName);
+
+            const int attempts = 100;
+            bool success = await BlobModifier.Modify(blob, (Stream content) =>
+            {
+                Stream memoryStream = new MemoryStream();
+                ExperimentSummaryStorage.Append(content, experimentSummary, memoryStream);
+                memoryStream.Position = 0;
+                return memoryStream;
+            }, attempts);
+            if (!success) throw new Exception(string.Format("Failed to modify the blob after {0} attempts", attempts));
+        }
+
         public async Task<Dictionary<ExperimentID, ExperimentEntity>> GetExperiments(ExperimentManager.ExperimentFilter? filter = default(ExperimentManager.ExperimentFilter?))
         {
             var dict = new Dictionary<ExperimentID, ExperimentEntity>();
@@ -182,7 +201,7 @@ namespace AzurePerformanceTest
             return binContainer.GetBlockBlobReference(name);
         }
 
-        public async Task<IReadOnlyDictionary<string,string>> GetExecutableMetadata(string name)
+        public async Task<IReadOnlyDictionary<string, string>> GetExecutableMetadata(string name)
         {
             var blob = binContainer.GetBlobReference(name);
             await blob.FetchAttributesAsync(AccessCondition.GenerateEmptyCondition(), new BlobRequestOptions { RetryPolicy = retryPolicy }, null);

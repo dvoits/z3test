@@ -16,8 +16,9 @@ namespace PerformanceTest
         /// Schedules execution of a new experiment from the given experiment definition.
         /// </summary>
         /// <param name="definition">Describes the experiment to be performed.</param>
+        /// <param name="summaryName">If not null, the results summary will be computed for the experiment and appended to previous summaries with same summary name.</param>
         /// <returns>Identifier of the new experiment for further reference.</returns>
-        public abstract Task<ExperimentID> StartExperiment(ExperimentDefinition definition, string creator = null, string note = null);
+        public abstract Task<ExperimentID> StartExperiment(ExperimentDefinition definition, string creator = null, string note = null, string summaryName = null);
 
         /// <summary>
         /// Returns current execution status of existing experiments.

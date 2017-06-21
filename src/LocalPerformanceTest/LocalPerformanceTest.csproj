@@ -86,6 +86,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AsyncLazy.cs" />
+    <Compile Include="ExperimentSummary.cs" />
     <Compile Include="BenchmarkResultsStorage.cs" />
     <Compile Include="ExperimentRunner.cs" />
     <Compile Include="ExperimentStorage.cs" />

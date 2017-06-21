@@ -66,27 +66,27 @@ namespace PerformanceTest.Management
         }
         public int Sat
         {
-            get { return GetProperty("SAT"); }
+            get { return GetProperty(Z3Domain.KeySat); }
         }
         public int Unsat
         {
-            get { return GetProperty("UNSAT"); }
+            get { return GetProperty(Z3Domain.KeyUnsat); }
         }
         public int Unknown
         {
-            get { return GetProperty("UNKNOWN"); }
+            get { return GetProperty(Z3Domain.KeyUnknown); }
         }
         public int TargetSat
         {
-            get { return GetProperty("TargetSAT"); }
+            get { return GetProperty(Z3Domain.KeyTargetSat); }
         }
         public int TargetUnsat
         {
-            get { return GetProperty("TargetUNSAT"); }
+            get { return GetProperty(Z3Domain.KeyTargetUnsat); }
         }
         public int TargetUnknown
         {
-            get { return GetProperty("TargetUNKNOWN"); }
+            get { return GetProperty(Z3Domain.KeyTargetUnknown); }
         }
         public double NormalizedRuntime
         {

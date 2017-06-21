@@ -139,6 +139,7 @@
     <Compile Include="AzureBenchmarkStorage.cs" />
     <Compile Include="AzureExperimentStorage.cs" />
     <Compile Include="ConnectionString.cs" />
+    <Compile Include="BlobModifier.cs" />
     <Compile Include="SecretStorage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

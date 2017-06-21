@@ -13,6 +13,18 @@ namespace Measurement
     [Export(typeof(Domain))]
     public class Z3Domain : Domain
     {
+        public const string KeySat = "SAT";
+        public const string KeyUnsat = "UNSAT";
+        public const string KeyUnknown = "UNKNOWN";
+        public const string KeyOverperformed = "OVERPERF";
+        public const string KeyUnderperformed = "UNDERPERF";
+        public const string KeyTimeSat = "SATTIME";
+        public const string KeyTimeUnsat = "UNSATTIME";
+        public const string KeyTargetSat = "TargetSAT";
+        public const string KeyTargetUnsat = "TargetUNSAT";
+        public const string KeyTargetUnknown = "TargetUNKNOWN";
+
+
         public Z3Domain() : base("Z3")
         {
         }
@@ -84,44 +96,55 @@ namespace Measurement
             return new ProcessRunAnalysis(status,
                 new Dictionary<string, string>
                 {
-                    { "SAT", countsResults.sat.ToString() },
-                    { "UNSAT", countsResults.unsat.ToString() },
-                    { "UNKNOWN", countsResults.other.ToString() },
+                    { KeySat, countsResults.sat.ToString() },
+                    { KeyUnsat, countsResults.unsat.ToString() },
+                    { KeyUnknown, countsResults.other.ToString() },
 
-                    { "TargetSAT", countsTargets.sat.ToString() },
-                    { "TargetUNSAT", countsTargets.unsat.ToString() },
-                    { "TargetUNKNOWN", countsTargets.other.ToString() }
+                    { KeyTargetSat, countsTargets.sat.ToString() },
+                    { KeyTargetUnsat, countsTargets.unsat.ToString() },
+                    { KeyTargetUnknown, countsTargets.other.ToString() }
                 });
         }
 
-        protected override IReadOnlyDictionary<string, string> AggregateProperties(IEnumerable<ProcessRunAnalysis> benchmarkResults)
+        protected override IReadOnlyDictionary<string, string> AggregateProperties(IEnumerable<ProcessRunResults> results)
         {
             int sat = 0, unsat = 0, unknown = 0, overPerf = 0, underPerf = 0;
-            foreach (ProcessRunAnalysis r in benchmarkResults)
+            double timeSat = 0.0, timeUnsat = 0.0;
+
+            foreach (ProcessRunResults result in results)
             {
-                int _sat = int.Parse(r.OutputProperties["SAT"]);
-                int _unsat = int.Parse(r.OutputProperties["UNSAT"]);
-                int _unk = int.Parse(r.OutputProperties["UNKNOWN"]);
-                int _tsat = int.Parse(r.OutputProperties["TargetSAT"]);
-                int _tunsat = int.Parse(r.OutputProperties["TargetUNSAT"]);
-                int _tunk = int.Parse(r.OutputProperties["TargetUNKNOWN"]);
+                ProcessRunAnalysis analysis = result.Analysis;
+                int _sat = int.Parse(analysis.OutputProperties[KeySat]);
+                int _unsat = int.Parse(analysis.OutputProperties[KeyUnsat]);
+                int _unk = int.Parse(analysis.OutputProperties[KeyUnknown]);
+                int _tsat = int.Parse(analysis.OutputProperties[KeyTargetSat]);
+                int _tunsat = int.Parse(analysis.OutputProperties[KeyTargetUnsat]);
+                int _tunk = int.Parse(analysis.OutputProperties[KeyTargetUnknown]);
 
-                sat += _sat;
-                unsat += _unsat;
-                unknown += _unk;
+                if (analysis.Status != ResultStatus.Bug)
+                {
+                    sat += _sat;
+                    unsat += _unsat;
+                    unknown += _unk;
 
-                if (r.Status == ResultStatus.Success && _sat + _unsat > _tsat + _tunsat && _unk < _tunk)
+                    if (_sat > 0) timeSat += result.Runtime;
+                    if (_unsat > 0) timeUnsat += result.Runtime;
+                }
+
+                if (analysis.Status == ResultStatus.Success && _sat + _unsat > _tsat + _tunsat && _unk < _tunk)
                     overPerf++;
                 if (_sat + _unsat < _tsat + _tunsat || _unk > _tunk)
                     underPerf++;
             }
             return new Dictionary<string, string>
                 {
-                    { "SAT", sat.ToString() },
-                    { "UNSAT", unsat.ToString() },
-                    { "UNKNOWN", unknown.ToString() },
-                    { "OVERPERFORMED", overPerf.ToString() },
-                    { "UNDERPERFORMED", underPerf.ToString() }
+                    { KeySat, sat.ToString() },
+                    { KeyUnsat, unsat.ToString() },
+                    { KeyUnknown, unknown.ToString() },
+                    { KeyOverperformed, overPerf.ToString() },
+                    { KeyUnderperformed, underPerf.ToString() },
+                    { KeyTimeSat, timeSat.ToString() },
+                    { KeyTimeUnsat, timeUnsat.ToString() }
                 };
         }
 

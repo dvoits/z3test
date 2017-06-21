@@ -33,14 +33,14 @@ namespace Measurement
         
         public abstract ProcessRunAnalysis Analyze(string inputFile, ProcessRunMeasure measure);
 
-        public AggregatedAnalysis Aggregate(IEnumerable<ProcessRunAnalysis> benchmarkResults)
+        public AggregatedAnalysis Aggregate(IEnumerable<ProcessRunResults> runs)
         {
-            var results = benchmarkResults.ToArray();
+            var results = runs.ToArray();
 
             int bugs = 0, errors = 0, timeouts = 0, memouts = 0;
             for (int i = 0; i < results.Length; i++)
             {
-                var result = results[i];
+                var result = results[i].Analysis;
                 switch (result.Status)
                 {
                     case ResultStatus.OutOfMemory:
@@ -49,7 +49,7 @@ namespace Measurement
                     case ResultStatus.Timeout:
                         timeouts++;
                         break;
-                    case ResultStatus.Error:
+                    case ResultStatus.Error:                        
                         errors++;
                         break;
                     case ResultStatus.Bug:
@@ -64,7 +64,7 @@ namespace Measurement
             return new AggregatedAnalysis(bugs, errors, timeouts, memouts, props);
         }
 
-        protected abstract IReadOnlyDictionary<string, string> AggregateProperties(IEnumerable<ProcessRunAnalysis> benchmarkResults);
+        protected abstract IReadOnlyDictionary<string, string> AggregateProperties(IEnumerable<ProcessRunResults> results);
     }
 
     public sealed class DefaultDomain : Domain
@@ -95,10 +95,26 @@ namespace Measurement
             return new ProcessRunAnalysis(status, new Dictionary<string, string>());
         }
 
-        protected override IReadOnlyDictionary<string, string> AggregateProperties(IEnumerable<ProcessRunAnalysis> benchmarkResults)
+        protected override IReadOnlyDictionary<string, string> AggregateProperties(IEnumerable<ProcessRunResults> results)
         {
             return new Dictionary<string, string>();
         }
+    }
+
+
+    public class ProcessRunResults
+    {
+        private readonly ProcessRunAnalysis analysis;
+        private readonly double runtime;
+
+        public ProcessRunResults(ProcessRunAnalysis analysis, double runtime)
+        {
+            this.analysis = analysis;
+            this.runtime = runtime;
+        }
+
+        public ProcessRunAnalysis Analysis { get { return analysis; } }
+        public double Runtime { get { return runtime; } }
     }
 
     public class ProcessRunAnalysis

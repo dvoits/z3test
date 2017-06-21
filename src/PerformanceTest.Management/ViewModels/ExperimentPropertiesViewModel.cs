@@ -28,7 +28,7 @@ namespace PerformanceTest.Management
         private static async Task<ExperimentStatistics> GetStatistics(ExperimentManager manager, int id, Measurement.Domain domain)
         {
             var results = await manager.GetResults(id);
-            var aggr = domain.Aggregate(results.Select(r => new Measurement.ProcessRunAnalysis(r.Status, r.Properties)));
+            var aggr = domain.Aggregate(results.Select(r => new ProcessRunResults(new ProcessRunAnalysis(r.Status, r.Properties), r.NormalizedRuntime)));
             return new ExperimentStatistics(aggr);
         }
 
@@ -227,7 +227,7 @@ namespace PerformanceTest.Management
         {
             get
             {
-                return GetProperty("SAT");
+                return GetProperty(Z3Domain.KeySat);
             }
 
         }
@@ -235,28 +235,28 @@ namespace PerformanceTest.Management
         {
             get
             {
-                return GetProperty("UNSAT");
+                return GetProperty(Z3Domain.KeyUnsat);
             }
         }
         public int? Unknown
         {
             get
             {
-                return GetProperty("UNKNOWN");
+                return GetProperty(Z3Domain.KeyUnknown);
             }
         }
         public int? Overperformed
         {
             get
             {
-                return GetProperty("OVERPERFORMED");
+                return GetProperty(Z3Domain.KeyOverperformed);
             }
         }
         public int? Underperformed
         {
             get
             {
-                return GetProperty("UNDERPERFORMED");
+                return GetProperty(Z3Domain.KeyUnderperformed);
             }
         }
         public int? ProblemBug
