@@ -37,6 +37,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Z3Domain", "src\Z3Domain\Z3
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NightlyRunner", "src\NightlyRunner\NightlyRunner.csproj", "{187CE57C-2840-4CFA-804B-7CE6CE382A71}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "PowerShell Scripts", "PowerShell Scripts", "{B4F22393-52FE-4C9E-B86F-9AD838E94381}"
+	ProjectSection(SolutionItems) = preProject
+		Initialize.ps1 = Initialize.ps1
+		NewNightlySchedule.ps1 = NewNightlySchedule.ps1
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
