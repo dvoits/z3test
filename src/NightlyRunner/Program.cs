@@ -116,7 +116,7 @@ namespace NightlyRunner
                 string.Format("{0} for https://github.com/{1}/{2}/commit/{3}", Settings.ExperimentNote, Settings.GitHubOwner, Settings.GitHubZ3Repository, commitSha) :
                 Settings.ExperimentNote;
 
-            var experimentId = await manager.StartExperiment(definition, Settings.Creator, note, "z3-nightly");
+            var experimentId = await manager.StartExperiment(definition, Settings.Creator, note, String.IsNullOrEmpty(Settings.Default.SummaryName) ? null : Settings.Default.SummaryName);
             Trace.WriteLine(string.Format("Done, experiment id {0}.", experimentId));
         }
 
