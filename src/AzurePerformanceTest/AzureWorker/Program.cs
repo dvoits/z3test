@@ -69,6 +69,7 @@ namespace AzureWorker
             string arguments = args[7];
             TimeSpan timeout = TimeSpan.FromSeconds(double.Parse(args[8]));
             double memoryLimit = 0; // no limit
+            string summaryName = null; // no summary
             long? outputLimit = null;
             long? errorLimit = null;
             if (args.Length > 9)
@@ -76,10 +77,14 @@ namespace AzureWorker
                 memoryLimit = double.Parse(args[9]);
                 if (args.Length > 10)
                 {
-                    outputLimit = args[10] == "null" ? null : (long?)long.Parse(args[10]);
+                    summaryName = args[10];
                     if (args.Length > 11)
                     {
-                        errorLimit = args[11] == "null" ? null : (long?)long.Parse(args[11]);
+                        outputLimit = args[11] == "null" ? null : (long?)long.Parse(args[11]);
+                        if (args.Length > 12)
+                        {
+                            errorLimit = args[12] == "null" ? null : (long?)long.Parse(args[12]);
+                        }
                     }
                 }
             }
@@ -215,6 +220,12 @@ namespace AzureWorker
                     Console.WriteLine("Done fetching failed tasks. Got {0}.", badResults.Count);
                 }
                 while (!collectionTask.Wait(30000));
+
+                // Building summary for the benchmark results
+                if(summaryName != null)
+                {
+                    await AppendSummary(summaryName, experimentId, domain, storage);
+                }
 
                 Console.WriteLine("Closing.");
             }
@@ -474,6 +485,17 @@ namespace AzureWorker
         {
             MEFDomainResolver domainResolver = new MEFDomainResolver();
             return domainResolver.GetDomain(domainName);
+        }
+
+        private static async Task AppendSummary(string summaryName, int experimentId, Domain domain, AzureExperimentStorage storage)
+        {
+            var results = await storage.GetResults(experimentId);
+            var catSummary = ExperimentSummary.Build(results, domain);
+            var expSummary = new ExperimentSummaryEntity(experimentId, DateTimeOffset.Now, catSummary);
+
+            //var summary = domain.Aggregate(results.Select(r => new ProcessRunResults(new ProcessRunAnalysis(r.Status, r.Properties), r.NormalizedRuntime)));
+
+            await storage.AppendSummary(summaryName, experimentId, expSummary);
         }
 
         internal class PrivatePropertiesResolver : DefaultContractResolver

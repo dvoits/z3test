@@ -13,6 +13,18 @@ namespace Measurement
     [Export(typeof(Domain))]
     public class Z3Domain : Domain
     {
+        public const string KeySat = "SAT";
+        public const string KeyUnsat = "UNSAT";
+        public const string KeyUnknown = "UNKNOWN";
+        public const string KeyOverperformed = "OVERPERF";
+        public const string KeyUnderperformed = "UNDERPERF";
+        public const string KeyTimeSat = "SATTIME";
+        public const string KeyTimeUnsat = "UNSATTIME";
+        public const string KeyTargetSat = "TargetSAT";
+        public const string KeyTargetUnsat = "TargetUNSAT";
+        public const string KeyTargetUnknown = "TargetUNKNOWN";
+
+
         public Z3Domain() : base("Z3")
         {
         }
@@ -84,13 +96,13 @@ namespace Measurement
             return new ProcessRunAnalysis(status,
                 new Dictionary<string, string>
                 {
-                    { "SAT", countsResults.sat.ToString() },
-                    { "UNSAT", countsResults.unsat.ToString() },
-                    { "UNKNOWN", countsResults.other.ToString() },
+                    { KeySat, countsResults.sat.ToString() },
+                    { KeyUnsat, countsResults.unsat.ToString() },
+                    { KeyUnknown, countsResults.other.ToString() },
 
-                    { "TargetSAT", countsTargets.sat.ToString() },
-                    { "TargetUNSAT", countsTargets.unsat.ToString() },
-                    { "TargetUNKNOWN", countsTargets.other.ToString() }
+                    { KeyTargetSat, countsTargets.sat.ToString() },
+                    { KeyTargetUnsat, countsTargets.unsat.ToString() },
+                    { KeyTargetUnknown, countsTargets.other.ToString() }
                 });
         }
 
@@ -102,12 +114,12 @@ namespace Measurement
             foreach (ProcessRunResults result in results)
             {
                 ProcessRunAnalysis analysis = result.Analysis;
-                int _sat = int.Parse(analysis.OutputProperties["SAT"]);
-                int _unsat = int.Parse(analysis.OutputProperties["UNSAT"]);
-                int _unk = int.Parse(analysis.OutputProperties["UNKNOWN"]);
-                int _tsat = int.Parse(analysis.OutputProperties["TargetSAT"]);
-                int _tunsat = int.Parse(analysis.OutputProperties["TargetUNSAT"]);
-                int _tunk = int.Parse(analysis.OutputProperties["TargetUNKNOWN"]);
+                int _sat = int.Parse(analysis.OutputProperties[KeySat]);
+                int _unsat = int.Parse(analysis.OutputProperties[KeyUnsat]);
+                int _unk = int.Parse(analysis.OutputProperties[KeyUnknown]);
+                int _tsat = int.Parse(analysis.OutputProperties[KeyTargetSat]);
+                int _tunsat = int.Parse(analysis.OutputProperties[KeyTargetUnsat]);
+                int _tunk = int.Parse(analysis.OutputProperties[KeyTargetUnknown]);
 
                 if (analysis.Status != ResultStatus.Bug)
                 {
@@ -126,13 +138,13 @@ namespace Measurement
             }
             return new Dictionary<string, string>
                 {
-                    { "SAT", sat.ToString() },
-                    { "UNSAT", unsat.ToString() },
-                    { "UNKNOWN", unknown.ToString() },
-                    { "OVERPERFORMED", overPerf.ToString() },
-                    { "UNDERPERFORMED", underPerf.ToString() },
-                    { "TimeSAT", timeSat.ToString() },
-                    { "TimeUNSAT", timeUnsat.ToString() }
+                    { KeySat, sat.ToString() },
+                    { KeyUnsat, unsat.ToString() },
+                    { KeyUnknown, unknown.ToString() },
+                    { KeyOverperformed, overPerf.ToString() },
+                    { KeyUnderperformed, underPerf.ToString() },
+                    { KeyTimeSat, timeSat.ToString() },
+                    { KeyTimeUnsat, timeUnsat.ToString() }
                 };
         }
 

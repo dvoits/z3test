@@ -49,7 +49,7 @@ namespace Measurement
                     case ResultStatus.Timeout:
                         timeouts++;
                         break;
-                    case ResultStatus.Error:
+                    case ResultStatus.Error:                        
                         errors++;
                         break;
                     case ResultStatus.Bug:
