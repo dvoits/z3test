@@ -21,6 +21,11 @@ namespace PerformanceTest
         public abstract Task<ExperimentID> StartExperiment(ExperimentDefinition definition, string creator = null, string note = null, string summaryName = null);
 
         /// <summary>
+        /// Restarts selected benchmarks within an experiment.
+        /// </summary>
+        public abstract Task RestartBenchmarks(ExperimentID id, IEnumerable<string> benchmarkNames, string newBenchmarkContainerUri = null);
+
+        /// <summary>
         /// Returns current execution status of existing experiments.
         /// </summary>
         public abstract Task<IEnumerable<ExperimentStatus>> GetStatus(IEnumerable<ExperimentID> ids);

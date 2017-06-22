@@ -113,6 +113,11 @@ namespace PerformanceTest
             return id;
         }
 
+        public override Task RestartBenchmarks(int id, IEnumerable<string> benchmarkNames, string newBenchmarkContainerUri = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public override Task<IEnumerable<ExperimentStatus>> GetStatus(IEnumerable<int> ids)
         {
             List<ExperimentStatus> status = new List<ExperimentStatus>();

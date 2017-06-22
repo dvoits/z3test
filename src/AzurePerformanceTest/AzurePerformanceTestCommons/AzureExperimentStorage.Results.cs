@@ -46,7 +46,7 @@ namespace AzurePerformanceTest
             var result2 = await PrepareBenchmarkResult(result, outputContainer);
             using (MemoryStream ms = new MemoryStream())
             {
-                ms.WriteByte(1);//signalling that this message contains a result
+                //ms.WriteByte(1);//signalling that this message contains a result
                 (new BinaryFormatter()).Serialize(ms, result2);
                 await resultsQueue.AddMessageAsync(new CloudQueueMessage(ms.ToArray()));
             }

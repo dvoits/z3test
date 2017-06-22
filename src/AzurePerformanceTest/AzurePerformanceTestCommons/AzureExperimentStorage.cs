@@ -33,6 +33,7 @@ namespace AzurePerformanceTest
         private CloudBlobContainer resultsContainer;
         private CloudBlobContainer outputContainer;
         private CloudBlobContainer configContainer;
+        private CloudBlobContainer tempContainer;
         private CloudTableClient tableClient;
         private CloudTable experimentsTable;
         private CloudTable resultsTable;
@@ -48,6 +49,7 @@ namespace AzurePerformanceTest
         private const string binContainerName = "bin";
         private const string outputContainerName = "output";
         private const string configContainerName = "config";
+        private const string tempContainerName = "temp";
         private const string experimentsTableName = "experiments";
         private const string resultsTableName = "data";
 
@@ -64,6 +66,7 @@ namespace AzurePerformanceTest
             outputContainer = blobClient.GetContainerReference(outputContainerName);
             configContainer = blobClient.GetContainerReference(configContainerName);
             resultsContainer = blobClient.GetContainerReference(resultsContainerName);
+            tempContainer = blobClient.GetContainerReference(tempContainerName);
 
             tableClient = storageAccount.CreateCloudTableClient();
             experimentsTable = tableClient.GetTableReference(experimentsTableName);
@@ -77,7 +80,8 @@ namespace AzurePerformanceTest
                 configContainer.CreateIfNotExistsAsync(),
                 resultsTable.CreateIfNotExistsAsync(),
                 experimentsTable.CreateIfNotExistsAsync(),
-                resultsContainer.CreateIfNotExistsAsync()
+                resultsContainer.CreateIfNotExistsAsync(),
+                tempContainer.CreateIfNotExistsAsync()
             };
             Task.WaitAll(cloudEntityCreationTasks);
 
@@ -85,6 +89,8 @@ namespace AzurePerformanceTest
         }
 
         public AzureBenchmarkStorage DefaultBenchmarkStorage { get; private set; }
+
+        public CloudBlobContainer TempBlobContainer { get { return tempContainer; } }
 
 
         public IEnumerable<CloudBlockBlob> ListAzureWorkerBlobs()
