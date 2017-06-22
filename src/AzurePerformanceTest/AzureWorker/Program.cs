@@ -120,7 +120,7 @@ namespace AzureWorker
                         return new string[] { benchmarksPath + s };
                 }).ToArray();
             totalBenchmarksToProcess = benchmarkList.Length;
-            Console.WriteLine("Retrieved list of benchmarks to re-process.");
+            Console.WriteLine("Retrieved list of benchmarks to re-process. Total: {0}.", totalBenchmarksToProcess);
             var collectionTask = CollectResults(experimentId, storage);
             Console.WriteLine("Started collection thread.");
 
@@ -277,15 +277,9 @@ namespace AzureWorker
                     }
                     while (continuationToken != null);
 
-                    //using (var ms = new MemoryStream())
-                    //{
-                    //    ms.WriteByte(2);//This is number of benchmarks
-                    //    (new BinaryFormatter()).Serialize(ms, totalBenchmarks);
-                    //    await queue.AddMessageAsync(new CloudQueueMessage(ms.ToArray()));
-                    //}
-
                     await storage.SetTotalBenchmarks(experimentId, totalBenchmarks);
                     Program.totalBenchmarks = totalBenchmarks;
+                    totalBenchmarksToProcess = totalBenchmarks;
 
                     await Task.WhenAll(starterTasks.ToArray());
                     Console.WriteLine("Finished starting tasks");
@@ -293,6 +287,7 @@ namespace AzureWorker
                 else
                 {
                     Program.totalBenchmarks = expInfo.TotalBenchmarks;
+                    totalBenchmarksToProcess = expInfo.TotalBenchmarks;
                 }
 
                 MonitorTasksUntilCompletion(experimentId, jobId, collectionTask, batchClient);
@@ -377,16 +372,7 @@ namespace AzureWorker
                 {
                     using (var ms = new MemoryStream(message.AsBytes))
                     {
-                        //var typeByte = ms.ReadByte();
-                        //if (totalBenchmarks == -1 && typeByte == 2)
-                        //{
-                        //    totalBenchmarks = (int)formatter.Deserialize(ms);
-                        //    await storage.SetTotalBenchmarks(experimentId, totalBenchmarks);
-                        //}
-                        //else
-                        //{
-                            goodResults.Add((AzureBenchmarkResult)formatter.Deserialize(ms));
-                        //}
+                        goodResults.Add((AzureBenchmarkResult)formatter.Deserialize(ms));
                     }
                 }
                 int oldCount = results.Count;

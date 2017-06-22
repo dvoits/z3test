@@ -403,7 +403,14 @@ namespace AzurePerformanceTest
             using (var bc = BatchClient.Open(batchCreds))
             {
                 //var pool = await bc.PoolOperations.GetPoolAsync(poolId);
-                await bc.JobOperations.DeleteJobAsync(jobId);
+                try
+                {
+                    await bc.JobOperations.DeleteJobAsync(jobId);
+                }
+                catch (BatchException batchExc) when (batchExc.RequestInformation != null && batchExc.RequestInformation.HttpStatusCode.HasValue && batchExc.RequestInformation.HttpStatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    //Not found - nothing to delete
+                }
 
                 CloudJob job = bc.JobOperations.CreateJob();
                 job.Id = jobId;
@@ -481,9 +488,29 @@ namespace AzurePerformanceTest
 
                 job.JobManagerTask = new JobManagerTask(taskId, taskCommandLine);
 
-                await job.CommitAsync();
+                bool failedToCommit = false;
+                int tryBackAwayMultiplier = 1;
+                int tryNo = 0;
+                do
+                {
+                    try
+                    {
+                        failedToCommit = false;
+                        await job.CommitAsync();
+                    }
+                    catch (BatchException batchExc) when (batchExc.RequestInformation != null && batchExc.RequestInformation.HttpStatusCode.HasValue && batchExc.RequestInformation.HttpStatusCode == System.Net.HttpStatusCode.Conflict)
+                    {
+                        if (tryNo == 7)//arbitrarily picked constant
+                            throw;
+
+                        ++tryNo;
+                        failedToCommit = true;
+                        await Task.Run(() => System.Threading.Thread.Sleep(tryBackAwayMultiplier * 500));
+                        tryBackAwayMultiplier = tryBackAwayMultiplier * 2;
+                    }
+                }
+                while (failedToCommit);
             }
-            throw new NotImplementedException();
         }
 
         private static string BuildJobId(int experimentId)
