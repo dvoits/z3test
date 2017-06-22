@@ -134,7 +134,22 @@ namespace AzurePerformanceTest
             }
         }
 
-        public async Task AppendOrReplaceSummary(string summaryName, ExperimentSummaryEntity experimentSummary)
+        public async Task<ExperimentSummary[]> GetSummary(string summaryName)
+        {
+            if (summaryName == null) throw new ArgumentNullException(nameof(summaryName));
+            string blobName = string.Format("{0}.csv", ToBinaryPackBlobName(summaryName));
+
+            var blob = summaryContainer.GetBlockBlobReference(blobName);
+            using (MemoryStream stream = new MemoryStream())
+            {
+                await blob.DownloadToStreamAsync(stream, AccessCondition.GenerateEmptyCondition(), new BlobRequestOptions { RetryPolicy = retryPolicy }, null);
+                stream.Position = 0;
+                var summary = ExperimentSummaryStorage.Load(stream);
+                return summary;
+            }
+        }
+
+        public async Task AppendOrReplaceSummary(string summaryName, ExperimentSummary experimentSummary)
         {
             if (summaryName == null) throw new ArgumentNullException(nameof(summaryName));
             if (experimentSummary == null) throw new ArgumentNullException(nameof(experimentSummary));

@@ -16,59 +16,30 @@ namespace PerformanceTest
 {
     public static class ExperimentSummaryStorage
     {
-        //public static void SaveBenchmarks(BenchmarkResult[] benchmarks, Stream stream)
-        //{
-        //    var length = FSharpOption<int>.Some(benchmarks.Length);
-        //    List<Column> columns = new List<Column>()
-        //    {
-        //        Column.Create("BenchmarkFileName", benchmarks.Select(b => b.BenchmarkFileName), length),
-        //        Column.Create("AcquireTime", benchmarks.Select(b => b.AcquireTime.ToString(System.Globalization.CultureInfo.InvariantCulture)), length),
-        //        Column.Create("NormalizedRuntime", benchmarks.Select(b => b.NormalizedRuntime), length),
-        //        Column.Create("TotalProcessorTime", benchmarks.Select(b => b.TotalProcessorTime.TotalSeconds), length),
-        //        Column.Create("WallClockTime", benchmarks.Select(b => b.WallClockTime.TotalSeconds), length),
-        //        Column.Create("PeakMemorySizeMB", benchmarks.Select(b => b.PeakMemorySizeMB), length),
-        //        Column.Create("Status", benchmarks.Select(b => StatusToString(b.Status)), length),
-        //        Column.Create("ExitCode", benchmarks.Select(b => b.ExitCode.HasValue ? b.ExitCode.ToString() : null), length),
-        //        Column.Create("StdOut", benchmarks.Select(b => Utils.StreamToString(b.StdOut, true)), length),
-        //        Column.Create("StdErr", benchmarks.Select(b => Utils.StreamToString(b.StdErr, true)), length)
-        //    };
-
-        //    HashSet<string> props = new HashSet<string>();
-        //    foreach (var b in benchmarks)
-        //        foreach (var p in b.Properties.Keys)
-        //            props.Add(p);
-        //    foreach (var p in props)
-        //    {
-        //        string key = p;
-        //        Column c = Column.Create(key, benchmarks.Select(b =>
-        //        {
-        //            string val = null;
-        //            b.Properties.TryGetValue(key, out val);
-        //            return val;
-        //        }), length);
-        //        columns.Add(c);
-        //    }
-        //    var table = Table.OfColumns(columns);
-        //    table.SaveUTF8Bom(stream, new WriteSettings(Delimiter.Comma, true, true));
-        //}
+        private const string dateFormat = "yyyy-MM-dd HH:mm:ss";
+        private const string KeyBug = "BUG";
+        private const string KeyError = "ERROR";
+        private const string KeyInferr = "INFERR";
+        private const string KeyMemoryOut = "MEMORY";
+        private const string KeyTimeOut = "TIMEOUT";
 
 
-        public static Table AppendOrReplace(Table table, ExperimentSummaryEntity newSummary)
+        public static Table AppendOrReplace(Table table, ExperimentSummary newSummary)
         {
             Dictionary<string, string> newColumns = new Dictionary<string, string>
             {
                 { "ID", newSummary.Id.ToString() },
-                { "Date", newSummary.Date.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss") }
+                { "Date", newSummary.Date.ToUniversalTime().ToString(dateFormat) }
             };
             foreach (var catSummary in newSummary.CategorySummary)
             {
                 string cat = catSummary.Key;
                 var expSum = catSummary.Value;
-                newColumns.Add(string.Join("|", cat, "BUG"), expSum.Bugs.ToString());
-                newColumns.Add(string.Join("|", cat, "ERROR"), expSum.Errors.ToString());
-                newColumns.Add(string.Join("|", cat, "INFERR"), expSum.InfrastructureErrors.ToString());
-                newColumns.Add(string.Join("|", cat, "MEMORY"), expSum.MemoryOuts.ToString());
-                newColumns.Add(string.Join("|", cat, "TIMEOUT"), expSum.Timeouts.ToString());
+                newColumns.Add(string.Join("|", cat, KeyBug), expSum.Bugs.ToString());
+                newColumns.Add(string.Join("|", cat, KeyError), expSum.Errors.ToString());
+                newColumns.Add(string.Join("|", cat, KeyInferr), expSum.InfrastructureErrors.ToString());
+                newColumns.Add(string.Join("|", cat, KeyMemoryOut), expSum.MemoryOuts.ToString());
+                newColumns.Add(string.Join("|", cat, KeyTimeOut), expSum.Timeouts.ToString());
 
                 foreach (var prop in expSum.Properties)
                 {
@@ -120,7 +91,7 @@ namespace PerformanceTest
             return table;
         }
 
-        public static void AppendOrReplace(Stream source, ExperimentSummaryEntity newSummary, Stream dest)
+        public static void AppendOrReplace(Stream source, ExperimentSummary newSummary, Stream dest)
         {
             var table = Table.Load(new StreamReader(source), new ReadSettings(Delimiter.Comma, false, true, FSharpOption<int>.None,
                 FSharpOption<FSharpFunc<Tuple<int, string>, FSharpOption<Type>>>.Some(FSharpFunc<Tuple<int, string>, FSharpOption<Type>>.FromConverter(tuple => FSharpOption<Type>.Some(typeof(string))))));
@@ -136,111 +107,68 @@ namespace PerformanceTest
             Table.Save(finalTable, new StreamWriter(dest, new UTF8Encoding(true)));
         }
 
-        //public static ExperimentEntity[] Load(Stream stream)
-        //{
-        //    var table = Table.Load(new StreamReader(stream), new ReadSettings(Delimiter.Comma, false, true, FSharpOption<int>.None,
-        //        FSharpOption<FSharpFunc<Tuple<int, string>, FSharpOption<Type>>>.Some(FSharpFunc<Tuple<int, string>, FSharpOption<Type>>.FromConverter(tuple => FSharpOption<Type>.Some(typeof(string))))));
-
-        //    var date = table["Date"].Rows.AsString;
-        //    var id = table["ID"].Rows.AsString;
-
-
-        //    var header =
-        //        table
-        //            .Where(c => c.Name.Contains("|"))
-        //            .Select(c =>
-        //            {
-        //                string[] parts = c.Name.Split(new[] { '|' }, 2);
-        //                string category = parts[0];
-        //                string property = parts[1];
-        //                return Tuple.Create(category, property, c.Rows);
-        //            })
-        //            .GroupBy(t => t.Item1)
-        //            .ToDictionary(g => g.Key, g => g.Select(t => Tuple.Create(t.Item2, t.Item3)).ToArray());
-
-        //    var propColumns =
-        //        (from c in table
-        //         where
-        //            c.Name != "Date" &&
-        //            c.Name != "ID"
-        //         select Tuple.Create(c.Name, c.Rows.AsString))
-        //        .ToArray();
-
-        //    var results = new ExperimentSummaryEntity[table.RowsCount];
-        //    for (int i = 0; i < results.Length; i++)
-        //    {
-        //        Dictionary<string, string> props = new Dictionary<string, string>(propColumns.Length);
-        //        foreach (var pc in propColumns)
-        //        {
-        //            if (pc.Item2 != null)
-        //            {
-        //                props[pc.Item1] = pc.Item2[i];
-        //            }
-        //        }
-
-        //        results[i] = new ExperimentSummaryEntity(
-        //            );
-        //    }
-        //    return results;
-        //}
-
-        public static string StatusToString(ResultStatus status)
+        public static ExperimentSummary[] Load(Stream stream)
         {
-            return status.ToString();
-        }
+            var table = Table.Load(new StreamReader(stream), new ReadSettings(Delimiter.Comma, false, true, FSharpOption<int>.None,
+                FSharpOption<FSharpFunc<Tuple<int, string>, FSharpOption<Type>>>.Some(FSharpFunc<Tuple<int, string>, FSharpOption<Type>>.FromConverter(tuple => FSharpOption<Type>.Some(typeof(string))))));
 
-        public static ResultStatus StatusFromString(string status)
-        {
-            return (ResultStatus)Enum.Parse(typeof(ResultStatus), status);
-        }
+            var date = table["Date"].Rows.AsString;
+            var id = table["ID"].Rows.AsString;
 
-    }
+            var content = // category -> (parameter, value)
+                table
+                    .Where(c => c.Name.Contains("|"))
+                    .Select(c =>
+                    {
+                        string[] parts = c.Name.Split(new[] { '|' }, 2);
+                        string category = parts[0];
+                        string property = parts[1];
+                        return Tuple.Create(category, property, c.Rows);
+                    })
+                    .GroupBy(t => t.Item1)
+                    .ToDictionary(g => g.Key, g => g.Select(t => Tuple.Create(t.Item2, t.Item3.AsString)).ToArray());
 
-    public class ExperimentSummaryEntity
-    {
-        public ExperimentSummaryEntity(int id, DateTimeOffset date, IReadOnlyDictionary<string, AggregatedAnalysis> categorySummary)
-        {
-            if (categorySummary == null) throw new ArgumentNullException(nameof(categorySummary));
-            Id = id;
-            Date = date;
-            CategorySummary = categorySummary;
-        }
-
-        public int Id { get; private set; }
-        public DateTimeOffset Date { get; private set; }
-
-        public IReadOnlyDictionary<string, AggregatedAnalysis> CategorySummary { get; private set; }
-    }
-
-    public class ExperimentSummary
-    {
-        public static Dictionary<string, AggregatedAnalysis> Build(IEnumerable<BenchmarkResult> results, Domain domain)
-        {
-            if (results == null) throw new ArgumentNullException(nameof(results));
-            if (domain == null) throw new ArgumentNullException(nameof(domain));
-
-            var categories = new Dictionary<string, List<BenchmarkResult>>();
-            foreach (var result in results)
+            int rowsCount = table.RowsCount;
+            var results = new ExperimentSummary[table.RowsCount];
+            for (int row = 0; row < rowsCount; row++)
             {
-                int i = result.BenchmarkFileName.IndexOf("/");
-                string category = i >= 0 ? result.BenchmarkFileName.Substring(0, i) : string.Empty;
+                int expId = int.Parse(id[row]);
+                DateTimeOffset expDate = DateTimeOffset.ParseExact(date[row], dateFormat, System.Globalization.CultureInfo.InvariantCulture);
 
-                List<BenchmarkResult> catResults;
-                if (!categories.TryGetValue(category, out catResults))
+                Dictionary<string, AggregatedAnalysis> catSum = new Dictionary<string, AggregatedAnalysis>();
+                foreach (var cat in content)
                 {
-                    catResults = new List<BenchmarkResult>();
-                    categories.Add(category, catResults);
-                }
-                catResults.Add(result);
-            }
+                    string category = cat.Key;
+                    var catParameters = cat.Value;
 
-            var stats = new Dictionary<string, AggregatedAnalysis>(categories.Count);
-            foreach (var cr in categories)
-            {
-                var catSummary = domain.Aggregate(cr.Value.Select(r => new ProcessRunResults(new ProcessRunAnalysis(r.Status, r.Properties), r.NormalizedRuntime)));
-                stats.Add(cr.Key, catSummary);
+                    int bugs = 0;
+                    int errors = 0;
+                    int infrastructureErrors = 0;
+                    int timeouts = 0;
+                    int memouts = 0;
+                    var props = new Dictionary<string, string>(catParameters.Length);
+
+                    for (int i = 0; i < catParameters.Length; i++)
+                    {
+                        var p = catParameters[i];
+                        var val = p.Item2[row];
+                        switch (p.Item1)
+                        {
+                            case KeyBug: bugs = int.Parse(val); break;
+                            case KeyError: errors = int.Parse(val); break;
+                            case KeyInferr: infrastructureErrors = int.Parse(val); break;
+                            case KeyMemoryOut: memouts = int.Parse(val); break;
+                            case KeyTimeOut: timeouts = int.Parse(val); break;
+                            default: if(!string.IsNullOrEmpty(val)) props[p.Item1] = val; break;
+                        }
+                    }
+
+                    catSum.Add(category, new AggregatedAnalysis(bugs, errors, infrastructureErrors, timeouts, memouts, props));
+                    results[row] = new ExperimentSummary(expId, expDate, catSum);
+                }
             }
-            return stats;
+            return results;
         }
     }
+        
 }

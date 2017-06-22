@@ -86,10 +86,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AsyncLazy.cs" />
-    <Compile Include="ExperimentSummary.cs" />
     <Compile Include="BenchmarkResultsStorage.cs" />
     <Compile Include="ExperimentRunner.cs" />
     <Compile Include="ExperimentStorage.cs" />
+    <Compile Include="ExperimentSummary.cs" />
     <Compile Include="LocalExperimentManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Table.cs" />

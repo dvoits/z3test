@@ -67,7 +67,7 @@ namespace Summary
 
             Console.WriteLine("Building summary for the experiment...");
             var catSummary = ExperimentSummary.Build(results, domain);
-            var expSummary = new ExperimentSummaryEntity(experimentId, DateTimeOffset.Now, catSummary);
+            var expSummary = new ExperimentSummary(experimentId, DateTimeOffset.Now, catSummary);
 
             Console.WriteLine("Uploading new summary...");
             await storage.AppendOrReplaceSummary(summaryName, expSummary);
