@@ -172,6 +172,19 @@ namespace PerformanceTest.Management
             }
         }
 
+        public void ReclassifyResults(BenchmarkResultViewModel[] old_Results, ResultStatus rc)
+        {
+            List<BenchmarkResult> new_Results = new List<BenchmarkResult>();
+            foreach (var res in old_Results)
+            {
+                BenchmarkResult old_result = res.GetBenchmarkResult();
+                BenchmarkResult new_result = new BenchmarkResult(old_result.ExperimentID, old_result.BenchmarkFileName, 
+                        old_result.AcquireTime, old_result.NormalizedRuntime, old_result.TotalProcessorTime, old_result.WallClockTime, 
+                        old_result.PeakMemorySizeMB, rc, old_result.ExitCode, old_result.StdOut, old_result.StdErr, old_result.Properties);
+                new_Results.Add(new_result);
+            }
+            manager.UpdateExperiment(id, null, new_Results.ToArray(), null);
+        }
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

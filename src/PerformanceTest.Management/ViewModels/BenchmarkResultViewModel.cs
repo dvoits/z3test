@@ -56,13 +56,13 @@ namespace PerformanceTest.Management
         public ResultStatus Status
         {
             get { return status; }
-            set
-            {
-                status = value;
-                NotifyPropertyChanged();
-                UpdateResultStatus();
-                NotifyPropertyChanged("Runtime");
-            }
+            //set
+            //{
+            //    status = value;
+            //    NotifyPropertyChanged();
+            //    UpdateResultStatus();
+            //    NotifyPropertyChanged("Runtime");
+            //}
         }
         public int Sat
         {
@@ -133,27 +133,27 @@ namespace PerformanceTest.Management
             }
         }
 
-        private async void UpdateResultStatus()
-        {
-            try
-            {
-                if (status == ResultStatus.Timeout) UpdateRuntime();
-                await manager.UpdateResultStatus(result.ExperimentID, status);
-                BenchmarkResult newResult = new BenchmarkResult(result.ExperimentID, result.BenchmarkFileName,
-                    result.AcquireTime, runtime, result.TotalProcessorTime, result.WallClockTime, result.PeakMemorySizeMB,
-                    status, result.ExitCode, result.StdOut, result.StdErr, result.Properties);
-                result = newResult;
-                Trace.WriteLine("Result status changed to '" + status.ToString() + "' for " + result.ExperimentID);
+        //private async void UpdateResultStatus()
+        //{
+        //    try
+        //    {
+        //        if (status == ResultStatus.Timeout) UpdateRuntime();
+        //        await manager.UpdateResultStatus(result.ExperimentID, status);
+        //        BenchmarkResult newResult = new BenchmarkResult(result.ExperimentID, result.BenchmarkFileName,
+        //            result.AcquireTime, runtime, result.TotalProcessorTime, result.WallClockTime, result.PeakMemorySizeMB,
+        //            status, result.ExitCode, result.StdOut, result.StdErr, result.Properties);
+        //        result = newResult;
+        //        Trace.WriteLine("Result status changed to '" + status.ToString() + "' for " + result.ExperimentID);
 
-            }
-            catch (Exception ex)
-            {
-                status = result.Status;
-                runtime = result.NormalizedRuntime;
-                NotifyPropertyChanged("Status");
-                uiService.ShowError(ex, "Failed to update benchmark status");
-            }
-        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        status = result.Status;
+        //        runtime = result.NormalizedRuntime;
+        //        NotifyPropertyChanged("Status");
+        //        uiService.ShowError(ex, "Failed to update benchmark status");
+        //    }
+        //}
 
         private int GetProperty(string prop)
         {
@@ -192,6 +192,10 @@ namespace PerformanceTest.Management
             return text;
         }
 
+        public BenchmarkResult GetBenchmarkResult ()
+        {
+            return result;
+        }
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

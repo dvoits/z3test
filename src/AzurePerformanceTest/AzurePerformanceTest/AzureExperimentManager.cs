@@ -527,11 +527,11 @@ namespace AzurePerformanceTest
         {
             await storage.UpdateStatusFlag(id, flag);
         }
-        public override Task UpdateResultStatus(ExperimentID id, ResultStatus status)
-        {
-            throw new NotImplementedException();
-            //await storage.UpdateResultStatus(id, status);
-        }
+        ////public override Task UpdateResultStatus(ExperimentID id, ResultStatus status)
+        //{
+        //    throw new NotImplementedException();
+        //    //await storage.UpdateResultStatus(id, status);
+        //}
         public override Task UpdateRuntime(ExperimentID id, double runtime)
         {
             throw new NotImplementedException();

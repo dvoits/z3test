@@ -39,20 +39,9 @@ namespace PerformanceTest.Management
         }
         private void Reclassify(ResultStatus rc)
         {
-            throw new NotImplementedException();
-            //try
-            //{
-            //    var elems = dataGrid.SelectedItems.Cast<BenchmarkResultViewModel>();
-            //    foreach (var vm in elems)
-            //    {
-            //        vm.Status = rc;
-            //    }
-            //    Console.WriteLine();
-            //}
-            //catch (Exception ex)
-            //{
-            //    MessageBox.Show(this, "Exception: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            //}
+            var vm = DataContext as ShowResultsViewModel;
+            var elems = dataGrid.SelectedItems.Cast<BenchmarkResultViewModel>().ToArray();
+            vm.ReclassifyResults(elems, rc);
         }
         private void ReclassifyOK(object target, ExecutedRoutedEventArgs e)
         {

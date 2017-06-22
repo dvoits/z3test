@@ -95,9 +95,10 @@ namespace PerformanceTest.Management
                 manager.UpdateExperiment(id, duplicatesToRemove.ToArray(), null, null);
             return filenames.Count > 0;
         }
-        public void Pick(List<BenchmarkResult> items)
+        public void Pick(List<BenchmarkResultViewModel> items)
         {
-            duplicatesToRemove.AddRange(items);
+            BenchmarkResult[] itemsToRemove = items.Select(elem => elem.GetBenchmarkResult()).ToArray();
+            duplicatesToRemove.AddRange(itemsToRemove);
         }
         public void showNextDupe()
         {
