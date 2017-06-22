@@ -498,7 +498,7 @@ namespace AzureWorker
             var catSummary = ExperimentSummary.Build(results, domain);
             var expSummary = new ExperimentSummaryEntity(experimentId, DateTimeOffset.Now, catSummary);
             Trace.WriteLine("Uploading new summary...");
-            await storage.AppendOrReplaceSummary(summaryName, experimentId, expSummary);
+            await storage.AppendOrReplaceSummary(summaryName, expSummary);
             Trace.WriteLine("Done.");
         }
 

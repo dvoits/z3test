@@ -111,11 +111,28 @@ namespace PerformanceTest
             return finalTable;
         }
 
+        public static Table Remove(Table table, int id)
+        {
+            // If the table already has summary for the experiment, it will be replaced
+            if (table.Count > 0) // if not empty then must contain ID
+                table = Table.Filter(new[] { "ID" }, FSharpFunc<string, bool>.FromConverter(_id => int.Parse(_id) != id), table);
+
+            return table;
+        }
+
         public static void AppendOrReplace(Stream source, ExperimentSummaryEntity newSummary, Stream dest)
         {
             var table = Table.Load(new StreamReader(source), new ReadSettings(Delimiter.Comma, false, true, FSharpOption<int>.None,
                 FSharpOption<FSharpFunc<Tuple<int, string>, FSharpOption<Type>>>.Some(FSharpFunc<Tuple<int, string>, FSharpOption<Type>>.FromConverter(tuple => FSharpOption<Type>.Some(typeof(string))))));
             var finalTable = AppendOrReplace(table, newSummary);
+            Table.Save(finalTable, new StreamWriter(dest, new UTF8Encoding(true)));
+        }
+
+        public static void Remove(Stream source, int id, Stream dest)
+        {
+            var table = Table.Load(new StreamReader(source), new ReadSettings(Delimiter.Comma, false, true, FSharpOption<int>.None,
+                FSharpOption<FSharpFunc<Tuple<int, string>, FSharpOption<Type>>>.Some(FSharpFunc<Tuple<int, string>, FSharpOption<Type>>.FromConverter(tuple => FSharpOption<Type>.Some(typeof(string))))));
+            var finalTable = Remove(table, id);
             Table.Save(finalTable, new StreamWriter(dest, new UTF8Encoding(true)));
         }
 

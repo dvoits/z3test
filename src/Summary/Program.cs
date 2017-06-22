@@ -46,11 +46,18 @@ namespace Summary
             string connectionString = await GetConnectionString();
             AzureExperimentManager manager = AzureExperimentManager.Open(connectionString);
 
-            var exp = await manager.Storage.GetExperiment(id);
-            IDomainResolver resolveDomain = new MEFDomainResolver();
-            Domain domain = resolveDomain.GetDomain(exp.DomainName);
+            var exp = await manager.TryFindExperiment(id);
+            if (exp != null)
+            {
+                IDomainResolver resolveDomain = new MEFDomainResolver();
+                Domain domain = resolveDomain.GetDomain(exp.Definition.DomainName);
 
-            await UpdateSummary(summaryName, id, domain, manager.Storage);
+                await UpdateSummary(summaryName, id, domain, manager.Storage);
+            }else
+            {
+                Console.WriteLine("Experiment is missing, trying to remove it from the summary table as well...");
+                await manager.Storage.RemoveSummary(summaryName, id);
+            }
         }
 
         private static async Task UpdateSummary(string summaryName, int experimentId, Domain domain, AzureExperimentStorage storage)
@@ -63,7 +70,7 @@ namespace Summary
             var expSummary = new ExperimentSummaryEntity(experimentId, DateTimeOffset.Now, catSummary);
 
             Console.WriteLine("Uploading new summary...");
-            await storage.AppendOrReplaceSummary(summaryName, experimentId, expSummary);
+            await storage.AppendOrReplaceSummary(summaryName, expSummary);
         }
 
         private static async Task<string> GetConnectionString()

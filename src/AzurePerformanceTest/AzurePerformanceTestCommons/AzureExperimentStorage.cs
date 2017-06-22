@@ -134,7 +134,7 @@ namespace AzurePerformanceTest
             }
         }
 
-        public async Task AppendOrReplaceSummary(string summaryName, int epxerimentId, ExperimentSummaryEntity experimentSummary)
+        public async Task AppendOrReplaceSummary(string summaryName, ExperimentSummaryEntity experimentSummary)
         {
             if (summaryName == null) throw new ArgumentNullException(nameof(summaryName));
             if (experimentSummary == null) throw new ArgumentNullException(nameof(experimentSummary));
@@ -147,6 +147,24 @@ namespace AzurePerformanceTest
             {
                 Stream memoryStream = new MemoryStream();
                 ExperimentSummaryStorage.AppendOrReplace(content, experimentSummary, memoryStream);
+                memoryStream.Position = 0;
+                return memoryStream;
+            }, attempts);
+            if (!success) throw new Exception(string.Format("Failed to modify the blob after {0} attempts", attempts));
+        }
+
+        public async Task RemoveSummary(string summaryName, int experimentId)
+        {
+            if (summaryName == null) throw new ArgumentNullException(nameof(summaryName));
+
+            string blobName = string.Format("{0}.csv", ToBinaryPackBlobName(summaryName));
+            var blob = summaryContainer.GetBlockBlobReference(blobName);
+
+            const int attempts = 100;
+            bool success = await BlobModifier.Modify(blob, (Stream content) =>
+            {
+                Stream memoryStream = new MemoryStream();
+                ExperimentSummaryStorage.Remove(content, experimentId, memoryStream);
                 memoryStream.Position = 0;
                 return memoryStream;
             }, attempts);

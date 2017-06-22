@@ -130,7 +130,7 @@ New-AzureBatchJobSchedule -Id "NightlyRunSchedule" -Schedule $Schedule -JobSpeci
 ## How to update experiment summary
 
 The .NET application `/src/Summary` allows to compute summary for an experiment and then either append or replace
-corresponding row in a given summary table.
+corresponding row in a given summary table. If the given experiment is missing, it is deleted from the summary table.
 
 Summary tables are stored in the `summary` container as CSV files, one row per experiment.
 
