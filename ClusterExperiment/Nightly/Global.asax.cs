@@ -22,7 +22,7 @@ namespace Nightly
             get
             {
                 #if DEBUG
-                string fn = @"F:\Nightly\config.xml";
+                string fn = @"C:\temp\z3\config.xml";
                 #else
                 string fn = Properties.Settings.Default.config_file;
                 #endif

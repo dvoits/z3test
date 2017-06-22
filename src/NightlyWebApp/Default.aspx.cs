@@ -1,4 +1,6 @@
 ﻿using AjaxControlToolkit;
+using AzurePerformanceTest;
+using Nightly.Properties;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -12,22 +14,25 @@ using System.Web.UI;
 using System.Web.UI.DataVisualization;
 using System.Web.UI.DataVisualization.Charting;
 using System.Web.UI.WebControls;
+using System.Threading.Tasks;
+using PerformanceTest.Alerts;
+using PerformanceTest;
+using Measurement;
 
 namespace Nightly
 {
     public partial class _Default : System.Web.UI.Page
     {
         public DateTime _startTime = DateTime.Now;
-        Timeline timeline = null;
-        Configuration config = null;
-        uint _listLimit = 1000;
-        Dictionary<string, string> _defaultParams = null;
+        private uint _listLimit = 1000;
+        private Dictionary<string, string> _defaultParams = null;
+        private MainPageViewModel vm;
+        private Settings config = Settings.Default;
 
-        protected void Page_Load(object sender, EventArgs e)
+        protected async void Page_Load(object sender, EventArgs e)
         {
             if (!IsPostBack)
             {
-                config = Application["Configuration"] as Configuration;
 
                 try
                 {
@@ -36,7 +41,11 @@ namespace Nightly
                     _defaultParams.Add("days", (p == null) ? config.daysback.ToString() : p);
                     p = Request.Params.Get("cat");
                     _defaultParams.Add("cat", (p == null) ? "" : p);
-                    timeline = new Timeline(Server.MapPath("~"), config.datadir, config.timeline);
+
+                    string connectionString = await GetConnectionString();
+                    var manager = AzureExperimentManager.Open(connectionString);
+                    vm = await MainPageViewModel.Initialize(manager, config.SummaryName);
+
                     buildCategoryPanels();
                 }
                 catch (Exception ex)
@@ -49,6 +58,17 @@ namespace Nightly
                     phMain.Controls.Add(l);
                 }
             }
+        }
+
+        private async Task<string> GetConnectionString()
+        {
+            if (!String.IsNullOrWhiteSpace(Settings.Default.ConnectionString))
+            {
+                return Settings.Default.ConnectionString;
+            }
+
+            var secretStorage = new SecretStorage(Settings.Default.AADApplicationId, Settings.Default.AADApplicationCertThumbprint, Settings.Default.KeyVaultUrl);
+            return await secretStorage.GetSecret(Settings.Default.ConnectionStringSecretId);
         }
 
         public TimeSpan RenderTime
@@ -72,150 +92,150 @@ namespace Nightly
             return res;
         }
 
-        protected double GetRowValue(int row, string cat, List<string> subcats)
-        {
-            double value = 0.0;
-            if (cat == "")
-            {
-                Dictionary<string, CategoryStatistics>.Enumerator e = timeline.Categories.GetEnumerator();
-                while (e.MoveNext())
-                {
-                    foreach (string sc in subcats)
-                    {
-                        object q = timeline.Lookup(row, e.Current.Key + "|" + sc);
-                        value += (q == null) ? 0 : Convert.ToDouble(q);
-                    }
-                }
-            }
-            else
-            {
-                foreach (string sc in subcats)
-                {
-                    object q = timeline.Lookup(row, cat + "|" + sc);
-                    value += (q == null) ? 0 : Convert.ToDouble(q);
-                }
-            }
-            return value;
-        }
+        //protected double GetRowValue(int row, string cat, List<string> subcats)
+        //{
+        //    double value = 0.0;
+        //    if (cat == "")
+        //    {
+        //        Dictionary<string, CategoryStatistics>.Enumerator e = timeline.Categories.GetEnumerator();
+        //        while (e.MoveNext())
+        //        {
+        //            foreach (string sc in subcats)
+        //            {
+        //                object q = timeline.Lookup(row, e.Current.Key + "|" + sc);
+        //                value += (q == null) ? 0 : Convert.ToDouble(q);
+        //            }
+        //        }
+        //    }
+        //    else
+        //    {
+        //        foreach (string sc in subcats)
+        //        {
+        //            object q = timeline.Lookup(row, cat + "|" + sc);
+        //            value += (q == null) ? 0 : Convert.ToDouble(q);
+        //        }
+        //    }
+        //    return value;
+        //}
 
-        public Series series(string name, Color col, int width, string cat, double maxdays, AxisType axisType,
-                             List<string> subcats, List<string> avgcats = null, bool logarithmic = false)
-        {
-            double logMultiplier = 20000.0;
-            DateTime now = DateTime.Now;
-            Series ser = new Series((logarithmic) ? name + " (log)" : name);
-            ser.ChartType = SeriesChartType.Line;            
-            ser.YAxisType = axisType;
-            ser.Color = col;
-            ser.BorderWidth = width;
+        //public Series series(string name, Color col, int width, string cat, double maxdays, AxisType axisType,
+        //                     List<string> subcats, List<string> avgcats = null, bool logarithmic = false)
+        //{
+        //    double logMultiplier = 20000.0;
+        //    DateTime now = DateTime.Now;
+        //    Series ser = new Series((logarithmic) ? name + " (log)" : name);
+        //    ser.ChartType = SeriesChartType.Line;            
+        //    ser.YAxisType = axisType;
+        //    ser.Color = col;
+        //    ser.BorderWidth = width;
 
-            double earliest_x = double.MinValue;
-            double earliest_y = 0.0;
-            bool need_earliest = true;
+        //    double earliest_x = double.MinValue;
+        //    double earliest_y = 0.0;
+        //    bool need_earliest = true;
 
-            double latest_x = double.MinValue;
-            double latest_y = 0.0;
-            bool need_latest = true;
+        //    double latest_x = double.MinValue;
+        //    double latest_y = 0.0;
+        //    bool need_latest = true;
 
-            double logMax = 10.0;
-            if (logarithmic)
-            {
-                // we need to find the max value.
-                for (int i = 0; i < timeline.RowCount; i++)
-                {
-                    double value = GetRowValue(i, cat, subcats);
-                    if (value > logMax) logMax = value;
-                }
-                logMultiplier = logMax / Math.Log10(logMax);
-            }
+        //    double logMax = 10.0;
+        //    if (logarithmic)
+        //    {
+        //        // we need to find the max value.
+        //        for (int i = 0; i < timeline.RowCount; i++)
+        //        {
+        //            double value = GetRowValue(i, cat, subcats);
+        //            if (value > logMax) logMax = value;
+        //        }
+        //        logMultiplier = logMax / Math.Log10(logMax);
+        //    }
 
-            for (int i = 0; i < timeline.RowCount; i++)
-            {
-                string date_str = timeline.Lookup(i, "Date") as string;
+        //    for (int i = 0; i < timeline.RowCount; i++)
+        //    {
+        //        string date_str = timeline.Lookup(i, "Date") as string;
 
-                double value = GetRowValue(i, cat, subcats);
+        //        double value = GetRowValue(i, cat, subcats);
 
-                if (avgcats != null)
-                {
-                    double contravalue = 0.0;
-                    if (cat == "")
-                    {
-                        Dictionary<string, CategoryStatistics>.Enumerator e = timeline.Categories.GetEnumerator();
-                        while (e.MoveNext())
-                        {
-                            foreach (string sc in avgcats)
-                            {
-                                object q = timeline.Lookup(i, e.Current.Key + "|" + sc);
-                                contravalue += (q == null) ? 0 : Convert.ToDouble(q);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        foreach (string sc in avgcats)
-                        {
-                            object q = timeline.Lookup(i, cat + "|" + sc);
-                            contravalue += (q == null) ? 0 : Convert.ToDouble(q);
-                        }
-                    }
+        //        if (avgcats != null)
+        //        {
+        //            double contravalue = 0.0;
+        //            if (cat == "")
+        //            {
+        //                Dictionary<string, CategoryStatistics>.Enumerator e = timeline.Categories.GetEnumerator();
+        //                while (e.MoveNext())
+        //                {
+        //                    foreach (string sc in avgcats)
+        //                    {
+        //                        object q = timeline.Lookup(i, e.Current.Key + "|" + sc);
+        //                        contravalue += (q == null) ? 0 : Convert.ToDouble(q);
+        //                    }
+        //                }
+        //            }
+        //            else
+        //            {
+        //                foreach (string sc in avgcats)
+        //                {
+        //                    object q = timeline.Lookup(i, cat + "|" + sc);
+        //                    contravalue += (q == null) ? 0 : Convert.ToDouble(q);
+        //                }
+        //            }
 
-                    value /= contravalue;
-                    if (double.IsNaN(value)) value = 0.0;
-                }
+        //            value /= contravalue;
+        //            if (double.IsNaN(value)) value = 0.0;
+        //        }
 
-                if (date_str != null)
-                {
-                    DateTime pdt = Convert.ToDateTime(date_str, Z3Data.Global.culture);
-                    double x = (now - pdt).TotalDays;
-                    if (x <= maxdays)
-                    {
-                        if (logarithmic && value != 0.0)
-                            ser.Points.AddXY(-x, Math.Log10(value) * logMultiplier);
-                        else
-                            ser.Points.AddXY(-x, value);
-                        ser.Points.Last().ToolTip = date_str + ": " + value.ToString();
+        //        if (date_str != null)
+        //        {
+        //            DateTime pdt = Convert.ToDateTime(date_str, Z3Data.Global.culture);
+        //            double x = (now - pdt).TotalDays;
+        //            if (x <= maxdays)
+        //            {
+        //                if (logarithmic && value != 0.0)
+        //                    ser.Points.AddXY(-x, Math.Log10(value) * logMultiplier);
+        //                else
+        //                    ser.Points.AddXY(-x, value);
+        //                ser.Points.Last().ToolTip = date_str + ": " + value.ToString();
 
-                        if (x == maxdays)
-                            need_earliest = false;
-                        else if (x == 0.0)
-                            need_latest = false;
+        //                if (x == maxdays)
+        //                    need_earliest = false;
+        //                else if (x == 0.0)
+        //                    need_latest = false;
 
-                        if (-x > latest_x)
-                        {
-                            latest_x = -x;
-                            latest_y = value;
-                        }
-                    }
-                    else if (-x > earliest_x)
-                    {
-                        earliest_x = -x;
-                        earliest_y = value;
-                    }
-                }
-            }
+        //                if (-x > latest_x)
+        //                {
+        //                    latest_x = -x;
+        //                    latest_y = value;
+        //                }
+        //            }
+        //            else if (-x > earliest_x)
+        //            {
+        //                earliest_x = -x;
+        //                earliest_y = value;
+        //            }
+        //        }
+        //    }
 
-            if (need_latest)
-            {
-                if (logarithmic && latest_y != 0.0)
-                    ser.Points.AddXY(0.0, Math.Log10(latest_y) * logMultiplier);
-                else
-                    ser.Points.AddXY(0.0, latest_y);
-                ser.Points.Last().ToolTip = "Latest: " + latest_y.ToString();
-            }
+        //    if (need_latest)
+        //    {
+        //        if (logarithmic && latest_y != 0.0)
+        //            ser.Points.AddXY(0.0, Math.Log10(latest_y) * logMultiplier);
+        //        else
+        //            ser.Points.AddXY(0.0, latest_y);
+        //        ser.Points.Last().ToolTip = "Latest: " + latest_y.ToString();
+        //    }
 
-            if (need_earliest && earliest_x != double.MinValue)
-            {
-                if (logarithmic && earliest_y != 0.0)
-                    ser.Points.InsertXY(0, -maxdays, Math.Log10(earliest_y) * logMultiplier);
-                else
-                    ser.Points.InsertXY(0, -maxdays, earliest_y);
-                ser.Points.First().ToolTip = "Before: " + earliest_y.ToString();
-            }
+        //    if (need_earliest && earliest_x != double.MinValue)
+        //    {
+        //        if (logarithmic && earliest_y != 0.0)
+        //            ser.Points.InsertXY(0, -maxdays, Math.Log10(earliest_y) * logMultiplier);
+        //        else
+        //            ser.Points.InsertXY(0, -maxdays, earliest_y);
+        //        ser.Points.First().ToolTip = "Before: " + earliest_y.ToString();
+        //    }
 
-            ser.MarkerSize = 2;
-            ser.MarkerStyle = MarkerStyle.Circle;
-            return ser;
-        }
+        //    ser.MarkerSize = 2;
+        //    ser.MarkerStyle = MarkerStyle.Circle;
+        //    return ser;
+        //}
 
         public void buildStatisticsChart(string name, Chart chart)
         {
@@ -338,6 +358,7 @@ namespace Nightly
             Jobs jobs = new Jobs(config.datadir, true);
             Records records = new Records(config.datadir);
             CategoryRecord virtualBest = (category == "") ? records.Overall : records.RecordsByCategory[category];
+
             double virtualBestAvg = (virtualBest.Time / virtualBest.Files);
             DateTime now = DateTime.Now;
 
@@ -384,27 +405,27 @@ namespace Nightly
             double latest_x = double.MinValue;
             double latest_y = 0.0;
 
-            foreach (Job j in jobs)
+            foreach (ExperimentViewModel exp in vm.Experiments)
             {
-                if (!j.MetaData.isFinished) continue;
+                if (!exp.IsFinished) continue;
 
-                CategoryStatistics jstats = j.Summary.Overall;
+                var jstats = exp.Summary.Overall;
 
-                double vbaGoodPart = virtualBestAvg * jstats.Files;
-                double vbaBadPart = (jstats.Files - (jstats.SAT + jstats.UNSAT)) * j.MetaData.Timeout;
-                double vbaBoth = (vbaGoodPart + vbaBadPart) / jstats.Files;
-                double vwa = j.MetaData.Timeout;
+                double vbaGoodPart = virtualBestAvg * jstats.Runs;
+                double vbaBadPart = (jstats.Runs - (jstats.SAT + jstats.UNSAT)) * exp.MetaData.Timeout;
+                double vbaBoth = (vbaGoodPart + vbaBadPart) / jstats.Runs;
+                double vwa = exp.MetaData.Timeout;
 
-                DateTime pdt = Convert.ToDateTime(j.MetaData.SubmissionTime, Z3Data.Global.culture);
+                DateTime pdt = Convert.ToDateTime(exp.MetaData.SubmissionTime, Z3Data.Global.culture);
                 double x = (now - pdt).TotalDays;
                 if (x <= maxdays)
                 {
                     double y = 0.0, y2 = 0.0, y3 = 0.0, y4 = 0.0;
                     string tt = "";
 
-                    if (category == "" || j.Summary.ContainsKey(category))
+                    if (category == "" || exp.Summary.ContainsKey(category))
                     {
-                        CategoryStatistics cs = (category == "") ? j.Summary.Overall : j.Summary[category];
+                        CategoryStatistics cs = (category == "") ? exp.Summary.Overall : exp.Summary[category];
                         double st = cs.TimeSAT;
                         double ut = cs.TimeUNSAT;
                         double sumf = (cs.SAT + cs.UNSAT);
@@ -453,7 +474,7 @@ namespace Nightly
                         latest_y = y;
                     }
 
-                    j.Dispose();
+                    exp.Dispose();
                     GC.Collect();
                 }
             }
@@ -476,109 +497,109 @@ namespace Nightly
             chart.Series.Add(ser4);
         }
 
-        protected void buildPerformanceVectorGraph(string category, Chart chart)
-        {
-            ChartArea ca = new ChartArea("PerformanceVectors");
-            double maxdays = config.daysback;
+        //protected void buildPerformanceVectorGraph(string category, Chart chart)
+        //{
+        //    ChartArea ca = new ChartArea("PerformanceVectors");
+        //    double maxdays = config.daysback;
 
-            string rdays = Request.Params.Get("days");
-            if (rdays != null) maxdays = Convert.ToUInt32(rdays);
+        //    string rdays = Request.Params.Get("days");
+        //    if (rdays != null) maxdays = Convert.ToUInt32(rdays);
 
-            ca.AxisX.Minimum = 0.0;
-            ca.AxisX.Maximum = 100.0;
-            ca.AxisX.LabelStyle.IsEndLabelVisible = true;
-            ca.AxisX.LabelAutoFitStyle = LabelAutoFitStyles.None;
-            ca.AxisX.LabelAutoFitMinFontSize = 8;
-            ca.AxisX.LabelAutoFitMaxFontSize = 8;
-            ca.AxisX.CustomLabels.Add(new CustomLabel(0, 8, "0%", 0, LabelMarkStyle.SideMark, GridTickTypes.All));
-            ca.AxisX.CustomLabels.Add(new CustomLabel(25, 25, "", 0, LabelMarkStyle.None, GridTickTypes.Gridline));
-            ca.AxisX.CustomLabels.Add(new CustomLabel(46, 54, "50%", 0, LabelMarkStyle.SideMark, GridTickTypes.All));
-            ca.AxisX.CustomLabels.Add(new CustomLabel(75, 75, "", 0, LabelMarkStyle.None, GridTickTypes.Gridline));
-            ca.AxisX.CustomLabels.Add(new CustomLabel(92, 100, "100%", 0, LabelMarkStyle.SideMark, GridTickTypes.All));
-            ca.AxisX.Title = "Rel. Success";
+        //    ca.AxisX.Minimum = 0.0;
+        //    ca.AxisX.Maximum = 100.0;
+        //    ca.AxisX.LabelStyle.IsEndLabelVisible = true;
+        //    ca.AxisX.LabelAutoFitStyle = LabelAutoFitStyles.None;
+        //    ca.AxisX.LabelAutoFitMinFontSize = 8;
+        //    ca.AxisX.LabelAutoFitMaxFontSize = 8;
+        //    ca.AxisX.CustomLabels.Add(new CustomLabel(0, 8, "0%", 0, LabelMarkStyle.SideMark, GridTickTypes.All));
+        //    ca.AxisX.CustomLabels.Add(new CustomLabel(25, 25, "", 0, LabelMarkStyle.None, GridTickTypes.Gridline));
+        //    ca.AxisX.CustomLabels.Add(new CustomLabel(46, 54, "50%", 0, LabelMarkStyle.SideMark, GridTickTypes.All));
+        //    ca.AxisX.CustomLabels.Add(new CustomLabel(75, 75, "", 0, LabelMarkStyle.None, GridTickTypes.Gridline));
+        //    ca.AxisX.CustomLabels.Add(new CustomLabel(92, 100, "100%", 0, LabelMarkStyle.SideMark, GridTickTypes.All));
+        //    ca.AxisX.Title = "Rel. Success";
 
-            ca.AxisY.Minimum = 0.0;
-            ca.AxisY.Maximum = 100.0;
-            ca.AxisY.LabelStyle.IsEndLabelVisible = true;
-            ca.AxisY.LabelAutoFitStyle = LabelAutoFitStyles.None;
-            ca.AxisY.LabelAutoFitMinFontSize = 8;
-            ca.AxisY.LabelAutoFitMaxFontSize = 8;
-            ca.AxisY.CustomLabels.Add(new CustomLabel(0, 8, "0%", 0, LabelMarkStyle.SideMark, GridTickTypes.All));
-            ca.AxisY.CustomLabels.Add(new CustomLabel(25, 25, "", 0, LabelMarkStyle.None, GridTickTypes.Gridline));
-            ca.AxisY.CustomLabels.Add(new CustomLabel(46, 54, "50%", 0, LabelMarkStyle.SideMark, GridTickTypes.All));
-            ca.AxisY.CustomLabels.Add(new CustomLabel(75, 75, "", 0, LabelMarkStyle.None, GridTickTypes.Gridline));
-            ca.AxisY.CustomLabels.Add(new CustomLabel(92, 100, "100%", 0, LabelMarkStyle.SideMark, GridTickTypes.All));
-            ca.AxisY.Title = "Rel. Speed";
+        //    ca.AxisY.Minimum = 0.0;
+        //    ca.AxisY.Maximum = 100.0;
+        //    ca.AxisY.LabelStyle.IsEndLabelVisible = true;
+        //    ca.AxisY.LabelAutoFitStyle = LabelAutoFitStyles.None;
+        //    ca.AxisY.LabelAutoFitMinFontSize = 8;
+        //    ca.AxisY.LabelAutoFitMaxFontSize = 8;
+        //    ca.AxisY.CustomLabels.Add(new CustomLabel(0, 8, "0%", 0, LabelMarkStyle.SideMark, GridTickTypes.All));
+        //    ca.AxisY.CustomLabels.Add(new CustomLabel(25, 25, "", 0, LabelMarkStyle.None, GridTickTypes.Gridline));
+        //    ca.AxisY.CustomLabels.Add(new CustomLabel(46, 54, "50%", 0, LabelMarkStyle.SideMark, GridTickTypes.All));
+        //    ca.AxisY.CustomLabels.Add(new CustomLabel(75, 75, "", 0, LabelMarkStyle.None, GridTickTypes.Gridline));
+        //    ca.AxisY.CustomLabels.Add(new CustomLabel(92, 100, "100%", 0, LabelMarkStyle.SideMark, GridTickTypes.All));
+        //    ca.AxisY.Title = "Rel. Speed";
 
-            ca.Position.Height = 25;
-            ca.Position.Width = 25;
-            ca.Position.Auto = false;
-            ca.Position.X = 0;
-            ca.Position.Y = 75;
+        //    ca.Position.Height = 25;
+        //    ca.Position.Width = 25;
+        //    ca.Position.Auto = false;
+        //    ca.Position.X = 0;
+        //    ca.Position.Y = 75;
 
-            chart.ChartAreas.Add(ca);
+        //    chart.ChartAreas.Add(ca);
 
-            Series series = new Series();
-            series.ChartArea = "PerformanceVectors";
-            series.ChartArea = ca.Name;
-            //series.Legend = l.Name;
-            series.ChartType = SeriesChartType.Point;
-            series.YAxisType = AxisType.Primary;
-            series.Color = Color.Blue;
-            series.MarkerSize = 4;
-            series.MarkerStyle = MarkerStyle.Circle;
+        //    Series series = new Series();
+        //    series.ChartArea = "PerformanceVectors";
+        //    series.ChartArea = ca.Name;
+        //    //series.Legend = l.Name;
+        //    series.ChartType = SeriesChartType.Point;
+        //    series.YAxisType = AxisType.Primary;
+        //    series.Color = Color.Blue;
+        //    series.MarkerSize = 4;
+        //    series.MarkerStyle = MarkerStyle.Circle;
 
-            Records records = new Records(config.datadir);
-            CategoryRecord virtualBest = (category == "") ? records.Overall : records.RecordsByCategory[category];
-            double virtualBestAvg = (virtualBest.Time / virtualBest.Files);
+        //    Records records = new Records(config.datadir);
+        //    CategoryRecord virtualBest = (category == "") ? records.Overall : records.RecordsByCategory[category];
+        //    double virtualBestAvg = (virtualBest.Time / virtualBest.Files);
 
-            DateTime now = DateTime.Now;
-            Jobs jobs = new Jobs(config.datadir, true);
+        //    DateTime now = DateTime.Now;
+        //    Jobs jobs = new Jobs(config.datadir, true);
 
-            double youngest = double.MaxValue;
-            double youngest_x = 0.0;
-            double youngest_y = 0.0;
+        //    double youngest = double.MaxValue;
+        //    double youngest_x = 0.0;
+        //    double youngest_y = 0.0;
 
-            foreach (Job j in jobs)
-            {
-                if (!j.MetaData.isFinished) continue;
+        //    foreach (ExperimentViewModel exp in jobs)
+        //    {
+        //        if (!exp.MetaData.isFinished) continue;
 
-                DateTime pdt = Convert.ToDateTime(j.MetaData.SubmissionTime, Z3Data.Global.culture);
-                double age = (now - pdt).TotalDays;
+        //        DateTime pdt = Convert.ToDateTime(exp.MetaData.SubmissionTime, Z3Data.Global.culture);
+        //        double age = (now - pdt).TotalDays;
 
-                if (age > maxdays) continue;
+        //        if (age > maxdays) continue;
 
-                if (category == "" || j.Summary.ContainsKey(category))
-                {
-                    CategoryStatistics cs = (category == "") ? j.Summary.Overall : j.Summary[category];
+        //        if (category == "" || exp.Summary.ContainsKey(category))
+        //        {
+        //            CategoryStatistics cs = (category == "") ? exp.Summary.Overall : exp.Summary[category];
 
-                    uint solved = (cs.SAT + cs.UNSAT);
-                    uint unsolved = (cs.Files - (cs.SAT + cs.UNSAT));
-                    double avg_time = (cs.TimeSAT + cs.TimeUNSAT) / (double)solved;
-                    double top_speed = virtualBestAvg;
+        //            uint solved = (cs.SAT + cs.UNSAT);
+        //            uint unsolved = (cs.Files - (cs.SAT + cs.UNSAT));
+        //            double avg_time = (cs.TimeSAT + cs.TimeUNSAT) / (double)solved;
+        //            double top_speed = virtualBestAvg;
 
-                    double x = 100.0 * solved / (double)cs.Files; // % solved.                
-                    double y = 100.0 * top_speed / avg_time; // rel. speed?
+        //            double x = 100.0 * solved / (double)cs.Files; // % solved.                
+        //            double y = 100.0 * top_speed / avg_time; // rel. speed?
 
-                    int inx = series.Points.AddXY(x, y);
-                    series.Points[inx].ToolTip = j.MetaData.SubmissionTime.ToString();
+        //            int inx = series.Points.AddXY(x, y);
+        //            series.Points[inx].ToolTip = exp.MetaData.SubmissionTime.ToString();
 
-                    int intensity = (int)(255.0 * (age / maxdays));
-                    series.Points[inx].MarkerColor = Color.FromArgb(intensity, intensity, 255);
+        //            int intensity = (int)(255.0 * (age / maxdays));
+        //            series.Points[inx].MarkerColor = Color.FromArgb(intensity, intensity, 255);
 
-                    if (age < youngest)
-                    {
-                        youngest_x = x;
-                        youngest_y = y;
-                    }
-                }
-            }
+        //            if (age < youngest)
+        //            {
+        //                youngest_x = x;
+        //                youngest_y = y;
+        //            }
+        //        }
+        //    }
 
-            series.Points.AddXY(youngest_x, youngest_y);
-            series.Points.Last().MarkerColor = Color.Red;
+        //    series.Points.AddXY(youngest_x, youngest_y);
+        //    series.Points.Last().MarkerColor = Color.Red;
 
-            chart.Series.Add(series);
-        }
+        //    chart.Series.Add(series);
+        //}
 
         protected Chart buildChart(string category)
         {
@@ -737,8 +758,7 @@ namespace Nightly
 
         public void buildCategoryPanel(string title, string category, string tag,
                                        bool collapsed, bool isOdd, bool collapsible, bool titleBold,
-                                       string summaryText,
-                                       Alerts alerts)
+                                       string summaryText, ExperimentAlerts alerts)
         {
             Panel p = new Panel();
             p.ID = "Panel_" + tag + "_Header";
@@ -818,13 +838,13 @@ namespace Nightly
             r.Cells.Add(tc);
             t.Rows.Add(r);
 
-            //r = new TableRow();
-            //tc = new TableCell();
-            //tc.Style["padding"] = "0px";
-            //ChartArea pchart = buildPerformanceChart(category, 900);
-            //tc.Controls.Add(pchart);
-            //r.Cells.Add(tc);
-            //t.Rows.Add(r);
+            r = new TableRow();
+            tc = new TableCell();
+            tc.Style["padding"] = "0px";
+            ChartArea pchart = buildPerformanceChart(category, 900);
+            tc.Controls.Add(pchart);
+            r.Cells.Add(tc);
+            t.Rows.Add(r);
 
             p.Controls.Add(t);
             phMain.Controls.Add(p);
@@ -914,7 +934,7 @@ namespace Nightly
             return p;
         }
 
-        TabPanel buildSummaryTab(string category, string alliswelltext, Alerts alerts)
+        TabPanel buildSummaryTab(string category, string alliswelltext, ExperimentAlerts alerts)
         {
             TabPanel tabSummary = new TabPanel();
             string toolTip = "This tab lists all alerts.";
@@ -924,9 +944,8 @@ namespace Nightly
                 int total = 0;
                 AlertLevel al = AlertLevel.None;
 
-                foreach (KeyValuePair<string, CategoryStatistics> kvp in timeline.Categories)
+                foreach (string cat in vm.Categories)
                 {
-                    string cat = kvp.Key;
                     AlertSet catAlerts = alerts[cat];
                     total += catAlerts.Count;
 
@@ -937,14 +956,14 @@ namespace Nightly
                     if (catAlerts.Count > 0)
                     {
                         Label l = new Label();
-                        l.Text = string.Format("Alerts in <a href='" + selfLink(cat) + "' style='text-decoration:none;'>{0}</a>:", cat);
+                        l.Text = string.Format("ExperimentAlerts in <a href='" + selfLink(cat) + "' style='text-decoration:none;'>{0}</a>:", cat);
 
                         tabSummary.Controls.Add(l);
                         tabSummary.Controls.Add(buildAlertMessages(catAlerts, ""));
                     }
                 }
 
-                TabHeaderTemplate htm = new TabHeaderTemplate(al, "Alerts", toolTip);
+                TabHeaderTemplate htm = new TabHeaderTemplate(al, "ExperimentAlerts", toolTip);
                 if (total > 0) htm._title += " (" + total + ")";
                 tabSummary.HeaderTemplate = htm;
                 tabSummary.ContentTemplate = new TabContentTemplate(new List<string>());
@@ -960,7 +979,7 @@ namespace Nightly
             else
             {
                 AlertSet catAlerts = alerts[category];
-                TabHeaderTemplate htm = new TabHeaderTemplate(catAlerts.Level, "Alerts", toolTip);
+                TabHeaderTemplate htm = new TabHeaderTemplate(catAlerts.Level, "ExperimentAlerts", toolTip);
                 if (catAlerts.Count > 0) htm._title += " (" + catAlerts.Count + ")";
                 tabSummary.HeaderTemplate = htm;
                 tabSummary.ContentTemplate = new TabContentTemplate(new List<string>());
@@ -970,12 +989,12 @@ namespace Nightly
             return tabSummary;
         }
 
-        TabPanel buildStatsTab(Job j, string category)
+        TabPanel buildStatsTab(ExperimentViewModel exp, string category)
         {
             TabPanel res = new TabPanel();
             res.HeaderTemplate = new TabHeaderTemplate(AlertLevel.None, "Statistics", "Statistical information about the job.");
             res.ContentTemplate = new TabContentTemplate(new List<string>());
-            res.Controls.Add(buildStatistics(j, category));
+            res.Controls.Add(buildStatistics(exp, category));
             return res;
         }
 
@@ -1031,39 +1050,41 @@ namespace Nightly
             return row;
         }
 
-        Control buildStatistics(Job j, string category)
+        Control buildStatistics(ExperimentViewModel exp, string category)
         {
-            Summary s = j.Summary;
-            CategoryStatistics cs = (category == "") ? s.Overall : s[category];
+            var cs = exp[category];
 
             Panel p = new Panel();
             Table t = new Table();
 
-            string st = j.MetaData.SubmissionTime.ToString();
-            if (!j.MetaData.isFinished)
+            string st = exp.SubmissionTime.ToString();
+            if (!exp.IsFinished)
                 st += " <font color=red>unfinished</font>";
-            t.Rows.Add(buildStatisticsRow("Job submission time:", st, "", Color.Black));
-            string id_msg = "" + j.MetaData.Id;
-            if (j.MetaData.Reference != 0)
-                id_msg += " (Reference: " + j.MetaData.Reference + ")";
-            else
-                id_msg += " (no reference)";
-            t.Rows.Add(buildStatisticsRow("Job ID:", id_msg, "", Color.Black));
-            t.Rows.Add(buildStatisticsRow("Files:", cs.Files, "", Color.Black));
-            t.Rows.Add(buildStatisticsRow("SAT:", cs.SAT, "", Color.Black));
-            t.Rows.Add(buildStatisticsRow("UNSAT:", cs.UNSAT, "", Color.Black));
-            t.Rows.Add(buildStatisticsRow("UNKNOWN:", cs.UNKNOWN, "", Color.Black));
+            t.Rows.Add(buildStatisticsRow("Experiment submission time:", st, "", Color.Black));
+            string id_msg = exp.Id.ToString();
+
+            int sat = int.Parse(cs.Properties[Z3Domain.KeySat]);
+            int unsat = int.Parse(cs.Properties[Z3Domain.KeyUnsat]);
+            int unk = int.Parse(cs.Properties[Z3Domain.KeyUnknown]);
+            double timesat = double.Parse(cs.Properties[Z3Domain.KeyTimeSat]);
+            double timeunsat = double.Parse(cs.Properties[Z3Domain.KeyTimeUnsat]);
+
+            t.Rows.Add(buildStatisticsRow("Experiment ID:", id_msg, "", Color.Black));
+            t.Rows.Add(buildStatisticsRow("Files:", cs.Runs, "", Color.Black));
+            t.Rows.Add(buildStatisticsRow("SAT:", sat, "", Color.Black));
+            t.Rows.Add(buildStatisticsRow("UNSAT:", unsat, "", Color.Black));
+            t.Rows.Add(buildStatisticsRow("UNKNOWN:", unk, "", Color.Black));
             t.Rows.Add(buildStatisticsRow("Errors:", cs.Errors, "", Color.Orange));
             t.Rows.Add(buildStatisticsRow("Infrastructure Errors:", cs.InfrastructureErrors, "", Color.Red));
             t.Rows.Add(buildStatisticsRow("Bugs:", cs.Bugs, "", Color.Red));
-            t.Rows.Add(buildStatisticsRow("Memoryout:", cs.Memout, "", Color.Black));
-            t.Rows.Add(buildStatisticsRow("Timeout:", cs.Timeout, "", Color.Black));
-            t.Rows.Add(buildStatisticsRow("Total time (SAT):", TimeSpan.FromSeconds(cs.TimeSAT), "", Color.Black));
-            t.Rows.Add(buildStatisticsRow("Total time (UNSAT):", TimeSpan.FromSeconds(cs.TimeUNSAT), "", Color.Black));
-            t.Rows.Add(buildStatisticsRow("Avg. time (SAT/UNSAT):", (cs.TimeSAT + cs.TimeUNSAT) /
-                                                                    (cs.SAT + cs.UNSAT), "sec.", Color.Black));
-            t.Rows.Add(buildStatisticsRow("Overperformers:", cs.Overperformers, "", Color.Black));
-            t.Rows.Add(buildStatisticsRow("Underperformers:", cs.UnderPerformers, "", Color.Black));
+            t.Rows.Add(buildStatisticsRow("Memoryout:", cs.MemoryOuts, "", Color.Black));
+            t.Rows.Add(buildStatisticsRow("Timeout:", cs.Timeouts, "", Color.Black));
+            t.Rows.Add(buildStatisticsRow("Total time (SAT):", TimeSpan.FromSeconds(timesat), "", Color.Black));
+            t.Rows.Add(buildStatisticsRow("Total time (UNSAT):", TimeSpan.FromSeconds(timeunsat), "", Color.Black));
+            t.Rows.Add(buildStatisticsRow("Avg. time (SAT/UNSAT):", (timesat + timeunsat) /
+                                                                    (sat + unsat), "sec.", Color.Black));
+            t.Rows.Add(buildStatisticsRow("Overperformers:", cs.Properties[Z3Domain.KeyOverperformed], "", Color.Black));
+            t.Rows.Add(buildStatisticsRow("Underperformers:", cs.Properties[Z3Domain.KeyUnderperformed], "", Color.Black));
 
             p.Controls.Add(t);
             return p;
@@ -1080,7 +1101,7 @@ namespace Nightly
             return result;
         }
 
-        void buildJobPanel(Job j, Alerts alerts, string category, string alliswelltext)
+        void buildJobPanel(ExperimentViewModel exp, ExperimentAlerts alerts, string category, string alliswelltext)
         {
             AlertSet catAlerts = alerts[category];
 
@@ -1089,11 +1110,13 @@ namespace Nightly
             tc.ScrollBars = ScrollBars.Vertical;
 
             tc.Tabs.Add(buildSummaryTab(category, alliswelltext, alerts));
-            tc.Tabs.Add(buildStatsTab(j, category));
-            tc.Tabs.Add(buildListTab("Errors", AlertLevel.Warning, j.Errors[category], "A benchmark is classified as erroneous when its return value is non-zero (except for memory outs)."));
-            tc.Tabs.Add(buildListTab("Bugs", AlertLevel.Critical, j.Bugs[category], "A benchmark is classified as buggy when its result does not agree with its annotation."));
-            tc.Tabs.Add(buildListTab("Underperformers", AlertLevel.None, j.Underperformers[category], "A benchmark underperforms when it has SAT/UNSAT annotations and some of them were not achieved."));
-            tc.Tabs.Add(buildListTab("Dippers", AlertLevel.None, j.Dippers[category], "A benchmark is classified as a dipper when it takes more than 10x more time than in a reference job (usually the previous)."));
+            tc.Tabs.Add(buildStatsTab(exp, category));
+
+            // todo:
+            //tc.Tabs.Add(buildListTab("Errors", AlertLevel.Warning, exp.Errors[category], "A benchmark is classified as erroneous when its return value is non-zero (except for memory outs)."));
+            //tc.Tabs.Add(buildListTab("Bugs", AlertLevel.Critical, exp.Bugs[category], "A benchmark is classified as buggy when its result does not agree with its annotation."));
+            //tc.Tabs.Add(buildListTab("Underperformers", AlertLevel.None, exp.Underperformers[category], "A benchmark underperforms when it has SAT/UNSAT annotations and some of them were not achieved."));
+            //tc.Tabs.Add(buildListTab("Dippers", AlertLevel.None, exp.Dippers[category], "A benchmark is classified as a dipper when it takes more than 10x more time than in a reference job (usually the previous)."));
 
             phMain.Controls.Add(tc);
         }
@@ -1134,10 +1157,8 @@ namespace Nightly
                 p.Controls.Add(h);
             }
 
-            foreach (KeyValuePair<string, CategoryStatistics> kvp in timeline.Categories)
+            foreach (string cat in vm.Categories)
             {
-                string cat = kvp.Key;
-
                 l = new Label();
                 l.Text += "&nbsp;| ";
                 p.Controls.Add(l);
@@ -1167,7 +1188,7 @@ namespace Nightly
             return p;
         }
 
-        public void buildCategoryPanels()
+        public async void buildCategoryPanels()
         {
             string limit_str = Request.Params.Get("limit");
             if (limit_str != null)
@@ -1180,38 +1201,17 @@ namespace Nightly
 
             phTop.Controls.Add(MakeDaySelectPanel());
 
-#if false // old stuff
-            //if (category == null)
-            //{
-            //    // build overview.
-            //    buildCategoryPanel("OVERALL", "", "OVERALL", false, true, true, true,
-            //                       "A summary of the results across categories.",
-            //                       "All is well in this everywhere!");
-
-            //    bool isOdd = false;
-
-            //    Dictionary<string, CategoryStatistics>.Enumerator e = timeline.Categories.GetEnumerator();
-            //    while (e.MoveNext())
-            //    {
-            //        buildCategoryPanel(e.Current.Key, e.Current.Key, e.Current.Key, true, isOdd, true, false,
-            //                           "",
-            //                           "All is well in this category.");
-            //        isOdd = !isOdd;
-            //    }
-            //}
-            //else
-#endif
-
             if (jobid == null || jobid == "")
             {
-                if (category == "" || timeline.Categories.ContainsKey(category))
+                if (category == "" || vm.Categories.Contains(category))
                 {
-                    Alerts alerts = new Alerts(timeline.LastJob, Request.FilePath);
+                    var exp = await vm.GetLastExperiment();
+                    ExperimentAlerts alerts = new ExperimentAlerts(exp.Summary, Request.FilePath);
                     string alliswelltext = (category == "") ? "All is well everywhere!" : "All is well in this category.";
                     buildCategoryPanel(category != "" ? category : "OVERALL", category, category, false, true, false, true,
                                        "", alerts);
 
-                    buildJobPanel(timeline.LastJob, alerts, category, alliswelltext);
+                    buildJobPanel(exp, alerts, category, alliswelltext);
                 }
                 else
                 {
@@ -1224,14 +1224,13 @@ namespace Nightly
             {
                 try
                 {
-                    uint jid = Convert.ToUInt32(jobid);
-                    Job j = new Job(config.datadir, jid, true);
-
-                    if (category == "" || timeline.Categories.ContainsKey(category))
+                    int id = int.Parse(jobid);
+                    ExperimentViewModel exp = await vm.GetExperiment(id);
+                    if (category == "" || vm.Categories.Contains(category))
                     {
-                        Alerts alerts = new Alerts(j, Request.FilePath);
+                        ExperimentAlerts alerts = new ExperimentAlerts(exp.Summary, Request.FilePath);
                         string alliswelltext = (category == "") ? "All is well everywhere!" : "All is well in this category.";
-                        buildJobPanel(j, alerts, category, alliswelltext);
+                        buildJobPanel(exp, alerts, category, alliswelltext);
                     }
                     else
                     {

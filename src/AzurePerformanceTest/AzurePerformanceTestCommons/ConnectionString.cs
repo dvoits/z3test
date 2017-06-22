@@ -109,6 +109,33 @@ namespace AzurePerformanceTest
             var copy = new ConnectionString(this.dict);
             copy.RemoveKeys(KeyBatchAccount, KeyBatchAccessKey, KeyBatchURL);
             return copy;
+        }        
+    }
+
+    public class StorageAccountConnectionString : ConnectionString
+    {
+        public const string KeyStorageAccountName = "AccountName";
+        public const string KeyStorageAccountKey = "AccountKey";
+
+        public StorageAccountConnectionString(string connectionString) : base(connectionString)
+        {
+            foreach (var item in dict.ToArray())
+            {
+                if (item.Key != KeyStorageAccountKey && item.Key != KeyStorageAccountName && item.Key != "DefaultEndpointsProtocol")
+                    dict.Remove(item.Key);
+            }
+        }
+
+        public string AccountName
+        {
+            get { return this[KeyStorageAccountName]; }
+            set { this[KeyStorageAccountName] = value; }
+        }
+
+        public string AccountKey
+        {
+            get { return this[KeyStorageAccountKey]; }
+            set { this[KeyStorageAccountKey] = value; }
         }
     }
 }

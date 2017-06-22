@@ -32,7 +32,7 @@ namespace Measurement
         }
         
         public abstract ProcessRunAnalysis Analyze(string inputFile, ProcessRunMeasure measure);
-
+        
         public AggregatedAnalysis Aggregate(IEnumerable<ProcessRunResults> runs)
         {
             var results = runs.ToArray();
@@ -63,7 +63,13 @@ namespace Measurement
             }
 
             var props = AggregateProperties(results);
-            return new AggregatedAnalysis(bugs, errors, infrErrors, timeouts, memouts, props);
+            return new AggregatedAnalysis(bugs, errors, infrErrors, timeouts, memouts, props, results.Length);
+        }
+
+        public virtual bool CanConsiderAsRecord(ProcessRunAnalysis result)
+        {
+            if (result == null) throw new ArgumentNullException(nameof(result));
+            return result.Status == ResultStatus.Success;
         }
 
         protected abstract IReadOnlyDictionary<string, string> AggregateProperties(IEnumerable<ProcessRunResults> results);
@@ -137,7 +143,7 @@ namespace Measurement
 
     public class AggregatedAnalysis
     {
-        public AggregatedAnalysis(int bugs, int errors, int infrastructureErrors, int timeouts, int memouts, IReadOnlyDictionary<string, string> props)
+        public AggregatedAnalysis(int bugs, int errors, int infrastructureErrors, int timeouts, int memouts, IReadOnlyDictionary<string, string> props, int runs)
         {
             Bugs = bugs;
             Errors = errors;
@@ -145,6 +151,7 @@ namespace Measurement
             MemoryOuts = memouts;
             Properties = props;
             InfrastructureErrors = infrastructureErrors;
+            Runs = runs;
         }
 
         public int Bugs { get; private set; }
@@ -156,6 +163,8 @@ namespace Measurement
         public int Timeouts { get; private set; }
 
         public int MemoryOuts { get; private set; }
+        public int Runs { get; private set; }
+
 
         public IReadOnlyDictionary<string, string> Properties { get; private set; }
     }

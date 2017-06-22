@@ -1,10 +1,7 @@
 ﻿<?xml version='1.0' encoding='utf-8'?>
-<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Nightly.Properties" GeneratedClassName="Settings">
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Summary.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="daysback" Type="System.Int32" Scope="Application">
-      <Value Profile="(Default)">90</Value>
-    </Setting>
     <Setting Name="ConnectionStringSecretId" Type="System.String" Scope="Application">
       <Value Profile="(Default)">z3PerfConnectionString</Value>
     </Setting>
@@ -19,9 +16,6 @@
     </Setting>
     <Setting Name="ConnectionString" Type="System.String" Scope="Application">
       <Value Profile="(Default)" />
-    </Setting>
-    <Setting Name="SummaryName" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">test</Value>
     </Setting>
   </Settings>
 </SettingsFile>

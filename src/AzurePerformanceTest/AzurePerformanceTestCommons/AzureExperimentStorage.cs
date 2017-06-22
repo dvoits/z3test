@@ -9,15 +9,10 @@ using Newtonsoft.Json.Serialization;
 using PerformanceTest;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Net;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 
 using ExperimentID = System.Int32;
@@ -136,25 +131,6 @@ namespace AzurePerformanceTest
             }
         }
 
-        public async Task AppendSummary(string summaryName, int epxerimentId, ExperimentSummaryEntity experimentSummary)
-        {
-            if (summaryName == null) throw new ArgumentNullException(nameof(summaryName));
-            if (experimentSummary == null) throw new ArgumentNullException(nameof(experimentSummary));
-
-            string blobName = string.Format("summary_{0}.csv", ToBinaryPackBlobName(summaryName));
-            var blob = resultsContainer.GetBlockBlobReference(blobName);
-
-            const int attempts = 100;
-            bool success = await BlobModifier.Modify(blob, (Stream content) =>
-            {
-                Stream memoryStream = new MemoryStream();
-                ExperimentSummaryStorage.Append(content, experimentSummary, memoryStream);
-                memoryStream.Position = 0;
-                return memoryStream;
-            }, attempts);
-            if (!success) throw new Exception(string.Format("Failed to modify the blob after {0} attempts", attempts));
-        }
-
         public async Task<Dictionary<ExperimentID, ExperimentEntity>> GetExperiments(ExperimentManager.ExperimentFilter? filter = default(ExperimentManager.ExperimentFilter?))
         {
             var dict = new Dictionary<ExperimentID, ExperimentEntity>();
@@ -235,7 +211,7 @@ namespace AzurePerformanceTest
 
             string fileNameNoExt = Path.GetFileNameWithoutExtension(fileName);
             string extension = Path.GetExtension(fileName);
-            string esc_creator = ToBinaryPackBlobName(creator);
+            string esc_creator = AzureUtils.ToBinaryPackBlobName(creator);
             string packageName;
 
             const string packageNameFormat = "{0}.{1}.{2:yyyy-MM-ddTHH-mm-ss-ffff}{3}";
@@ -277,19 +253,9 @@ namespace AzurePerformanceTest
             }
         }
 
-        private static string invalidChars = System.Text.RegularExpressions.Regex.Escape("." + new string(Path.GetInvalidFileNameChars()));
-        private static string invalidRegStr = string.Format(@"([{0}]*\.+$)|([{0}]+)", invalidChars);
-        private static string ToBinaryPackBlobName(string name)
-        {
-            string name2 = System.Text.RegularExpressions.Regex.Replace(name, invalidRegStr, "_");
-            if (name2.Length > 1024) name2 = name2.Substring(0, 1024);
-            else if (name2.Length == 0) name2 = "_";
-            return name2;
-        }
-
         public async Task<Tuple<string, DateTimeOffset?>> TryFindRecentExecutableBlob(string creator)
         {
-            string prefix = ToBinaryPackBlobName(creator);
+            string prefix = AzureUtils.ToBinaryPackBlobName(creator);
             string asciiCreator = StripNonAscii(creator);
 
             BlobContinuationToken token = null;

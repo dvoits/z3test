@@ -1,4 +1,4 @@
-﻿<%@ Page Title="Z3 Nightly" Language="C#" MasterPageFile="~/Site.master" AutoEventWireup="true"
+﻿<%@ Page Title="Z3 Nightly" Language="C#" MasterPageFile="~/Site.master" AutoEventWireup="true" Async="true"
     CodeBehind="Default.aspx.cs" Inherits="Nightly._Default" %>
 
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="asp" %>

@@ -65,7 +65,11 @@ namespace AzurePerformanceTest
 
         public Stream Content
         {
-            get { return content; }
+            get
+            {
+                content.Position = 0;
+                return content;
+            }
         }
 
         public async Task<bool> TryModify(Stream newContent)

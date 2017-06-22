@@ -281,7 +281,7 @@ namespace AzurePerformanceTest
             return result;
         }
 
-        public override async Task<ExperimentID> StartExperiment(ExperimentDefinition definition, string creator = null, string note = null, string summaryName = null)
+        public override async Task<ExperimentID> StartExperiment(ExperimentDefinition definition, string creator = null, string note = null)
         {
             if (!CanStart) throw new InvalidOperationException("Cannot start experiment since the manager is in read mode");
 
@@ -367,11 +367,10 @@ namespace AzurePerformanceTest
                 job.Constraints.MaxTaskRetryCount = MaxTaskRetryCount;
                 string taskId = "taskStarter";
 
-                string taskCommandLine = string.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\" + job.Id + "\\AzureWorker.exe --manage-tasks {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\" \"{7}\" \"{8}\" \"{9}\" \"{10}\"", 
+                string taskCommandLine = string.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\" + job.Id + "\\AzureWorker.exe --manage-tasks {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\" \"{7}\" \"{8}\" \"{9}\"", 
                     id, definition.BenchmarkContainerUri, definition.BenchmarkDirectory,
                     definition.Category, definition.BenchmarkFileExtension, definition.DomainName, definition.Executable, definition.Parameters, 
-                    definition.BenchmarkTimeout.TotalSeconds.ToString(), definition.MemoryLimitMB.ToString(),
-                    summaryName ?? "");
+                    definition.BenchmarkTimeout.TotalSeconds.ToString(), definition.MemoryLimitMB.ToString());
 
                 job.JobManagerTask = new JobManagerTask(taskId, taskCommandLine);
 

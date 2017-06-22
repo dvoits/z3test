@@ -176,7 +176,6 @@ namespace AzureWorker
             string arguments = args[7];
             TimeSpan timeout = TimeSpan.FromSeconds(double.Parse(args[8]));
             double memoryLimit = 0; // no limit
-            string summaryName = null; // no summary
             long? outputLimit = null;
             long? errorLimit = null;
             if (args.Length > 9)
@@ -184,14 +183,10 @@ namespace AzureWorker
                 memoryLimit = double.Parse(args[9]);
                 if (args.Length > 10)
                 {
-                    summaryName = args[10];
+                    outputLimit = args[10] == "null" ? null : (long?)long.Parse(args[10]);
                     if (args.Length > 11)
                     {
-                        outputLimit = args[11] == "null" ? null : (long?)long.Parse(args[11]);
-                        if (args.Length > 12)
-                        {
-                            errorLimit = args[12] == "null" ? null : (long?)long.Parse(args[12]);
-                        }
+                        errorLimit = args[11] == "null" ? null : (long?)long.Parse(args[11]);
                     }
                 }
             }
@@ -301,12 +296,6 @@ namespace AzureWorker
                 }
 
                 MonitorTasksUntilCompletion(experimentId, jobId, collectionTask, batchClient);
-
-                // Building summary for the benchmark results
-                if (summaryName != null)
-                {
-                    await AppendSummary(summaryName, experimentId, domain, storage);
-                }
 
                 Console.WriteLine("Closing.");
             }
@@ -554,18 +543,18 @@ namespace AzureWorker
             //if (args.Length > 6)
             //{
             //    workerInfo = args[6];
-                if (args.Length > 9)
+            if (args.Length > 9)
+            {
+                memoryLimit = double.Parse(args[9]);
+                if (args.Length > 10)
                 {
-                    memoryLimit = double.Parse(args[9]);
-                    if (args.Length > 10)
+                    outputLimit = args[10] == "null" ? null : (long?)long.Parse(args[10]);
+                    if (args.Length > 11)
                     {
-                        outputLimit = args[10] == "null" ? null : (long?)long.Parse(args[10]);
-                        if (args.Length > 11)
-                        {
-                            errorLimit = args[11] == "null" ? null : (long?)long.Parse(args[11]);
-                        }
+                        errorLimit = args[11] == "null" ? null : (long?)long.Parse(args[11]);
                     }
                 }
+            }
             //}
             double normal = 1.0;
 
@@ -597,7 +586,7 @@ namespace AzureWorker
                 errorLimit,
                 domain,
                 normal);
-            
+
             await AzureExperimentStorage.PutResult(experimentId, result, new CloudQueue(outputQueueUri), new CloudBlobContainer(outputBlobContainerUri));
         }
 
@@ -614,7 +603,7 @@ namespace AzureWorker
                 return Task.FromResult(1.0);
             }
             var exp = ParseReferenceExperiment(refJsonPath);
-            
+
             var pathForBenchmarks = Path.Combine(workerDir, "refdata", "data");
             var execPath = Path.Combine(workerDir, "refdata", exp.Definition.Executable);
 
@@ -666,16 +655,8 @@ namespace AzureWorker
 
         private static Domain ResolveDomain(string domainName)
         {
-            MEFDomainResolver domainResolver = new MEFDomainResolver();
+            var domainResolver = MEFDomainResolver.Instance;
             return domainResolver.GetDomain(domainName);
-        }
-
-        private static async Task AppendSummary(string summaryName, int experimentId, Domain domain, AzureExperimentStorage storage)
-        {
-            var results = await storage.GetResults(experimentId);
-            var catSummary = ExperimentSummary.Build(results, domain);
-            var expSummary = new ExperimentSummaryEntity(experimentId, DateTimeOffset.Now, catSummary);
-            await storage.AppendSummary(summaryName, experimentId, expSummary);
         }
 
         internal class PrivatePropertiesResolver : DefaultContractResolver
