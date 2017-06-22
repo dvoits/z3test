@@ -17,7 +17,7 @@ namespace Summary
             if(args.Length != 2)
             {
                 Console.WriteLine("Syntax: Summary.exe <ExperimentID> <SummaryName>\n");
-                Console.WriteLine("Program computes summary for the given experiment and then either adds or replaces\n" +  
+                Console.WriteLine("Program computes summary and records for the given experiment and then either adds or replaces\n" +  
                     "the row corresponding to this experiment in the summary table determined by the <SummaryName>.");
                 Console.WriteLine("\nSee the program configuration file for additional settings.");
                 return 2;

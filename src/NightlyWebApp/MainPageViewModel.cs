@@ -35,6 +35,7 @@ namespace Nightly
             }
         }
 
+       
         public async Task<ExperimentViewModel> GetExperiment(int id)
         {
             var exp = await manager.TryFindExperiment(id);

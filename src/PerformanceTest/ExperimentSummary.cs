@@ -36,6 +36,7 @@ namespace PerformanceTest
                 int infrastructureErrors = 0;
                 int timeouts = 0;
                 int memouts = 0;
+                int runs = 0;
                 Dictionary<string, double> props = new Dictionary<string, double>();
                 foreach (var item in CategorySummary)
                 {
@@ -46,6 +47,7 @@ namespace PerformanceTest
                     infrastructureErrors += sum.InfrastructureErrors;
                     timeouts += sum.InfrastructureErrors;
                     memouts += sum.MemoryOuts;
+                    runs += sum.Runs;
 
                     foreach (var p in sum.Properties)
                     {
@@ -64,7 +66,7 @@ namespace PerformanceTest
                 {
                     stringProps.Add(item.Key, item.Value.ToString());
                 }
-                overall = new AggregatedAnalysis(bugs, errors, infrastructureErrors, timeouts, memouts, stringProps);
+                overall = new AggregatedAnalysis(bugs, errors, infrastructureErrors, timeouts, memouts, stringProps, runs);
                 return overall;
             }
         }

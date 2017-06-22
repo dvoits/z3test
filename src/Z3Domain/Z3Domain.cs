@@ -148,6 +148,17 @@ namespace Measurement
                 };
         }
 
+        public override bool CanConsiderAsRecord(ProcessRunAnalysis result)
+        {
+            int _sat = int.Parse(result.OutputProperties[KeySat]);
+            int _unsat = int.Parse(result.OutputProperties[KeyUnsat]);
+            int _unk = int.Parse(result.OutputProperties[KeyUnknown]);
+
+            return result.Status == ResultStatus.Success &&
+                _unk == 0 &&
+                _sat + _unsat > 0;
+        }
+
         private ResultStatus GetBugCode(ProcessRunMeasure measure)
         {
             ResultStatus status = ResultStatus.Error; // no bug found means general error.

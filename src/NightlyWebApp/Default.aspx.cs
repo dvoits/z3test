@@ -27,12 +27,12 @@ namespace Nightly
         private uint _listLimit = 1000;
         private Dictionary<string, string> _defaultParams = null;
         private MainPageViewModel vm;
+        private Settings config = Settings.Default;
 
         protected async void Page_Load(object sender, EventArgs e)
         {
             if (!IsPostBack)
             {
-                var config = Settings.Default;
 
                 try
                 {
@@ -237,264 +237,265 @@ namespace Nightly
         //    return ser;
         //}
 
-        //public void buildStatisticsChart(string name, Chart chart)
-        //{
-        //    ChartArea ca = new ChartArea();
-        //    ca.Name = "Statistics";
+        public void buildStatisticsChart(string name, Chart chart)
+        {
+            ChartArea ca = new ChartArea();
+            ca.Name = "Statistics";
 
-        //    double maxdays = config.daysback;
+            double maxdays = config.daysback;
 
-        //    string rdays = Request.Params.Get("days");
-        //    if (rdays != null) maxdays = Convert.ToUInt32(rdays);
+            string rdays = Request.Params.Get("days");
+            if (rdays != null) maxdays = Convert.ToUInt32(rdays);
 
-        //    ca.AxisX.Title = "Days in the past";
-        //    ca.AxisX.Interval = 30;
-        //    ca.AxisX.Minimum = -maxdays;
-        //    ca.AxisX.Maximum = 0;
+            ca.AxisX.Title = "Days in the past";
+            ca.AxisX.Interval = 30;
+            ca.AxisX.Minimum = -maxdays;
+            ca.AxisX.Maximum = 0;
 
-        //    // ca.AxisY.Title = "# Benchmarks";
-        //    ca.AxisY.TextOrientation = TextOrientation.Rotated270;
-        //    ca.AxisY.IsLogarithmic = false;
-        //    ca.AxisY.Minimum = 0;
-        //    ca.AxisY.LabelStyle.IsEndLabelVisible = true;
+            // ca.AxisY.Title = "# Benchmarks";
+            ca.AxisY.TextOrientation = TextOrientation.Rotated270;
+            ca.AxisY.IsLogarithmic = false;
+            ca.AxisY.Minimum = 0;
+            ca.AxisY.LabelStyle.IsEndLabelVisible = true;
 
-        //    ca.AxisY2.IsLogarithmic = false;
-        //    ca.AxisY2.Minimum = 0;
-        //    ca.AxisY2.LabelStyle.IsEndLabelVisible = true;
-        //    ca.AxisY2.MajorGrid.Enabled = false;
-        //    ca.AxisY2.MinorGrid.Enabled = false;
+            ca.AxisY2.IsLogarithmic = false;
+            ca.AxisY2.Minimum = 0;
+            ca.AxisY2.LabelStyle.IsEndLabelVisible = true;
+            ca.AxisY2.MajorGrid.Enabled = false;
+            ca.AxisY2.MinorGrid.Enabled = false;
 
-        //    ca.Position.Height = 70;
-        //    ca.Position.Width = 85;
-        //    ca.Position.Auto = false;
-        //    ca.Position.X = 0;
-        //    ca.Position.Y = 5;
+            ca.Position.Height = 70;
+            ca.Position.Width = 85;
+            ca.Position.Auto = false;
+            ca.Position.X = 0;
+            ca.Position.Y = 5;
 
-        //    chart.ChartAreas.Add(ca);
+            chart.ChartAreas.Add(ca);
 
-        //    Legend l = new Legend();
-        //    l.Docking = Docking.Right;
-        //    l.IsDockedInsideChartArea = false;
-        //    l.Alignment = StringAlignment.Near;
-        //    l.DockedToChartArea = ca.Name;
-        //    l.Name = "StatisticsLegend";
-        //    chart.Legends.Add(l);
+            Legend l = new Legend();
+            l.Docking = Docking.Right;
+            l.IsDockedInsideChartArea = false;
+            l.Alignment = StringAlignment.Near;
+            l.DockedToChartArea = ca.Name;
+            l.Name = "StatisticsLegend";
+            chart.Legends.Add(l);
 
-        //    chart.Series.Add(series("# solved", Color.Green, 1, name, maxdays, AxisType.Primary, new List<string>() { "SAT", "UNSAT" }));
-        //    chart.Series.Last().ChartArea = ca.Name;
-        //    chart.Series.Last().Legend = l.Name;
-        //    chart.Series.Add(series("# errors", Color.OrangeRed, 2, name, maxdays, AxisType.Primary, new List<string>() { "ERROR" }, null, true));
-        //    chart.Series.Last().ChartArea = ca.Name;
-        //    chart.Series.Last().Legend = l.Name;
-        //    chart.Series.Add(series("# inf. errors", Color.LightSalmon, 1, name, maxdays, AxisType.Primary, new List<string>() { "INFERR" }, null, true));
-        //    chart.Series.Last().ChartArea = ca.Name;
-        //    chart.Series.Last().Legend = l.Name;
-        //    chart.Series.Add(series("# bugs", Color.Red, 2, name, maxdays, AxisType.Primary, new List<string>() { "BUG" }, null, true));
-        //    chart.Series.Last().ChartArea = ca.Name;
-        //    chart.Series.Last().Legend = l.Name;
-        //    chart.Series.Add(series("# unsolved", Color.Blue, 1, name, maxdays, AxisType.Primary, new List<string>() { "TIMEOUT", "MEMORY", "UNKNOWN" }));
-        //    chart.Series.Last().ChartArea = ca.Name;
-        //    chart.Series.Last().Legend = l.Name;
+            chart.Series.Add(series("# solved", Color.Green, 1, name, maxdays, AxisType.Primary, new List<string>() { "SAT", "UNSAT" }));
+            chart.Series.Last().ChartArea = ca.Name;
+            chart.Series.Last().Legend = l.Name;
+            chart.Series.Add(series("# errors", Color.OrangeRed, 2, name, maxdays, AxisType.Primary, new List<string>() { "ERROR" }, null, true));
+            chart.Series.Last().ChartArea = ca.Name;
+            chart.Series.Last().Legend = l.Name;
+            chart.Series.Add(series("# inf. errors", Color.LightSalmon, 1, name, maxdays, AxisType.Primary, new List<string>() { "INFERR" }, null, true));
+            chart.Series.Last().ChartArea = ca.Name;
+            chart.Series.Last().Legend = l.Name;
+            chart.Series.Add(series("# bugs", Color.Red, 2, name, maxdays, AxisType.Primary, new List<string>() { "BUG" }, null, true));
+            chart.Series.Last().ChartArea = ca.Name;
+            chart.Series.Last().Legend = l.Name;
+            chart.Series.Add(series("# unsolved", Color.Blue, 1, name, maxdays, AxisType.Primary, new List<string>() { "TIMEOUT", "MEMORY", "UNKNOWN" }));
+            chart.Series.Last().ChartArea = ca.Name;
+            chart.Series.Last().Legend = l.Name;
 
-        //    chart.Series.Add(series("avg  runtime [s]", Color.Gray, 1, name, maxdays, AxisType.Secondary,
-        //        new List<string>() { "SATTIME", "UNSATTIME" },
-        //        new List<string>() { "SAT", "UNSAT" }));
-        //    chart.Series.Last().ChartArea = "Statistics";
-        //}
+            chart.Series.Add(series("avg  runtime [s]", Color.Gray, 1, name, maxdays, AxisType.Secondary,
+                new List<string>() { "SATTIME", "UNSATTIME" },
+                new List<string>() { "SAT", "UNSAT" }));
+            chart.Series.Last().ChartArea = "Statistics";
+        }
 
-        //public void buildPerformanceChart(string category, Chart chart)
-        //{
-        //    //Chart chart = new Chart();
-        //    //chart.Style["margin-top"] = "0px";
-        //    //chart.Style["margin-left"] = "20px";
-        //    //chart.Style["margin-bottom"] = "20px";
+        public void buildPerformanceChart(string category, Chart chart)
+        {
+            //Chart chart = new Chart();
+            //chart.Style["margin-top"] = "0px";
+            //chart.Style["margin-left"] = "20px";
+            //chart.Style["margin-bottom"] = "20px";
 
-        //    // chart.Titles.Add((name == "") ? "Overall" : name);
-        //    ChartArea ca = new ChartArea();
-        //    ca.Name = "Performance";
-        //    double maxdays = config.daysback;
+            // chart.Titles.Add((name == "") ? "Overall" : name);
+            ChartArea ca = new ChartArea();
+            ca.Name = "Performance";
+            double maxdays = config.daysback;
 
-        //    string rdays = Request.Params.Get("days");
-        //    if (rdays != null) maxdays = Convert.ToUInt32(rdays);
+            string rdays = Request.Params.Get("days");
+            if (rdays != null) maxdays = Convert.ToUInt32(rdays);
 
-        //    ca.AxisX.Interval = 30;
-        //    ca.AxisX.Minimum = -maxdays;
-        //    ca.AxisX.Maximum = 0.0;
-        //    ca.AxisX.LabelStyle.Enabled = false;
+            ca.AxisX.Interval = 30;
+            ca.AxisX.Minimum = -maxdays;
+            ca.AxisX.Maximum = 0.0;
+            ca.AxisX.LabelStyle.Enabled = false;
 
-        //    // ca.AxisY.TextOrientation = TextOrientation.Rotated270;            
-        //    ca.AxisY.Minimum = 0.0;
-        //    ca.AxisY.Maximum = 100.0;
-        //    ca.AxisY.LabelStyle.IsEndLabelVisible = true;
-        //    ca.AxisY.LabelAutoFitStyle = LabelAutoFitStyles.None;
-        //    ca.AxisY.LabelAutoFitMinFontSize = 8;
-        //    ca.AxisY.LabelAutoFitMaxFontSize = 8;
-        //    ca.AxisY.CustomLabels.Add(new CustomLabel(-4, 4, "0%", 0, LabelMarkStyle.SideMark, GridTickTypes.All));
-        //    ca.AxisY.CustomLabels.Add(new CustomLabel(25, 25, "", 0, LabelMarkStyle.None, GridTickTypes.Gridline));
-        //    ca.AxisY.CustomLabels.Add(new CustomLabel(46, 54, "50%", 0, LabelMarkStyle.SideMark, GridTickTypes.All));
-        //    ca.AxisY.CustomLabels.Add(new CustomLabel(75, 75, "", 0, LabelMarkStyle.None, GridTickTypes.Gridline));
-        //    ca.AxisY.CustomLabels.Add(new CustomLabel(96, 104, "100%", 0, LabelMarkStyle.SideMark, GridTickTypes.All));
+            // ca.AxisY.TextOrientation = TextOrientation.Rotated270;            
+            ca.AxisY.Minimum = 0.0;
+            ca.AxisY.Maximum = 100.0;
+            ca.AxisY.LabelStyle.IsEndLabelVisible = true;
+            ca.AxisY.LabelAutoFitStyle = LabelAutoFitStyles.None;
+            ca.AxisY.LabelAutoFitMinFontSize = 8;
+            ca.AxisY.LabelAutoFitMaxFontSize = 8;
+            ca.AxisY.CustomLabels.Add(new CustomLabel(-4, 4, "0%", 0, LabelMarkStyle.SideMark, GridTickTypes.All));
+            ca.AxisY.CustomLabels.Add(new CustomLabel(25, 25, "", 0, LabelMarkStyle.None, GridTickTypes.Gridline));
+            ca.AxisY.CustomLabels.Add(new CustomLabel(46, 54, "50%", 0, LabelMarkStyle.SideMark, GridTickTypes.All));
+            ca.AxisY.CustomLabels.Add(new CustomLabel(75, 75, "", 0, LabelMarkStyle.None, GridTickTypes.Gridline));
+            ca.AxisY.CustomLabels.Add(new CustomLabel(96, 104, "100%", 0, LabelMarkStyle.SideMark, GridTickTypes.All));
 
-        //    ca.Position.Height = 25;
-        //    ca.Position.Width = 85;
-        //    ca.Position.Auto = false;
-        //    ca.Position.X = 0;
-        //    ca.Position.Y = 75;
+            ca.Position.Height = 25;
+            ca.Position.Width = 85;
+            ca.Position.Auto = false;
+            ca.Position.X = 0;
+            ca.Position.Y = 75;
 
-        //    ca.AlignWithChartArea = "Statistics";
-        //    ca.AlignmentOrientation = AreaAlignmentOrientations.Vertical;
-        //    ca.AlignmentStyle = AreaAlignmentStyles.PlotPosition;
+            ca.AlignWithChartArea = "Statistics";
+            ca.AlignmentOrientation = AreaAlignmentOrientations.Vertical;
+            ca.AlignmentStyle = AreaAlignmentStyles.PlotPosition;
 
-        //    chart.ChartAreas.Add(ca);
+            chart.ChartAreas.Add(ca);
 
-        //    Legend l = new Legend();
-        //    l.Docking = Docking.Right;
-        //    l.IsDockedInsideChartArea = false;
-        //    l.Alignment = StringAlignment.Near;
-        //    l.Name = "PerformanceLegend";
-        //    l.DockedToChartArea = ca.Name;
-        //    chart.Legends.Add(l);
+            Legend l = new Legend();
+            l.Docking = Docking.Right;
+            l.IsDockedInsideChartArea = false;
+            l.Alignment = StringAlignment.Near;
+            l.Name = "PerformanceLegend";
+            l.DockedToChartArea = ca.Name;
+            chart.Legends.Add(l);
 
-        //    Jobs jobs = new Jobs(config.datadir, true);
-        //    Records records = new Records(config.datadir);
-        //    CategoryRecord virtualBest = (category == "") ? records.Overall : records.RecordsByCategory[category];
-        //    double virtualBestAvg = (virtualBest.Time / virtualBest.Files);
-        //    DateTime now = DateTime.Now;
+            Jobs jobs = new Jobs(config.datadir, true);
+            Records records = new Records(config.datadir);
+            CategoryRecord virtualBest = (category == "") ? records.Overall : records.RecordsByCategory[category];
 
-        //    Series ser = new Series("Perf. Index");
-        //    ser.ChartArea = ca.Name;
-        //    ser.Legend = l.Name;
-        //    ser.ChartType = SeriesChartType.Line;
-        //    ser.YAxisType = AxisType.Primary;
-        //    ser.Color = Color.Blue;
-        //    ser.MarkerSize = 2;
-        //    ser.MarkerStyle = MarkerStyle.Circle;
+            double virtualBestAvg = (virtualBest.Time / virtualBest.Files);
+            DateTime now = DateTime.Now;
 
-        //    Series ser2 = new Series("Solved [%]");
-        //    ser2.ChartArea = ca.Name;
-        //    ser2.Legend = l.Name;
-        //    ser2.ChartType = SeriesChartType.Line;
-        //    ser2.YAxisType = AxisType.Primary;
-        //    ser2.Color = Color.PaleGreen;
-        //    ser2.MarkerSize = 2;
-        //    ser2.MarkerStyle = MarkerStyle.Circle;
+            Series ser = new Series("Perf. Index");
+            ser.ChartArea = ca.Name;
+            ser.Legend = l.Name;
+            ser.ChartType = SeriesChartType.Line;
+            ser.YAxisType = AxisType.Primary;
+            ser.Color = Color.Blue;
+            ser.MarkerSize = 2;
+            ser.MarkerStyle = MarkerStyle.Circle;
 
-        //    Series ser3 = new Series("P. Closeness [%]");
-        //    ser3.ChartArea = ca.Name;
-        //    ser3.Legend = l.Name;
-        //    ser3.ChartType = SeriesChartType.Line;
-        //    ser3.YAxisType = AxisType.Primary;
-        //    ser3.Color = Color.PaleVioletRed;
-        //    ser3.MarkerSize = 2;
-        //    ser3.MarkerStyle = MarkerStyle.Circle;
+            Series ser2 = new Series("Solved [%]");
+            ser2.ChartArea = ca.Name;
+            ser2.Legend = l.Name;
+            ser2.ChartType = SeriesChartType.Line;
+            ser2.YAxisType = AxisType.Primary;
+            ser2.Color = Color.PaleGreen;
+            ser2.MarkerSize = 2;
+            ser2.MarkerStyle = MarkerStyle.Circle;
 
-        //    Series ser4 = new Series("Exp. Index [%]");
-        //    ser4.ChartArea = ca.Name;
-        //    ser4.Legend = l.Name;
-        //    ser4.ChartType = SeriesChartType.Line;
-        //    ser4.YAxisType = AxisType.Primary;
-        //    ser4.Color = Color.Red;
-        //    ser4.MarkerSize = 2;
-        //    ser4.MarkerStyle = MarkerStyle.Circle;
+            Series ser3 = new Series("P. Closeness [%]");
+            ser3.ChartArea = ca.Name;
+            ser3.Legend = l.Name;
+            ser3.ChartType = SeriesChartType.Line;
+            ser3.YAxisType = AxisType.Primary;
+            ser3.Color = Color.PaleVioletRed;
+            ser3.MarkerSize = 2;
+            ser3.MarkerStyle = MarkerStyle.Circle;
 
-        //    bool need_earliest = true;
-        //    double earliest_x = double.MaxValue;
-        //    double earliest_y = 0.0;
-        //    bool need_latest = true;
-        //    double latest_x = double.MinValue;
-        //    double latest_y = 0.0;
+            Series ser4 = new Series("Exp. Index [%]");
+            ser4.ChartArea = ca.Name;
+            ser4.Legend = l.Name;
+            ser4.ChartType = SeriesChartType.Line;
+            ser4.YAxisType = AxisType.Primary;
+            ser4.Color = Color.Red;
+            ser4.MarkerSize = 2;
+            ser4.MarkerStyle = MarkerStyle.Circle;
 
-        //    foreach (ExperimentViewModel exp in jobs)
-        //    {
-        //        if (!exp.MetaData.isFinished) continue;
+            bool need_earliest = true;
+            double earliest_x = double.MaxValue;
+            double earliest_y = 0.0;
+            bool need_latest = true;
+            double latest_x = double.MinValue;
+            double latest_y = 0.0;
 
-        //        CategoryStatistics jstats = exp.Summary.Overall;
+            foreach (ExperimentViewModel exp in vm.Experiments)
+            {
+                if (!exp.IsFinished) continue;
 
-        //        double vbaGoodPart = virtualBestAvg * jstats.Files;
-        //        double vbaBadPart = (jstats.Files - (jstats.SAT + jstats.UNSAT)) * exp.MetaData.Timeout;
-        //        double vbaBoth = (vbaGoodPart + vbaBadPart) / jstats.Files;
-        //        double vwa = exp.MetaData.Timeout;
+                var jstats = exp.Summary.Overall;
 
-        //        DateTime pdt = Convert.ToDateTime(exp.MetaData.SubmissionTime, Z3Data.Global.culture);
-        //        double x = (now - pdt).TotalDays;
-        //        if (x <= maxdays)
-        //        {
-        //            double y = 0.0, y2 = 0.0, y3 = 0.0, y4 = 0.0;
-        //            string tt = "";
+                double vbaGoodPart = virtualBestAvg * jstats.Runs;
+                double vbaBadPart = (jstats.Runs - (jstats.SAT + jstats.UNSAT)) * exp.MetaData.Timeout;
+                double vbaBoth = (vbaGoodPart + vbaBadPart) / jstats.Runs;
+                double vwa = exp.MetaData.Timeout;
 
-        //            if (category == "" || exp.Summary.ContainsKey(category))
-        //            {
-        //                CategoryStatistics cs = (category == "") ? exp.Summary.Overall : exp.Summary[category];
-        //                double st = cs.TimeSAT;
-        //                double ut = cs.TimeUNSAT;
-        //                double sumf = (cs.SAT + cs.UNSAT);
-        //                double curAvg = (sumf == 0) ? vwa : (st + ut) / sumf;
-        //                y2 = 100.0 * sumf / cs.Files;
-        //                y3 = 100.0 * (1.0 - (vbaBoth / vwa));
-        //                if (y3 > 100.0) y3 = 100; else if (y3 < 0.0) y3 = 0.0;
+                DateTime pdt = Convert.ToDateTime(exp.MetaData.SubmissionTime, Z3Data.Global.culture);
+                double x = (now - pdt).TotalDays;
+                if (x <= maxdays)
+                {
+                    double y = 0.0, y2 = 0.0, y3 = 0.0, y4 = 0.0;
+                    string tt = "";
 
-        //                y = (y2 * y3) / 100.0;
-        //                tt = pdt.ToString() + ": " + y.ToString();
-        //                if (y > 100.0) y = 100.0;
+                    if (category == "" || exp.Summary.ContainsKey(category))
+                    {
+                        CategoryStatistics cs = (category == "") ? exp.Summary.Overall : exp.Summary[category];
+                        double st = cs.TimeSAT;
+                        double ut = cs.TimeUNSAT;
+                        double sumf = (cs.SAT + cs.UNSAT);
+                        double curAvg = (sumf == 0) ? vwa : (st + ut) / sumf;
+                        y2 = 100.0 * sumf / cs.Files;
+                        y3 = 100.0 * (1.0 - (vbaBoth / vwa));
+                        if (y3 > 100.0) y3 = 100; else if (y3 < 0.0) y3 = 0.0;
 
-        //                y4 = (y2 + y3) / 2.0;
-        //            }
-        //            else
-        //            {
-        //                y = 0.0;
-        //                y2 = 0.0;
-        //                y3 = 0.0;
-        //                y4 = 0.0;
-        //                tt = pdt.ToString() + ": no data";
-        //            }
+                        y = (y2 * y3) / 100.0;
+                        tt = pdt.ToString() + ": " + y.ToString();
+                        if (y > 100.0) y = 100.0;
 
-        //            ser.Points.AddXY(-x, y);
-        //            ser.Points.Last().ToolTip = tt;
-        //            ser2.Points.AddXY(-x, y2);
-        //            ser.Points.Last().ToolTip = y2.ToString();
-        //            ser3.Points.AddXY(-x, y3);
-        //            ser.Points.Last().ToolTip = y3.ToString();
-        //            ser4.Points.AddXY(-x, y4);
-        //            ser.Points.Last().ToolTip = y4.ToString();
+                        y4 = (y2 + y3) / 2.0;
+                    }
+                    else
+                    {
+                        y = 0.0;
+                        y2 = 0.0;
+                        y3 = 0.0;
+                        y4 = 0.0;
+                        tt = pdt.ToString() + ": no data";
+                    }
 
-        //            if (x == maxdays)
-        //                need_earliest = false;
-        //            else if (x == 0.0)
-        //                need_latest = false;
+                    ser.Points.AddXY(-x, y);
+                    ser.Points.Last().ToolTip = tt;
+                    ser2.Points.AddXY(-x, y2);
+                    ser.Points.Last().ToolTip = y2.ToString();
+                    ser3.Points.AddXY(-x, y3);
+                    ser.Points.Last().ToolTip = y3.ToString();
+                    ser4.Points.AddXY(-x, y4);
+                    ser.Points.Last().ToolTip = y4.ToString();
 
-        //            if (-x < earliest_x)
-        //            {
-        //                earliest_x = -x;
-        //                earliest_y = y;
-        //            }
-        //            else if (-x > latest_x)
-        //            {
-        //                latest_x = -x;
-        //                latest_y = y;
-        //            }
+                    if (x == maxdays)
+                        need_earliest = false;
+                    else if (x == 0.0)
+                        need_latest = false;
 
-        //            exp.Dispose();
-        //            GC.Collect();
-        //        }
-        //    }
+                    if (-x < earliest_x)
+                    {
+                        earliest_x = -x;
+                        earliest_y = y;
+                    }
+                    else if (-x > latest_x)
+                    {
+                        latest_x = -x;
+                        latest_y = y;
+                    }
 
-        //    if (need_latest)
-        //    {
-        //        ser.Points.AddXY(0.0, latest_y);
-        //        ser.Points.Last().ToolTip = "Latest: " + latest_y.ToString();
-        //    }
+                    exp.Dispose();
+                    GC.Collect();
+                }
+            }
 
-        //    if (need_earliest)
-        //    {
-        //        ser.Points.InsertXY(0, -maxdays, earliest_y);
-        //        ser.Points.First().ToolTip = "Before: " + earliest_y.ToString();
-        //    }
+            if (need_latest)
+            {
+                ser.Points.AddXY(0.0, latest_y);
+                ser.Points.Last().ToolTip = "Latest: " + latest_y.ToString();
+            }
 
-        //    chart.Series.Add(ser);
-        //    chart.Series.Add(ser2);
-        //    chart.Series.Add(ser3);
-        //    chart.Series.Add(ser4);
-        //}
+            if (need_earliest)
+            {
+                ser.Points.InsertXY(0, -maxdays, earliest_y);
+                ser.Points.First().ToolTip = "Before: " + earliest_y.ToString();
+            }
+
+            chart.Series.Add(ser);
+            chart.Series.Add(ser2);
+            chart.Series.Add(ser3);
+            chart.Series.Add(ser4);
+        }
 
         //protected void buildPerformanceVectorGraph(string category, Chart chart)
         //{
@@ -608,12 +609,12 @@ namespace Nightly
             chart.Height = 600;
             chart.Width = 900;
 
-            //buildStatisticsChart(category, chart);
+            buildStatisticsChart(category, chart);
 
-            //if (Request.Params.Get("pvg") == null)
-            //    buildPerformanceChart(category, chart);
-            //else
-            //    buildPerformanceVectorGraph(category, chart);
+            if (Request.Params.Get("pvg") == null)
+                buildPerformanceChart(category, chart);
+            else
+                buildPerformanceVectorGraph(category, chart);
 
             return chart;
         }
@@ -837,13 +838,13 @@ namespace Nightly
             r.Cells.Add(tc);
             t.Rows.Add(r);
 
-            //r = new TableRow();
-            //tc = new TableCell();
-            //tc.Style["padding"] = "0px";
-            //ChartArea pchart = buildPerformanceChart(category, 900);
-            //tc.Controls.Add(pchart);
-            //r.Cells.Add(tc);
-            //t.Rows.Add(r);
+            r = new TableRow();
+            tc = new TableCell();
+            tc.Style["padding"] = "0px";
+            ChartArea pchart = buildPerformanceChart(category, 900);
+            tc.Controls.Add(pchart);
+            r.Cells.Add(tc);
+            t.Rows.Add(r);
 
             p.Controls.Add(t);
             phMain.Controls.Add(p);
@@ -1069,7 +1070,7 @@ namespace Nightly
             double timeunsat = double.Parse(cs.Properties[Z3Domain.KeyTimeUnsat]);
 
             t.Rows.Add(buildStatisticsRow("Experiment ID:", id_msg, "", Color.Black));
-            t.Rows.Add(buildStatisticsRow("Files:", "-na-" /*cs.Files*/, "", Color.Black));
+            t.Rows.Add(buildStatisticsRow("Files:", cs.Runs, "", Color.Black));
             t.Rows.Add(buildStatisticsRow("SAT:", sat, "", Color.Black));
             t.Rows.Add(buildStatisticsRow("UNSAT:", unsat, "", Color.Black));
             t.Rows.Add(buildStatisticsRow("UNKNOWN:", unk, "", Color.Black));
