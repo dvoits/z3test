@@ -1,6 +1,7 @@
 ﻿using AzurePerformanceTest;
 using Measurement;
 using PerformanceTest;
+using PerformanceTest.Records;
 using Summary.Properties;
 using System;
 using System.Collections.Generic;
@@ -42,35 +43,10 @@ namespace Summary
 
         private static async Task Run(int id, string summaryName)
         {
-            Console.WriteLine("Connecting to Azure experiment storage...");
+            Console.WriteLine("Connecting to Azure...");
             string connectionString = await GetConnectionString();
-            AzureExperimentManager manager = AzureExperimentManager.Open(connectionString);
-
-            var exp = await manager.TryFindExperiment(id);
-            if (exp != null)
-            {
-                IDomainResolver resolveDomain = new MEFDomainResolver();
-                Domain domain = resolveDomain.GetDomain(exp.Definition.DomainName);
-
-                await UpdateSummary(summaryName, id, domain, manager.Storage);
-            }else
-            {
-                Console.WriteLine("Experiment is missing, trying to remove it from the summary table as well...");
-                await manager.Storage.RemoveSummary(summaryName, id);
-            }
-        }
-
-        private static async Task UpdateSummary(string summaryName, int experimentId, Domain domain, AzureExperimentStorage storage)
-        {
-            Console.WriteLine("Downloading experiment results...");
-            var results = await storage.GetResults(experimentId);
-
-            Console.WriteLine("Building summary for the experiment...");
-            var catSummary = ExperimentSummary.Build(results, domain);
-            var expSummary = new ExperimentSummary(experimentId, DateTimeOffset.Now, catSummary);
-
-            Console.WriteLine("Uploading new summary...");
-            await storage.AppendOrReplaceSummary(summaryName, expSummary);
+            var manager = new AzureSummaryManager(connectionString);
+            await manager.Update(summaryName, id);
         }
 
         private static async Task<string> GetConnectionString()

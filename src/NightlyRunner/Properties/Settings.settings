@@ -65,8 +65,5 @@
     <Setting Name="KeyVaultUrl" Type="System.String" Scope="Application">
       <Value Profile="(Default)">https://z3perftest.vault.azure.net</Value>
     </Setting>
-    <Setting Name="SummaryName" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">z3nightly</Value>
-    </Setting>
   </Settings>
 </SettingsFile>

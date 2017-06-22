@@ -96,7 +96,8 @@ namespace PerformanceTest.Tests
             var domain = new Z3Domain();
 
             var benchmarkResults1 = Enumerable.Concat(BuildResults(1, 3, "a"), BuildResults(1, 2, "b"));
-            var records1 = Records.Records.Build(benchmarkResults1, domain);
+            var records1 = new Records.RecordsTable(new Dictionary<string, Records.Record>(), new Dictionary<string, Records.CategoryRecord>());
+            records1.Update(benchmarkResults1, domain);
 
             Assert.AreEqual(3, records1.CategoryRecords["a"].Files);
             Assert.AreEqual(3, records1.CategoryRecords["a"].Runtime);

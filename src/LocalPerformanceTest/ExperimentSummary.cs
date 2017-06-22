@@ -3,6 +3,7 @@ using Angara.Data.DelimitedFile;
 using Measurement;
 using Microsoft.FSharp.Core;
 using PerformanceTest;
+using PerformanceTest.Records;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -109,11 +110,21 @@ namespace PerformanceTest
             Table.Save(finalTable, new StreamWriter(dest, new UTF8Encoding(true)));
         }
 
-        public static ExperimentSummary[] Load(Stream stream)
+        public static void SaveTable(Table summary, Stream stream)
+        {
+            Table.Save(summary, new StreamWriter(stream, new UTF8Encoding(true)));
+        }
+
+        public static Table LoadTable(Stream stream)
         {
             var table = Table.Load(new StreamReader(stream), new ReadSettings(Delimiter.Comma, false, true, FSharpOption<int>.None,
                 FSharpOption<FSharpFunc<Tuple<int, string>, FSharpOption<Type>>>.Some(FSharpFunc<Tuple<int, string>, FSharpOption<Type>>.FromConverter(tuple => FSharpOption<Type>.Some(typeof(string))))));
+            return table;
+        }
 
+        public static ExperimentSummary[] Load(Stream stream)
+        {
+            var table = LoadTable(stream);
             var date = table["Date"].Rows.AsString;
             var id = table["ID"].Rows.AsString;
 

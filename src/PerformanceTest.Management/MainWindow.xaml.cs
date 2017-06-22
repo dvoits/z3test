@@ -747,7 +747,7 @@ namespace PerformanceTest.Management
 
             try
             {
-                domainResolver = new MEFDomainResolver();
+                domainResolver = MEFDomainResolver.Instance;
             }
             catch (Exception ex)
             {

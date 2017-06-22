@@ -8,28 +8,25 @@ using System.Threading.Tasks;
 
 namespace PerformanceTest.Records
 {
-    public class Records
+    public class RecordsTable
     {
-        private readonly IReadOnlyDictionary<string, Record> records;
-        private readonly IReadOnlyDictionary<string, CategoryRecord> categoryRecords;
+        private readonly Dictionary<string, Record> records;
+        private readonly Dictionary<string, CategoryRecord> categoryRecords;
 
-        public Records(IReadOnlyDictionary<string, Record> records, IReadOnlyDictionary<string, CategoryRecord> categoryRecords)
+        public RecordsTable(Dictionary<string, Record> records, Dictionary<string, CategoryRecord> categoryRecords)
         {
             this.records = records;
             this.categoryRecords = categoryRecords;
         }
 
         /// <summary>Record for each benchmark (maps from benchmark filename).</summary>
-        public IReadOnlyDictionary<string, Record> BenchmarkRecords { get { return records; } }
+        public Dictionary<string, Record> BenchmarkRecords { get { return records; } }
 
         /// <summary>Returns the benchmark records aggregated by categories (maps from category name).</summary>
-        public IReadOnlyDictionary<string, CategoryRecord> CategoryRecords { get { return categoryRecords; } }
+        public Dictionary<string, CategoryRecord> CategoryRecords { get { return categoryRecords; } }
 
-        public static Records Build(IEnumerable<BenchmarkResult> results, Domain domain)
+        public void Update(IEnumerable<BenchmarkResult> results, Domain domain)
         {
-            Dictionary<string, Record> records = new Dictionary<string, Record>();
-            Dictionary<string, CategoryRecord> categoryRecords = new Dictionary<string, CategoryRecord>();
-
             foreach (var r in results)
             {
                 if (domain.CanConsiderAsRecord(new ProcessRunAnalysis(r.Status, r.Properties)))
@@ -39,22 +36,35 @@ namespace PerformanceTest.Records
                     {
                         // New record found
                         records[r.BenchmarkFileName] = new Record(r.ExperimentID, r.NormalizedRuntime);
-
-
-                        // Category
-                        int i = r.BenchmarkFileName.IndexOf("/");
-                        string category = i >= 0 ? r.BenchmarkFileName.Substring(0, i) : string.Empty;
-
-                        CategoryRecord catRecord;
-                        if (!categoryRecords.TryGetValue(category, out catRecord))
-                            catRecord = new CategoryRecord(0, 0);
-
-                        categoryRecords[category] = catRecord.Add(r.NormalizedRuntime, 1);
+                        string category = Category(r.BenchmarkFileName);
                     }
                 }
             }
+            RebuildSummary();
+        }
 
-            return new Records(new ReadOnlyDictionary<string, Record>(records), new ReadOnlyDictionary<string, CategoryRecord>(categoryRecords));
+        private void RebuildSummary()
+        {
+            categoryRecords.Clear();
+            foreach (var item in records)
+            {
+                string category = Category(item.Key);
+
+                CategoryRecord catRecord;
+                if (!categoryRecords.TryGetValue(category, out catRecord))
+                    catRecord = new CategoryRecord(0, 0);
+
+                categoryRecords[category] = catRecord.Add(item.Value.Runtime, 1);
+            }
+        }
+
+
+
+        private static string Category(string filename)
+        {
+            int i = filename.IndexOf("/");
+            string category = i >= 0 ? filename.Substring(0, i) : string.Empty;
+            return category;
         }
     }
 

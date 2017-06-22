@@ -211,14 +211,5 @@ namespace NightlyRunner.Properties {
                 return ((string)(this["KeyVaultUrl"]));
             }
         }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("z3nightly")]
-        public string SummaryName {
-            get {
-                return ((string)(this["SummaryName"]));
-            }
-        }
     }
 }

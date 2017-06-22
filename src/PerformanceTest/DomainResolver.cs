@@ -51,10 +51,23 @@ namespace PerformanceTest
 
     public class MEFDomainResolver : IDomainResolver
     {
+        private static IDomainResolver instance;
+
+        public static IDomainResolver Instance
+        {
+            get
+            {
+                if (instance == null)
+                    instance = new MEFDomainResolver();
+                return instance;
+            }
+        }
+
+
         [ImportMany(typeof(Domain))]
         protected List<Domain> domains;
 
-        public MEFDomainResolver()
+        private MEFDomainResolver()
         {
             var catalog = new AggregateCatalog();
 
@@ -71,6 +84,7 @@ namespace PerformanceTest
                 Trace.WriteLine("Composition exception when resolving domains: " + ex);
             }
         }
+
 
         public string[] Domains
         {
