@@ -24,6 +24,7 @@ namespace PerformanceTest
         /// </summary>
         public abstract Task RestartBenchmarks(ExperimentID id, IEnumerable<string> benchmarkNames, string newBenchmarkContainerUri = null);
 
+        public abstract Task UpdateExperiment(ExperimentID id, BenchmarkResult[] removingResults, BenchmarkResult[] updatingResults, BenchmarkResult[] addingResults);
         /// <summary>
         /// Returns current execution status of existing experiments.
         /// </summary>

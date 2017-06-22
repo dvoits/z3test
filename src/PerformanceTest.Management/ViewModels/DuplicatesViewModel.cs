@@ -16,22 +16,25 @@ namespace PerformanceTest.Management
         private readonly ExperimentManager manager;
         private readonly IUIService uiService;
         private List<string> filenames;
-        private Dictionary<string, List<BenchmarkResultViewModel>> duplicates;
+        private Dictionary<string, List<BenchmarkResult>> duplicates;
         private List<BenchmarkResultViewModel> currentDuplicates;
-        private BenchmarkResult[] results; 
+        private BenchmarkResult[] results;
+        private List<BenchmarkResult> duplicatesToRemove;
 
-        private bool resolveTimeouts, resolveSameTime, resolveSlowest;
+        private bool resolveTimeouts, resolveSameTime, resolveSlowest, resolveInErrors;
         public event PropertyChangedEventHandler PropertyChanged;
-        public DuplicatesViewModel(int id, bool resolveTimeouts, bool resolveSameTime, bool resolveSlowest, ExperimentManager manager, IUIService uiService)
+        public DuplicatesViewModel(int id, bool resolveTimeouts, bool resolveSameTime, bool resolveSlowest, bool resolveInErrors, ExperimentManager manager, IUIService uiService)
         {
             this.id = id;
             this.resolveTimeouts = resolveTimeouts;
             this.resolveSameTime = resolveSameTime;
             this.resolveSlowest = resolveSlowest;
+            this.resolveInErrors = resolveInErrors;
             this.manager = manager;
             this.uiService = uiService;
             this.filenames = new List<string>();
             this.currentDuplicates = new List<BenchmarkResultViewModel>();
+            this.duplicatesToRemove = new List<BenchmarkResult>();
         }
         public string Title
         {
@@ -49,22 +52,20 @@ namespace PerformanceTest.Management
         {
             var t1 = Task.Run(() => manager.GetResults(id));
             var res = await t1;
-            results = res; 
-            var dataToResolve = res.Select(e => new BenchmarkResultViewModel(e, manager, uiService)).ToArray();
-
-            return ResolveData(dataToResolve);
+            results = res;
+            return ResolveData(results);
         }
-        private bool ResolveData(BenchmarkResultViewModel[] results)
+        private bool ResolveData(BenchmarkResult[] results)
         {
-            Dictionary<string, List<BenchmarkResultViewModel>> dict = new Dictionary<string, List<BenchmarkResultViewModel>>();
+            Dictionary<string, List<BenchmarkResult>> dict = new Dictionary<string, List<BenchmarkResult>>();
             if (results != null && results.Length > 1)
             {
-                List<BenchmarkResultViewModel> dupList = new List<BenchmarkResultViewModel>();
-                string prevFilename = results[0].Filename;
+                List<BenchmarkResult> dupList = new List<BenchmarkResult>();
+                string prevFilename = results[0].BenchmarkFileName;
                 bool isNew = true;
                 for (int i = 1; i < results.Length; i++)
                 {
-                    string nextFilename = results[i].Filename;
+                    string nextFilename = results[i].BenchmarkFileName;
                     if (nextFilename == prevFilename)
                     {
                         if (isNew)
@@ -80,7 +81,7 @@ namespace PerformanceTest.Management
                         if (dupList.Count > 0)
                         {
                             dict.Add(prevFilename, dupList);
-                            dupList = new List<BenchmarkResultViewModel>();
+                            dupList = new List<BenchmarkResult>();
                         }
                         prevFilename = nextFilename;
                         isNew = true;
@@ -90,28 +91,13 @@ namespace PerformanceTest.Management
             duplicates = dict;
 
             showNextDupe();
+            if (duplicatesToRemove.Count > 0)
+                manager.UpdateExperiment(id, duplicatesToRemove.ToArray(), null, null);
             return filenames.Count > 0;
         }
-        private bool IsEqualBenchmarks (BenchmarkResult b1, BenchmarkResultViewModel b2)
+        public void Pick(List<BenchmarkResult> items)
         {
-            var b1vm = new BenchmarkResultViewModel(b1, manager, uiService);
-            bool result = b1vm.ExitCode == b2.ExitCode && b1vm.Filename == b2.Filename && b1vm.MemorySizeMB == b2.MemorySizeMB &&
-                          b1vm.NormalizedRuntime == b2.NormalizedRuntime && b1vm.Sat == b2.Sat && b1vm.Status == b2.Status &&
-                          b1vm.TargetSat == b2.TargetSat && b1vm.TargetUnknown == b2.TargetUnknown && b1vm.TargetUnsat == b2.TargetUnsat &&
-                          b1vm.TotalProcessorTime == b2.TotalProcessorTime && b1vm.Unknown == b2.Unknown && b1vm.Unsat == b2.Unsat &&
-                          b1vm.WallClockTime == b2.WallClockTime;
-            return result;
-                            
-        }
-        public void Pick(BenchmarkResultViewModel item)
-        {
-            var new_Results = results.Where(i => !IsEqualBenchmarks(i, item)).ToArray();
-
-
-
-            throw new NotImplementedException();
-            
-            //remove duplicates
+            duplicatesToRemove.AddRange(items);
         }
         public void showNextDupe()
         {
@@ -119,15 +105,14 @@ namespace PerformanceTest.Management
                 return;
             else
             {
-                bool not_done = true;
                 do
                 {
                     string next_fn = filenames.First();
                     filenames.RemoveAt(0);
-                    var duplicates_fn = new List<BenchmarkResultViewModel>();
+                    var duplicates_fn = new List<BenchmarkResult>();
                     duplicates.TryGetValue(next_fn, out duplicates_fn);
-                    Duplicates = duplicates_fn;
-                    if (resolveTimeouts || resolveSameTime || resolveSlowest)
+                    Duplicates = duplicates_fn.Select(item => new BenchmarkResultViewModel(item, manager, uiService)).ToList();
+                    if (resolveTimeouts || resolveSameTime || resolveSlowest || resolveInErrors)
                     {
                         bool first = true;
                         bool all_timeouts = true;
@@ -136,11 +121,11 @@ namespace PerformanceTest.Management
                         bool all_memouts = true;
                         double runtime = 0.0;
                         double min_time = double.MaxValue;
-                        BenchmarkResultViewModel min_item = null;
+                        BenchmarkResult min_item = null;
                         double max_time = double.MinValue;
-                        BenchmarkResultViewModel max_item = null;
+                        BenchmarkResult max_item = null;
 
-                        foreach (BenchmarkResultViewModel r in duplicates_fn)
+                        foreach (BenchmarkResult r in duplicates_fn)
                         {
                             ResultStatus status = r.Status;
                             double time = r.NormalizedRuntime;
@@ -171,25 +156,34 @@ namespace PerformanceTest.Management
                         }
 
                         if (resolveTimeouts && all_timeouts)
-                            Pick(duplicates_fn.First());
+                        {
+                            BenchmarkResult pickItem = duplicates_fn.First();
+                            duplicates_fn.Remove(pickItem);
+                            duplicatesToRemove.AddRange(duplicates_fn);
+                        }
                         else if (resolveSameTime && all_ok && all_times_same)
-                            Pick(duplicates_fn.First());
+                        {
+                            BenchmarkResult pickItem = duplicates_fn.First();
+                            duplicates_fn.Remove(pickItem);
+                            duplicatesToRemove.AddRange(duplicates_fn);
+                        }
                         else if (resolveSlowest && (all_ok || all_memouts))
-                            Pick(max_item);
+                        {
+                            duplicates_fn.Remove(max_item);
+                            duplicatesToRemove.AddRange(duplicates_fn);
+                        }
+                        //TO DO: add resolving in. errors
                         else
                         {
-                            not_done = true;
                             uiService.ShowDuplicatesWindow(this);
                         }
                     }
                     else
-                        not_done = false;
+                    {
+                        uiService.ShowDuplicatesWindow(this);   
+                    }
                 }
-                while (not_done && filenames.Count() > 0);
-
-                if (not_done == false && filenames.Count() == 0)
-                    return;
-                uiService.ShowDuplicatesWindow(this);
+                while (filenames.Count() > 0);                 
             }
         }
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")

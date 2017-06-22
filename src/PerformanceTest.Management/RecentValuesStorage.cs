@@ -37,6 +37,11 @@ namespace PerformanceTest.Management
             get { return ReadBool("ResolveSlowestDupes"); }
             set { WriteBool("ResolveSlowestDupes", value); }
         }
+        public bool ResolveInErrorsDupes
+        {
+            get { return ReadBool("ResolveInErrorsDupes"); }
+            set { WriteBool("ResolveInErrorsDupes", value); }
+        }
         public string ConnectionString
         {
             get { return ReadString("ConnectionString"); }

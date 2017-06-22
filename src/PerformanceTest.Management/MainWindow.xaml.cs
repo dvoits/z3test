@@ -695,7 +695,7 @@ namespace PerformanceTest.Management
         {
             var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().Select(item => item.ID).ToArray();
             managerVm.BuildDuplicatesResolverView(sts, mnuOptResolveTimeoutDupes.IsChecked,
-                 mnuOptResolveSameTimeDupes.IsChecked, mnuOptResolveSlowestDupes.IsChecked);
+                 mnuOptResolveSameTimeDupes.IsChecked, mnuOptResolveSlowestDupes.IsChecked, mnuOptResolveInErrorsDupes.IsChecked);
         }
         private void btnEdit_Click(object sender, RoutedEventArgs e)
         {
@@ -724,6 +724,7 @@ namespace PerformanceTest.Management
                 recentValues.ResolveTimeoutDupes = mnuOptResolveTimeoutDupes.IsChecked;
                 recentValues.ResolveSameTimeDupes = mnuOptResolveSameTimeDupes.IsChecked;
                 recentValues.ResolveSlowestDupes = mnuOptResolveSlowestDupes.IsChecked;
+                recentValues.ResolveInErrorsDupes = mnuOptResolveInErrorsDupes.IsChecked;
             }
             catch (Exception ex)
             {
@@ -739,6 +740,7 @@ namespace PerformanceTest.Management
                 mnuOptResolveTimeoutDupes.IsChecked = recentValues.ResolveTimeoutDupes;
                 mnuOptResolveSameTimeDupes.IsChecked = recentValues.ResolveSameTimeDupes;
                 mnuOptResolveSlowestDupes.IsChecked = recentValues.ResolveSlowestDupes;
+                mnuOptResolveInErrorsDupes.IsChecked = recentValues.ResolveInErrorsDupes;
             }
             catch (Exception ex)
             {

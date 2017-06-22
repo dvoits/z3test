@@ -46,7 +46,7 @@ namespace PerformanceTest.Management
         {
             return ExperimentPropertiesViewModel.CreateAsync(manager, id, domainResolver, uiService);
         }
-        public async void BuildDuplicatesResolverView(int[] ids, bool resolveTimeouts, bool resolveSameTime, bool resolveSlowest)
+        public async void BuildDuplicatesResolverView(int[] ids, bool resolveTimeouts, bool resolveSameTime, bool resolveSlowest, bool resolveInErrors)
         {
             bool zero_duplicates = true;
             var handle = uiService.StartIndicateLongOperation("Resolving duplicates...");
@@ -55,7 +55,7 @@ namespace PerformanceTest.Management
                 for (int i = 0; i < ids.Length; i++)
                 {
                     int eid = ids[i];
-                    var vm = new DuplicatesViewModel(eid, resolveTimeouts, resolveSameTime, resolveSlowest, manager, uiService);
+                    var vm = new DuplicatesViewModel(eid, resolveTimeouts, resolveSameTime, resolveSlowest, resolveInErrors, manager, uiService);
                     bool hadDuplicates = await vm.DownloadResultsAsync();
                     if (hadDuplicates) zero_duplicates = false;
                 }
@@ -65,10 +65,10 @@ namespace PerformanceTest.Management
                     uiService.ShowInfo("There are no duplicates to resolve in experiment.", "No duplicates");
                 }
             }
-            catch (Exception ex)
-            {
-                uiService.ShowError(ex, "Failed to resolve duplicates in experiment");
-            }
+            //catch (Exception ex)
+            //{
+            //    uiService.ShowError(ex, "Failed to resolve duplicates in experiment");
+            //}
             finally
             {
                 uiService.StopIndicateLongOperation(handle);

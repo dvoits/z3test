@@ -264,6 +264,10 @@ namespace PerformanceTest
         {
             return "";
         }
+        public override Task UpdateExperiment(int id, BenchmarkResult[] removingResults, BenchmarkResult[] updatingResults, BenchmarkResult[] addingResults)
+        {
+            throw new NotImplementedException();
+        }
 
     }
     

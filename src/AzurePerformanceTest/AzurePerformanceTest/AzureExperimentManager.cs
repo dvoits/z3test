@@ -536,6 +536,10 @@ namespace AzurePerformanceTest
         {
             throw new NotImplementedException();
         }
+        public override Task UpdateExperiment(int id, BenchmarkResult[] removingResults, BenchmarkResult[] updatingResults, BenchmarkResult[] addingResults)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public sealed class PoolDescription
