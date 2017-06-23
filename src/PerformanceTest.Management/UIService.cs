@@ -257,7 +257,7 @@ namespace PerformanceTest.Management
         public void ShowDuplicatesWindow(DuplicatesViewModel vm)
         {
             Duplicates dlg = new Duplicates(vm);
-            dlg.Show();
+            dlg.ShowDialog();
         }
     }
 }

@@ -15,6 +15,7 @@ namespace PerformanceTest.Management
     public class ShowResultsViewModel : INotifyPropertyChanged
     {
         private readonly int id;
+        private readonly double timeout;
         private readonly ExperimentManager manager;
         private readonly IUIService uiService;
         private readonly string sharedDirectory;
@@ -25,7 +26,7 @@ namespace PerformanceTest.Management
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public ShowResultsViewModel(int id, string sharedDirectory, ExperimentManager manager, IUIService uiService)
+        public ShowResultsViewModel(int id, double timeout, string sharedDirectory, ExperimentManager manager, IUIService uiService)
         {
             if (manager == null) throw new ArgumentNullException("manager");
             if (uiService == null) throw new ArgumentNullException("uiService");
@@ -33,6 +34,7 @@ namespace PerformanceTest.Management
             this.uiService = uiService;
             this.id = id;
             this.sharedDirectory = sharedDirectory;
+            this.timeout = timeout;
             RefreshResultsAsync();
         }
 
@@ -172,6 +174,29 @@ namespace PerformanceTest.Management
             }
         }
 
+        public void ReclassifyResults(BenchmarkResultViewModel[] old_Results, ResultStatus rc)
+        {
+            List<BenchmarkResult> new_Results = new List<BenchmarkResult>();
+            foreach (var res in old_Results)
+            {
+                BenchmarkResult old_result = res.GetBenchmarkResult();
+                BenchmarkResult new_result = (rc == ResultStatus.Timeout) ? 
+                    new BenchmarkResult(old_result.ExperimentID, old_result.BenchmarkFileName,
+                        old_result.AcquireTime, timeout, old_result.TotalProcessorTime, old_result.WallClockTime,
+                        old_result.PeakMemorySizeMB, rc, old_result.ExitCode, old_result.StdOut, old_result.StdErr, old_result.Properties):
+                    new BenchmarkResult(old_result.ExperimentID, old_result.BenchmarkFileName, 
+                        old_result.AcquireTime, old_result.NormalizedRuntime, old_result.TotalProcessorTime, old_result.WallClockTime, 
+                        old_result.PeakMemorySizeMB, rc, old_result.ExitCode, old_result.StdOut, old_result.StdErr, old_result.Properties);
+
+                new_Results.Add(new_result);
+            }
+            UpdateResults(new_Results.ToArray());
+        }
+
+        public void UpdateResults(BenchmarkResult[] new_results)
+        {
+            throw new NotImplementedException();
+        }
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

@@ -42,9 +42,6 @@ namespace PerformanceTest
 
         public abstract Task UpdateStatusFlag(ExperimentID id, bool flag);
         public abstract Task UpdateNote(ExperimentID id, string note);
-        public abstract Task UpdateResultStatus(ExperimentID id, ResultStatus status);
-        public abstract Task UpdateRuntime(ExperimentID id, double runtime);
-
         /// <summary>
         /// Returns an ordered list of experiments satisfying the filter.
         /// </summary>

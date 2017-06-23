@@ -34,9 +34,9 @@ namespace PerformanceTest.Management
         {
             return new ExperimentListViewModel(manager, uiService);
         }
-        public ShowResultsViewModel BuildResultsView(int id, string directory)
+        public ShowResultsViewModel BuildResultsView(int id, double timeout, string directory)
         {
-            return new ShowResultsViewModel(id, directory, manager, uiService);
+            return new ShowResultsViewModel(id, timeout, directory, manager, uiService);
         }
         public CompareExperimentsViewModel BuildComparingResults(int id1, int id2, ExperimentDefinition def1, ExperimentDefinition def2)
         {
@@ -46,7 +46,7 @@ namespace PerformanceTest.Management
         {
             return ExperimentPropertiesViewModel.CreateAsync(manager, id, domainResolver, uiService);
         }
-        public async void BuildDuplicatesResolverView(int[] ids, bool resolveTimeouts, bool resolveSameTime, bool resolveSlowest)
+        public async void BuildDuplicatesResolverView(int[] ids, bool resolveTimeouts, bool resolveSameTime, bool resolveSlowest, bool resolveInErrors)
         {
             bool zero_duplicates = true;
             var handle = uiService.StartIndicateLongOperation("Resolving duplicates...");
@@ -55,7 +55,7 @@ namespace PerformanceTest.Management
                 for (int i = 0; i < ids.Length; i++)
                 {
                     int eid = ids[i];
-                    var vm = new DuplicatesViewModel(eid, resolveTimeouts, resolveSameTime, resolveSlowest, manager, uiService);
+                    var vm = new DuplicatesViewModel(eid, resolveTimeouts, resolveSameTime, resolveSlowest, resolveInErrors, manager, uiService);
                     bool hadDuplicates = await vm.DownloadResultsAsync();
                     if (hadDuplicates) zero_duplicates = false;
                 }

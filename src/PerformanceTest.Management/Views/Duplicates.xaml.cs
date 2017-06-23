@@ -31,7 +31,9 @@ namespace PerformanceTest.Management
             if (dataGrid.SelectedItems.Count == 1)
             {
                 var item = (BenchmarkResultViewModel)dataGrid.SelectedItem;
-                vm.Pick(item);
+                var items = dataGrid.Items.Cast<BenchmarkResultViewModel>().ToList();
+                items.Remove(item);
+                vm.Pick(items);
                 Close();
             }
         }
