@@ -75,6 +75,35 @@ namespace PerformanceTest.Management
             }
 
         }
+        public async void RequeueIErrors(ExperimentStatusViewModel[] ids)
+        {
+            var handle = uiService.StartIndicateLongOperation("Requeue infrastructure errors...");
+            int requeueCount = 0;
+            try
+            {
+                for (int i = 0; i < ids.Length; i++)
+                {
+                    int eid = ids[i].ID;
+                    var results = await manager.GetResults(eid);
+                    var ieResults = results.Where(r => r.Status == Measurement.ResultStatus.InfrastructureError).Select(r => r.BenchmarkFileName).Distinct();
+                    if (ieResults.Count() > 0)
+                    {
+                        string benchmarkCont = ids[i].Definition.BenchmarkContainerUri;
+                        await manager.RestartBenchmarks(eid, ieResults, benchmarkCont);
+                        requeueCount += ieResults.Count();
+                    }
+                }
+                uiService.ShowInfo("Requeued " + requeueCount + " infrastructure errors.", "Infrastructure errors");
+            }
+            catch (Exception ex)
+            {
+                uiService.ShowError(ex, "Failed to requeue infrastructure errors");
+            }
+            finally
+            {
+                uiService.StopIndicateLongOperation(handle);
+            }
+        }
         public async Task<string[]> GetAvailableCategories(string directory)
         {
             if (directory == null) throw new ArgumentNullException("directory");

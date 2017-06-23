@@ -197,6 +197,23 @@ namespace PerformanceTest.Management
         {
             throw new NotImplementedException();
         }
+        public async void RequeueResults(BenchmarkResultViewModel[] items)
+        {
+            var handle = uiService.StartIndicateLongOperation("Requeue experiment results...");
+            try
+            {
+                string[] benchmarkNames = items.Select(e => e.Filename).Distinct().ToArray();
+                await manager.RestartBenchmarks(id, benchmarkNames);
+            }
+            catch (Exception ex)
+            {
+                uiService.ShowError(ex.Message, "Failed to requeue experiment results");
+            }
+            finally
+            {
+                uiService.StopIndicateLongOperation(handle);
+            }
+        }
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

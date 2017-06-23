@@ -500,7 +500,7 @@ namespace PerformanceTest.Management
                 //    //change note
                 //}
                 //not implemented
-
+                throw new NotImplementedException();
             }
         }
 
@@ -654,11 +654,31 @@ namespace PerformanceTest.Management
         }
         private void canRequeueIErrors(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = dataGrid.SelectedItems.Count > 0;
+            if (managerVm == null || dataGrid.SelectedItems.Count < 1)
+            {
+                e.CanExecute = false;
+                return;
+            }
+            else
+            {
+
+                var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().ToArray();
+                for (var i = 0; i < sts.Length; i++)
+                {
+                    var rc = sts[i].JobStatus;
+                    if (rc != ExperimentExecutionState.Completed)
+                    {
+                        e.CanExecute = false;
+                        return;
+                    }
+                }
+            }
+            e.CanExecute = true;
         }
         private void requeueIErrors(object target, ExecutedRoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().ToArray();
+            managerVm.RequeueIErrors(sts);
         }
         private void canRecovery(object sender, CanExecuteRoutedEventArgs e)
         {
