@@ -5,60 +5,91 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Web;
 using PerformanceTest;
+using PerformanceTest.Records;
 
 namespace Nightly
 {
     public class MainPageViewModel
     {
-        private readonly AzureExperimentManager manager;
+        private readonly AzureExperimentManager expManager;
+        private readonly AzureSummaryManager summaryManager;
         private readonly string summaryName;
-        private readonly ExperimentSummary[] summaries;
+        private readonly ExperimentViewModel[] experiments;
 
-        public MainPageViewModel(AzureExperimentManager manager, string summaryName, ExperimentSummary[] summaries)
+        public static async Task<MainPageViewModel> Initialize(string connectionString, string summaryName)
         {
-            this.manager = manager;
+            var expManager = AzureExperimentManager.Open(connectionString);
+            var summaryManager = new AzureSummaryManager(connectionString);
+
+            var summRec = await summaryManager.GetSummariesAndRecords(summaryName);
+            var summ = summRec.Item1;
+            var records = summRec.Item2;
+            var now = DateTime.Now;
+
+            var expTasks =
+                summ
+                .Select(async expSum =>
+                {
+                    var exp = await expManager.TryFindExperiment(expSum.Id);
+                    if (exp == null) return null;
+
+                    bool isFinished;
+                    if (exp.Status.SubmissionTime.Subtract(now).TotalDays >= 3)
+                    {
+                        isFinished = true;
+                    }
+                    else
+                    {
+                        try
+                        {
+                            var jobState = await expManager.GetExperimentJobState(new[] { exp.ID });
+                            isFinished = jobState[0] != ExperimentExecutionState.Active;
+                        }
+                        catch
+                        {
+                            isFinished = true;
+                        }
+                    }
+
+                    return new ExperimentViewModel(expSum, isFinished, exp.Status.SubmissionTime, exp.Definition.BenchmarkTimeout);
+                });
+
+            var experiments = await Task.WhenAll(expTasks);
+            return new MainPageViewModel(expManager, summaryManager, summaryName, experiments, records);
+        }
+
+        private MainPageViewModel(AzureExperimentManager expManager, AzureSummaryManager summaryManager, string summaryName, ExperimentViewModel[] experiments, RecordsTable records)
+        {
+            this.expManager = expManager;
+            this.summaryManager = summaryManager;
             this.summaryName = summaryName;
-            this.summaries = summaries;
+            this.experiments = experiments.OrderBy(exp => exp.SubmissionTime).ToArray();
+
+            Records = records;
         }
 
-        public static async Task<MainPageViewModel> Initialize(AzureExperimentManager manager, string summaryName)
-        {
-            var summaries = await manager.Storage.GetSummary(summaryName);
-            return new MainPageViewModel(manager, summaryName, summaries);
-        }
+        public string SummaryName { get { return summaryName; } }
 
         public string[] Categories
         {
             get
             {
-                return summaries.SelectMany(s => s.CategorySummary.Keys).Distinct().ToArray();
+                return experiments.SelectMany(exp => exp.Summary.CategorySummary.Keys).Distinct().ToArray();
             }
         }
 
-       
-        public async Task<ExperimentViewModel> GetExperiment(int id)
+        public RecordsTable Records { get; internal set; }
+
+        public ExperimentViewModel[] Experiments { get { return experiments; } }
+
+        public ExperimentViewModel GetExperiment(int id)
         {
-            var exp = await manager.TryFindExperiment(id);
-            if (exp == null) throw new Exception("Experiment " + id + " not found");
-
-            bool isFinished;
-            try
-            {
-                var jobState = await manager.GetExperimentJobState(new[] { id });
-                isFinished = jobState[0] != ExperimentExecutionState.Active;
-            }
-            catch
-            {
-                isFinished = true;
-            }
-
-            var summary = summaries.First(s => s.Id == id);
-            return new ExperimentViewModel(summary, isFinished, exp.Status.SubmissionTime);
+            return experiments.First(exp => exp.Id == id);
         }
 
-        public Task<ExperimentViewModel> GetLastExperiment()
+        public ExperimentViewModel GetLastExperiment()
         {
-            return GetExperiment(summaries.OrderByDescending(s => s.Date).First().Id);
+            return experiments.Last();
         }
     }
 }

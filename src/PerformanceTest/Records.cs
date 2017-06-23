@@ -25,6 +25,17 @@ namespace PerformanceTest.Records
         /// <summary>Returns the benchmark records aggregated by categories (maps from category name).</summary>
         public Dictionary<string, CategoryRecord> CategoryRecords { get { return categoryRecords; } }
 
+        public CategoryRecord Overall
+        {
+            get
+            {
+                CategoryRecord res = new CategoryRecord(0.0, 0);
+                foreach (KeyValuePair<string, CategoryRecord> kvp in categoryRecords)
+                    res = res.Add(kvp.Value.Runtime, kvp.Value.Files);
+                return res;
+            }
+        }
+
         public void Update(IEnumerable<BenchmarkResult> results, Domain domain)
         {
             foreach (var r in results)

@@ -25,6 +25,7 @@ namespace AzurePerformanceTest
         private readonly IDomainResolver resolveDomain;
         private readonly IRetryPolicy retryPolicy = new ExponentialRetry(TimeSpan.FromMilliseconds(250), 7);
 
+
         private const string summaryContainerName = "summary";
 
 
@@ -44,6 +45,16 @@ namespace AzurePerformanceTest
             resolveDomain = MEFDomainResolver.Instance;
 
             Task.WaitAll(cloudEntityCreationTasks);
+        }
+
+
+        public async Task<Tuple<ExperimentSummary[], RecordsTable>> GetSummariesAndRecords(string summaryName)
+        {
+            var results = await DownloadSummary(summaryName);
+            var records = results.Item2;
+            var summaries = ExperimentSummaryStorage.LoadFromTable(results.Item1);
+
+            return Tuple.Create(summaries, records);
         }
 
         public async Task Update(string summaryName, int experimentId)
