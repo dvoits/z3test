@@ -18,7 +18,7 @@ namespace PerformanceTest
         public static ExperimentDefinition Create(string executable, string benchmarkContainerUri, string benchmarkDirectory, string benchmarkFileExtension, string parameters,
             TimeSpan benchmarkTimeout,
             string domainName,
-            string category = null, double memoryLimitMB = 0)
+            string category = null, double memoryLimitMB = 0, int adaptiveRunMaxRepetitions = 10, double adaptiveRunMaxTimeInSeconds = 10)
         {
             return new ExperimentDefinition()
             {
@@ -30,7 +30,9 @@ namespace PerformanceTest
                 BenchmarkTimeout = benchmarkTimeout,
                 Category = category,
                 MemoryLimitMB = memoryLimitMB,
-                DomainName = domainName
+                DomainName = domainName,
+                AdaptiveRunMaxRepetitions = adaptiveRunMaxRepetitions,
+                AdaptiveRunMaxTimeInSeconds = adaptiveRunMaxTimeInSeconds
             };
         }
 
@@ -98,6 +100,16 @@ namespace PerformanceTest
         /// The time limit per experiment.
         /// </summary>
         public TimeSpan ExperimentTimeout { get; private set; }
+
+        /// <summary>
+        /// Maximum number of repetitions of short benchmarks (1 for turning adaptivity off)
+        /// </summary>
+        public int AdaptiveRunMaxRepetitions { get; private set; }
+
+        /// <summary>
+        /// Maximum total duration of adaptive runs in seconds
+        /// </summary>
+        public double AdaptiveRunMaxTimeInSeconds { get; private set; }
 
         public string GroupName { get; private set; }
 

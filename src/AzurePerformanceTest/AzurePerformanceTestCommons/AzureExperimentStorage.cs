@@ -390,6 +390,8 @@ namespace AzurePerformanceTest
             row.Note = note;
             row.Creator = creator;
             row.WorkerInformation = workerInformation;
+            row.AdaptiveRunMaxRepetitions = experiment.AdaptiveRunMaxRepetitions;
+            row.AdaptiveRunMaxTimeInSeconds = experiment.AdaptiveRunMaxTimeInSeconds;
 
             TableOperation insertOperation = TableOperation.Insert(row);
             await experimentsTable.ExecuteAsync(insertOperation);
@@ -780,6 +782,16 @@ namespace AzurePerformanceTest
         /// Seconds.
         /// </summary>
         public double ExperimentTimeout { get; set; }
+
+        /// <summary>
+        /// Maximum number of repetitions of short benchmarks (1 for turning adaptivity off)
+        /// </summary>
+        public int AdaptiveRunMaxRepetitions { get; set; }
+
+        /// <summary>
+        /// Maximum total duration of adaptive runs in seconds
+        /// </summary>
+        public double AdaptiveRunMaxTimeInSeconds { get; set; }
         public string Note { get; set; }
         public string Creator { get; set; }
         public string WorkerInformation { get; set; }

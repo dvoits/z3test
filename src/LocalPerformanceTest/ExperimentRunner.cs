@@ -77,7 +77,7 @@ namespace PerformanceTest
             return results.ToArray();
         }
 
-        public static BenchmarkResult RunBenchmark(int experimentId, string executable, string args, string inputDisplayName, string inputFullPath, int repetitions, TimeSpan timeOut, double memLimitMB, long? ouputLimit, long? errorLimit, Domain domain, double normal)
+        public static BenchmarkResult RunBenchmark(int experimentId, string executable, string args, string inputDisplayName, string inputFullPath, int repetitions, TimeSpan timeOut, double memLimitMB, long? ouputLimit, long? errorLimit, Domain domain, double normal, int maxRepetitions = 10, double maxTimeInSeconds = 10)
         {
             if (domain == null) throw new ArgumentNullException("domain");
             if (args != null)
@@ -86,8 +86,8 @@ namespace PerformanceTest
                 args = "";
 
             DateTime acq = DateTime.Now;
-            int maxCount = repetitions == 0 ? 10 : repetitions;
-            TimeSpan maxTime = TimeSpan.FromSeconds(10);
+            int maxCount = repetitions == 0 ? maxRepetitions : repetitions;
+            TimeSpan maxTime = TimeSpan.FromSeconds(maxTimeInSeconds);
 
             int count = 0;
             List<ProcessRunMeasure> measures = new List<ProcessRunMeasure>();
