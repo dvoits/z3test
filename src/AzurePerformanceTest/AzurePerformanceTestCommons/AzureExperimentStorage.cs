@@ -87,6 +87,8 @@ namespace AzurePerformanceTest
 
         public CloudBlobContainer TempBlobContainer { get { return tempContainer; } }
 
+        public string StorageName { get { return storageAccount.Credentials.AccountName; } }
+
 
         public IEnumerable<CloudBlockBlob> ListAzureWorkerBlobs()
         {

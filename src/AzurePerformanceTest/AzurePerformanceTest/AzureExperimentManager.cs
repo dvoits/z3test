@@ -300,7 +300,7 @@ namespace AzurePerformanceTest
                 job.PoolInformation = new PoolInformation { PoolId = poolId };
                 job.JobPreparationTask = new JobPreparationTask
                 {
-                    CommandLine = "cmd /c (robocopy %AZ_BATCH_TASK_WORKING_DIR% %AZ_BATCH_NODE_SHARED_DIR%\\" + job.Id + " /e /purge) ^& IF %ERRORLEVEL% LEQ 1 exit 0",
+                    CommandLine = "cmd /c (robocopy %AZ_BATCH_TASK_WORKING_DIR% %AZ_BATCH_NODE_SHARED_DIR%\\%AZ_BATCH_JOB_ID% /e /purge) ^& IF %ERRORLEVEL% LEQ 1 exit 0",
                     ResourceFiles = new List<ResourceFile>(),
                     WaitForSuccess = true
                 };
@@ -368,7 +368,7 @@ namespace AzurePerformanceTest
                 job.Constraints.MaxTaskRetryCount = MaxTaskRetryCount;
                 string taskId = "taskStarter";
 
-                string taskCommandLine = string.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\" + job.Id + "\\AzureWorker.exe --manage-tasks {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\" \"{7}\" \"{8}\" \"{9}\"", 
+                string taskCommandLine = string.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\%AZ_BATCH_JOB_ID%\\AzureWorker.exe --manage-tasks {0} \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\" \"{7}\" \"{8}\" \"{9}\"", 
                     id, definition.BenchmarkContainerUri, definition.BenchmarkDirectory,
                     definition.Category, definition.BenchmarkFileExtension, definition.DomainName, definition.Executable, definition.Parameters, 
                     definition.BenchmarkTimeout.TotalSeconds.ToString(), definition.MemoryLimitMB.ToString());
@@ -419,7 +419,7 @@ namespace AzurePerformanceTest
                 job.PoolInformation = new PoolInformation { PoolId = poolId };
                 job.JobPreparationTask = new JobPreparationTask
                 {
-                    CommandLine = "cmd /c (robocopy %AZ_BATCH_TASK_WORKING_DIR% %AZ_BATCH_NODE_SHARED_DIR%\\" + job.Id + " /e /purge) ^& IF %ERRORLEVEL% LEQ 1 exit 0",
+                    CommandLine = "cmd /c (robocopy %AZ_BATCH_TASK_WORKING_DIR% %AZ_BATCH_NODE_SHARED_DIR%\\%AZ_BATCH_JOB_ID% / e /purge) ^& IF %ERRORLEVEL% LEQ 1 exit 0",
                     ResourceFiles = new List<ResourceFile>(),
                     WaitForSuccess = true
                 };
@@ -484,7 +484,7 @@ namespace AzurePerformanceTest
                 job.Constraints.MaxTaskRetryCount = MaxTaskRetryCount;
                 string taskId = "taskStarter";
 
-                string taskCommandLine = string.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\" + job.Id + "\\AzureWorker.exe --manage-retry {0} \"{1}\" \"{2}\"",
+                string taskCommandLine = string.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\%AZ_BATCH_JOB_ID%\\AzureWorker.exe --manage-retry {0} \"{1}\" \"{2}\"",
                     id, tempBlobName, newBenchmarkContainerUri);
 
                 job.JobManagerTask = new JobManagerTask(taskId, taskCommandLine);
@@ -514,9 +514,9 @@ namespace AzurePerformanceTest
             }
         }
 
-        private static string BuildJobId(int experimentId)
+        private string BuildJobId(int experimentId)
         {
-            return "exp" + experimentId.ToString();
+            return this.storage.StorageName + "_exp" + experimentId.ToString();
         }
 
         public override async Task UpdateNote(int id, string note)

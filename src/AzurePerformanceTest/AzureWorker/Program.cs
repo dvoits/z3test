@@ -70,7 +70,7 @@ namespace AzureWorker
                 benchmarkContainerUri = args[2];
             }
 
-            string jobId = "exp" + experimentId.ToString();
+            string jobId = Environment.GetEnvironmentVariable(JobIdEnvVariableName);
 
             var secretStorage = new SecretStorage(Settings.Default.AADApplicationId, Settings.Default.AADApplicationCertThumbprint, Settings.Default.KeyVaultUrl);
             BatchConnectionString credentials = new BatchConnectionString(await secretStorage.GetSecret(Settings.Default.ConnectionStringSecretId));
@@ -193,7 +193,7 @@ namespace AzureWorker
             }
             Console.WriteLine(String.Format("Params are:\n id: {0}\ncontainer: {8}\ndirectory:{9}\ncategory: {1}\nextensions: {10}\ndomain: {11}\nexec: {2}\nargs: {3}\ntimeout: {4}\nmemlimit: {5}\noutlimit: {6}\nerrlimit: {7}", experimentId, benchmarkCategory, executable, arguments, timeout, memoryLimit, outputLimit, errorLimit, benchmarkContainerUri, benchmarkDirectory, extensionsString, domainString));
 
-            string jobId = "exp" + experimentId.ToString();
+            string jobId = Environment.GetEnvironmentVariable(JobIdEnvVariableName);
 
             var secretStorage = new SecretStorage(Settings.Default.AADApplicationId, Settings.Default.AADApplicationCertThumbprint, Settings.Default.KeyVaultUrl);
             BatchConnectionString credentials = new BatchConnectionString(await secretStorage.GetSecret(Settings.Default.ConnectionStringSecretId));
@@ -457,31 +457,6 @@ namespace AzureWorker
             var comparer = new AzureBenchmarkResultsComparer();
             var distinct = groups.SelectMany(g => g.Distinct(comparer)).ToList();
             return new Tuple<int, List<AzureBenchmarkResult>>(uniqueNameCount, distinct);
-            //results.Sort((a, b) => string.Compare(a.BenchmarkFileName, b.BenchmarkFileName));
-            //var lastUniqueName = results[0].BenchmarkFileName;
-            //var lastUniqueResult = results[0];
-            //int uniqueNameCount = 1;
-            //int i = 1;
-            //int total = results.Count;
-            //while (i < total)
-            //{
-            //    if (AreAzureBenchmarkResultsEqual(lastUniqueResult, results[i]))
-            //    {
-            //        results.RemoveAt(i);
-            //        --total;
-            //    }
-            //    else
-            //    {
-            //        lastUniqueResult = results[i];
-            //        if (lastUniqueName != results[i].BenchmarkFileName)
-            //        {
-            //            lastUniqueName = results[i].BenchmarkFileName;
-            //            ++uniqueNameCount;
-            //        }
-            //        ++i;
-            //    }
-            //}
-            //return uniqueNameCount;
         }
 
         private static string CombineBlobPath(string benchmarkDirectory, string benchmarkCategory)
