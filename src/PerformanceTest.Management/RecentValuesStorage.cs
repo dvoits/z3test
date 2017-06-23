@@ -71,6 +71,34 @@ namespace PerformanceTest.Management
             get { return ReadString("ExperimentExecutableParameters"); }
             set { WriteString("ExperimentExecutableParameters", value); }
         }
+        public bool AllowAdaptiveRuns
+        {
+            get { return ReadBool("AllowAdaptiveRuns"); }
+            set { WriteBool("AllowAdaptiveRuns", value); }
+        }
+
+        public int MaxRepetitions
+        {
+            get
+            {
+                var reps = ReadInt("MaxRepetitions");
+                return reps <= 0 ? 10 : reps;
+            }
+            set { WriteInt("MaxRepetitions", value); }
+        }
+
+        public double MaxTimeForAdaptiveRuns
+        {
+            get
+            {
+                double time = ReadDouble("MaxTimeForAdaptiveRuns");
+                return Double.IsNaN(time) ? 10.0 : time;
+            }
+            set
+            {
+                WriteDouble("MaxTimeForAdaptiveRuns", value);
+            }
+        }
 
         public double BenchmarkMemoryLimit
         {

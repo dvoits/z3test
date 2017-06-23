@@ -7,7 +7,7 @@
         xmlns:local="clr-namespace:PerformanceTest.Management"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        Title="New Experiment..." Height="750" Width="550" Loaded="Window_Loaded" WindowStartupLocation="CenterOwner" ShowInTaskbar="False" ResizeMode="NoResize">
+        Title="New Experiment..." Height="800" Width="550" Loaded="Window_Loaded" WindowStartupLocation="CenterOwner" ShowInTaskbar="False" ResizeMode="NoResize">
 
     <Window.Resources>
         <local:InverseBooleanConverter x:Key="InverseBooleanConverter" />
@@ -211,6 +211,36 @@
                              Text="{Binding BenchmarkTimeoutSec}"/>
                 <Label Content="sec" HorizontalAlignment="Left" Grid.Column="2"/>
             </Grid>
+            <!-- RunShortBenchmarksAdaptively -->
+            <GroupBox>
+                <GroupBox.Header>
+                    <CheckBox Name="chkAdaptiveRuns" Content="Allow to adaptively run benchmarks multiple times and pick median value to increase precision"  IsChecked="{Binding AllowAdaptiveRuns}" />
+                </GroupBox.Header>
+                <StackPanel Orientation="Vertical" IsEnabled="{Binding AllowAdaptiveRuns}">
+                    <Grid Margin="{StaticResource ParameterMargin}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="{StaticResource KeyWidth}" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Label Content="Run each benchmark at most" Height="28" HorizontalAlignment="Left" Name="labelMaxReps" VerticalAlignment="Center" Grid.Column="0"/>
+                        <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtMaxRepetitions" VerticalAlignment="Center" Grid.Column="1" ToolTip="Maximum number of times ecah benchmark can run" Margin="0,2"
+                             Text="{Binding MaxRepetitions}"/>
+                        <Label Content="times" HorizontalAlignment="Left" Grid.Column="2"/>
+                    </Grid>
+                    <Grid Margin="{StaticResource ParameterMargin}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="{StaticResource KeyWidth}" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Label Content="while its total runtime is less than" Height="28" HorizontalAlignment="Left" Name="labelMaxTime" VerticalAlignment="Center" Grid.Column="0"/>
+                        <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtMaxTime" VerticalAlignment="Center" Grid.Column="1" ToolTip="The time limit (per benchmark)." Margin="0,2"
+                             Text="{Binding MaxTimeForAdaptiveRuns}"/>
+                        <Label Content="sec" HorizontalAlignment="Left" Grid.Column="2"/>
+                    </Grid>
+                </StackPanel>
+            </GroupBox>
             <!-- Note -->
             <Grid Margin="{StaticResource ParameterMargin}">
                 <Grid.ColumnDefinitions>

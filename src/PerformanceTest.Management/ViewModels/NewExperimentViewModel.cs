@@ -28,6 +28,9 @@ namespace PerformanceTest.Management
         private string parameters;
         private string extension;
         private string note;
+        private bool allowAdaptiveRuns;
+        private int maxRepetitions;
+        private double maxTimeForAdaptiveRuns;
 
         private bool useMostRecentExecutable;
 
@@ -65,6 +68,9 @@ namespace PerformanceTest.Management
             timelimit = recentValues.BenchmarkTimeLimit.TotalSeconds;
             memlimit = recentValues.BenchmarkMemoryLimit;
             note = recentValues.ExperimentNote;
+            allowAdaptiveRuns = recentValues.AllowAdaptiveRuns;
+            maxRepetitions = recentValues.MaxRepetitions;
+            maxTimeForAdaptiveRuns = recentValues.MaxTimeForAdaptiveRuns;
 
             Domain = Domains[0];
             // Following will override the defaults given when setting the Domain above.
@@ -257,6 +263,36 @@ namespace PerformanceTest.Management
             }
         }
 
+        public bool AllowAdaptiveRuns
+        {
+            get { return allowAdaptiveRuns; }
+            set
+            {
+                allowAdaptiveRuns = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+        public int MaxRepetitions
+        {
+            get { return maxRepetitions; }
+            set
+            {
+                maxRepetitions = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+        public double MaxTimeForAdaptiveRuns
+        {
+            get { return maxTimeForAdaptiveRuns; }
+            set
+            {
+                maxTimeForAdaptiveRuns = value;
+                NotifyPropertyChanged();
+            }
+        }
+
         public string Note
         {
             get { return note; }
@@ -309,6 +345,7 @@ namespace PerformanceTest.Management
             recentValues.BenchmarkMemoryLimit = memlimit;
             recentValues.ExperimentNote = note;
             recentValues.BatchPool = selectedPool;
+            recentValues.AllowAdaptiveRuns = allowAdaptiveRuns;
         }
 
         public Task<string> GetRecentExecutable()

@@ -171,6 +171,14 @@ namespace PerformanceTest.Management
                 }
             }
 
+            int maxRepetitions = 1;
+            double maxTime = 0;
+            if (newExperiment.AllowAdaptiveRuns)
+            {
+                maxRepetitions = newExperiment.MaxRepetitions;
+                maxTime = newExperiment.MaxTimeForAdaptiveRuns;
+            }
+
             // Submitting experiments
             string[] cats = newExperiment.Categories.Split('|');
             var res = new Tuple<string, int?, Exception>[cats.Length];
@@ -182,7 +190,7 @@ namespace PerformanceTest.Management
                 ExperimentDefinition.Create(
                     packageName, newExperiment.BenchmarkContainerUri, newExperiment.BenchmarkDirectory, newExperiment.Extension, newExperiment.Parameters,
                     TimeSpan.FromSeconds(newExperiment.BenchmarkTimeoutSec), newExperiment.Domain,
-                    category, newExperiment.BenchmarkMemoryLimitMb);
+                    category, newExperiment.BenchmarkMemoryLimitMb, maxRepetitions, maxTime);
 
                 try
                 {

@@ -330,6 +330,9 @@ namespace PerformanceTest.Management
                     vm.BenchmarkMemoryLimitMb = experiment.Definition.MemoryLimitMB;
                     vm.Domain = experiment.Definition.DomainName;
                     vm.Parameters = experiment.Definition.Parameters;
+                    vm.MaxRepetitions = experiment.Definition.AdaptiveRunMaxRepetitions;
+                    vm.MaxTimeForAdaptiveRuns = experiment.Definition.AdaptiveRunMaxTimeInSeconds;
+                    vm.AllowAdaptiveRuns = experiment.Definition.AdaptiveRunMaxRepetitions != 1 || experiment.Definition.AdaptiveRunMaxTimeInSeconds != 0;
                     // experiment.Definition.Executable;
 
                     SubmitNewJob(vm);
