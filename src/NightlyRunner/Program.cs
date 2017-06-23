@@ -104,6 +104,7 @@ namespace NightlyRunner
                     Settings.BenchmarkFileExtension,
                     Settings.Parameters,
                     TimeSpan.FromSeconds(Settings.BenchmarkTimeoutSeconds),
+                    TimeSpan.FromSeconds(Settings.ExperimentTimeoutSeconds),
                     Settings.Domain,
                     Settings.BenchmarkCategory,
                     Settings.MemoryLimitMegabytes);

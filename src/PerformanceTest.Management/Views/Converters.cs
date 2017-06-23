@@ -147,4 +147,26 @@ namespace PerformanceTest.Management
 
         #endregion
     }
+
+    public class AndExprToVisibilityConverter : IMultiValueConverter
+    {
+        #region IValueConverter Members
+
+        public object Convert(object[] values, Type targetType, object parameter,
+            System.Globalization.CultureInfo culture)
+        {
+            if (values == null) return null;
+            if ((string)values[0] == "" && (string)values[1] == "") return Visibility.Visible;
+            return Visibility.Hidden;
+
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter,
+            System.Globalization.CultureInfo culture)
+        {
+            throw new NotSupportedException();
+        }
+
+        #endregion
+    }
 }

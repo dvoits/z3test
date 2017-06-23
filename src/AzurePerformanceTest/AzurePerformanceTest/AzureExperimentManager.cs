@@ -216,6 +216,7 @@ namespace AzurePerformanceTest
                 experimentEntity.BenchmarkFileExtension,
                 experimentEntity.Parameters,
                 TimeSpan.FromSeconds(experimentEntity.BenchmarkTimeout),
+                TimeSpan.FromSeconds(experimentEntity.ExperimentTimeout),
                 experimentEntity.DomainName,
                 experimentEntity.Category,
                 experimentEntity.MemoryLimitMB,

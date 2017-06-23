@@ -16,7 +16,7 @@ namespace PerformanceTest
     public class ExperimentDefinition
     {
         public static ExperimentDefinition Create(string executable, string benchmarkContainerUri, string benchmarkDirectory, string benchmarkFileExtension, string parameters,
-            TimeSpan benchmarkTimeout,
+            TimeSpan benchmarkTimeout, TimeSpan experimentTimeout,
             string domainName,
             string category = null, double memoryLimitMB = 0, int adaptiveRunMaxRepetitions = 10, double adaptiveRunMaxTimeInSeconds = 10)
         {
@@ -28,6 +28,7 @@ namespace PerformanceTest
                 BenchmarkFileExtension = benchmarkFileExtension,
                 Parameters = parameters,
                 BenchmarkTimeout = benchmarkTimeout,
+                ExperimentTimeout = experimentTimeout,
                 Category = category,
                 MemoryLimitMB = memoryLimitMB,
                 DomainName = domainName,

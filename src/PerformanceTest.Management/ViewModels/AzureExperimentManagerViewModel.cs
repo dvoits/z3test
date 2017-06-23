@@ -34,9 +34,9 @@ namespace PerformanceTest.Management
         {
             return new ExperimentListViewModel(manager, uiService);
         }
-        public ShowResultsViewModel BuildResultsView(int id, double timeout, string directory)
+        public ShowResultsViewModel BuildResultsView(int id, ExperimentExecutionState? jobStatus, double timeout, string directory)
         {
-            return new ShowResultsViewModel(id, timeout, directory, manager, uiService);
+            return new ShowResultsViewModel(id, jobStatus, timeout, directory, manager, uiService);
         }
         public CompareExperimentsViewModel BuildComparingResults(int id1, int id2, ExperimentDefinition def1, ExperimentDefinition def2)
         {
@@ -181,7 +181,7 @@ namespace PerformanceTest.Management
                 ExperimentDefinition def =
                 ExperimentDefinition.Create(
                     packageName, newExperiment.BenchmarkContainerUri, newExperiment.BenchmarkDirectory, newExperiment.Extension, newExperiment.Parameters,
-                    TimeSpan.FromSeconds(newExperiment.BenchmarkTimeoutSec), newExperiment.Domain,
+                    TimeSpan.FromSeconds(newExperiment.BenchmarkTimeoutSec), TimeSpan.FromSeconds(newExperiment.ExperimentTimeoutSec), newExperiment.Domain,
                     category, newExperiment.BenchmarkMemoryLimitMb);
 
                 try

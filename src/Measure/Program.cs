@@ -42,7 +42,7 @@ namespace Measure
             }
 
             TimeSpan timeout = TimeSpan.FromHours(1);
-            ExperimentDefinition definition = ExperimentDefinition.Create(executable, benchmarkContainerUri, benchmarkDirectory, extension, arguments, timeout, Measurement.Domain.Default.Name, category: category);
+            ExperimentDefinition definition = ExperimentDefinition.Create(executable, benchmarkContainerUri, benchmarkDirectory, extension, arguments, timeout, TimeSpan.FromSeconds(0), Measurement.Domain.Default.Name, category: category);
             string version = GetVersion(executable);
 
             if(init)

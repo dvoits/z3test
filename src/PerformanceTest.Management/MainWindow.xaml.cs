@@ -547,7 +547,7 @@ namespace PerformanceTest.Management
             }
             else sharedDirectory = st.Definition.Category;
 
-            var vm = managerVm.BuildResultsView(st.ID, st.Definition.BenchmarkTimeout.TotalSeconds, sharedDirectory);
+            var vm = managerVm.BuildResultsView(st.ID, st.JobStatus, st.Definition.BenchmarkTimeout.TotalSeconds, sharedDirectory);
             dlg.DataContext = vm;
             dlg.Owner = this;
             dlg.Show();
@@ -696,6 +696,8 @@ namespace PerformanceTest.Management
                 for (var i = 0; i < sts.Length; i++)
                 {
                     var rc = sts[i].JobStatus;
+                    //if (rc == null)
+                    //    rc = 
                     if (rc != ExperimentExecutionState.Completed)
                     {
                         e.CanExecute = false;

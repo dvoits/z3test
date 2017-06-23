@@ -35,6 +35,12 @@ namespace PerformanceTest.Management
 
         private void canReclassify(object sender, CanExecuteRoutedEventArgs e)
         {
+            var vm = DataContext as ShowResultsViewModel;
+            if (vm.JobStatus != ExperimentExecutionState.Completed)
+            {
+                e.CanExecute = false;
+                return;
+            }
             e.CanExecute = dataGrid.SelectedItems.Count > 0;
         }
         private void Reclassify(ResultStatus rc)
@@ -75,6 +81,12 @@ namespace PerformanceTest.Management
         }
         private void canRequeue(object sender, CanExecuteRoutedEventArgs e)
         {
+            var vm = DataContext as ShowResultsViewModel;
+            if (vm.JobStatus != ExperimentExecutionState.Completed)
+            {
+                e.CanExecute = false;
+                return;
+            }
             e.CanExecute = dataGrid.SelectedItems.Count >= 1;
         }
         private void Requeue(object target, ExecutedRoutedEventArgs e)

@@ -97,7 +97,18 @@ namespace PerformanceTest.Management
                 WriteDouble("BenchmarkTimeLimit", value.TotalSeconds);
             }
         }
-
+        public TimeSpan ExperimentTimeLimit
+        {
+            get
+            {
+                double sec = ReadDouble("ExperimentTimeLimit");
+                return Double.IsNaN(sec) ? TimeSpan.FromSeconds(0) : TimeSpan.FromSeconds(sec);
+            }
+            set
+            {
+                WriteDouble("ExperimentTimeLimit", value.TotalSeconds);
+            }
+        }
         public string ExperimentNote
         {
             get { return ReadString("ExperimentNote"); }

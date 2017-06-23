@@ -85,7 +85,18 @@ namespace NightlyRunner.Properties {
                 return ((double)(this["BenchmarkTimeoutSeconds"]));
             }
         }
-        
+
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public double ExperimentTimeoutSeconds
+        {
+            get
+            {
+                return ((double)(this["ExperimentTimeoutSeconds"]));
+            }
+        }
+
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("2048")]
