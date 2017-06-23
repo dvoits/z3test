@@ -20,19 +20,38 @@ namespace Measurement
             this.name = name;
         }
 
+        /// <summary>
+        /// Gets name of the domain.
+        /// </summary>
         public string Name { get { return name; } }
 
+        /// <summary>
+        /// Returns a collection of extensions that are supported by the program.
+        /// </summary>
         public virtual string[] BenchmarkExtensions { get { return new string[0]; } }
 
+        /// <summary>
+        /// Returns default command line parameters.
+        /// </summary>
         public virtual string CommandLineParameters { get { return ""; } }
 
+        /// <summary>
+        /// Adds an input file name to the command line parameters in accordance with the 
+        /// program command line syntax.
+        /// </summary>
         public virtual string AddFileNameArgument(string parameters, string fileName)
         {
             return string.Format("{0} {1}", parameters, fileName);
         }
-        
+
+        /// <summary>
+        /// Determines status of the process run result and its custom domain-specific properties.
+        /// </summary>
         public abstract ProcessRunAnalysis Analyze(string inputFile, ProcessRunMeasure measure);
-        
+
+        /// <summary>
+        /// Builds aggregated statistics for a collection of results of process runs.
+        /// </summary>
         public AggregatedAnalysis Aggregate(IEnumerable<ProcessRunResults> runs)
         {
             var results = runs.ToArray();
@@ -66,14 +85,36 @@ namespace Measurement
             return new AggregatedAnalysis(bugs, errors, infrErrors, timeouts, memouts, props, results.Length);
         }
 
+
+        /// <summary>
+        /// Allows to provide domain-specific properties for the aggregated statistics of multiple process runs.
+        /// </summary>
+        protected abstract IReadOnlyDictionary<string, string> AggregateProperties(IEnumerable<ProcessRunResults> results);
+
+        /// <summary>
+        /// Returns a boolean value that determines of the given process run result 
+        /// can participate in the best result challenge.
+        /// </summary>
+        /// <param name="result"></param>
+        /// <returns></returns>
         public virtual bool CanConsiderAsRecord(ProcessRunAnalysis result)
         {
             if (result == null) throw new ArgumentNullException(nameof(result));
             return result.Status == ResultStatus.Success;
         }
 
-        protected abstract IReadOnlyDictionary<string, string> AggregateProperties(IEnumerable<ProcessRunResults> results);
+        /// <summary>
+        /// Returns tags that are applicable to the process run result which
+        /// then can be used in UI application to distinguish this result.
+        /// </summary>
+        /// <param name="result">Result of a process run for an input file.</param>
+        public virtual string[] GetTags(ProcessRunAnalysis result)
+        {
+            return new string[0];
+        }
     }
+
+
 
     public sealed class DefaultDomain : Domain
     {

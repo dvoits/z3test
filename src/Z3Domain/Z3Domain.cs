@@ -72,7 +72,6 @@ namespace Measurement
             }
             Counts countsResults = CountResults(measure.StdOut);
 
-
             int? exitCode = measure.ExitCode;
             LimitsStatus limits = measure.Limits;
             ResultStatus status;
@@ -164,6 +163,19 @@ namespace Measurement
             return result.Status == ResultStatus.Success &&
                 _unk == 0 &&
                 _sat + _unsat > 0;
+        }
+
+        public override string[] GetTags(ProcessRunAnalysis result)
+        {
+            int _sat = int.Parse(result.OutputProperties[KeySat]);
+            int _unsat = int.Parse(result.OutputProperties[KeyUnsat]);
+            int _unk = int.Parse(result.OutputProperties[KeyUnknown]);
+            int _tsat = int.Parse(result.OutputProperties[KeyTargetSat]);
+            int _tunsat = int.Parse(result.OutputProperties[KeyTargetUnsat]);
+            int _tunk = int.Parse(result.OutputProperties[KeyTargetUnknown]);
+
+            if (_sat + _unsat < _tsat + _tunsat || _unk > _tunk) return new string[] { "UNDERPERFORMERS" };
+            return new string[0];
         }
 
         private ResultStatus GetBugCode(ProcessRunMeasure measure)

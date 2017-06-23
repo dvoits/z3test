@@ -1136,11 +1136,10 @@ namespace Nightly
             tc.Tabs.Add(buildSummaryTab(category, alliswelltext, alerts));
             tc.Tabs.Add(buildStatsTab(exp, category));
 
-            // todo:
-            //tc.Tabs.Add(buildListTab("Errors", AlertLevel.Warning, exp.Errors[category], "A benchmark is classified as erroneous when its return value is non-zero (except for memory outs)."));
-            //tc.Tabs.Add(buildListTab("Bugs", AlertLevel.Critical, exp.Bugs[category], "A benchmark is classified as buggy when its result does not agree with its annotation."));
-            //tc.Tabs.Add(buildListTab("Underperformers", AlertLevel.None, exp.Underperformers[category], "A benchmark underperforms when it has SAT/UNSAT annotations and some of them were not achieved."));
-            //tc.Tabs.Add(buildListTab("Dippers", AlertLevel.None, exp.Dippers[category], "A benchmark is classified as a dipper when it takes more than 10x more time than in a reference job (usually the previous)."));
+            tc.Tabs.Add(buildListTab("Errors", AlertLevel.Warning, exp.Errors[category], "A benchmark is classified as erroneous when its return value is non-zero (except for memory outs)."));
+            tc.Tabs.Add(buildListTab("Bugs", AlertLevel.Critical, exp.Bugs[category], "A benchmark is classified as buggy when its result does not agree with its annotation."));
+            tc.Tabs.Add(buildListTab("Underperformers", AlertLevel.None, exp.Underperformers[category], "A benchmark underperforms when it has SAT/UNSAT annotations and some of them were not achieved."));
+            tc.Tabs.Add(buildListTab("Dippers", AlertLevel.None, exp.Dippers[category], "A benchmark is classified as a dipper when it takes more than 10x more time than in a reference job (usually the previous)."));
 
             phMain.Controls.Add(tc);
         }

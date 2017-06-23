@@ -47,7 +47,7 @@ namespace PerformanceTest.Records
                     {
                         // New record found
                         records[r.BenchmarkFileName] = new Record(r.ExperimentID, r.NormalizedRuntime);
-                        string category = Category(r.BenchmarkFileName);
+                        string category = GetCategory(r.BenchmarkFileName);
                     }
                 }
             }
@@ -59,7 +59,7 @@ namespace PerformanceTest.Records
             categoryRecords.Clear();
             foreach (var item in records)
             {
-                string category = Category(item.Key);
+                string category = GetCategory(item.Key);
 
                 CategoryRecord catRecord;
                 if (!categoryRecords.TryGetValue(category, out catRecord))
@@ -71,7 +71,7 @@ namespace PerformanceTest.Records
 
 
 
-        private static string Category(string filename)
+        public static string GetCategory(string filename)
         {
             int i = filename.IndexOf("/");
             string category = i >= 0 ? filename.Substring(0, i) : string.Empty;
