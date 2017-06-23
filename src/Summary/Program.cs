@@ -46,6 +46,9 @@ namespace Summary
             Console.WriteLine("Connecting to Azure...");
             string connectionString = await GetConnectionString();
             var manager = new AzureSummaryManager(connectionString);
+
+            var stsum = await manager.GetStatusSummary(184, 158);
+
             await manager.Update(summaryName, id);
         }
 

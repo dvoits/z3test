@@ -81,6 +81,99 @@ namespace AzurePerformanceTest
             await UploadSummary(summaryName, sumTable, records, all_summaries.Item3);
         }
 
+        public async Task<ExperimentStatusSummary> GetStatusSummary(int expId, int? refExpId)
+        {
+            Trace.WriteLine("Check if the summary already exists...");
+            ExperimentStatusSummary summary = await TryDownloadStatusSummary(expId, refExpId);
+            if (summary != null)
+            {
+                Trace.WriteLine("Ok, summary found.");
+                return summary;
+            }
+
+            Trace.WriteLine("Downloading experiment information...");
+            var exp = await storage.GetExperiment(expId); // fails if not found
+            var domain = resolveDomain.GetDomain(exp.DomainName);
+
+            Trace.WriteLine("Downloading experiment results...");
+            BenchmarkResult[] results = await storage.GetResults(expId);
+
+            BenchmarkResult[] refResults = null;
+            if (refExpId.HasValue)
+            {
+                Trace.WriteLine("Downloading another experiment results...");
+                refResults = await storage.GetResults(refExpId.Value);
+            }
+
+            Trace.WriteLine("Building summary...");
+            summary = ExperimentStatusSummary.Build(expId, results, refExpId, refResults, domain);
+
+            Trace.WriteLine("Uploading summary...");
+            await UploadStatusSummary(summary);
+            return summary;
+        }
+
+        private static string GetStatusSummaryFileName(int expId, int? refExpId)
+        {
+            return refExpId.HasValue ?
+                string.Format("statuses_{0}_{1}.csv", expId, refExpId.Value) :
+                string.Format("statuses_{0}.csv", expId);
+        }
+
+        private async Task UploadStatusSummary(ExperimentStatusSummary summary)
+        {
+            string fileName = GetStatusSummaryFileName(summary.Id, summary.ReferenceId);
+            var blobName = fileName + ".zip";
+            var blob = summaryContainer.GetBlockBlobReference(blobName);
+
+            using (Stream zipStream = new MemoryStream())
+            {
+                using (ZipFile zip = new ZipFile())
+                using (MemoryStream mem = new MemoryStream())
+                {
+                    ExperimentStatusSummaryStorage.Save(summary, mem);
+
+                    mem.Position = 0;
+                    zip.AddEntry(fileName, mem);
+                    zip.Save(zipStream);
+                }
+                zipStream.Position = 0;
+                await blob.UploadFromStreamAsync(zipStream, AccessCondition.GenerateEmptyCondition(), new BlobRequestOptions { RetryPolicy = retryPolicy }, null);
+            }
+        }
+
+        private async Task<ExperimentStatusSummary> TryDownloadStatusSummary(int expId, int? refExpId)
+        {
+            string fileName = GetStatusSummaryFileName(expId, refExpId);
+            var blobName = fileName + ".zip";
+            var blob = summaryContainer.GetBlockBlobReference(blobName);
+
+            try
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    await blob.DownloadToStreamAsync(ms);
+                    ms.Position = 0;
+
+                    using (ZipFile zip = ZipFile.Read(ms))
+                    {
+                        var zip_summary = zip[fileName];
+
+                        using (MemoryStream mem = new MemoryStream((int)zip_summary.UncompressedSize))
+                        {
+                            zip_summary.Extract(mem);
+                            mem.Position = 0;
+                            return ExperimentStatusSummaryStorage.Load(expId, refExpId, mem);
+                        }
+                    }
+                }
+            }
+            catch (StorageException ex) when (ex.RequestInformation.HttpStatusCode == (int)System.Net.HttpStatusCode.NotFound)
+            {
+                return null;
+            }
+        }
+
         private async Task<Tuple<Table, RecordsTable, string>> DownloadSummary(string summaryName)
         {
             var blobName = string.Format("{0}.zip", AzureUtils.ToBinaryPackBlobName(summaryName));

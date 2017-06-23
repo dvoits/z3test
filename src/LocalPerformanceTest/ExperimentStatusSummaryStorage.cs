@@ -45,7 +45,7 @@ namespace PerformanceTest
             }
         }
 
-        public ExperimentStatusSummary Load(Stream stream)
+        public static ExperimentStatusSummary Load(int expId, int? refExpId, Stream stream)
         {
             Dictionary<string, List<string>> errorsByCategory = new Dictionary<string, List<string>>();
             Dictionary<string, List<string>> bugsByCategory = new Dictionary<string, List<string>>();
@@ -106,7 +106,7 @@ namespace PerformanceTest
                     }
                 }
             }
-            return new ExperimentStatusSummary(expid)
+            return new ExperimentStatusSummary(expId, refExpId, errorsByCategory, bugsByCategory, tagsByCategory, dippersByCategory);
         }
 
 
