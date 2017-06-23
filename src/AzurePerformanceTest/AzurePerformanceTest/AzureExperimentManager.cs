@@ -250,7 +250,8 @@ namespace AzurePerformanceTest
                         PoolState = p.State,
                         DedicatedNodes = p.CurrentDedicatedComputeNodes ?? 0,
                         VirtualMachineSize = p.VirtualMachineSize,
-                        RunningJobs = 0
+                        RunningJobs = 0,
+                        AutoScaleFormula = p.AutoScaleFormula
                     }).ToArray();
 
                     var jobPools =
@@ -542,5 +543,7 @@ namespace AzurePerformanceTest
         public int DedicatedNodes { get; set; }
 
         public int RunningJobs { get; set; }
+
+        public string AutoScaleFormula { get; set; }
     }
 }
