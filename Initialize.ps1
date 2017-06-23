@@ -19,6 +19,7 @@ $ReferenceMemoryLimitMB = 2048.0
 $ReferenceBenchmarkTimeout = "00:20:00"
 $ReferenceExperimentTimeout = "00:00:00"
 $ReferenceRepetitions = 20
+# Average runtime of the reference experiment on standard d2 v2 machine (seconds)
 $ReferenceValue = 16.34375
 
 

@@ -36,7 +36,7 @@ namespace PerformanceTest
                 int infrastructureErrors = 0;
                 int timeouts = 0;
                 int memouts = 0;
-                int runs = 0;
+                int files = 0;
                 Dictionary<string, double> props = new Dictionary<string, double>();
                 foreach (var item in CategorySummary)
                 {
@@ -47,7 +47,7 @@ namespace PerformanceTest
                     infrastructureErrors += sum.InfrastructureErrors;
                     timeouts += sum.InfrastructureErrors;
                     memouts += sum.MemoryOuts;
-                    runs += sum.Runs;
+                    files += sum.Files;
 
                     foreach (var p in sum.Properties)
                     {
@@ -66,21 +66,32 @@ namespace PerformanceTest
                 {
                     stringProps.Add(item.Key, item.Value.ToString());
                 }
-                overall = new AggregatedAnalysis(bugs, errors, infrastructureErrors, timeouts, memouts, stringProps, runs);
+                overall = new AggregatedAnalysis(bugs, errors, infrastructureErrors, timeouts, memouts, stringProps, files);
                 return overall;
             }
         }
 
 
 
-        public static Dictionary<string, AggregatedAnalysis> Build(IEnumerable<BenchmarkResult> results, Domain domain)
+        public static Dictionary<string, AggregatedAnalysis> Build(IEnumerable<BenchmarkResult> results, Domain domain, DuplicateResolution duplicateResolution = DuplicateResolution.Ignore)
         {
             if (results == null) throw new ArgumentNullException(nameof(results));
             if (domain == null) throw new ArgumentNullException(nameof(domain));
 
             var categories = new Dictionary<string, List<BenchmarkResult>>();
+            HashSet<string> seen = new HashSet<string>();
             foreach (var result in results)
             {
+                if (duplicateResolution != DuplicateResolution.TakeAll)
+                {
+                    if (seen.Contains(result.BenchmarkFileName))
+                    {
+                        if (duplicateResolution == DuplicateResolution.Fail) throw new InvalidOperationException("Duplicate found");
+                        continue;
+                    }
+                    seen.Add(result.BenchmarkFileName);
+                }
+
                 int i = result.BenchmarkFileName.IndexOf("/");
                 string category = i >= 0 ? result.BenchmarkFileName.Substring(0, i) : string.Empty;
 
@@ -100,6 +111,13 @@ namespace PerformanceTest
                 stats.Add(cr.Key, catSummary);
             }
             return stats;
+        }
+
+        public enum DuplicateResolution
+        {
+            Fail,
+            Ignore,
+            TakeAll
         }
     }
 }

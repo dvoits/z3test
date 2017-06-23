@@ -51,14 +51,18 @@ namespace Nightly
 
         public Z3SummaryProperties(AggregatedAnalysis summary)
         {
+            if (summary == null) throw new ArgumentNullException(nameof(summary));
             props = summary.Properties;
         }
 
         public int Sat { get { return int.Parse(props[Z3Domain.KeySat]); } }
         public int Unsat { get { return int.Parse(props[Z3Domain.KeyUnsat]); } }
+
+        public int TargetSat { get { return int.Parse(props[Z3Domain.KeyTargetSat]); } }
+        public int TargetUnsat { get { return int.Parse(props[Z3Domain.KeyTargetUnsat]); } }
+        public int TargetUnknown { get { return int.Parse(props[Z3Domain.KeyTargetUnknown]); } }
+
         public double TimeUnsat { get { return double.Parse(props[Z3Domain.KeyTimeUnsat]); } }
         public double TimeSat { get { return double.Parse(props[Z3Domain.KeyTimeSat]); } }
     }
-
-
 }
