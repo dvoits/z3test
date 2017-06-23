@@ -43,7 +43,7 @@
                 <MenuItem Header="Auto-resolve timeout dupes" Name="mnuOptResolveTimeoutDupes" IsCheckable="True" />
                 <MenuItem Header="Auto-resolve same-time dupes" Name="mnuOptResolveSameTimeDupes" IsCheckable="True" />
                 <MenuItem Header="Auto-resolve slowest dupes" Name="mnuOptResolveSlowestDupes" IsCheckable="True" />
-                <MenuItem Header="Auto-resolve in. errors dupes" Name="mnuOptResolveInErrorsDupes" IsCheckable="True"/>
+                <MenuItem Header="Auto-resolve in. errors dupes" Name="mnuOptResolveInErrorsDupes" IsEnabled="False" IsCheckable="False"/>
             </MenuItem>
         </Menu>
 

@@ -62,7 +62,7 @@ namespace PerformanceTest.Management
 
                 if (zero_duplicates)
                 {
-                    uiService.ShowInfo("There are no duplicates to resolve in experiment.", "No duplicates");
+                    uiService.ShowInfo("There are no duplicates to resolve.", "No duplicates");
                 }
             }
             catch (Exception ex)

@@ -18,6 +18,8 @@
 
         <Label Content="Double click entry to keep; the others are discarded." Grid.Column="1" Grid.Row="0" HorizontalAlignment="Stretch" VerticalAlignment="Top"/>
 
-        <DataGrid Grid.Column="1" Grid.Row="1" AutoGenerateColumns="True" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,0,0" Name="dataGrid" IsReadOnly="True" RowHeight="23" SelectionUnit="FullRow" ItemsSource="{Binding Duplicates}" MouseDoubleClick="dataGrid_MouseDoubleClick" />
+        <DataGrid Grid.Column="1" Grid.Row="1" AutoGenerateColumns="True" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,0,0" 
+                  IsReadOnly="True" RowHeight="23" SelectionUnit="FullRow" SelectionMode="Extended" GridLinesVisibility="None" AlternatingRowBackground="AliceBlue"
+                  Name="dataGrid" ItemsSource="{Binding Duplicates}" MouseDoubleClick="dataGrid_MouseDoubleClick" />
     </Grid>
 </Window>

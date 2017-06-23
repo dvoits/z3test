@@ -493,13 +493,7 @@ namespace PerformanceTest.Management
             {
                 string name = dlg.txtGroupName.Text;
                 string note = dlg.txtNote.Text;
-                //for (var i = 0; i < ids.Length; i++)
-                //{
-                //    ExperimentDefinition def = ids[i].Definition;
-                //    //change groupName
-                //    //change note
-                //}
-                //not implemented
+     
                 throw new NotImplementedException();
             }
         }
