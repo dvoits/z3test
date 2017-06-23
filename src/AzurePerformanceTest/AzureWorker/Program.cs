@@ -120,6 +120,7 @@ namespace AzureWorker
                         return new string[] { benchmarksPath + s };
                 }).ToArray();
             totalBenchmarksToProcess = benchmarkList.Length;
+            totalBenchmarks = expInfo.TotalBenchmarks;
             Console.WriteLine("Retrieved list of benchmarks to re-process. Total: {0}.", totalBenchmarksToProcess);
             var collectionTask = CollectResults(experimentId, storage);
             Console.WriteLine("Started collection thread.");
@@ -367,7 +368,8 @@ namespace AzureWorker
             {
                 completed = totalBenchmarksToProcess != -1 && completedTasksCount >= totalBenchmarksToProcess;
                 var messages = queue.GetMessages(32, TimeSpan.FromMinutes(5));
-                completed = completed && messages.Count() == 0;
+                int messageCount = messages.Count();
+                completed = completed && messageCount == 0;
                 foreach (CloudQueueMessage message in messages)
                 {
                     using (var ms = new MemoryStream(message.AsBytes))
@@ -377,9 +379,13 @@ namespace AzureWorker
                 }
                 int oldCount = results.Count;
                 results = goodResults.Concat(badResults).ToList();
-                processedBenchmarks = SortCountUniqueNamesAndRemoveExactDuplicates(results);
+                var tuple = SortCountUniqueNamesAndRemoveExactDuplicates(results);
+                processedBenchmarks = tuple.Item1;
+                results = tuple.Item2;
                 await storage.PutAzureExperimentResults(experimentId, results.ToArray(), true);
-                await storage.SetCompletedBenchmarks(experimentId, totalBenchmarks == -1 ? processedBenchmarks : totalBenchmarks - totalBenchmarksToProcess + completedTasksCount);
+                int completedBenchmarks = totalBenchmarks == -1 ? processedBenchmarks : totalBenchmarks - totalBenchmarksToProcess + completedTasksCount;
+                await storage.SetCompletedBenchmarks(experimentId, completedBenchmarks);
+                Console.WriteLine("Setting completed benchmarks to {0}.\nTotal benchmarks: {1}\nProcessed benchmarks: {2}\nTotal to process: {3}\nCompleted tasks: {4}\nMessage count: {5}", completedBenchmarks, totalBenchmarks, processedBenchmarks, totalBenchmarksToProcess, completedTasksCount, messageCount);
                 foreach (CloudQueueMessage message in messages)
                 {
                     queue.DeleteMessage(message);
@@ -409,54 +415,73 @@ namespace AzureWorker
             return true;
         }
 
-        private static bool AreAzureBenchmarkResultsEqual(AzureBenchmarkResult x, AzureBenchmarkResult y)
+        class AzureBenchmarkResultsComparer : IEqualityComparer<AzureBenchmarkResult>
         {
-            return x.NormalizedRuntime == y.NormalizedRuntime
-                && x.TotalProcessorTime == y.TotalProcessorTime
-                && x.WallClockTime == y.WallClockTime
-                && x.AcquireTime == y.AcquireTime
-                && x.BenchmarkFileName == y.BenchmarkFileName
-                && x.ExitCode == y.ExitCode
-                && x.ExperimentID == y.ExperimentID
-                && x.PeakMemorySizeMB == y.PeakMemorySizeMB
-                && AreStringDictionariesEqual(x.Properties, y.Properties)
-                && x.Status == y.Status
-                && x.StdErr == y.StdErr
-                && x.StdErrExtStorageIdx == y.StdErrExtStorageIdx
-                && x.StdOut == y.StdOut
-                && x.StdOutExtStorageIdx == y.StdOutExtStorageIdx;
+            public static bool AreAzureBenchmarkResultsEqual(AzureBenchmarkResult x, AzureBenchmarkResult y)
+            {
+                return x.NormalizedRuntime == y.NormalizedRuntime
+                    && x.TotalProcessorTime == y.TotalProcessorTime
+                    && x.WallClockTime == y.WallClockTime
+                    && x.AcquireTime == y.AcquireTime
+                    && x.BenchmarkFileName == y.BenchmarkFileName
+                    && x.ExitCode == y.ExitCode
+                    && x.ExperimentID == y.ExperimentID
+                    && x.PeakMemorySizeMB == y.PeakMemorySizeMB
+                    && AreStringDictionariesEqual(x.Properties, y.Properties)
+                    && x.Status == y.Status
+                    && x.StdErr == y.StdErr
+                    && x.StdErrExtStorageIdx == y.StdErrExtStorageIdx
+                    && x.StdOut == y.StdOut
+                    && x.StdOutExtStorageIdx == y.StdOutExtStorageIdx;
+            }
+
+            public bool Equals(AzureBenchmarkResult x, AzureBenchmarkResult y)
+            {
+                return AreAzureBenchmarkResultsEqual(x, y);
+            }
+
+            public int GetHashCode(AzureBenchmarkResult obj)
+            {
+                return obj.NormalizedRuntime.GetHashCode() ^ obj.AcquireTime.GetHashCode();
+            }
         }
 
-        private static int SortCountUniqueNamesAndRemoveExactDuplicates(List<AzureBenchmarkResult> results)
+        private static Tuple<int, List<AzureBenchmarkResult>> SortCountUniqueNamesAndRemoveExactDuplicates(List<AzureBenchmarkResult> results)
         {
             if (results.Count == 0)
-                return 0;
+                return new Tuple<int, List<AzureBenchmarkResult>>(0, results);
 
-            results.Sort((a, b) => string.Compare(a.BenchmarkFileName, b.BenchmarkFileName));
-            var lastUniqueName = results[0].BenchmarkFileName;
-            var lastUniqueResult = results[0];
-            int uniqueNameCount = 1;
-            int i = 1;
-            int total = results.Count;
-            while (i < total)
-            {
-                if (AreAzureBenchmarkResultsEqual(lastUniqueResult, results[i]))
-                {
-                    results.RemoveAt(i);
-                    --total;
-                }
-                else
-                {
-                    lastUniqueResult = results[i];
-                    if (lastUniqueName != results[i].BenchmarkFileName)
-                    {
-                        lastUniqueName = results[i].BenchmarkFileName;
-                        ++uniqueNameCount;
-                    }
-                    ++i;
-                }
-            }
-            return uniqueNameCount;
+            var groups = results.GroupBy(r => r.BenchmarkFileName).ToList();
+            groups.Sort((a, b) => string.Compare(a.Key, b.Key));
+            int uniqueNameCount = groups.Count;
+            var comparer = new AzureBenchmarkResultsComparer();
+            var distinct = groups.SelectMany(g => g.Distinct(comparer)).ToList();
+            return new Tuple<int, List<AzureBenchmarkResult>>(uniqueNameCount, distinct);
+            //results.Sort((a, b) => string.Compare(a.BenchmarkFileName, b.BenchmarkFileName));
+            //var lastUniqueName = results[0].BenchmarkFileName;
+            //var lastUniqueResult = results[0];
+            //int uniqueNameCount = 1;
+            //int i = 1;
+            //int total = results.Count;
+            //while (i < total)
+            //{
+            //    if (AreAzureBenchmarkResultsEqual(lastUniqueResult, results[i]))
+            //    {
+            //        results.RemoveAt(i);
+            //        --total;
+            //    }
+            //    else
+            //    {
+            //        lastUniqueResult = results[i];
+            //        if (lastUniqueName != results[i].BenchmarkFileName)
+            //        {
+            //            lastUniqueName = results[i].BenchmarkFileName;
+            //            ++uniqueNameCount;
+            //        }
+            //        ++i;
+            //    }
+            //}
+            //return uniqueNameCount;
         }
 
         private static string CombineBlobPath(string benchmarkDirectory, string benchmarkCategory)

@@ -26,7 +26,23 @@ namespace LaunchExperiment
 
             //Console.WriteLine("Experiment id:" + id);
 
-            manager.RestartBenchmarks(159, new string[] { "15Puzzle/15-puzzle.init10.smt2", "15Puzzle/15-puzzle.init11.smt2", "15Puzzle/15-puzzle.init12.smt2" }).Wait();
+            manager.RestartBenchmarks(159, new string[] {
+                "15Puzzle/15-puzzle.init10.smt2",
+                "15Puzzle/15-puzzle.init11.smt2",
+                "15Puzzle/15-puzzle.init12.smt2",
+                "15Puzzle/15-puzzle.init13.smt2",
+                "15Puzzle/15-puzzle.init14.smt2",
+                "15Puzzle/15-puzzle.init15.smt2",
+                "15Puzzle/15-puzzle.init2.smt2",
+                "15Puzzle/15-puzzle.init3.smt2",
+                "15Puzzle/15-puzzle.init4.smt2",
+                "15Puzzle/15-puzzle.init5.smt2",
+                "15Puzzle/15-puzzle.init6.smt2",
+                "15Puzzle/15-puzzle.init7.smt2",
+                "15Puzzle/15-puzzle.init8.smt2",
+                "15Puzzle/15-puzzle.init9.smt2",
+                "15Puzzle/15puzzle_ins.lp.smt2"
+            }).Wait();
 
             Console.WriteLine("Done.");
 
