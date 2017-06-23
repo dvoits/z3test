@@ -53,8 +53,8 @@ namespace PerformanceTest
             }
 
             // If the table already has summary for the experiment, it will be replaced
-            if(table.Count > 0) // if not empty then must contain ID
-                table = Table.Filter(new[] { "ID" }, FSharpFunc<string,bool>.FromConverter(id => int.Parse(id) != newSummary.Id), table);
+            if (table.Count > 0) // if not empty then must contain ID
+                table = Table.Filter(new[] { "ID" }, FSharpFunc<string, bool>.FromConverter(id => int.Parse(id) != newSummary.Id), table);
 
             List<Column> finalColumns = new List<Column>();
             foreach (var existingColumn in table)
@@ -122,9 +122,8 @@ namespace PerformanceTest
             return table;
         }
 
-        public static ExperimentSummary[] Load(Stream stream)
+        public static ExperimentSummary[] LoadFromTable(Table table)
         {
-            var table = LoadTable(stream);
             var date = table["Date"].Rows.AsString;
             var id = table["ID"].Rows.AsString;
 
@@ -166,16 +165,17 @@ namespace PerformanceTest
                     {
                         var p = catParameters[i];
                         var val = p.Item2[row];
-                        switch (p.Item1)
-                        {
-                            case KeyBug: bugs = int.Parse(val); break;
-                            case KeyError: errors = int.Parse(val); break;
-                            case KeyInferr: infrastructureErrors = int.Parse(val); break;
-                            case KeyMemoryOut: memouts = int.Parse(val); break;
-                            case KeyTimeOut: timeouts = int.Parse(val); break;
-                            case KeyRuns: runs = int.Parse(val); break;
-                            default: if(!string.IsNullOrEmpty(val)) props[p.Item1] = val; break;
-                        }
+                        if (!string.IsNullOrEmpty(val))
+                            switch (p.Item1)
+                            {
+                                case KeyBug: bugs = int.Parse(val); break;
+                                case KeyError: errors = int.Parse(val); break;
+                                case KeyInferr: infrastructureErrors = int.Parse(val); break;
+                                case KeyMemoryOut: memouts = int.Parse(val); break;
+                                case KeyTimeOut: timeouts = int.Parse(val); break;
+                                case KeyRuns: runs = int.Parse(val); break;
+                                default: props[p.Item1] = val; break;
+                            }
                     }
 
                     catSum.Add(category, new AggregatedAnalysis(bugs, errors, infrastructureErrors, timeouts, memouts, props, runs));
@@ -185,5 +185,5 @@ namespace PerformanceTest
             return results;
         }
     }
-        
+
 }

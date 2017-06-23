@@ -62,7 +62,7 @@ namespace PerformanceTest.Management
 
                 if (zero_duplicates)
                 {
-                    uiService.ShowInfo("There are no duplicates to resolve in experiment.", "No duplicates");
+                    uiService.ShowInfo("There are no duplicates to resolve.", "No duplicates");
                 }
             }
             catch (Exception ex)
@@ -74,6 +74,35 @@ namespace PerformanceTest.Management
                 uiService.StopIndicateLongOperation(handle);
             }
 
+        }
+        public async void RequeueIErrors(ExperimentStatusViewModel[] ids)
+        {
+            var handle = uiService.StartIndicateLongOperation("Requeue infrastructure errors...");
+            int requeueCount = 0;
+            try
+            {
+                for (int i = 0; i < ids.Length; i++)
+                {
+                    int eid = ids[i].ID;
+                    var results = await manager.GetResults(eid);
+                    var ieResults = results.Where(r => r.Status == Measurement.ResultStatus.InfrastructureError).Select(r => r.BenchmarkFileName).Distinct();
+                    if (ieResults.Count() > 0)
+                    {
+                        string benchmarkCont = ids[i].Definition.BenchmarkContainerUri;
+                        await manager.RestartBenchmarks(eid, ieResults, benchmarkCont);
+                        requeueCount += ieResults.Count();
+                    }
+                }
+                uiService.ShowInfo("Requeued " + requeueCount + " infrastructure errors.", "Infrastructure errors");
+            }
+            catch (Exception ex)
+            {
+                uiService.ShowError(ex, "Failed to requeue infrastructure errors");
+            }
+            finally
+            {
+                uiService.StopIndicateLongOperation(handle);
+            }
         }
         public async Task<string[]> GetAvailableCategories(string directory)
         {

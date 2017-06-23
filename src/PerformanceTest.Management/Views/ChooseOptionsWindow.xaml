@@ -16,6 +16,7 @@
                 <TextBlock Text="{Binding AllocationState, Mode=OneWay, StringFormat=Allocation state: {0}}" />
                 <TextBlock Text="{Binding DedicatedNodes, Mode=OneWay, StringFormat=Current dedicated nodes: {0}}" />
                 <TextBlock Text="{Binding RunningJobs, Mode=OneWay, StringFormat=Running jobs: {0}}" />
+                <TextBlock Text="{Binding AutoScaleFormula, Mode=OneWay, StringFormat=Auto-scale formula: {0}}" />
             </StackPanel>
         </DataTemplate>
     </Window.Resources>
