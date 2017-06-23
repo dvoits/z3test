@@ -327,6 +327,7 @@ namespace PerformanceTest.Management
                     vm.Categories = experiment.Category;
                     vm.Extension = experiment.Definition.BenchmarkFileExtension;
                     vm.BenchmarkTimeoutSec = experiment.Definition.BenchmarkTimeout.TotalSeconds;
+                    vm.ExperimentTimeoutSec = experiment.Definition.ExperimentTimeout.TotalSeconds;
                     vm.BenchmarkMemoryLimitMb = experiment.Definition.MemoryLimitMB;
                     vm.Domain = experiment.Definition.DomainName;
                     vm.Parameters = experiment.Definition.Parameters;
