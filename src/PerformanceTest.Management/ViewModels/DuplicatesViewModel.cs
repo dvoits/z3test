@@ -120,6 +120,7 @@ namespace PerformanceTest.Management
                         bool all_ok = true;
                         bool all_times_same = true;
                         bool all_memouts = true;
+                        bool all_inerrors = true;
                         double runtime = 0.0;
                         double min_time = double.MaxValue;
                         BenchmarkResult min_item = null;
@@ -130,10 +131,10 @@ namespace PerformanceTest.Management
                         {
                             ResultStatus status = r.Status;
                             double time = r.NormalizedRuntime;
-                            if (status != ResultStatus.Timeout) { all_timeouts = false; }
-                            if (status != ResultStatus.Success) { all_ok = false; }
-                            if (status != ResultStatus.OutOfMemory) { all_memouts = false; }
-
+                            if (status != ResultStatus.Timeout && status != ResultStatus.InfrastructureError) { all_timeouts = false; }
+                            if (status != ResultStatus.Success && status != ResultStatus.InfrastructureError) { all_ok = false; }
+                            if (status != ResultStatus.OutOfMemory && status != ResultStatus.InfrastructureError) { all_memouts = false; }
+                            if (status != ResultStatus.InfrastructureError) { all_inerrors = false; }
                             if (time < min_time)
                             {
                                 min_time = time;
@@ -155,8 +156,21 @@ namespace PerformanceTest.Management
                                 if (time != runtime) all_times_same = false;
                             }
                         }
-
-                        if (resolveTimeouts && all_timeouts)
+                        //remove in. errors duplicates if other exist
+                        if (resolveInErrors && !all_inerrors)
+                        {
+                            BenchmarkResult[] inErrorsitem = duplicates_fn.Where(i => i.Status == ResultStatus.InfrastructureError).ToArray();
+                            duplicates_fn = duplicates_fn.Where(i => i.Status != ResultStatus.InfrastructureError).ToList();
+                            duplicatesToRemove.AddRange(inErrorsitem);
+                        }
+                        
+                        if (resolveInErrors && all_inerrors)
+                        {
+                            BenchmarkResult pickItem = duplicates_fn.First();
+                            duplicates_fn.Remove(pickItem);
+                            duplicatesToRemove.AddRange(duplicates_fn);
+                        }
+                        else if (resolveTimeouts && all_timeouts)
                         {
                             BenchmarkResult pickItem = duplicates_fn.First();
                             duplicates_fn.Remove(pickItem);
@@ -173,7 +187,6 @@ namespace PerformanceTest.Management
                             duplicates_fn.Remove(max_item);
                             duplicatesToRemove.AddRange(duplicates_fn);
                         }
-                        //TO DO: add resolving in. errors
                         else
                         {
                             uiService.ShowDuplicatesWindow(this);

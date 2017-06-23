@@ -7,7 +7,7 @@
         xmlns:local="clr-namespace:PerformanceTest.Management"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        Title="New Experiment..." Height="800" Width="550" Loaded="Window_Loaded" WindowStartupLocation="CenterOwner" ShowInTaskbar="False" ResizeMode="NoResize">
+        Title="New Experiment..." Height="900" Width="550" Loaded="Window_Loaded" WindowStartupLocation="CenterOwner" ShowInTaskbar="False" ResizeMode="NoResize">
 
     <Window.Resources>
         <local:InverseBooleanConverter x:Key="InverseBooleanConverter" />
@@ -16,6 +16,7 @@
         <local:NullToVisibilityConverter x:Key="NullToVisibility" />
         <local:BoolToVisibilityConverter x:Key="BoolToVisibility" />
         <local:AreEqualToFontWeightConverter x:Key="AreEqual" />
+        <local:AndExprToVisibilityConverter x:Key="WarningIsVisible" />
 
         <GridLength x:Key="KeyWidth">200</GridLength>
         <Thickness x:Key="ParameterMargin" Left="5" Top="5" Right="10" Bottom="10" />
@@ -73,7 +74,6 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-
                 <Label Content="Categories:" Height="28" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Column="0"/>
                 <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtCategories" 
                              Text="{Binding Categories, Mode=TwoWay}"
@@ -83,6 +83,16 @@
                     <Image Source="/PerformanceTest.Management;component/Images/taskbrowse.ico" />
                 </Button>
             </Grid>
+            <Label Content="Directory and categories are empty! Experiment can take a lot of time!" FontSize="10" Foreground="Red" Height="27" HorizontalAlignment="Left" VerticalAlignment="Top"
+                 Width="335" Margin="200,-10,0,-10" RenderTransformOrigin="1.32,0.64">
+                <Label.Visibility>
+                    <MultiBinding Converter="{StaticResource WarningIsVisible}">
+                        <Binding Path="BenchmarkDirectory"/>
+                        <Binding Path="Categories"/>
+                    </MultiBinding>
+                </Label.Visibility>
+            </Label>
+            <!-- Domain -->
             <Grid Margin="{StaticResource ParameterMargin}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="{StaticResource KeyWidth}" />
@@ -206,9 +216,21 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <Label Content="Timeout:" Height="28" HorizontalAlignment="Left" Name="label12" VerticalAlignment="Center" Grid.Column="0"/>
+                <Label Content="Benchmark timeout:" Height="28" HorizontalAlignment="Left" Name="label12" VerticalAlignment="Center" Grid.Column="0"/>
                 <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtTimeout" VerticalAlignment="Center" TabIndex="15" Grid.Column="1" ToolTip="The time limit (per benchmark)." Margin="0,2"
                              Text="{Binding BenchmarkTimeoutSec}"/>
+                <Label Content="sec" HorizontalAlignment="Left" Grid.Column="2"/>
+            </Grid>
+            <!-- Experiment Timeout -->
+            <Grid Margin="{StaticResource ParameterMargin}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="{StaticResource KeyWidth}" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Label Content="Experiment timeout:" Height="28" HorizontalAlignment="Left" Name="label22" VerticalAlignment="Center" Grid.Column="0"/>
+                <TextBox Height="24" HorizontalAlignment="Stretch" Name="txtExpTimeout" VerticalAlignment="Center" TabIndex="15" Grid.Column="1" ToolTip="The time limit (per experiment)." Margin="0,2"
+                             Text="{Binding ExperimentTimeoutSec}"/>
                 <Label Content="sec" HorizontalAlignment="Left" Grid.Column="2"/>
             </Grid>
             <!-- RunShortBenchmarksAdaptively -->

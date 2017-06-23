@@ -39,7 +39,7 @@ namespace PerformanceTest
             string relExec = Utils.MakeRelativePath(experimentsFolder, def.Executable);
             string relDirectory = Utils.MakeRelativePath(experimentsFolder, def.BenchmarkDirectory);
             return ExperimentDefinition.Create(relExec, def.BenchmarkContainerUri, relDirectory, def.BenchmarkFileExtension,
-                def.Parameters, def.BenchmarkTimeout, def.DomainName,
+                def.Parameters, def.BenchmarkTimeout, def.ExperimentTimeout, def.DomainName,
                 def.Category, def.MemoryLimitMB);
         }
 
@@ -239,6 +239,7 @@ namespace PerformanceTest
                 row.Executable, row.BenchmarkContainerUri, row.BenchmarkDirectory,
                 row.BenchmarkFileExtension, row.Parameters,
                 TimeSpan.FromSeconds(row.BenchmarkTimeout),
+                TimeSpan.FromSeconds(row.ExperimentTimeout),
                 row.DomainName, row.Category, row.MemoryLimitMB);
         }
 

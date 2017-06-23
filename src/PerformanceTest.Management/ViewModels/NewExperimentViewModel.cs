@@ -25,6 +25,7 @@ namespace PerformanceTest.Management
         private string domain;
         private double memlimit;
         private double timelimit;
+        private double exptimelimit;
         private string parameters;
         private string extension;
         private string note;
@@ -66,6 +67,7 @@ namespace PerformanceTest.Management
             benchmarkDirectory = recentValues.BenchmarkDirectory;
             categories = recentValues.BenchmarkCategories;
             timelimit = recentValues.BenchmarkTimeLimit.TotalSeconds;
+            exptimelimit = recentValues.ExperimentTimeLimit.TotalSeconds;
             memlimit = recentValues.BenchmarkMemoryLimit;
             note = recentValues.ExperimentNote;
             allowAdaptiveRuns = recentValues.AllowAdaptiveRuns;
@@ -130,7 +132,6 @@ namespace PerformanceTest.Management
                 NotifyPropertyChanged();
             }
         }
-
         public string Domain
         {
             get { return domain; }
@@ -242,6 +243,15 @@ namespace PerformanceTest.Management
                 NotifyPropertyChanged();
             }
         }
+        public double ExperimentTimeoutSec
+        {
+            get { return exptimelimit; }
+            set
+            {
+                exptimelimit = value;
+                NotifyPropertyChanged();
+            }
+        }
 
         public double BenchmarkMemoryLimitMb
         {
@@ -342,6 +352,7 @@ namespace PerformanceTest.Management
             recentValues.BenchmarkExtension = extension;
             recentValues.ExperimentExecutableParameters = parameters;
             recentValues.BenchmarkTimeLimit = TimeSpan.FromSeconds(timelimit);
+            recentValues.ExperimentTimeLimit = TimeSpan.FromSeconds(exptimelimit);
             recentValues.BenchmarkMemoryLimit = memlimit;
             recentValues.ExperimentNote = note;
             recentValues.BatchPool = selectedPool;

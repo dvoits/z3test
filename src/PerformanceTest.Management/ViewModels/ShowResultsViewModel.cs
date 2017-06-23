@@ -16,6 +16,7 @@ namespace PerformanceTest.Management
     {
         private readonly int id;
         private readonly double timeout;
+        private readonly ExperimentExecutionState? jobStatus;
         private readonly ExperimentManager manager;
         private readonly IUIService uiService;
         private readonly string sharedDirectory;
@@ -26,7 +27,7 @@ namespace PerformanceTest.Management
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public ShowResultsViewModel(int id, double timeout, string sharedDirectory, ExperimentManager manager, IUIService uiService)
+        public ShowResultsViewModel(int id, ExperimentExecutionState? jobStatus, double timeout, string sharedDirectory, ExperimentManager manager, IUIService uiService)
         {
             if (manager == null) throw new ArgumentNullException("manager");
             if (uiService == null) throw new ArgumentNullException("uiService");
@@ -35,9 +36,13 @@ namespace PerformanceTest.Management
             this.id = id;
             this.sharedDirectory = sharedDirectory;
             this.timeout = timeout;
+            this.jobStatus = jobStatus;
             RefreshResultsAsync();
         }
-
+        public ExperimentExecutionState? JobStatus
+        {
+            get { return jobStatus; }
+        }
         public bool IsFiltering
         {
             get { return isFiltering; }
