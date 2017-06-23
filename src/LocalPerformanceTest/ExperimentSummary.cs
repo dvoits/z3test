@@ -23,8 +23,17 @@ namespace PerformanceTest
         private const string KeyInferr = "INFERR";
         private const string KeyMemoryOut = "MEMORY";
         private const string KeyTimeOut = "TIMEOUT";
-        private const string KeyRuns = "RUNS";
+        private const string KeyFiles = "FILES";
 
+        public static Table EmptyTable()
+        {
+            return Table.OfColumns(
+                new[]
+                {
+                    Column.Create("ID", new string[0], FSharpOption<int>.None),
+                    Column.Create("Date", new string[0], FSharpOption<int>.None)
+                });
+        }
 
         public static Table AppendOrReplace(Table table, ExperimentSummary newSummary)
         {
@@ -42,7 +51,7 @@ namespace PerformanceTest
                 newColumns.Add(string.Join("|", cat, KeyInferr), expSum.InfrastructureErrors.ToString());
                 newColumns.Add(string.Join("|", cat, KeyMemoryOut), expSum.MemoryOuts.ToString());
                 newColumns.Add(string.Join("|", cat, KeyTimeOut), expSum.Timeouts.ToString());
-                newColumns.Add(string.Join("|", cat, KeyRuns), expSum.Runs.ToString());
+                newColumns.Add(string.Join("|", cat, KeyFiles), expSum.Files.ToString());
 
                 foreach (var prop in expSum.Properties)
                 {
@@ -158,7 +167,7 @@ namespace PerformanceTest
                     int infrastructureErrors = 0;
                     int timeouts = 0;
                     int memouts = 0;
-                    int runs = 0;
+                    int files = 0;
                     var props = new Dictionary<string, string>(catParameters.Length);
 
                     for (int i = 0; i < catParameters.Length; i++)
@@ -173,12 +182,12 @@ namespace PerformanceTest
                                 case KeyInferr: infrastructureErrors = int.Parse(val); break;
                                 case KeyMemoryOut: memouts = int.Parse(val); break;
                                 case KeyTimeOut: timeouts = int.Parse(val); break;
-                                case KeyRuns: runs = int.Parse(val); break;
+                                case KeyFiles: files = int.Parse(val); break;
                                 default: props[p.Item1] = val; break;
                             }
                     }
 
-                    catSum.Add(category, new AggregatedAnalysis(bugs, errors, infrastructureErrors, timeouts, memouts, props, runs));
+                    catSum.Add(category, new AggregatedAnalysis(bugs, errors, infrastructureErrors, timeouts, memouts, props, files));
                     results[row] = new ExperimentSummary(expId, expDate, catSum);
                 }
             }

@@ -108,7 +108,7 @@ namespace Measurement
 
         protected override IReadOnlyDictionary<string, string> AggregateProperties(IEnumerable<ProcessRunResults> results)
         {
-            int sat = 0, unsat = 0, unknown = 0, overPerf = 0, underPerf = 0;
+            int sat = 0, unsat = 0, unknown = 0, overPerf = 0, underPerf = 0, tsat = 0, tunsat = 0, tunk = 0;
             double timeSat = 0.0, timeUnsat = 0.0;
 
             foreach (ProcessRunResults result in results)
@@ -127,6 +127,10 @@ namespace Measurement
                     unsat += _unsat;
                     unknown += _unk;
 
+                    tsat += _tsat;
+                    tunsat += _tunsat;
+                    tunk += _tunk;
+
                     if (_sat > 0) timeSat += result.Runtime;
                     if (_unsat > 0) timeUnsat += result.Runtime;
                 }
@@ -144,7 +148,10 @@ namespace Measurement
                     { KeyOverperformed, overPerf.ToString() },
                     { KeyUnderperformed, underPerf.ToString() },
                     { KeyTimeSat, timeSat.ToString() },
-                    { KeyTimeUnsat, timeUnsat.ToString() }
+                    { KeyTimeUnsat, timeUnsat.ToString() },
+                    { KeyTargetSat, tsat.ToString() },
+                    { KeyTargetUnsat, tunsat.ToString() },
+                    { KeyTargetUnknown, tunk.ToString() },
                 };
         }
 

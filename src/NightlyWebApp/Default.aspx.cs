@@ -147,7 +147,7 @@ namespace Nightly
                 logMultiplier = logMax / Math.Log10(logMax);
             }
 
-            foreach(ExperimentViewModel exp in vm.Experiments)
+            foreach (ExperimentViewModel exp in vm.Experiments)
             {
                 var pdt = exp.SubmissionTime;
                 string date_str = pdt.ToString(culture);
@@ -377,14 +377,14 @@ namespace Nightly
 
             DateTime now = DateTime.Now;
 
-            Series ser = new Series("Perf. Index");
-            ser.ChartArea = ca.Name;
-            ser.Legend = l.Name;
-            ser.ChartType = SeriesChartType.Line;
-            ser.YAxisType = AxisType.Primary;
-            ser.Color = Color.Blue;
-            ser.MarkerSize = 2;
-            ser.MarkerStyle = MarkerStyle.Circle;
+            //Series ser = new Series("Perf. Index");
+            //ser.ChartArea = ca.Name;
+            //ser.Legend = l.Name;
+            //ser.ChartType = SeriesChartType.Line;
+            //ser.YAxisType = AxisType.Primary;
+            //ser.Color = Color.Blue;
+            //ser.MarkerSize = 2;
+            //ser.MarkerStyle = MarkerStyle.Circle;
 
             Series ser2 = new Series("Solved [%]");
             ser2.ChartArea = ca.Name;
@@ -395,23 +395,23 @@ namespace Nightly
             ser2.MarkerSize = 2;
             ser2.MarkerStyle = MarkerStyle.Circle;
 
-            Series ser3 = new Series("P. Closeness [%]");
-            ser3.ChartArea = ca.Name;
-            ser3.Legend = l.Name;
-            ser3.ChartType = SeriesChartType.Line;
-            ser3.YAxisType = AxisType.Primary;
-            ser3.Color = Color.PaleVioletRed;
-            ser3.MarkerSize = 2;
-            ser3.MarkerStyle = MarkerStyle.Circle;
+            //Series ser3 = new Series("P. Closeness [%]");
+            //ser3.ChartArea = ca.Name;
+            //ser3.Legend = l.Name;
+            //ser3.ChartType = SeriesChartType.Line;
+            //ser3.YAxisType = AxisType.Primary;
+            //ser3.Color = Color.PaleVioletRed;
+            //ser3.MarkerSize = 2;
+            //ser3.MarkerStyle = MarkerStyle.Circle;
 
-            Series ser4 = new Series("Exp. Index [%]");
-            ser4.ChartArea = ca.Name;
-            ser4.Legend = l.Name;
-            ser4.ChartType = SeriesChartType.Line;
-            ser4.YAxisType = AxisType.Primary;
-            ser4.Color = Color.Red;
-            ser4.MarkerSize = 2;
-            ser4.MarkerStyle = MarkerStyle.Circle;
+            //Series ser4 = new Series("Exp. Index [%]");
+            //ser4.ChartArea = ca.Name;
+            //ser4.Legend = l.Name;
+            //ser4.ChartType = SeriesChartType.Line;
+            //ser4.YAxisType = AxisType.Primary;
+            //ser4.Color = Color.Red;
+            //ser4.MarkerSize = 2;
+            //ser4.MarkerStyle = MarkerStyle.Circle;
 
             bool need_earliest = true;
             double earliest_x = double.MaxValue;
@@ -430,9 +430,11 @@ namespace Nightly
                 // todo: probably use average normalized timeout?
                 // or non-normalized for stat?
                 // todo: sat+unsat seems to be non-comparable with number of files
-                double vbaGoodPart = virtualBestAvg * jstats.Runs;
-                double vbaBadPart = (jstats.Runs - (z3stats.Sat + z3stats.Unsat)) * exp.Timeout.TotalSeconds;
-                double vbaBoth = (vbaGoodPart + vbaBadPart) / jstats.Runs;
+                //double vbaGoodPart = virtualBestAvg * jstats.Runs;
+                //double vbaBadPart = (jstats.Runs - (z3stats.Sat + z3stats.Unsat)) * exp.Timeout.TotalSeconds;
+                //double vbaBoth = (vbaGoodPart + vbaBadPart) / jstats.Runs;
+                // vbaBoth ~ virtualBestAvg + timeout * (1 - (sat+unsat)/files)
+
                 double vwa = exp.Timeout.TotalSeconds;
 
                 DateTime pdt = Convert.ToDateTime(exp.SubmissionTime, culture);
@@ -444,39 +446,44 @@ namespace Nightly
 
                     if (category == "" || exp.Summary.CategorySummary.ContainsKey(category))
                     {
-                        var cs = (category == "") ? exp.Summary.Overall : exp.Summary.CategorySummary[category];
+                        var cs = category == "" ? exp.Summary.Overall : exp.Summary.CategorySummary[category];
                         var csZ3 = new Z3SummaryProperties(cs);
-                        double st = csZ3.TimeSat;
-                        double ut = csZ3.TimeUnsat;
-                        double sumf = (csZ3.Sat + csZ3.Unsat);
-                        double curAvg = (sumf == 0) ? vwa : (st + ut) / sumf;
-                        y2 = 100.0 * sumf / cs.Runs;
-                        y3 = 100.0 * (1.0 - (vbaBoth / vwa));
-                        if (y3 > 100.0) y3 = 100; else if (y3 < 0.0) y3 = 0.0;
+                        
+                        //double st = csZ3.TimeSat;
+                        //double ut = csZ3.TimeUnsat;
 
-                        y = (y2 * y3) / 100.0;
-                        tt = pdt.ToString() + ": " + y.ToString();
-                        if (y > 100.0) y = 100.0;
+                        double solvedProblems = csZ3.Sat + csZ3.Unsat;
+                        double totalProblems = csZ3.TargetSat + csZ3.TargetUnsat + csZ3.TargetUnknown;
 
-                        y4 = (y2 + y3) / 2.0;
+                        y2 = 100.0 * solvedProblems / totalProblems;
+
+                        //double curAvg = (solvedProblems == 0) ? vwa : (st + ut) / solvedProblems;
+                        //y3 = 100.0 * (1.0 - (vbaBoth / vwa));
+                        //if (y3 > 100.0) y3 = 100; else if (y3 < 0.0) y3 = 0.0;
+
+                        //y = (y2 * y3) / 100.0;
+                        //tt = pdt.ToString() + ": " + y.ToString();
+                        //if (y > 100.0) y = 100.0;
+
+                        //y4 = (y2 + y3) / 2.0;
                     }
                     else
                     {
-                        y = 0.0;
+                        //y = 0.0;
                         y2 = 0.0;
-                        y3 = 0.0;
-                        y4 = 0.0;
+                        //y3 = 0.0;
+                        //y4 = 0.0;
                         tt = pdt.ToString() + ": no data";
                     }
 
-                    ser.Points.AddXY(-x, y);
-                    ser.Points.Last().ToolTip = tt;
+                    //ser.Points.AddXY(-x, y);
+                    //ser.Points.Last().ToolTip = tt;
                     ser2.Points.AddXY(-x, y2);
-                    ser.Points.Last().ToolTip = y2.ToString();
-                    ser3.Points.AddXY(-x, y3);
-                    ser.Points.Last().ToolTip = y3.ToString();
-                    ser4.Points.AddXY(-x, y4);
-                    ser.Points.Last().ToolTip = y4.ToString();
+                    //ser.Points.Last().ToolTip = y2.ToString();
+                    //ser3.Points.AddXY(-x, y3);
+                    //ser.Points.Last().ToolTip = y3.ToString();
+                    //ser4.Points.AddXY(-x, y4);
+                    //ser.Points.Last().ToolTip = y4.ToString();
 
                     if (x == maxdays)
                         need_earliest = false;
@@ -496,22 +503,22 @@ namespace Nightly
                 }
             }
 
-            if (need_latest)
-            {
-                ser.Points.AddXY(0.0, latest_y);
-                ser.Points.Last().ToolTip = "Latest: " + latest_y.ToString();
-            }
+            //if (need_latest)
+            //{
+            //    ser.Points.AddXY(0.0, latest_y);
+            //    ser.Points.Last().ToolTip = "Latest: " + latest_y.ToString();
+            //}
 
-            if (need_earliest)
-            {
-                ser.Points.InsertXY(0, -maxdays, earliest_y);
-                ser.Points.First().ToolTip = "Before: " + earliest_y.ToString();
-            }
+            //if (need_earliest)
+            //{
+            //    ser.Points.InsertXY(0, -maxdays, earliest_y);
+            //    ser.Points.First().ToolTip = "Before: " + earliest_y.ToString();
+            //}
 
-            chart.Series.Add(ser);
+            //chart.Series.Add(ser);
             chart.Series.Add(ser2);
-            chart.Series.Add(ser3);
-            chart.Series.Add(ser4);
+            //chart.Series.Add(ser3);
+            //chart.Series.Add(ser4);
         }
 
         protected void buildPerformanceVectorGraph(string category, Chart chart)
@@ -591,11 +598,11 @@ namespace Nightly
                     var csZ3 = new Z3SummaryProperties(cs);
 
                     int solved = (csZ3.Sat + csZ3.Unsat);
-                    int unsolved = (cs.Runs - (csZ3.Sat + csZ3.Unsat));
+                    int unsolved = (cs.Files - (csZ3.Sat + csZ3.Unsat));
                     double avg_time = (csZ3.TimeSat + csZ3.TimeUnsat) / (double)solved;
                     double top_speed = virtualBestAvg;
 
-                    double x = 100.0 * solved / (double)cs.Runs; // % solved.                
+                    double x = 100.0 * solved / (double)cs.Files; // % solved.                
                     double y = 100.0 * top_speed / avg_time; // rel. speed?
 
                     int inx = series.Points.AddXY(x, y);
@@ -1087,7 +1094,7 @@ namespace Nightly
             double timeunsat = double.Parse(cs.Properties[Z3Domain.KeyTimeUnsat]);
 
             t.Rows.Add(buildStatisticsRow("Experiment ID:", id_msg, "", Color.Black));
-            t.Rows.Add(buildStatisticsRow("Files:", cs.Runs, "", Color.Black));
+            t.Rows.Add(buildStatisticsRow("Files:", cs.Files, "", Color.Black));
             t.Rows.Add(buildStatisticsRow("SAT:", sat, "", Color.Black));
             t.Rows.Add(buildStatisticsRow("UNSAT:", unsat, "", Color.Black));
             t.Rows.Add(buildStatisticsRow("UNKNOWN:", unk, "", Color.Black));

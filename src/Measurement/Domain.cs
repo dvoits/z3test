@@ -143,7 +143,7 @@ namespace Measurement
 
     public class AggregatedAnalysis
     {
-        public AggregatedAnalysis(int bugs, int errors, int infrastructureErrors, int timeouts, int memouts, IReadOnlyDictionary<string, string> props, int runs)
+        public AggregatedAnalysis(int bugs, int errors, int infrastructureErrors, int timeouts, int memouts, IReadOnlyDictionary<string, string> props, int files)
         {
             Bugs = bugs;
             Errors = errors;
@@ -151,7 +151,7 @@ namespace Measurement
             MemoryOuts = memouts;
             Properties = props;
             InfrastructureErrors = infrastructureErrors;
-            Runs = runs;
+            Files = files;
         }
 
         public int Bugs { get; private set; }
@@ -163,7 +163,8 @@ namespace Measurement
         public int Timeouts { get; private set; }
 
         public int MemoryOuts { get; private set; }
-        public int Runs { get; private set; }
+
+        public int Files { get; private set; }
 
 
         public IReadOnlyDictionary<string, string> Properties { get; private set; }

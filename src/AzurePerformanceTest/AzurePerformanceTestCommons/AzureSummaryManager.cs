@@ -27,7 +27,9 @@ namespace AzurePerformanceTest
 
 
         private const string summaryContainerName = "summary";
-
+        private const string fileNameTimeline = "timeline.csv";
+        private const string fileNameRecords = "records.csv";
+        private const string fileNameRecordsSummary = "records_summary.csv";
 
         public AzureSummaryManager(string storageConnectionString)
         {
@@ -68,7 +70,7 @@ namespace AzurePerformanceTest
             var results = await storage.GetResults(experimentId);
 
             Trace.WriteLine("Building summary for the experiment...");
-            var catSummary = ExperimentSummary.Build(results, domain);
+            var catSummary = ExperimentSummary.Build(results, domain, ExperimentSummary.DuplicateResolution.Ignore);
             var expSummary = new ExperimentSummary(experimentId, DateTimeOffset.Now, catSummary);
             var sumTable = ExperimentSummaryStorage.AppendOrReplace(all_summaries.Item1, expSummary);
 
@@ -99,9 +101,9 @@ namespace AzurePerformanceTest
 
                     using (ZipFile zip = ZipFile.Read(ms))
                     {
-                        var zip_summary = zip["summary.csv"];
-                        var zip_records = zip["records.csv"];
-                        var zip_records_summary = zip["records_summary.csv"];
+                        var zip_summary = zip[fileNameTimeline];
+                        var zip_records = zip[fileNameRecords];
+                        var zip_records_summary = zip[fileNameRecordsSummary];
 
                         using (MemoryStream mem = new MemoryStream((int)zip_summary.UncompressedSize))
                         {
@@ -126,7 +128,7 @@ namespace AzurePerformanceTest
             }
             catch (StorageException ex) when (ex.RequestInformation.HttpStatusCode == (int)System.Net.HttpStatusCode.NotFound)
             {
-                summary = Table.Empty;
+                summary = ExperimentSummaryStorage.EmptyTable();
                 records = new Dictionary<string, Record>();
                 records_summary = new Dictionary<string, CategoryRecord>();
                 etag = null;
@@ -146,15 +148,15 @@ namespace AzurePerformanceTest
                 {
                     ExperimentSummaryStorage.SaveTable(summary, s1);
                     s1.Position = 0;
-                    zip.AddEntry("summary.csv", s1);
+                    zip.AddEntry(fileNameTimeline, s1);
 
                     RecordsStorage.SaveBenchmarksRecords(records.BenchmarkRecords, s2);
                     s2.Position = 0;
-                    zip.AddEntry("records.csv", s2);
+                    zip.AddEntry(fileNameRecords, s2);
 
                     RecordsStorage.SaveSummaryRecords(records.CategoryRecords, s3);
                     s3.Position = 0;
-                    zip.AddEntry("records_summary.csv", s3);
+                    zip.AddEntry(fileNameRecordsSummary, s3);
 
                     zip.Save(zipStream);
                 }
