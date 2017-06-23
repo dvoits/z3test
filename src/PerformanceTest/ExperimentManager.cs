@@ -25,15 +25,6 @@ namespace PerformanceTest
         public abstract Task RestartBenchmarks(ExperimentID id, IEnumerable<string> benchmarkNames, string newBenchmarkContainerUri = null);
 
         /// <summary>
-        /// Add new results, update existing results and remove unnecessary results in the experiment
-        /// </summary>
-        /// <param name="id">ID of the experiment</param>
-        /// <param name="removingResults"></param>
-        /// <param name="updatingResults"></param>
-        /// <param name="addingResults"></param>
-        /// <returns></returns>
-        public abstract Task UpdateExperiment(ExperimentID id, BenchmarkResult[] removingResults, BenchmarkResult[] updatingResults, BenchmarkResult[] addingResults);
-        /// <summary>
         /// Returns current execution status of existing experiments.
         /// </summary>
         public abstract Task<IEnumerable<ExperimentStatus>> GetStatus(IEnumerable<ExperimentID> ids);
@@ -51,9 +42,6 @@ namespace PerformanceTest
 
         public abstract Task UpdateStatusFlag(ExperimentID id, bool flag);
         public abstract Task UpdateNote(ExperimentID id, string note);
-        //public abstract Task UpdateResultStatus(ExperimentID id, ResultStatus status);
-        public abstract Task UpdateRuntime(ExperimentID id, double runtime);
-
         /// <summary>
         /// Returns an ordered list of experiments satisfying the filter.
         /// </summary>

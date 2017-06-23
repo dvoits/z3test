@@ -34,9 +34,9 @@ namespace PerformanceTest.Management
         {
             return new ExperimentListViewModel(manager, uiService);
         }
-        public ShowResultsViewModel BuildResultsView(int id, string directory)
+        public ShowResultsViewModel BuildResultsView(int id, double timeout, string directory)
         {
-            return new ShowResultsViewModel(id, directory, manager, uiService);
+            return new ShowResultsViewModel(id, timeout, directory, manager, uiService);
         }
         public CompareExperimentsViewModel BuildComparingResults(int id1, int id2, ExperimentDefinition def1, ExperimentDefinition def2)
         {
@@ -65,10 +65,10 @@ namespace PerformanceTest.Management
                     uiService.ShowInfo("There are no duplicates to resolve in experiment.", "No duplicates");
                 }
             }
-            //catch (Exception ex)
-            //{
-            //    uiService.ShowError(ex, "Failed to resolve duplicates in experiment");
-            //}
+            catch (Exception ex)
+            {
+                uiService.ShowError(ex, "Failed to resolve duplicates in experiment");
+            }
             finally
             {
                 uiService.StopIndicateLongOperation(handle);

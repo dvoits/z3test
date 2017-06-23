@@ -92,7 +92,7 @@ namespace PerformanceTest.Management
 
             showNextDupe();
             if (duplicatesToRemove.Count > 0)
-                manager.UpdateExperiment(id, duplicatesToRemove.ToArray(), null, null);
+                DeleteResults(duplicatesToRemove.ToArray());
             return filenames.Count > 0;
         }
         public void Pick(List<BenchmarkResultViewModel> items)
@@ -186,6 +186,10 @@ namespace PerformanceTest.Management
                 }
                 while (filenames.Count() > 0);                 
             }
+        }
+        public void DeleteResults(BenchmarkResult[] removing_results)
+        {
+            throw new NotImplementedException();
         }
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
         {

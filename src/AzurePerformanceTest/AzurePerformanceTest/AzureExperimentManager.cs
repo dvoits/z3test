@@ -527,19 +527,6 @@ namespace AzurePerformanceTest
         {
             await storage.UpdateStatusFlag(id, flag);
         }
-        ////public override Task UpdateResultStatus(ExperimentID id, ResultStatus status)
-        //{
-        //    throw new NotImplementedException();
-        //    //await storage.UpdateResultStatus(id, status);
-        //}
-        public override Task UpdateRuntime(ExperimentID id, double runtime)
-        {
-            throw new NotImplementedException();
-        }
-        public override Task UpdateExperiment(int id, BenchmarkResult[] removingResults, BenchmarkResult[] updatingResults, BenchmarkResult[] addingResults)
-        {
-            throw new NotImplementedException();
-        }
     }
 
     public sealed class PoolDescription

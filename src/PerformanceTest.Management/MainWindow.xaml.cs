@@ -553,7 +553,7 @@ namespace PerformanceTest.Management
             }
             else sharedDirectory = st.Definition.Category;
 
-            var vm = managerVm.BuildResultsView(st.ID, sharedDirectory);
+            var vm = managerVm.BuildResultsView(st.ID, st.Definition.BenchmarkTimeout.TotalSeconds, sharedDirectory);
             dlg.DataContext = vm;
             dlg.Owner = this;
             dlg.Show();
