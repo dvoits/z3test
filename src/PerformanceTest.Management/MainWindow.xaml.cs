@@ -700,7 +700,6 @@ namespace PerformanceTest.Management
                 for (var i = 0; i < sts.Length; i++)
                 {
                     var rc = sts[i].JobStatus;
-                    //if (rc == null) 
                     if (rc != ExperimentExecutionState.Completed)
                     {
                         e.CanExecute = false;

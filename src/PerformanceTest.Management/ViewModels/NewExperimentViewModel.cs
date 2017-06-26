@@ -501,7 +501,7 @@ namespace PerformanceTest.Management
                 string[] initial = BenchmarkDirectory == null ? new string[0] : BenchmarkDirectory.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
                 var selected = await service.BrowseTree("Browse for directory", initial, selection =>
                 {
-                    return manager.GetDirectories(string.Join("/", selection));
+                    return manager.GetDirectories(string.Join("/", selection), BenchmarkContainerUri);
                 });
                 if (selected != null)
                 {
@@ -521,7 +521,7 @@ namespace PerformanceTest.Management
                 string[] selected = Categories == null ? new string[0] : Categories.Split('|').Select(s => s.Trim()).ToArray();
 
                 selected = service.ChooseOptions("Choose categories",
-                    new AsyncLazy<string[]>(() => manager.GetAvailableCategories(BenchmarkDirectory)),
+                    new AsyncLazy<string[]>(() => manager.GetAvailableCategories(BenchmarkDirectory, BenchmarkContainerUri)),
                     new Predicate<string>(c => selected.Contains(c)));
                 if (selected != null)
                 {

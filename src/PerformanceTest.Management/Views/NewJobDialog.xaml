@@ -44,7 +44,7 @@
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Margin="0,0,10,0" Grid.Column="0">Connection string:</TextBlock>
+                            <TextBlock Margin="0,0,10,0" Grid.Column="0">SAS url:</TextBlock>
                             <TextBox Height="24" Grid.Column="1" Text="{Binding BenchmarkContainerUri}" IsEnabled="{Binding Path='IsChecked', ElementName='connectionstring'}"/>
                         </Grid>
                     </RadioButton>

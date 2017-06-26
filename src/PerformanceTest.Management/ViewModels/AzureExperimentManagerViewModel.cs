@@ -110,19 +110,19 @@ namespace PerformanceTest.Management
                 uiService.StopIndicateLongOperation(handle);
             }
         }
-        public async Task<string[]> GetAvailableCategories(string directory)
+        public async Task<string[]> GetAvailableCategories(string directory, string benchmarkContainerUri = "default")
         {
             if (directory == null) throw new ArgumentNullException("directory");
-            string[] cats = await GetDirectories(directory);
+            string[] cats = await GetDirectories(directory, benchmarkContainerUri);
             return cats;
         }
 
-        public Task<string[]> GetDirectories(string baseDirectory = "")
+        public Task<string[]> GetDirectories(string baseDirectory = "", string benchmarkContainerUri = "default")
         {
             if (baseDirectory == null) throw new ArgumentNullException("baseDirectory");
             var expStorage = manager.Storage;
-            var benchStorage = expStorage.DefaultBenchmarkStorage;
-
+            var benchStorage = benchmarkContainerUri == "default" ? expStorage.DefaultBenchmarkStorage : new AzureBenchmarkStorage(benchmarkContainerUri);
+            
             return Task.Run(() =>
             {
                 string[] dirs;
