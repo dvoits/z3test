@@ -664,7 +664,7 @@ namespace PerformanceTest.Management
                 for (var i = 0; i < sts.Length; i++)
                 {
                     var rc = sts[i].JobStatus;
-                    if (rc != ExperimentExecutionState.Completed)
+                    if (rc == ExperimentExecutionState.Active)
                     {
                         e.CanExecute = false;
                         return;
@@ -700,7 +700,7 @@ namespace PerformanceTest.Management
                 for (var i = 0; i < sts.Length; i++)
                 {
                     var rc = sts[i].JobStatus;
-                    if (rc != ExperimentExecutionState.Completed)
+                    if (rc == ExperimentExecutionState.Active)
                     {
                         e.CanExecute = false;
                         return;

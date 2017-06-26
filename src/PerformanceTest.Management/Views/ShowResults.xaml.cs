@@ -82,7 +82,7 @@ namespace PerformanceTest.Management
         private void canRequeue(object sender, CanExecuteRoutedEventArgs e)
         {
             var vm = DataContext as ShowResultsViewModel;
-            if (vm.JobStatus != ExperimentExecutionState.Completed)
+            if (vm.JobStatus == ExperimentExecutionState.Active)
             {
                 e.CanExecute = false;
                 return;
