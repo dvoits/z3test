@@ -12,6 +12,7 @@ namespace PerformanceTest
 
     public abstract class ExperimentManager
     {
+        abstract public string BatchPoolID { get; set; }
         /// <summary>
         /// Schedules execution of a new experiment from the given experiment definition.
         /// </summary>

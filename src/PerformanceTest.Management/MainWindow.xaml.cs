@@ -551,7 +551,7 @@ namespace PerformanceTest.Management
             }
             else sharedDirectory = st.Definition.Category;
 
-            var vm = managerVm.BuildResultsView(st.ID, st.JobStatus, st.Definition.BenchmarkContainerUri, st.Definition.BenchmarkTimeout.TotalSeconds, sharedDirectory);
+            var vm = managerVm.BuildResultsView(st.ID, st.JobStatus, st.Definition.BenchmarkContainerUri, st.Definition.BenchmarkTimeout.TotalSeconds, sharedDirectory, recentValues);
             dlg.DataContext = vm;
             dlg.Owner = this;
             dlg.Show();
@@ -676,7 +676,7 @@ namespace PerformanceTest.Management
         private void requeueIErrors(object target, ExecutedRoutedEventArgs e)
         {
             var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().ToArray();
-            managerVm.RequeueIErrors(sts);
+            managerVm.RequeueIErrors(sts, recentValues);
         }
         private void canRecovery(object sender, CanExecuteRoutedEventArgs e)
         {

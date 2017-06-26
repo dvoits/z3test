@@ -15,6 +15,7 @@ namespace PerformanceTest
 {
     public sealed class LocalExperimentManager : ExperimentManager
     {
+        public override string BatchPoolID { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
         public static LocalExperimentManager NewExperiments(string experimentsFolder, ReferenceExperiment reference, IDomainResolver domainResolver)
         {
             ExperimentDefinition def = MakeRelativeDefinition(experimentsFolder, reference.Definition);

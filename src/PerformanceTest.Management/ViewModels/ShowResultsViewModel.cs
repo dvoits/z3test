@@ -24,11 +24,11 @@ namespace PerformanceTest.Management
         private string benchmarkContainerUri;
         private IEnumerable<BenchmarkResultViewModel> results, allResults;
         private bool isFiltering;
-
+        private RecentValuesStorage recentValues;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public ShowResultsViewModel(int id, ExperimentExecutionState? jobStatus, string benchmarkContainerUri, double timeout, string sharedDirectory, ExperimentManager manager, AzureExperimentManagerViewModel managerVm, IUIService uiService)
+        public ShowResultsViewModel(int id, ExperimentExecutionState? jobStatus, string benchmarkContainerUri, double timeout, string sharedDirectory, ExperimentManager manager, AzureExperimentManagerViewModel managerVm, RecentValuesStorage recentValues, IUIService uiService)
         {
             if (manager == null) throw new ArgumentNullException("manager");
             if (managerVm == null) throw new ArgumentNullException(nameof(managerVm));
@@ -41,6 +41,7 @@ namespace PerformanceTest.Management
             this.timeout = timeout;
             this.jobStatus = jobStatus;
             this.benchmarkContainerUri = benchmarkContainerUri;
+            this.recentValues = recentValues;
             RefreshResultsAsync();
         }
         public ExperimentExecutionState? JobStatus
@@ -213,9 +214,13 @@ namespace PerformanceTest.Management
             {
                 string[] benchmarkNames = items.Select(e => e.Filename).Distinct().ToArray();
 
-                RequeueSettingsViewModel requeueSettingsVm = new RequeueSettingsViewModel(benchmarkContainerUri, managerVm, uiService);
+                RequeueSettingsViewModel requeueSettingsVm = new RequeueSettingsViewModel(benchmarkContainerUri, managerVm, recentValues, uiService);
                 requeueSettingsVm = uiService.ShowRequeueSettings(requeueSettingsVm);
-                await manager.RestartBenchmarks(id, benchmarkNames, requeueSettingsVm.BenchmarkContainerUri);
+                if (requeueSettingsVm != null)
+                {
+                    manager.BatchPoolID = requeueSettingsVm.Pool;
+                    await manager.RestartBenchmarks(id, benchmarkNames, requeueSettingsVm.BenchmarkContainerUri);
+                }
             }
             catch (Exception ex)
             {

@@ -34,9 +34,9 @@ namespace PerformanceTest.Management
         {
             return new ExperimentListViewModel(manager, uiService);
         }
-        public ShowResultsViewModel BuildResultsView(int id, ExperimentExecutionState? jobStatus, string benchmarkContainerUri, double timeout, string directory)
+        public ShowResultsViewModel BuildResultsView(int id, ExperimentExecutionState? jobStatus, string benchmarkContainerUri, double timeout, string directory, RecentValuesStorage recentValues)
         {
-            return new ShowResultsViewModel(id, jobStatus, benchmarkContainerUri, timeout, directory, manager, this, uiService);
+            return new ShowResultsViewModel(id, jobStatus, benchmarkContainerUri, timeout, directory, manager, this, recentValues, uiService);
         }
         public CompareExperimentsViewModel BuildComparingResults(int id1, int id2, ExperimentDefinition def1, ExperimentDefinition def2)
         {
@@ -75,7 +75,7 @@ namespace PerformanceTest.Management
             }
 
         }
-        public async void RequeueIErrors(ExperimentStatusViewModel[] ids)
+        public async void RequeueIErrors(ExperimentStatusViewModel[] ids, RecentValuesStorage recentValues)
         {
             var handle = uiService.StartIndicateLongOperation("Requeue infrastructure errors...");
             int requeueCount = 0;
@@ -89,11 +89,14 @@ namespace PerformanceTest.Management
                     if (ieResults.Count() > 0)
                     {
                         string benchmarkCont = ids[i].Definition.BenchmarkContainerUri;
-                        //Pool???
-                        RequeueSettingsViewModel requeueSettingsVm = new RequeueSettingsViewModel(benchmarkCont, this, uiService);
+                        RequeueSettingsViewModel requeueSettingsVm = new RequeueSettingsViewModel(benchmarkCont, this, recentValues, uiService);
                         requeueSettingsVm = uiService.ShowRequeueSettings(requeueSettingsVm);
-                        await manager.RestartBenchmarks(eid, ieResults, requeueSettingsVm.BenchmarkContainerUri);
-                        requeueCount += ieResults.Count();
+                        if (requeueSettingsVm != null)
+                        {
+                            manager.BatchPoolID = requeueSettingsVm.Pool;
+                            await manager.RestartBenchmarks(eid, ieResults, requeueSettingsVm.BenchmarkContainerUri);
+                            requeueCount += ieResults.Count();
+                        }
                     }
                 }
                 uiService.ShowInfo("Requeued " + requeueCount + " infrastructure errors.", "Infrastructure errors");

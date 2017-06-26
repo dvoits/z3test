@@ -12,24 +12,26 @@ namespace PerformanceTest.Management
 {
     public class RequeueSettingsViewModel : INotifyPropertyChanged
     {
-        private readonly AzureExperimentManagerViewModel manager;
+        private readonly AzureExperimentManagerViewModel managerVm;
         private readonly IUIService service; 
         private string benchmarkContainerUri;
         private bool isDefaultBenchmarkContainerUri;
         private string selectedPool;
-
+        private RecentValuesStorage recentValues;
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public RequeueSettingsViewModel(string benchmarkContainerUri, AzureExperimentManagerViewModel manager, IUIService uiService)
+        public RequeueSettingsViewModel(string benchmarkContainerUri, AzureExperimentManagerViewModel managerVm, RecentValuesStorage recentValues, IUIService uiService)
         {
-            if (manager == null) throw new ArgumentNullException(nameof(manager));
+            if (managerVm == null) throw new ArgumentNullException(nameof(managerVm));
             if (uiService == null) throw new ArgumentNullException(nameof(uiService));
-            this.manager = manager;
+            if (recentValues == null) throw new ArgumentNullException(nameof(recentValues));
+            this.managerVm = managerVm;
             this.service = uiService;
+            this.recentValues = recentValues;
             this.benchmarkContainerUri = benchmarkContainerUri;
             isDefaultBenchmarkContainerUri = benchmarkContainerUri == ExperimentDefinition.DefaultContainerUri;
             ChoosePoolCommand = new DelegateCommand(ListPools);
-            //selectedPool = recentValues.BatchPool;
+            selectedPool = recentValues.BatchPool;
         }
 
         public bool IsDefaultBenchmarkContainerUri
@@ -51,7 +53,6 @@ namespace PerformanceTest.Management
                 NotifyPropertyChanged();
             }
         }
-
         public string Pool
         {
             get { return selectedPool; }
@@ -86,12 +87,17 @@ namespace PerformanceTest.Management
             return isValid;
         }
 
+        public void SaveRecentSettings()
+        {
+            recentValues.BatchPool = selectedPool;
+        }
+
         private void ListPools()
         {
             try
             {
                 PoolDescription pool = service.ChooseOption("Choose an Azure Batch Pool",
-                    new AsyncLazy<PoolDescription[]>(() => manager.GetAvailablePools()),
+                    new AsyncLazy<PoolDescription[]>(() => managerVm.GetAvailablePools()),
                     new Predicate<PoolDescription>(p => p.Id == selectedPool));
                 if (pool != null)
                 {

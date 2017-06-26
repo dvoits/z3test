@@ -262,12 +262,11 @@ namespace PerformanceTest.Management
         }
         public RequeueSettingsViewModel ShowRequeueSettings(RequeueSettingsViewModel vm)
         {
-            RequeueSettingsViewModel old_data = vm;
             RequeueSettings dlg = new RequeueSettings();
             dlg.DataContext = vm;
             if (dlg.ShowDialog() == true)
                 return (dlg.DataContext as RequeueSettingsViewModel);
-            else return old_data;
+            else return null;
         }
     }
 }

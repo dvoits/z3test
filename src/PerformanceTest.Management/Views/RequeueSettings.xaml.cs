@@ -37,5 +37,9 @@ namespace PerformanceTest.Management
                 DialogResult = true;
             }
         }
+        private void cancelButton_Click(object sender, RoutedEventArgs e)
+        {
+            DialogResult = false;
+        }
     }
 }
