@@ -23,7 +23,7 @@ namespace Measurement
         public const string KeyTargetSat = "TargetSAT";
         public const string KeyTargetUnsat = "TargetUNSAT";
         public const string KeyTargetUnknown = "TargetUNKNOWN";
-
+        public const string TagUnderperformers = "UNDERPERFORMERS";
 
         public Z3Domain() : base("Z3")
         {
@@ -174,7 +174,7 @@ namespace Measurement
             int _tunsat = int.Parse(result.OutputProperties[KeyTargetUnsat]);
             int _tunk = int.Parse(result.OutputProperties[KeyTargetUnknown]);
 
-            if (_sat + _unsat < _tsat + _tunsat || _unk > _tunk) return new string[] { "UNDERPERFORMERS" };
+            if (_sat + _unsat < _tsat + _tunsat || _unk > _tunk) return new string[] { TagUnderperformers };
             return new string[0];
         }
 

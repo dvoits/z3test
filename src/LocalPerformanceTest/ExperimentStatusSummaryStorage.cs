@@ -85,7 +85,7 @@ namespace PerformanceTest
                             break;
 
                         case ParserType.BUGS:
-                            AddToList(errorsByCategory, tokens[0], tokens[1]);
+                            AddToList(bugsByCategory, tokens[0], tokens[1]);
                             break;
 
                         case ParserType.DIPPERS:

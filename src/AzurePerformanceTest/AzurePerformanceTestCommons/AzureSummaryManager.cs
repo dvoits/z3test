@@ -31,8 +31,10 @@ namespace AzurePerformanceTest
         private const string fileNameRecords = "records.csv";
         private const string fileNameRecordsSummary = "records_summary.csv";
 
-        public AzureSummaryManager(string storageConnectionString)
+        public AzureSummaryManager(string storageConnectionString, IDomainResolver domainResolver)
         {
+            if (domainResolver == null) throw new ArgumentNullException(nameof(domainResolver));
+
             var cs = new StorageAccountConnectionString(storageConnectionString).ToString();
             storage = new AzureExperimentStorage(cs);
 
@@ -44,7 +46,7 @@ namespace AzurePerformanceTest
                 summaryContainer.CreateIfNotExistsAsync()
             };
 
-            resolveDomain = MEFDomainResolver.Instance;
+            resolveDomain = domainResolver;
 
             Task.WaitAll(cloudEntityCreationTasks);
         }
@@ -113,17 +115,10 @@ namespace AzurePerformanceTest
             return summary;
         }
 
-        private static string GetStatusSummaryFileName(int expId, int? refExpId)
-        {
-            return refExpId.HasValue ?
-                string.Format("statuses_{0}_{1}.csv", expId, refExpId.Value) :
-                string.Format("statuses_{0}.csv", expId);
-        }
-
         private async Task UploadStatusSummary(ExperimentStatusSummary summary)
         {
             string fileName = GetStatusSummaryFileName(summary.Id, summary.ReferenceId);
-            var blobName = fileName + ".zip";
+            string blobName = GetStatusSummaryBlobName(fileName);
             var blob = summaryContainer.GetBlockBlobReference(blobName);
 
             using (Stream zipStream = new MemoryStream())
@@ -142,10 +137,22 @@ namespace AzurePerformanceTest
             }
         }
 
+        private static string GetStatusSummaryBlobName(string fileName)
+        {
+            return string.Concat("_", fileName, ".zip");
+        }
+
+        private static string GetStatusSummaryFileName(int expId, int? refExpId)
+        {
+            return refExpId.HasValue ?
+                string.Format("statuses_{0}_{1}.csv", expId, refExpId.Value) :
+                string.Format("statuses_{0}.csv", expId);
+        }
+
         private async Task<ExperimentStatusSummary> TryDownloadStatusSummary(int expId, int? refExpId)
         {
             string fileName = GetStatusSummaryFileName(expId, refExpId);
-            var blobName = fileName + ".zip";
+            var blobName = GetStatusSummaryBlobName(fileName);
             var blob = summaryContainer.GetBlockBlobReference(blobName);
 
             try

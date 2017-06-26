@@ -47,10 +47,12 @@ namespace Nightly
                     _defaultParams.Add("cat", (p == null) ? "" : p);
 
                     string summaryName = Request.Params.Get("summary");
-                    _defaultParams.Add("summary", (summaryName == null) ? "" : summaryName);
+                    summaryName = summaryName == null ? config.SummaryName : summaryName;
+                    _defaultParams.Add("summary", summaryName);
 
                     string connectionString = await GetConnectionString();
-                    vm = await MainPageViewModel.Initialize(connectionString, summaryName == null ? config.SummaryName : summaryName);
+                    IDomainResolver domainResolver = new MEFDomainResolver(System.IO.Path.Combine(HttpRuntime.AppDomainAppPath, "bin"));
+                    vm = await MainPageViewModel.Initialize(connectionString, summaryName, domainResolver);
 
                     buildCategoryPanels();
                 }
@@ -424,9 +426,8 @@ namespace Nightly
             {
                 if (!exp.IsFinished) continue;
 
-                var jstats = exp.Summary.Overall;
-                var z3stats = new Z3SummaryProperties(jstats);
-
+                //var jstats = exp.Summary.Overall;
+                //var z3stats = Z3SummaryProperties.TryWrap(jstats);
                 // todo: probably use average normalized timeout?
                 // or non-normalized for stat?
                 // todo: sat+unsat seems to be non-comparable with number of files
@@ -447,25 +448,27 @@ namespace Nightly
                     if (category == "" || exp.Summary.CategorySummary.ContainsKey(category))
                     {
                         var cs = category == "" ? exp.Summary.Overall : exp.Summary.CategorySummary[category];
-                        var csZ3 = new Z3SummaryProperties(cs);
-                        
-                        //double st = csZ3.TimeSat;
-                        //double ut = csZ3.TimeUnsat;
+                        Z3SummaryProperties csZ3 = Z3SummaryProperties.TryWrap(cs);
+                        if (csZ3 != null)
+                        {
+                            //double st = csZ3.TimeSat;
+                            //double ut = csZ3.TimeUnsat;
 
-                        double solvedProblems = csZ3.Sat + csZ3.Unsat;
-                        double totalProblems = csZ3.TargetSat + csZ3.TargetUnsat + csZ3.TargetUnknown;
+                            double solvedProblems = csZ3.Sat + csZ3.Unsat;
+                            double totalProblems = csZ3.TargetSat + csZ3.TargetUnsat + csZ3.TargetUnknown;
 
-                        y2 = 100.0 * solvedProblems / totalProblems;
+                            y2 = 100.0 * solvedProblems / totalProblems;
 
-                        //double curAvg = (solvedProblems == 0) ? vwa : (st + ut) / solvedProblems;
-                        //y3 = 100.0 * (1.0 - (vbaBoth / vwa));
-                        //if (y3 > 100.0) y3 = 100; else if (y3 < 0.0) y3 = 0.0;
+                            //double curAvg = (solvedProblems == 0) ? vwa : (st + ut) / solvedProblems;
+                            //y3 = 100.0 * (1.0 - (vbaBoth / vwa));
+                            //if (y3 > 100.0) y3 = 100; else if (y3 < 0.0) y3 = 0.0;
 
-                        //y = (y2 * y3) / 100.0;
-                        //tt = pdt.ToString() + ": " + y.ToString();
-                        //if (y > 100.0) y = 100.0;
+                            //y = (y2 * y3) / 100.0;
+                            //tt = pdt.ToString() + ": " + y.ToString();
+                            //if (y > 100.0) y = 100.0;
 
-                        //y4 = (y2 + y3) / 2.0;
+                            //y4 = (y2 + y3) / 2.0;
+                        }
                     }
                     else
                     {
@@ -595,26 +598,29 @@ namespace Nightly
                 if (category == "" || exp.Summary.CategorySummary.ContainsKey(category))
                 {
                     var cs = (category == "") ? exp.Summary.Overall : exp.Summary.CategorySummary[category];
-                    var csZ3 = new Z3SummaryProperties(cs);
+                    var csZ3 = Z3SummaryProperties.TryWrap(cs);
 
-                    int solved = (csZ3.Sat + csZ3.Unsat);
-                    int unsolved = (cs.Files - (csZ3.Sat + csZ3.Unsat));
-                    double avg_time = (csZ3.TimeSat + csZ3.TimeUnsat) / (double)solved;
-                    double top_speed = virtualBestAvg;
-
-                    double x = 100.0 * solved / (double)cs.Files; // % solved.                
-                    double y = 100.0 * top_speed / avg_time; // rel. speed?
-
-                    int inx = series.Points.AddXY(x, y);
-                    series.Points[inx].ToolTip = exp.SubmissionTime.ToString();
-
-                    int intensity = (int)(255.0 * (age / maxdays));
-                    series.Points[inx].MarkerColor = Color.FromArgb(intensity, intensity, 255);
-
-                    if (age < youngest)
+                    if (csZ3 != null)
                     {
-                        youngest_x = x;
-                        youngest_y = y;
+                        int solved = (csZ3.Sat + csZ3.Unsat);
+                        int unsolved = (cs.Files - (csZ3.Sat + csZ3.Unsat));
+                        double avg_time = (csZ3.TimeSat + csZ3.TimeUnsat) / (double)solved;
+                        double top_speed = virtualBestAvg;
+
+                        double x = 100.0 * solved / (double)cs.Files; // % solved.                
+                        double y = 100.0 * top_speed / avg_time; // rel. speed?
+
+                        int inx = series.Points.AddXY(x, y);
+                        series.Points[inx].ToolTip = exp.SubmissionTime.ToString();
+
+                        int intensity = (int)(255.0 * (age / maxdays));
+                        series.Points[inx].MarkerColor = Color.FromArgb(intensity, intensity, 255);
+
+                        if (age < youngest)
+                        {
+                            youngest_x = x;
+                            youngest_y = y;
+                        }
                     }
                 }
             }
@@ -1087,11 +1093,11 @@ namespace Nightly
             t.Rows.Add(buildStatisticsRow("Experiment submission time:", st, "", Color.Black));
             string id_msg = exp.Id.ToString();
 
-            int sat = int.Parse(cs.Properties[Z3Domain.KeySat]);
-            int unsat = int.Parse(cs.Properties[Z3Domain.KeyUnsat]);
-            int unk = int.Parse(cs.Properties[Z3Domain.KeyUnknown]);
-            double timesat = double.Parse(cs.Properties[Z3Domain.KeyTimeSat]);
-            double timeunsat = double.Parse(cs.Properties[Z3Domain.KeyTimeUnsat]);
+            int sat = cs.Properties.ContainsKey(Z3Domain.KeySat) ? int.Parse(cs.Properties[Z3Domain.KeySat]) : 0;
+            int unsat = cs.Properties.ContainsKey(Z3Domain.KeyUnsat) ? int.Parse(cs.Properties[Z3Domain.KeyUnsat]) : 0;
+            int unk = cs.Properties.ContainsKey(Z3Domain.KeyUnknown) ? int.Parse(cs.Properties[Z3Domain.KeyUnknown]) : 0;
+            double timesat = cs.Properties.ContainsKey(Z3Domain.KeyTimeSat) ? double.Parse(cs.Properties[Z3Domain.KeyTimeSat]) : 0;
+            double timeunsat = cs.Properties.ContainsKey(Z3Domain.KeyTimeUnsat) ? double.Parse(cs.Properties[Z3Domain.KeyTimeUnsat]) : 0;
 
             t.Rows.Add(buildStatisticsRow("Experiment ID:", id_msg, "", Color.Black));
             t.Rows.Add(buildStatisticsRow("Files:", cs.Files, "", Color.Black));
@@ -1107,8 +1113,8 @@ namespace Nightly
             t.Rows.Add(buildStatisticsRow("Total time (UNSAT):", TimeSpan.FromSeconds(timeunsat), "", Color.Black));
             t.Rows.Add(buildStatisticsRow("Avg. time (SAT/UNSAT):", (timesat + timeunsat) /
                                                                     (sat + unsat), "sec.", Color.Black));
-            t.Rows.Add(buildStatisticsRow("Overperformers:", cs.Properties[Z3Domain.KeyOverperformed], "", Color.Black));
-            t.Rows.Add(buildStatisticsRow("Underperformers:", cs.Properties[Z3Domain.KeyUnderperformed], "", Color.Black));
+            t.Rows.Add(buildStatisticsRow("Overperformers:", cs.Properties.ContainsKey(Z3Domain.KeyOverperformed) ? cs.Properties[Z3Domain.KeyOverperformed] : "0", "", Color.Black));
+            t.Rows.Add(buildStatisticsRow("Underperformers:", cs.Properties.ContainsKey(Z3Domain.KeyUnderperformed) ? cs.Properties[Z3Domain.KeyUnderperformed] : "0", "", Color.Black));
 
             p.Controls.Add(t);
             return p;
@@ -1125,7 +1131,7 @@ namespace Nightly
             return result;
         }
 
-        void buildJobPanel(ExperimentViewModel exp, ExperimentAlerts alerts, string category, string alliswelltext)
+        void buildJobPanel(ExperimentViewModel exp, ExperimentStatusSummary expStatus, ExperimentAlerts alerts, string category, string alliswelltext)
         {
             AlertSet catAlerts = alerts[category];
 
@@ -1136,12 +1142,18 @@ namespace Nightly
             tc.Tabs.Add(buildSummaryTab(category, alliswelltext, alerts));
             tc.Tabs.Add(buildStatsTab(exp, category));
 
-            tc.Tabs.Add(buildListTab("Errors", AlertLevel.Warning, exp.Errors[category], "A benchmark is classified as erroneous when its return value is non-zero (except for memory outs)."));
-            tc.Tabs.Add(buildListTab("Bugs", AlertLevel.Critical, exp.Bugs[category], "A benchmark is classified as buggy when its result does not agree with its annotation."));
-            tc.Tabs.Add(buildListTab("Underperformers", AlertLevel.None, exp.Underperformers[category], "A benchmark underperforms when it has SAT/UNSAT annotations and some of them were not achieved."));
-            tc.Tabs.Add(buildListTab("Dippers", AlertLevel.None, exp.Dippers[category], "A benchmark is classified as a dipper when it takes more than 10x more time than in a reference job (usually the previous)."));
+            tc.Tabs.Add(buildListTab("Errors", AlertLevel.Warning, GetStatuses(expStatus.ErrorsByCategory, category), "A benchmark is classified as erroneous when its return value is non-zero (except for memory outs)."));
+            tc.Tabs.Add(buildListTab("Bugs", AlertLevel.Critical, GetStatuses(expStatus.BugsByCategory, category), "A benchmark is classified as buggy when its result does not agree with its annotation."));
+            tc.Tabs.Add(buildListTab("Underperformers", AlertLevel.None, expStatus.TagsByCategory.ContainsKey(Z3Domain.TagUnderperformers) ? GetStatuses(expStatus.TagsByCategory[Z3Domain.TagUnderperformers], category) : new List<string>(), "A benchmark underperforms when it has SAT/UNSAT annotations and some of them were not achieved."));
+            tc.Tabs.Add(buildListTab("Dippers", AlertLevel.None, GetStatuses(expStatus.DippersByCategory, category), "A benchmark is classified as a dipper when it takes more than 10x more time than in a reference job (usually the previous)."));
 
             phMain.Controls.Add(tc);
+        }
+
+        private static List<string> GetStatuses(Dictionary<string, List<string>> dict, string cat)
+        {
+            if (dict == null || !dict.ContainsKey(cat)) return new List<string>();
+            return dict[cat];
         }
 
         public Control buildFooter(string category)
@@ -1211,7 +1223,7 @@ namespace Nightly
             return p;
         }
 
-        public void buildCategoryPanels()
+        public async void buildCategoryPanels()
         {
             string limit_str = Request.Params.Get("limit");
             if (limit_str != null)
@@ -1229,12 +1241,13 @@ namespace Nightly
                 if (category == "" || vm.Categories.Contains(category))
                 {
                     var exp = vm.GetLastExperiment();
-                    ExperimentAlerts alerts = new ExperimentAlerts(exp.Summary, Request.FilePath);
-                    string alliswelltext = (category == "") ? "All is well everywhere!" : "All is well in this category.";
-                    buildCategoryPanel(category != "" ? category : "OVERALL", category, category, false, true, false, true,
-                                       "", alerts);
+                    var statusSummary = await vm.GetStatusSummary(exp.Id);
 
-                    buildJobPanel(exp, alerts, category, alliswelltext);
+                    ExperimentAlerts alerts = new ExperimentAlerts(exp.Summary, statusSummary, Request.FilePath);
+                    string alliswelltext = (category == "") ? "All is well everywhere!" : "All is well in this category.";
+                    buildCategoryPanel(category != "" ? category : "OVERALL", category, category, false, true, false, true, "", alerts);
+
+                    buildJobPanel(exp, statusSummary, alerts, category, alliswelltext);
                 }
                 else
                 {
@@ -1249,11 +1262,13 @@ namespace Nightly
                 {
                     int id = int.Parse(jobid);
                     ExperimentViewModel exp = vm.GetExperiment(id);
+                    var statusSummary = await vm.GetStatusSummary(id);
+
                     if (category == "" || vm.Categories.Contains(category))
                     {
-                        ExperimentAlerts alerts = new ExperimentAlerts(exp.Summary, Request.FilePath);
+                        ExperimentAlerts alerts = new ExperimentAlerts(exp.Summary, statusSummary, Request.FilePath);
                         string alliswelltext = (category == "") ? "All is well everywhere!" : "All is well in this category.";
-                        buildJobPanel(exp, alerts, category, alliswelltext);
+                        buildJobPanel(exp, statusSummary, alerts, category, alliswelltext);
                     }
                     else
                     {

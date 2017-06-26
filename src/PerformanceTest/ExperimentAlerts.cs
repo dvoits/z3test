@@ -11,7 +11,7 @@ namespace PerformanceTest.Alerts
         private readonly Dictionary<string, AlertSet> alertSets;
 
 
-        public ExperimentAlerts(ExperimentSummary summary, string _linkPage)
+        public ExperimentAlerts(ExperimentSummary summary, ExperimentStatusSummary statusSummary, string _linkPage)
         {
             alertSets = new Dictionary<string, AlertSet>();
             var overall = new AlertSet();
@@ -20,7 +20,7 @@ namespace PerformanceTest.Alerts
             {
                 if (catSum.Key != "")
                 {
-                    var set = FindCategoryAlerts(summary, catSum.Key);
+                    var set = FindCategoryAlerts(summary, statusSummary, catSum.Key);
                     alertSets.Add(catSum.Key, set);
 
                     if (set.Messages.Count != 0)
@@ -53,12 +53,12 @@ namespace PerformanceTest.Alerts
 
 
 
-        private static AlertSet FindCategoryAlerts(ExperimentSummary summary, string category)
+        private static AlertSet FindCategoryAlerts(ExperimentSummary summary, ExperimentStatusSummary statusSummary, string category)
         {
             AlertSet res = new AlertSet();
 
             // Check for bugs != 0; This is critical.            
-            int bugs = (category == "") ? summary.Overall.Bugs : summary.CategorySummary[category].Bugs;
+            int bugs = category == "" ? summary.Overall.Bugs : summary.CategorySummary[category].Bugs;
             if (bugs != 0)
             {
                 res.Add(AlertLevel.Critical,
@@ -66,7 +66,7 @@ namespace PerformanceTest.Alerts
             }
 
             // Infrastructure errors; this is just an information.
-            int ierrs = (category == "") ? summary.Overall.InfrastructureErrors : summary.CategorySummary[category].InfrastructureErrors;
+            int ierrs = category == "" ? summary.Overall.InfrastructureErrors : summary.CategorySummary[category].InfrastructureErrors;
             if (ierrs != 0)
             {
                 res.Add(AlertLevel.None,
@@ -74,7 +74,7 @@ namespace PerformanceTest.Alerts
             }
 
             // Check for errors != 0; this is just a warning.
-            int errors = (category == "") ? summary.Overall.Errors : summary.CategorySummary[category].Errors;
+            int errors = category == "" ? summary.Overall.Errors : summary.CategorySummary[category].Errors;
             if (errors != 0)
             {
                 res.Add(AlertLevel.Warning,
@@ -82,7 +82,7 @@ namespace PerformanceTest.Alerts
             }
 
             // See whether something got slower.            
-            int dippers = -1; // todo: (category == "") ? _job.Dippers[""].Count : _job.Dippers[category].Count;
+            int dippers = GetStatuses(statusSummary.DippersByCategory, category).Count;
             if (dippers != 0)
             {
                 res.Add(AlertLevel.None,
@@ -94,7 +94,14 @@ namespace PerformanceTest.Alerts
 
             return res;
         }
+
+        private static List<string> GetStatuses(Dictionary<string, List<string>> dict, string cat)
+        {
+            if (dict == null || !dict.ContainsKey(cat)) return new List<string>();
+            return dict[cat];
+        }
     }
+
 
     public enum AlertLevel { None, Warning, Critical };
 
