@@ -322,6 +322,11 @@ namespace PerformanceTest.Management
                     var experiment = experiments[i];
                     var vm = new NewExperimentViewModel(managerVm, uiService, recentValues, creator, domainResolver);
                     vm.Note = experiment.Note;
+                    if (experiment.Definition.BenchmarkContainerUri != ExperimentDefinition.DefaultContainerUri)
+                    {
+                        vm.BenchmarkContainerUriNotDefault = experiment.Definition.BenchmarkContainerUri;
+                        vm.IsDefaultBenchmarkContainerUri = false;
+                    }
                     vm.BenchmarkContainerUri = experiment.Definition.BenchmarkContainerUri;
                     vm.BenchmarkDirectory = experiment.Definition.BenchmarkDirectory;
                     vm.Categories = experiment.Category;
@@ -334,7 +339,7 @@ namespace PerformanceTest.Management
                     vm.MaxRepetitions = experiment.Definition.AdaptiveRunMaxRepetitions;
                     vm.MaxTimeForAdaptiveRuns = experiment.Definition.AdaptiveRunMaxTimeInSeconds;
                     vm.AllowAdaptiveRuns = experiment.Definition.AdaptiveRunMaxRepetitions != 1 || experiment.Definition.AdaptiveRunMaxTimeInSeconds != 0;
-                    // experiment.Definition.Executable;
+                    vm.Executable = experiment.Definition.Executable;
 
                     SubmitNewJob(vm);
                 }

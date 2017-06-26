@@ -150,6 +150,10 @@ namespace PerformanceTest.Management
                 packageName = await newExperiment.GetRecentExecutable();
                 if (String.IsNullOrEmpty(packageName)) throw new InvalidOperationException("Executable package is not available");
             }
+            else if (newExperiment.UseOriginalExecutable)
+            {
+                packageName = newExperiment.Executable;
+            }
             else // upload new executable
             {
                 if (newExperiment.ExecutableFileNames == null || newExperiment.ExecutableFileNames.Length == 0)
