@@ -58,6 +58,7 @@
     <Compile Include="Experiment.cs" />
     <Compile Include="ExperimentAlerts.cs" />
     <Compile Include="ExperimentManager.cs" />
+    <Compile Include="ExperimentStatusSummary.cs" />
     <Compile Include="ExperimentSummary.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Records.cs" />

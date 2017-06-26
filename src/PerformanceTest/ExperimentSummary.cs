@@ -45,7 +45,7 @@ namespace PerformanceTest
                     bugs += sum.Bugs;
                     errors += sum.Errors;
                     infrastructureErrors += sum.InfrastructureErrors;
-                    timeouts += sum.InfrastructureErrors;
+                    timeouts += sum.Timeouts;
                     memouts += sum.MemoryOuts;
                     files += sum.Files;
 

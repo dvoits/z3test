@@ -67,12 +67,14 @@ namespace PerformanceTest
         [ImportMany(typeof(Domain))]
         protected List<Domain> domains;
 
-        private MEFDomainResolver()
+        public MEFDomainResolver() : this(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location))
+        {
+        }
+
+        public MEFDomainResolver(string directoryPath)
         {
             var catalog = new AggregateCatalog();
-
-            string path = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            catalog.Catalogs.Add(new DirectoryCatalog(path, "*Domain.dll"));
+            catalog.Catalogs.Add(new DirectoryCatalog(directoryPath, "*Domain.dll"));
 
             try
             {

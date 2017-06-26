@@ -49,7 +49,7 @@ namespace Nightly
     {
         private readonly IReadOnlyDictionary<string, string> props;
 
-        public Z3SummaryProperties(AggregatedAnalysis summary)
+        private Z3SummaryProperties(AggregatedAnalysis summary)
         {
             if (summary == null) throw new ArgumentNullException(nameof(summary));
             props = summary.Properties;
@@ -64,5 +64,11 @@ namespace Nightly
 
         public double TimeUnsat { get { return double.Parse(props[Z3Domain.KeyTimeUnsat]); } }
         public double TimeSat { get { return double.Parse(props[Z3Domain.KeyTimeSat]); } }
+
+        public static Z3SummaryProperties TryWrap(AggregatedAnalysis summary)
+        {
+            if (summary == null || !summary.Properties.ContainsKey(Z3Domain.KeySat)) return null;
+            return new Z3SummaryProperties(summary);
+        }
     }
 }

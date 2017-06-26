@@ -89,7 +89,8 @@
     <Compile Include="BenchmarkResultsStorage.cs" />
     <Compile Include="ExperimentRunner.cs" />
     <Compile Include="ExperimentStorage.cs" />
-    <Compile Include="ExperimentSummary.cs" />
+    <Compile Include="ExperimentStatusSummaryStorage.cs" />
+    <Compile Include="ExperimentSummaryStorage.cs" />
     <Compile Include="Records.cs" />
     <Compile Include="LocalExperimentManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
