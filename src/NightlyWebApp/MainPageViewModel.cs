@@ -9,7 +9,7 @@ using PerformanceTest.Records;
 
 namespace Nightly
 {
-    public class MainPageViewModel
+    public class ExperimentsViewModel
     {
         private readonly AzureExperimentManager expManager;
         private readonly AzureSummaryManager summaryManager;
@@ -17,7 +17,7 @@ namespace Nightly
         /// <summary>Ordered by submission time, most recent is last.</summary>
         private readonly ExperimentViewModel[] experiments;
 
-        public static async Task<MainPageViewModel> Initialize(string connectionString, string summaryName, IDomainResolver domainResolver)
+        public static async Task<ExperimentsViewModel> Initialize(string connectionString, string summaryName, IDomainResolver domainResolver)
         {
             var expManager = AzureExperimentManager.Open(connectionString);
             var summaryManager = new AzureSummaryManager(connectionString, domainResolver);
@@ -56,10 +56,10 @@ namespace Nightly
                 });
 
             var experiments = await Task.WhenAll(expTasks);
-            return new MainPageViewModel(expManager, summaryManager, summaryName, experiments, records);
+            return new ExperimentsViewModel(expManager, summaryManager, summaryName, experiments, records);
         }
 
-        private MainPageViewModel(AzureExperimentManager expManager, AzureSummaryManager summaryManager, string summaryName, ExperimentViewModel[] experiments, RecordsTable records)
+        private ExperimentsViewModel(AzureExperimentManager expManager, AzureSummaryManager summaryManager, string summaryName, ExperimentViewModel[] experiments, RecordsTable records)
         {
             this.expManager = expManager;
             this.summaryManager = summaryManager;

@@ -27,7 +27,7 @@ namespace Nightly
         public DateTime _startTime = DateTime.Now;
         private uint _listLimit = 1000;
         private Dictionary<string, string> _defaultParams = null;
-        private MainPageViewModel vm;
+        private ExperimentsViewModel vm;
         private Settings config = Settings.Default;
 
         public static CultureInfo culture = new CultureInfo("en-US");
@@ -50,9 +50,7 @@ namespace Nightly
                     summaryName = summaryName == null ? config.SummaryName : summaryName;
                     _defaultParams.Add("summary", summaryName);
 
-                    string connectionString = await GetConnectionString();
-                    IDomainResolver domainResolver = new MEFDomainResolver(System.IO.Path.Combine(HttpRuntime.AppDomainAppPath, "bin"));
-                    vm = await MainPageViewModel.Initialize(connectionString, summaryName, domainResolver);
+                    vm = await Helpers.GetExperimentsViewModel(summaryName);
 
                     buildCategoryPanels();
                 }
@@ -66,17 +64,6 @@ namespace Nightly
                     phMain.Controls.Add(l);
                 }
             }
-        }
-
-        private async Task<string> GetConnectionString()
-        {
-            if (!String.IsNullOrWhiteSpace(Settings.Default.ConnectionString))
-            {
-                return Settings.Default.ConnectionString;
-            }
-
-            var secretStorage = new SecretStorage(Settings.Default.AADApplicationId, Settings.Default.AADApplicationCertThumbprint, Settings.Default.KeyVaultUrl);
-            return await secretStorage.GetSecret(Settings.Default.ConnectionStringSecretId);
         }
 
         public TimeSpan RenderTime

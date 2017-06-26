@@ -85,5 +85,23 @@ namespace Nightly.Properties {
                 return ((string)(this["SummaryName"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("158")]
+        public int TagId {
+            get {
+                return ((int)(this["TagId"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("z3 4.5.1 commit 907899debe8b x86 win")]
+        public string TagName {
+            get {
+                return ((string)(this["TagName"]));
+            }
+        }
     }
 }

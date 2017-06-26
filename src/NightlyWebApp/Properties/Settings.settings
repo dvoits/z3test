@@ -23,5 +23,11 @@
     <Setting Name="SummaryName" Type="System.String" Scope="Application">
       <Value Profile="(Default)">Z3Nightly</Value>
     </Setting>
+    <Setting Name="TagId" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">158</Value>
+    </Setting>
+    <Setting Name="TagName" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">z3 4.5.1 commit 907899debe8b x86 win</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
