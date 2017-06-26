@@ -321,7 +321,6 @@ namespace PerformanceTest.Management
             {
                 UpdateStatus(true);
 
-
                 bool cksat = ckSAT.Checked;
                 bool ckunsat = ckUNSAT.Checked;
                 bool ckunk = ckUNKNOWN.Checked;
@@ -391,8 +390,9 @@ namespace PerformanceTest.Management
                         if (fancy)
                         {
                             string name = item.Filename;
-                            int inx = name.IndexOf('\\', name.IndexOf('\\') + 1);
-                            string c = inx > 0 ? name.Substring(0, inx) : name;
+                            int inx = name.IndexOf('/', name.IndexOf('/') + 1);
+                            string c = (inx > 0) ? name.Substring(0, inx) : name;
+
                             Series s;
                             int k;
 
@@ -403,11 +403,11 @@ namespace PerformanceTest.Management
                                 addSeries(c);
                                 int l = chart.Series.Count - 1;
                                 classes.Add(c, l);
-                                s = chart.Series[l];
+                                s = chart.Series.Last();
                             }
 
                             int j = s.Points.AddXY(x, y);
-                            s.Points[j].ToolTip = name;
+                            s.Points.Last().ToolTip = name;
                         }
                         else
                         {
@@ -443,6 +443,7 @@ namespace PerformanceTest.Management
             }
             finally
             {
+
                 chart.Update();
                 if(vm.CompareItems != null) UpdateStatus(false);
                 uiService.StopIndicateLongOperation(handle);

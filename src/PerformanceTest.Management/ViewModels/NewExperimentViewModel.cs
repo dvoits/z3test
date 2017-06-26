@@ -20,6 +20,7 @@ namespace PerformanceTest.Management
         private readonly string creator;
 
         private string benchmarkContainerUri;
+        private bool isDefaultBenchmarkContainerUri;
         private string benchmarkDirectory;
         private string categories;
         private string domain;
@@ -58,7 +59,7 @@ namespace PerformanceTest.Management
             this.domainResolver = domainResolver;
 
             benchmarkContainerUri = ExperimentDefinition.DefaultContainerUri;
-
+            isDefaultBenchmarkContainerUri = true;
             ChooseDirectoryCommand = new DelegateCommand(ChooseDirectory);
             ChooseCategoriesCommand = new DelegateCommand(ChooseCategories);
             ChooseExecutableCommand = new DelegateCommand(ChooseExecutable);
@@ -101,6 +102,17 @@ namespace PerformanceTest.Management
             get { return manager.BenchmarkLibraryDescription; }
         }
 
+        public bool IsDefaultBenchmarkContainerUri
+        {
+            get { return isDefaultBenchmarkContainerUri; }
+            set
+            {
+                isDefaultBenchmarkContainerUri = value;
+                if (isDefaultBenchmarkContainerUri) BenchmarkContainerUri = ExperimentDefinition.DefaultContainerUri;
+                NotifyPropertyChanged();
+
+            }
+        }
         public string BenchmarkContainerUri
         {
             get { return benchmarkContainerUri; }

@@ -42,6 +42,7 @@ namespace PerformanceTest.Management
         /// </summary>
         bool? AskYesNoCancel(string message, string caption);
         void ShowDuplicatesWindow(DuplicatesViewModel vm);
+        RequeueSettingsViewModel ShowRequeueSettings(RequeueSettingsViewModel vm);
     }
 
     public class UIService : IUIService
@@ -258,6 +259,15 @@ namespace PerformanceTest.Management
         {
             Duplicates dlg = new Duplicates(vm);
             dlg.ShowDialog();
+        }
+        public RequeueSettingsViewModel ShowRequeueSettings(RequeueSettingsViewModel vm)
+        {
+            RequeueSettingsViewModel old_data = vm;
+            RequeueSettings dlg = new RequeueSettings();
+            dlg.DataContext = vm;
+            if (dlg.ShowDialog() == true)
+                return (dlg.DataContext as RequeueSettingsViewModel);
+            else return old_data;
         }
     }
 }

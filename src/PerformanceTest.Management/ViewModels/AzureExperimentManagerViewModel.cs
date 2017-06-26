@@ -34,9 +34,9 @@ namespace PerformanceTest.Management
         {
             return new ExperimentListViewModel(manager, uiService);
         }
-        public ShowResultsViewModel BuildResultsView(int id, ExperimentExecutionState? jobStatus, double timeout, string directory)
+        public ShowResultsViewModel BuildResultsView(int id, ExperimentExecutionState? jobStatus, string benchmarkContainerUri, double timeout, string directory)
         {
-            return new ShowResultsViewModel(id, jobStatus, timeout, directory, manager, uiService);
+            return new ShowResultsViewModel(id, jobStatus, benchmarkContainerUri, timeout, directory, manager, this, uiService);
         }
         public CompareExperimentsViewModel BuildComparingResults(int id1, int id2, ExperimentDefinition def1, ExperimentDefinition def2)
         {
@@ -89,7 +89,10 @@ namespace PerformanceTest.Management
                     if (ieResults.Count() > 0)
                     {
                         string benchmarkCont = ids[i].Definition.BenchmarkContainerUri;
-                        await manager.RestartBenchmarks(eid, ieResults, benchmarkCont);
+                        //Pool???
+                        RequeueSettingsViewModel requeueSettingsVm = new RequeueSettingsViewModel(benchmarkCont, this, uiService);
+                        requeueSettingsVm = uiService.ShowRequeueSettings(requeueSettingsVm);
+                        await manager.RestartBenchmarks(eid, ieResults, requeueSettingsVm.BenchmarkContainerUri);
                         requeueCount += ieResults.Count();
                     }
                 }
