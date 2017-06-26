@@ -31,15 +31,15 @@
                 </Grid.ColumnDefinitions>
                 <Label Content="Benchmark container:" Height="28" HorizontalAlignment="Left" Name="label3" VerticalAlignment="Center" Grid.Row="0" />
                 <StackPanel Orientation="Vertical" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,0,2,0">
-                    <RadioButton GroupName="groupContainer" Name="defaultConnectionstring" IsChecked="{Binding IsDefaultBenchmarkContainerUri}">Default</RadioButton>
-                    <RadioButton GroupName="groupContainer" Name="connectionstring" IsChecked="True" IsEnabled="{Binding IsDefaultBenchmarkContainerUri}" HorizontalContentAlignment="Stretch">
+                    <RadioButton GroupName="groupContainer" Name="defaultConnectionstring" IsChecked="{Binding IsChosenDefaultContainer}">Default</RadioButton>
+                    <RadioButton GroupName="groupContainer" Name="connectionstring" IsChecked="True" IsEnabled="{Binding IsNotDefaultBenchmarkContainerUri}" HorizontalContentAlignment="Stretch">
                         <Grid Margin="0,0,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <TextBlock Margin="0,0,10,0" Grid.Column="0">SAS url:</TextBlock>
-                            <TextBox Height="24" Grid.Column="1" Text="{Binding BenchmarkContainerUri}" IsEnabled="{Binding Path='IsChecked', ElementName='connectionstring'}"/>
+                            <TextBox Height="24" Grid.Column="1" Text="{Binding BenchmarkContainerUriNotDefault}" IsEnabled="{Binding Path='IsChecked', ElementName='connectionstring'}"/>
                         </Grid>
                     </RadioButton>
                 </StackPanel>

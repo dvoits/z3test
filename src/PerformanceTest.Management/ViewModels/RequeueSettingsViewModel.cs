@@ -14,8 +14,9 @@ namespace PerformanceTest.Management
     {
         private readonly AzureExperimentManagerViewModel managerVm;
         private readonly IUIService service; 
-        private string benchmarkContainerUri;
-        private bool isDefaultBenchmarkContainerUri;
+        private string benchmarkContainerUri, benchmarkContainerUriNotDefault;
+        private readonly bool isNotDefaultBenchmarkContainerUri;
+        private bool isChosenDefaultContainer;
         private string selectedPool;
         private RecentValuesStorage recentValues;
         public event PropertyChangedEventHandler PropertyChanged;
@@ -29,18 +30,25 @@ namespace PerformanceTest.Management
             this.service = uiService;
             this.recentValues = recentValues;
             this.benchmarkContainerUri = benchmarkContainerUri;
-            isDefaultBenchmarkContainerUri = benchmarkContainerUri == ExperimentDefinition.DefaultContainerUri;
+            isNotDefaultBenchmarkContainerUri = benchmarkContainerUri != ExperimentDefinition.DefaultContainerUri;
+            this.benchmarkContainerUriNotDefault = isNotDefaultBenchmarkContainerUri ? benchmarkContainerUri : "";
+            isChosenDefaultContainer = benchmarkContainerUri == ExperimentDefinition.DefaultContainerUri;
             ChoosePoolCommand = new DelegateCommand(ListPools);
             selectedPool = recentValues.BatchPool;
         }
 
-        public bool IsDefaultBenchmarkContainerUri
+        public bool IsNotDefaultBenchmarkContainerUri
         {
-            get { return isDefaultBenchmarkContainerUri; }
+            get { return isNotDefaultBenchmarkContainerUri; }
+        }
+        public bool IsChosenDefaultContainer
+        {
+            get { return isChosenDefaultContainer; }
             set
             {
-                isDefaultBenchmarkContainerUri = value;
-                if (isDefaultBenchmarkContainerUri) BenchmarkContainerUri = ExperimentDefinition.DefaultContainerUri;
+                isChosenDefaultContainer = value;
+                if (isChosenDefaultContainer) BenchmarkContainerUri = ExperimentDefinition.DefaultContainerUri;
+                else BenchmarkContainerUri = BenchmarkContainerUriNotDefault;
                 NotifyPropertyChanged();
             }
         }
@@ -50,6 +58,15 @@ namespace PerformanceTest.Management
             set
             {
                 benchmarkContainerUri = value;
+                NotifyPropertyChanged();
+            }
+        }
+        public string BenchmarkContainerUriNotDefault
+        {
+            get { return benchmarkContainerUriNotDefault; }
+            set
+            {
+                BenchmarkContainerUri = benchmarkContainerUriNotDefault = value;
                 NotifyPropertyChanged();
             }
         }

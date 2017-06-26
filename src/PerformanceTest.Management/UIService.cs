@@ -265,7 +265,10 @@ namespace PerformanceTest.Management
             RequeueSettings dlg = new RequeueSettings();
             dlg.DataContext = vm;
             if (dlg.ShowDialog() == true)
+            {
+                vm.SaveRecentSettings();
                 return (dlg.DataContext as RequeueSettingsViewModel);
+            }
             else return null;
         }
     }

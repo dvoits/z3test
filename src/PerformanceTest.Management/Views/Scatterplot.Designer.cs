@@ -105,11 +105,11 @@
             this.lblAvgSpeedupTxt.Name = "lblAvgSpeedupTxt";
             this.lblAvgSpeedupTxt.Size = new System.Drawing.Size(130, 13);
             this.lblAvgSpeedupTxt.TabIndex = 2;
-            this.lblAvgSpeedupTxt.Text = "Avg. speedup (excl. T/O) (sec):";
+            this.lblAvgSpeedupTxt.Text = "Avg. speedup (excl. T/O):";
             // 
             // lblAvgSpeedup
             // 
-            this.lblAvgSpeedup.Location = new System.Drawing.Point(171, 19);
+            this.lblAvgSpeedup.Location = new System.Drawing.Point(141, 19);
             this.lblAvgSpeedup.Name = "lblAvgSpeedup";
             this.lblAvgSpeedup.Size = new System.Drawing.Size(72, 16);
             this.lblAvgSpeedup.TabIndex = 3;
@@ -203,7 +203,7 @@
             // 
             // lblSlower
             // 
-            this.lblSlower.Location = new System.Drawing.Point(152, 73);
+            this.lblSlower.Location = new System.Drawing.Point(122, 73);
             this.lblSlower.Name = "lblSlower";
             this.lblSlower.Size = new System.Drawing.Size(91, 13);
             this.lblSlower.TabIndex = 25;
@@ -221,7 +221,7 @@
             // 
             // lblFaster
             // 
-            this.lblFaster.Location = new System.Drawing.Point(152, 58);
+            this.lblFaster.Location = new System.Drawing.Point(122, 58);
             this.lblFaster.Name = "lblFaster";
             this.lblFaster.Size = new System.Drawing.Size(91, 13);
             this.lblFaster.TabIndex = 23;
@@ -239,7 +239,7 @@
             // 
             // lblTotal
             // 
-            this.lblTotal.Location = new System.Drawing.Point(152, 42);
+            this.lblTotal.Location = new System.Drawing.Point(122, 42);
             this.lblTotal.Name = "lblTotal";
             this.lblTotal.Size = new System.Drawing.Size(91, 16);
             this.lblTotal.TabIndex = 21;
@@ -296,10 +296,10 @@
             this.rbNormalized.Checked = true;
             this.rbNormalized.Location = new System.Drawing.Point(3, 6);
             this.rbNormalized.Name = "rbNormalized";
-            this.rbNormalized.Size = new System.Drawing.Size(114, 17);
+            this.rbNormalized.Size = new System.Drawing.Size(139, 17);
             this.rbNormalized.TabIndex = 0;
             this.rbNormalized.TabStop = true;
-            this.rbNormalized.Text = "Normalized runtime";
+            this.rbNormalized.Text = "Normalized runtime (sec)";
             this.rbNormalized.CheckedChanged += new System.EventHandler(this.ckCheckedChanged);
             // 
             // rbNonNormalized
@@ -307,9 +307,9 @@
             this.rbNonNormalized.AutoSize = true;
             this.rbNonNormalized.Location = new System.Drawing.Point(3, 25);
             this.rbNonNormalized.Name = "rbNonNormalized";
-            this.rbNonNormalized.Size = new System.Drawing.Size(135, 17);
+            this.rbNonNormalized.Size = new System.Drawing.Size(160, 17);
             this.rbNonNormalized.TabIndex = 0;
-            this.rbNonNormalized.Text = "Non-normalized runtime";
+            this.rbNonNormalized.Text = "Non-normalized runtime (sec)";
             this.rbNonNormalized.CheckedChanged += new System.EventHandler(this.ckCheckedChanged);
             // 
             // rbWallClock
@@ -317,9 +317,9 @@
             this.rbWallClock.AutoSize = true;
             this.rbWallClock.Location = new System.Drawing.Point(3, 43);
             this.rbWallClock.Name = "rbWallClock";
-            this.rbWallClock.Size = new System.Drawing.Size(97, 17);
+            this.rbWallClock.Size = new System.Drawing.Size(122, 17);
             this.rbWallClock.TabIndex = 0;
-            this.rbWallClock.Text = "Wall clock time";
+            this.rbWallClock.Text = "Wall clock time (sec)";
             this.rbWallClock.CheckedChanged += new System.EventHandler(this.ckCheckedChanged);
             // 
             // rbMemoryUsed
@@ -327,9 +327,9 @@
             this.rbMemoryUsed.AutoSize = true;
             this.rbMemoryUsed.Location = new System.Drawing.Point(3, 60);
             this.rbMemoryUsed.Name = "rbMemoryUsed";
-            this.rbMemoryUsed.Size = new System.Drawing.Size(88, 17);
+            this.rbMemoryUsed.Size = new System.Drawing.Size(113, 17);
             this.rbMemoryUsed.TabIndex = 0;
-            this.rbMemoryUsed.Text = "Memory used";
+            this.rbMemoryUsed.Text = "Memory used (MB)";
             this.rbMemoryUsed.CheckedChanged += new System.EventHandler(this.ckCheckedChanged);
             // 
             // splitContainer1
@@ -365,7 +365,7 @@
             this.gbStatistics.Controls.Add(this.lblTotal);
             this.gbStatistics.Location = new System.Drawing.Point(281, 0);
             this.gbStatistics.Name = "gbStatistics";
-            this.gbStatistics.Size = new System.Drawing.Size(252, 116);
+            this.gbStatistics.Size = new System.Drawing.Size(222, 116);
             this.gbStatistics.TabIndex = 30;
             this.gbStatistics.TabStop = false;
             // 
@@ -375,9 +375,9 @@
             this.panel1.Controls.Add(this.rbWallClock);
             this.panel1.Controls.Add(this.rbNonNormalized);
             this.panel1.Controls.Add(this.rbNormalized);
-            this.panel1.Location = new System.Drawing.Point(536, 13);
+            this.panel1.Location = new System.Drawing.Point(506, 13);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(142, 91);
+            this.panel1.Size = new System.Drawing.Size(170, 91);
             this.panel1.TabIndex = 31;
             // 
             // Scatterplot

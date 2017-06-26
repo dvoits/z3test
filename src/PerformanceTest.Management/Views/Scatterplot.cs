@@ -471,13 +471,13 @@ namespace PerformanceTest.Management
             SetupChart();
             if (rbMemoryUsed.Checked)
             {
-                lblAvgSpeedupTxt.Text = "Avg.memory used(excl.OOM) (Mb):";
+                lblAvgSpeedupTxt.Text = "Avg.memory used(excl.OOM):";
                 label3.Text = "Y Less Memory";
                 label5.Text = "Y More Memory";
             }
             else
             {
-                lblAvgSpeedupTxt.Text = "Avg.speedup(excl. T/O) (sec):";
+                lblAvgSpeedupTxt.Text = "Avg.speedup(excl. T/O):";
                 label3.Text = "Y Faster";
                 label5.Text = "Y Slower";
             }

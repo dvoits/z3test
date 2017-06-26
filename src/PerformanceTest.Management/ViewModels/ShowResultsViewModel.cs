@@ -209,26 +209,27 @@ namespace PerformanceTest.Management
         }
         public async void RequeueResults(BenchmarkResultViewModel[] items)
         {
-            var handle = uiService.StartIndicateLongOperation("Requeue experiment results...");
-            try
-            {
-                string[] benchmarkNames = items.Select(e => e.Filename).Distinct().ToArray();
+            
+            string[] benchmarkNames = items.Select(e => e.Filename).Distinct().ToArray();
 
-                RequeueSettingsViewModel requeueSettingsVm = new RequeueSettingsViewModel(benchmarkContainerUri, managerVm, recentValues, uiService);
-                requeueSettingsVm = uiService.ShowRequeueSettings(requeueSettingsVm);
-                if (requeueSettingsVm != null)
+            RequeueSettingsViewModel requeueSettingsVm = new RequeueSettingsViewModel(benchmarkContainerUri, managerVm, recentValues, uiService);
+            requeueSettingsVm = uiService.ShowRequeueSettings(requeueSettingsVm);
+            if (requeueSettingsVm != null)
+            {
+                var handle = uiService.StartIndicateLongOperation("Requeue experiment results...");
+                try
                 {
                     manager.BatchPoolID = requeueSettingsVm.Pool;
                     await manager.RestartBenchmarks(id, benchmarkNames, requeueSettingsVm.BenchmarkContainerUri);
                 }
-            }
-            catch (Exception ex)
-            {
-                uiService.ShowError(ex.Message, "Failed to requeue experiment results");
-            }
-            finally
-            {
-                uiService.StopIndicateLongOperation(handle);
+                catch (Exception ex)
+                {
+                    uiService.ShowError(ex.Message, "Failed to requeue experiment results");
+                }
+                finally
+                {
+                    uiService.StopIndicateLongOperation(handle);
+                }
             }
         }
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
