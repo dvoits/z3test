@@ -17,6 +17,7 @@ using AzurePerformanceTest;
 using Nightly.Properties;
 using PerformanceTest.Alerts;
 using PerformanceTest;
+using System.Threading.Tasks;
 
 namespace Nightly
 {
@@ -120,8 +121,11 @@ namespace Nightly
                 try
                 {
                     AzureExperimentManager expMan = AzureExperimentManager.Open(connectionString);
-                    jX = await Helpers.GetComparableExperiment(int.Parse(JX), expMan);
-                    jY = await Helpers.GetComparableExperiment(int.Parse(JY), expMan);
+                    var t1 = Task.Run(() => Helpers.GetComparableExperiment(int.Parse(JX), expMan));
+                    var t2 = Task.Run(() => Helpers.GetComparableExperiment(int.Parse(JY), expMan));
+
+                    jX = await t1;
+                    jY = await t2;
                 }
                 catch (Exception)
                 {
