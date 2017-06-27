@@ -322,6 +322,11 @@ namespace PerformanceTest.Management
                     var experiment = experiments[i];
                     var vm = new NewExperimentViewModel(managerVm, uiService, recentValues, creator, domainResolver);
                     vm.Note = experiment.Note;
+                    if (experiment.Definition.BenchmarkContainerUri != ExperimentDefinition.DefaultContainerUri)
+                    {
+                        vm.BenchmarkContainerUriNotDefault = experiment.Definition.BenchmarkContainerUri;
+                        vm.IsDefaultBenchmarkContainerUri = false;
+                    }
                     vm.BenchmarkContainerUri = experiment.Definition.BenchmarkContainerUri;
                     vm.BenchmarkDirectory = experiment.Definition.BenchmarkDirectory;
                     vm.Categories = experiment.Category;
@@ -334,7 +339,7 @@ namespace PerformanceTest.Management
                     vm.MaxRepetitions = experiment.Definition.AdaptiveRunMaxRepetitions;
                     vm.MaxTimeForAdaptiveRuns = experiment.Definition.AdaptiveRunMaxTimeInSeconds;
                     vm.AllowAdaptiveRuns = experiment.Definition.AdaptiveRunMaxRepetitions != 1 || experiment.Definition.AdaptiveRunMaxTimeInSeconds != 0;
-                    // experiment.Definition.Executable;
+                    vm.Executable = experiment.Definition.Executable;
 
                     SubmitNewJob(vm);
                 }
@@ -442,7 +447,7 @@ namespace PerformanceTest.Management
                         }
                         else if (args.PropertyName == nameof(vm.ExecutionStatus) && vm.ExecutionStatus != null)
                         {
-                            item.JobStatus = vm.ExecutionStatus;
+                            item.JobStatus = (ExperimentExecutionStateVM)vm.ExecutionStatus;
                         }
                     }
                     catch (Exception ex)
@@ -551,7 +556,7 @@ namespace PerformanceTest.Management
             }
             else sharedDirectory = st.Definition.Category;
 
-            var vm = managerVm.BuildResultsView(st.ID, st.JobStatus, st.Definition.BenchmarkTimeout.TotalSeconds, sharedDirectory);
+            var vm = managerVm.BuildResultsView(st.ID, st.JobStatus, st.Definition.BenchmarkContainerUri, st.Definition.BenchmarkTimeout.TotalSeconds, sharedDirectory, recentValues);
             dlg.DataContext = vm;
             dlg.Owner = this;
             dlg.Show();
@@ -664,7 +669,7 @@ namespace PerformanceTest.Management
                 for (var i = 0; i < sts.Length; i++)
                 {
                     var rc = sts[i].JobStatus;
-                    if (rc != ExperimentExecutionState.Completed)
+                    if (rc == ExperimentExecutionStateVM.Active || rc == ExperimentExecutionStateVM.Loading)
                     {
                         e.CanExecute = false;
                         return;
@@ -676,7 +681,7 @@ namespace PerformanceTest.Management
         private void requeueIErrors(object target, ExecutedRoutedEventArgs e)
         {
             var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().ToArray();
-            managerVm.RequeueIErrors(sts);
+            managerVm.RequeueIErrors(sts, recentValues);
         }
         private void canRecovery(object sender, CanExecuteRoutedEventArgs e)
         {
@@ -700,9 +705,7 @@ namespace PerformanceTest.Management
                 for (var i = 0; i < sts.Length; i++)
                 {
                     var rc = sts[i].JobStatus;
-                    //if (rc == null)
-                    //    rc = 
-                    if (rc != ExperimentExecutionState.Completed)
+                    if (rc == ExperimentExecutionStateVM.Active || rc == ExperimentExecutionStateVM.Loading)
                     {
                         e.CanExecute = false;
                         return;

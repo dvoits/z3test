@@ -19,7 +19,8 @@ namespace PerformanceTest.Management
         private readonly RecentValuesStorage recentValues;
         private readonly string creator;
 
-        private string benchmarkContainerUri;
+        private string benchmarkContainerUri, benchmarkContainerUriNotDefault;
+        private bool isDefaultBenchmarkContainerUri;
         private string benchmarkDirectory;
         private string categories;
         private string domain;
@@ -29,11 +30,12 @@ namespace PerformanceTest.Management
         private string parameters;
         private string extension;
         private string note;
+        private string executable;
         private bool allowAdaptiveRuns;
         private int maxRepetitions;
         private double maxTimeForAdaptiveRuns;
 
-        private bool useMostRecentExecutable;
+        private int useMostRecentExecutable;
 
         private string[] fileNames;
         private string recentBlobDisplayName;
@@ -58,7 +60,8 @@ namespace PerformanceTest.Management
             this.domainResolver = domainResolver;
 
             benchmarkContainerUri = ExperimentDefinition.DefaultContainerUri;
-
+            benchmarkContainerUriNotDefault = "";
+            isDefaultBenchmarkContainerUri = true;
             ChooseDirectoryCommand = new DelegateCommand(ChooseDirectory);
             ChooseCategoriesCommand = new DelegateCommand(ChooseCategories);
             ChooseExecutableCommand = new DelegateCommand(ChooseExecutable);
@@ -95,12 +98,49 @@ namespace PerformanceTest.Management
         {
             get { return creator; }
         }
-
+        public string Executable
+        {
+            get { return executable; }
+            set
+            {
+                executable = value;
+                NotifyPropertyChanged();
+                NotifyPropertyChanged("HasOriginalExecutable");
+            }
+        }
+        public bool HasOriginalExecutable
+        {
+            get { return Executable != null && Executable != ""; }
+        }
         public string BenchmarkLibaryDescription
         {
             get { return manager.BenchmarkLibraryDescription; }
         }
 
+        public bool IsDefaultBenchmarkContainerUri
+        {
+            get { return isDefaultBenchmarkContainerUri; }
+            set
+            {
+                isDefaultBenchmarkContainerUri = value;
+                if (isDefaultBenchmarkContainerUri) BenchmarkContainerUri = ExperimentDefinition.DefaultContainerUri;
+                else BenchmarkContainerUri = BenchmarkContainerUriNotDefault;
+                NotifyPropertyChanged();
+
+            }
+        }
+        public bool UseNotDefaultBenchmarkContainerUri
+        {
+            get { return !isDefaultBenchmarkContainerUri; }
+            set
+            {
+                isDefaultBenchmarkContainerUri = !value;
+                if (isDefaultBenchmarkContainerUri) BenchmarkContainerUri = ExperimentDefinition.DefaultContainerUri;
+                else BenchmarkContainerUri = BenchmarkContainerUriNotDefault;
+                NotifyPropertyChanged();
+
+            }
+        }
         public string BenchmarkContainerUri
         {
             get { return benchmarkContainerUri; }
@@ -110,7 +150,15 @@ namespace PerformanceTest.Management
                 NotifyPropertyChanged();
             }
         }
-
+        public string BenchmarkContainerUriNotDefault
+        {
+            get { return benchmarkContainerUriNotDefault; }
+            set
+            {
+                BenchmarkContainerUri = benchmarkContainerUriNotDefault = value;
+                NotifyPropertyChanged();
+            }
+        }
         public string BenchmarkDirectory
         {
             get { return benchmarkDirectory; }
@@ -171,15 +219,16 @@ namespace PerformanceTest.Management
             get { return fileNames != null && fileNames.Length > 0 ? fileNames[0] : string.Empty; }
         }
 
-        public bool UseMostRecentExecutable
+        public bool UseMostRecentExecutable //1
         {
-            get { return useMostRecentExecutable; }
+            get { return useMostRecentExecutable == 1; }
             set
             {
-                if (useMostRecentExecutable == value) return;
-                useMostRecentExecutable = value;
+                if (useMostRecentExecutable == 1) return;
+                useMostRecentExecutable = 1;
                 NotifyPropertyChanged("UseMostRecentExecutable");
                 NotifyPropertyChanged("UseNewExecutable");
+                NotifyPropertyChanged("UseOriginalExecutable");
             }
         }
 
@@ -197,17 +246,28 @@ namespace PerformanceTest.Management
 
         public bool UseNewExecutable
         {
-            get { return !useMostRecentExecutable; }
+            get { return useMostRecentExecutable == 2; }
             set
             {
-                if (useMostRecentExecutable == !value) return;
-                useMostRecentExecutable = !value;
+                if (useMostRecentExecutable == 2) return;
+                useMostRecentExecutable = 2;
                 NotifyPropertyChanged("UseMostRecentExecutable");
                 NotifyPropertyChanged("UseNewExecutable");
+                NotifyPropertyChanged("UseOriginalExecutable");
             }
         }
-
-
+        public bool UseOriginalExecutable
+        {
+            get { return useMostRecentExecutable == 0; }
+            set
+            {
+                if (useMostRecentExecutable == 0) return;
+                useMostRecentExecutable = 0;
+                NotifyPropertyChanged("UseMostRecentExecutable");
+                NotifyPropertyChanged("UseNewExecutable");
+                NotifyPropertyChanged("UseOriginalExecutable");
+            }
+        }
         public string RecentBlobDisplayName
         {
             get { return recentBlobDisplayName; }
@@ -489,7 +549,7 @@ namespace PerformanceTest.Management
                 string[] initial = BenchmarkDirectory == null ? new string[0] : BenchmarkDirectory.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
                 var selected = await service.BrowseTree("Browse for directory", initial, selection =>
                 {
-                    return manager.GetDirectories(string.Join("/", selection));
+                    return manager.GetDirectories(string.Join("/", selection), BenchmarkContainerUri);
                 });
                 if (selected != null)
                 {
@@ -509,7 +569,7 @@ namespace PerformanceTest.Management
                 string[] selected = Categories == null ? new string[0] : Categories.Split('|').Select(s => s.Trim()).ToArray();
 
                 selected = service.ChooseOptions("Choose categories",
-                    new AsyncLazy<string[]>(() => manager.GetAvailableCategories(BenchmarkDirectory)),
+                    new AsyncLazy<string[]>(() => manager.GetAvailableCategories(BenchmarkDirectory, BenchmarkContainerUri)),
                     new Predicate<string>(c => selected.Contains(c)));
                 if (selected != null)
                 {

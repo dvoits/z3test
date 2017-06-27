@@ -96,6 +96,7 @@
                         <DataGridTextColumn Binding="{Binding Path=Category, Mode=OneWay}" Header="Category" />
                         <DataGridTextColumn Binding="{Binding Path=Creator, Mode=OneWay}" Header="Creator" />
                         <DataGridTextColumn Binding="{Binding Path=Note, Mode=OneWay}" Header="Note" />
+                        <DataGridTextColumn Binding="{Binding Path=AdaptiveRun, Mode=OneWay}" Header="Adaptive Run" />
                         <DataGridCheckBoxColumn Binding="{Binding Path=Flag, UpdateSourceTrigger=PropertyChanged}" Header="Flag" IsThreeState="False" />
                         <DataGridTextColumn Binding="{Binding Path=WorkerInformation, Mode=OneWay}" Header="Machine" />
                         <DataGridTemplateColumn Header="Progress" CellTemplate="{StaticResource ProgressTemplate}" Visibility="Hidden"/>

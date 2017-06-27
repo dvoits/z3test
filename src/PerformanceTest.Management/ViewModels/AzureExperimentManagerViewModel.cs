@@ -34,9 +34,9 @@ namespace PerformanceTest.Management
         {
             return new ExperimentListViewModel(manager, uiService);
         }
-        public ShowResultsViewModel BuildResultsView(int id, ExperimentExecutionState? jobStatus, double timeout, string directory)
+        public ShowResultsViewModel BuildResultsView(int id, ExperimentExecutionStateVM? jobStatus, string benchmarkContainerUri, double timeout, string directory, RecentValuesStorage recentValues)
         {
-            return new ShowResultsViewModel(id, jobStatus, timeout, directory, manager, uiService);
+            return new ShowResultsViewModel(id, jobStatus, benchmarkContainerUri, timeout, directory, manager, this, recentValues, uiService);
         }
         public CompareExperimentsViewModel BuildComparingResults(int id1, int id2, ExperimentDefinition def1, ExperimentDefinition def2)
         {
@@ -75,7 +75,7 @@ namespace PerformanceTest.Management
             }
 
         }
-        public async void RequeueIErrors(ExperimentStatusViewModel[] ids)
+        public async void RequeueIErrors(ExperimentStatusViewModel[] ids, RecentValuesStorage recentValues)
         {
             var handle = uiService.StartIndicateLongOperation("Requeue infrastructure errors...");
             int requeueCount = 0;
@@ -89,8 +89,14 @@ namespace PerformanceTest.Management
                     if (ieResults.Count() > 0)
                     {
                         string benchmarkCont = ids[i].Definition.BenchmarkContainerUri;
-                        await manager.RestartBenchmarks(eid, ieResults, benchmarkCont);
-                        requeueCount += ieResults.Count();
+                        RequeueSettingsViewModel requeueSettingsVm = new RequeueSettingsViewModel(benchmarkCont, this, recentValues, uiService);
+                        requeueSettingsVm = uiService.ShowRequeueSettings(requeueSettingsVm);
+                        if (requeueSettingsVm != null)
+                        {
+                            manager.BatchPoolID = requeueSettingsVm.Pool;
+                            await manager.RestartBenchmarks(eid, ieResults, requeueSettingsVm.BenchmarkContainerUri);
+                            requeueCount += ieResults.Count();
+                        }
                     }
                 }
                 uiService.ShowInfo("Requeued " + requeueCount + " infrastructure errors.", "Infrastructure errors");
@@ -104,19 +110,19 @@ namespace PerformanceTest.Management
                 uiService.StopIndicateLongOperation(handle);
             }
         }
-        public async Task<string[]> GetAvailableCategories(string directory)
+        public async Task<string[]> GetAvailableCategories(string directory, string benchmarkContainerUri = "default")
         {
             if (directory == null) throw new ArgumentNullException("directory");
-            string[] cats = await GetDirectories(directory);
+            string[] cats = await GetDirectories(directory, benchmarkContainerUri);
             return cats;
         }
 
-        public Task<string[]> GetDirectories(string baseDirectory = "")
+        public Task<string[]> GetDirectories(string baseDirectory = "", string benchmarkContainerUri = "default")
         {
             if (baseDirectory == null) throw new ArgumentNullException("baseDirectory");
             var expStorage = manager.Storage;
-            var benchStorage = expStorage.DefaultBenchmarkStorage;
-
+            var benchStorage = benchmarkContainerUri == "default" ? expStorage.DefaultBenchmarkStorage : new AzureBenchmarkStorage(benchmarkContainerUri);
+            
             return Task.Run(() =>
             {
                 string[] dirs;
@@ -143,6 +149,10 @@ namespace PerformanceTest.Management
             {
                 packageName = await newExperiment.GetRecentExecutable();
                 if (String.IsNullOrEmpty(packageName)) throw new InvalidOperationException("Executable package is not available");
+            }
+            else if (newExperiment.UseOriginalExecutable)
+            {
+                packageName = newExperiment.Executable;
             }
             else // upload new executable
             {

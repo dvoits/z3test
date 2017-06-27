@@ -16,30 +16,35 @@ namespace PerformanceTest.Management
     {
         private readonly int id;
         private readonly double timeout;
-        private readonly ExperimentExecutionState? jobStatus;
+        private readonly ExperimentExecutionStateVM? jobStatus;
         private readonly ExperimentManager manager;
+        private readonly AzureExperimentManagerViewModel managerVm;
         private readonly IUIService uiService;
         private readonly string sharedDirectory;
-
+        private string benchmarkContainerUri;
         private IEnumerable<BenchmarkResultViewModel> results, allResults;
         private bool isFiltering;
-
+        private RecentValuesStorage recentValues;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public ShowResultsViewModel(int id, ExperimentExecutionState? jobStatus, double timeout, string sharedDirectory, ExperimentManager manager, IUIService uiService)
+        public ShowResultsViewModel(int id, ExperimentExecutionStateVM? jobStatus, string benchmarkContainerUri, double timeout, string sharedDirectory, ExperimentManager manager, AzureExperimentManagerViewModel managerVm, RecentValuesStorage recentValues, IUIService uiService)
         {
             if (manager == null) throw new ArgumentNullException("manager");
+            if (managerVm == null) throw new ArgumentNullException(nameof(managerVm));
             if (uiService == null) throw new ArgumentNullException("uiService");
             this.manager = manager;
+            this.managerVm = managerVm;
             this.uiService = uiService;
             this.id = id;
             this.sharedDirectory = sharedDirectory;
             this.timeout = timeout;
             this.jobStatus = jobStatus;
+            this.benchmarkContainerUri = benchmarkContainerUri;
+            this.recentValues = recentValues;
             RefreshResultsAsync();
         }
-        public ExperimentExecutionState? JobStatus
+        public ExperimentExecutionStateVM? JobStatus
         {
             get { return jobStatus; }
         }
@@ -204,19 +209,27 @@ namespace PerformanceTest.Management
         }
         public async void RequeueResults(BenchmarkResultViewModel[] items)
         {
-            var handle = uiService.StartIndicateLongOperation("Requeue experiment results...");
-            try
+            
+            string[] benchmarkNames = items.Select(e => e.Filename).Distinct().ToArray();
+
+            RequeueSettingsViewModel requeueSettingsVm = new RequeueSettingsViewModel(benchmarkContainerUri, managerVm, recentValues, uiService);
+            requeueSettingsVm = uiService.ShowRequeueSettings(requeueSettingsVm);
+            if (requeueSettingsVm != null)
             {
-                string[] benchmarkNames = items.Select(e => e.Filename).Distinct().ToArray();
-                await manager.RestartBenchmarks(id, benchmarkNames);
-            }
-            catch (Exception ex)
-            {
-                uiService.ShowError(ex.Message, "Failed to requeue experiment results");
-            }
-            finally
-            {
-                uiService.StopIndicateLongOperation(handle);
+                var handle = uiService.StartIndicateLongOperation("Requeue experiment results...");
+                try
+                {
+                    manager.BatchPoolID = requeueSettingsVm.Pool;
+                    await manager.RestartBenchmarks(id, benchmarkNames, requeueSettingsVm.BenchmarkContainerUri);
+                }
+                catch (Exception ex)
+                {
+                    uiService.ShowError(ex.Message, "Failed to requeue experiment results");
+                }
+                finally
+                {
+                    uiService.StopIndicateLongOperation(handle);
+                }
             }
         }
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")

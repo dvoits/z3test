@@ -73,7 +73,7 @@ namespace AzurePerformanceTest
 
         public AzureExperimentStorage Storage { get { return storage; } }
 
-        public string BatchPoolID { get; set; }
+        public override string BatchPoolID { get; set; }
 
         public bool CanStart
         {

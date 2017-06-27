@@ -129,7 +129,7 @@ namespace PerformanceTest.Management
                 foreach (var vm in allExperiments)
                 {
                     if (now.Subtract(vm.Submitted).TotalDays > 7) break;
-                    vm.JobStatus = null;
+                    vm.JobStatus = ExperimentExecutionStateVM.Loading;
                     items.Add(vm);
                 }
 
@@ -137,7 +137,7 @@ namespace PerformanceTest.Management
                 int n = Math.Min(states.Length, items.Count);
                 for (int i = 0; i < n; i++)
                 {
-                    items[i].JobStatus = states[i];
+                    items[i].JobStatus = (ExperimentExecutionStateVM)states[i];
                 }
             }
             catch (Exception ex)
@@ -205,7 +205,7 @@ namespace PerformanceTest.Management
         private static bool Contains(string str, string keyword)
         {
             if (str == null) return String.IsNullOrEmpty(keyword);
-            return keyword == null || str.Contains(keyword);
+            return keyword == null || str.ToLowerInvariant().Contains(keyword.ToLowerInvariant());
         }
 
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
@@ -213,7 +213,14 @@ namespace PerformanceTest.Management
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
-
+    public enum ExperimentExecutionStateVM
+    {
+        Active,
+        Completed,
+        Terminated,
+        NotFound,
+        Loading
+    }
     public class ExperimentStatusViewModel : INotifyPropertyChanged
     {
         private readonly ExperimentDefinition definition;
@@ -223,7 +230,7 @@ namespace PerformanceTest.Management
         private ExperimentStatus status;
 
         private bool flag;
-        private ExperimentExecutionState? jobStatus;
+        private ExperimentExecutionStateVM? jobStatus;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -274,8 +281,17 @@ namespace PerformanceTest.Management
                 }
             }
         }
-
-        public ExperimentExecutionState? JobStatus
+        public string AdaptiveRun
+        {
+            get
+            {
+                if (definition.AdaptiveRunMaxRepetitions == 1 || definition.AdaptiveRunMaxTimeInSeconds == 0)
+                    return "Run Once";
+                else
+                    return String.Format("Auto({0} times,{1} sec)", definition.AdaptiveRunMaxRepetitions, definition.AdaptiveRunMaxTimeInSeconds);
+            }
+        }
+        public ExperimentExecutionStateVM? JobStatus
         {
             get { return jobStatus; }
             set

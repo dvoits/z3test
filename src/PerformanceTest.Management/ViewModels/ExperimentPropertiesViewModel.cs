@@ -45,7 +45,7 @@ namespace PerformanceTest.Management
         private string currentNote;
         private bool isSyncing;
 
-        private ExperimentExecutionState? executionStatus;
+        private ExperimentExecutionStateVM? executionStatus;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -162,11 +162,11 @@ namespace PerformanceTest.Management
         private async Task RefreshExecutionStatus()
         {
             var state = await Task.Run(() => manager.GetExperimentJobState(new[] { id }));
-            executionStatus = state[0];
+            executionStatus = (ExperimentExecutionStateVM)state[0];
             NotifyPropertyChanged("ExecutionStatus");
         }
 
-        public ExperimentExecutionState? ExecutionStatus
+        public ExperimentExecutionStateVM? ExecutionStatus
         {
             get { return executionStatus; }
         }
@@ -294,7 +294,7 @@ namespace PerformanceTest.Management
         }
         public string WorkerInformation
         {
-            get;
+            get { return status.WorkerInformation; }
         }
         public string Parameters
         {

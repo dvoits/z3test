@@ -141,8 +141,12 @@ namespace PerformanceTest.Management
             Title t = new Title(category, Docking.Top);
             t.Font = new Font(FontFamily.GenericSansSerif, 16.0f, FontStyle.Bold);
             chart.Titles.Add(t);
-            chart.ChartAreas[0].AxisX.Title = "Experiment #" + experiment1.ID + ": " + experiment1.Note;
-            chart.ChartAreas[0].AxisY.Title = "Experiment #" + experiment2.ID + ": " + experiment2.Note;
+            string xTitle = "Experiment #" + experiment1.ID + ": " + experiment1.Note;
+            if (experiment1.Definition.AdaptiveRunMaxRepetitions != 1 && experiment1.Definition.AdaptiveRunMaxTimeInSeconds != 0) xTitle = xTitle + " (adaptive)";
+            string yTitle = "Experiment #" + experiment2.ID + ": " + experiment2.Note;
+            if (experiment2.Definition.AdaptiveRunMaxRepetitions != 1 && experiment2.Definition.AdaptiveRunMaxTimeInSeconds != 0) yTitle = yTitle + " (adaptive)";
+            chart.ChartAreas[0].AxisX.Title = xTitle;
+            chart.ChartAreas[0].AxisY.Title = yTitle;
             chart.ChartAreas[0].AxisY.TextOrientation = TextOrientation.Rotated270;
             chart.ChartAreas[0].AxisX.Minimum = axisMinimum;
             chart.ChartAreas[0].AxisX.Maximum = axisMaximum;
@@ -321,7 +325,6 @@ namespace PerformanceTest.Management
             {
                 UpdateStatus(true);
 
-
                 bool cksat = ckSAT.Checked;
                 bool ckunsat = ckUNSAT.Checked;
                 bool ckunk = ckUNKNOWN.Checked;
@@ -391,8 +394,9 @@ namespace PerformanceTest.Management
                         if (fancy)
                         {
                             string name = item.Filename;
-                            int inx = name.IndexOf('\\', name.IndexOf('\\') + 1);
-                            string c = inx > 0 ? name.Substring(0, inx) : name;
+                            int inx = name.IndexOf('/', name.IndexOf('/') + 1);
+                            string c = (inx > 0) ? name.Substring(0, inx) : name;
+
                             Series s;
                             int k;
 
@@ -403,11 +407,11 @@ namespace PerformanceTest.Management
                                 addSeries(c);
                                 int l = chart.Series.Count - 1;
                                 classes.Add(c, l);
-                                s = chart.Series[l];
+                                s = chart.Series.Last();
                             }
 
                             int j = s.Points.AddXY(x, y);
-                            s.Points[j].ToolTip = name;
+                            s.Points.Last().ToolTip = name;
                         }
                         else
                         {
@@ -443,6 +447,7 @@ namespace PerformanceTest.Management
             }
             finally
             {
+
                 chart.Update();
                 if(vm.CompareItems != null) UpdateStatus(false);
                 uiService.StopIndicateLongOperation(handle);
@@ -470,13 +475,13 @@ namespace PerformanceTest.Management
             SetupChart();
             if (rbMemoryUsed.Checked)
             {
-                lblAvgSpeedupTxt.Text = "Avg.memory used(excl.OOM) (Mb):";
+                lblAvgSpeedupTxt.Text = "Avg.memory used(excl.OOM):";
                 label3.Text = "Y Less Memory";
                 label5.Text = "Y More Memory";
             }
             else
             {
-                lblAvgSpeedupTxt.Text = "Avg.speedup(excl. T/O) (sec):";
+                lblAvgSpeedupTxt.Text = "Avg.speedup(excl. T/O):";
                 label3.Text = "Y Faster";
                 label5.Text = "Y Slower";
             }

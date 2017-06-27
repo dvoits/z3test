@@ -78,6 +78,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Views\RequeueSettings.xaml.cs">
+      <DependentUpon>RequeueSettings.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ViewModels\RequeueSettingsViewModel.cs" />
     <Compile Include="Views\Duplicates.xaml.cs">
       <DependentUpon>Duplicates.xaml</DependentUpon>
     </Compile>
@@ -130,6 +134,10 @@
     </Compile>
     <Compile Include="DelegateCommand.cs" />
     <Compile Include="ViewModels\NewExperimentViewModel.cs" />
+    <Page Include="Views\RequeueSettings.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\Duplicates.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
