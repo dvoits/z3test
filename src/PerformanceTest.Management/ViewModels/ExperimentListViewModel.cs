@@ -274,7 +274,16 @@ namespace PerformanceTest.Management
                 }
             }
         }
-
+        public string AdaptiveRun
+        {
+            get
+            {
+                if (definition.AdaptiveRunMaxRepetitions == 1 || definition.AdaptiveRunMaxTimeInSeconds == 0)
+                    return "Run Once";
+                else
+                    return String.Format("Auto({0} times,{1} sec)", definition.AdaptiveRunMaxRepetitions, definition.AdaptiveRunMaxTimeInSeconds);
+            }
+        }
         public ExperimentExecutionState? JobStatus
         {
             get { return jobStatus; }

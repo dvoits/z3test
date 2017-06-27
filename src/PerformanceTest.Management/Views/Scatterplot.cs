@@ -141,8 +141,12 @@ namespace PerformanceTest.Management
             Title t = new Title(category, Docking.Top);
             t.Font = new Font(FontFamily.GenericSansSerif, 16.0f, FontStyle.Bold);
             chart.Titles.Add(t);
-            chart.ChartAreas[0].AxisX.Title = "Experiment #" + experiment1.ID + ": " + experiment1.Note;
-            chart.ChartAreas[0].AxisY.Title = "Experiment #" + experiment2.ID + ": " + experiment2.Note;
+            string xTitle = "Experiment #" + experiment1.ID + ": " + experiment1.Note;
+            if (experiment1.Definition.AdaptiveRunMaxRepetitions != 1 && experiment1.Definition.AdaptiveRunMaxTimeInSeconds != 0) xTitle = xTitle + " (adaptive)";
+            string yTitle = "Experiment #" + experiment2.ID + ": " + experiment2.Note;
+            if (experiment2.Definition.AdaptiveRunMaxRepetitions != 1 && experiment2.Definition.AdaptiveRunMaxTimeInSeconds != 0) yTitle = yTitle + " (adaptive)";
+            chart.ChartAreas[0].AxisX.Title = xTitle;
+            chart.ChartAreas[0].AxisY.Title = yTitle;
             chart.ChartAreas[0].AxisY.TextOrientation = TextOrientation.Rotated270;
             chart.ChartAreas[0].AxisX.Minimum = axisMinimum;
             chart.ChartAreas[0].AxisX.Maximum = axisMaximum;
