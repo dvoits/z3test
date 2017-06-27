@@ -52,19 +52,48 @@ namespace AzurePerformanceTest
         }
 
 
-        public async Task<Tuple<ExperimentSummary[], RecordsTable>> GetSummariesAndRecords(string summaryName)
+        public async Task<Tuple<ExperimentSummary[], RecordsTable>> GetTimelineAndRecords(string timelineName)
         {
-            var results = await DownloadSummary(summaryName);
+            var results = await DownloadSummary(timelineName);
             var records = results.Item2;
             var summaries = ExperimentSummaryStorage.LoadFromTable(results.Item1);
 
             return Tuple.Create(summaries, records);
         }
 
-        public async Task Update(string summaryName, int experimentId)
+        public async Task<ExperimentSummary[]> GetTimeline(string timelineName)
+        {
+            var results = await DownloadSummary(timelineName, true);
+            var summaries = ExperimentSummaryStorage.LoadFromTable(results.Item1);
+            return summaries;
+        }
+
+        public async Task<Tags> GetTags(string timelineName)
+        {
+            var blobName = string.Format("{0}.tags.csv", AzureUtils.ToBinaryPackBlobName(timelineName));
+            var blob = summaryContainer.GetBlockBlobReference(blobName);
+
+            try
+            {
+                using(MemoryStream ms = new MemoryStream())
+                {
+                    await blob.DownloadToStreamAsync(ms, AccessCondition.GenerateEmptyCondition(), new BlobRequestOptions { RetryPolicy = retryPolicy }, null);
+                    
+                    ms.Position = 0;
+                    Tags tags = TagsStorage.Load(ms);
+                    return tags;
+                }
+            }
+            catch (StorageException ex) when (ex.RequestInformation.HttpStatusCode == (int)System.Net.HttpStatusCode.NotFound)
+            {
+                return new Tags();
+            }
+        }
+
+        public async Task Update(string timelineName, int experimentId)
         {
             Trace.WriteLine("Downloading experiment results...");
-            var all_summaries = await DownloadSummary(summaryName);
+            var all_summaries = await DownloadSummary(timelineName);
 
             var exp = await storage.GetExperiment(experimentId); // fails if not found
             var domain = resolveDomain.GetDomain(exp.DomainName);
@@ -80,7 +109,7 @@ namespace AzurePerformanceTest
             var records = all_summaries.Item2;
             records.Update(results, domain);
 
-            await UploadSummary(summaryName, sumTable, records, all_summaries.Item3);
+            await UploadSummary(timelineName, sumTable, records, all_summaries.Item3);
         }
 
         public async Task<ExperimentStatusSummary> GetStatusSummary(int expId, int? refExpId)
@@ -181,14 +210,14 @@ namespace AzurePerformanceTest
             }
         }
 
-        private async Task<Tuple<Table, RecordsTable, string>> DownloadSummary(string summaryName)
+        private async Task<Tuple<Table, RecordsTable, string>> DownloadSummary(string timelineName, bool onlySummary = false)
         {
-            var blobName = string.Format("{0}.zip", AzureUtils.ToBinaryPackBlobName(summaryName));
+            var blobName = string.Format("{0}.zip", AzureUtils.ToBinaryPackBlobName(timelineName));
             var blob = summaryContainer.GetBlockBlobReference(blobName);
 
             Table summary;
-            Dictionary<string, Record> records;
-            Dictionary<string, CategoryRecord> records_summary;
+            Dictionary<string, Record> records = null;
+            Dictionary<string, CategoryRecord> records_summary = null;
             string etag = null;
 
             try
@@ -201,27 +230,31 @@ namespace AzurePerformanceTest
 
                     using (ZipFile zip = ZipFile.Read(ms))
                     {
-                        var zip_summary = zip[fileNameTimeline];
-                        var zip_records = zip[fileNameRecords];
-                        var zip_records_summary = zip[fileNameRecordsSummary];
-
+                        var zip_summary = zip[fileNameTimeline];                        
                         using (MemoryStream mem = new MemoryStream((int)zip_summary.UncompressedSize))
                         {
                             zip_summary.Extract(mem);
                             mem.Position = 0;
                             summary = ExperimentSummaryStorage.LoadTable(mem);
                         }
-                        using (MemoryStream mem = new MemoryStream((int)zip_records.UncompressedSize))
+
+                        if (!onlySummary)
                         {
-                            zip_records.Extract(mem);
-                            mem.Position = 0;
-                            records = RecordsStorage.LoadBenchmarksRecords(mem);
-                        }
-                        using (MemoryStream mem = new MemoryStream((int)zip_records_summary.UncompressedSize))
-                        {
-                            zip_records_summary.Extract(mem);
-                            mem.Position = 0;
-                            records_summary = RecordsStorage.LoadSummaryRecords(mem);
+                            var zip_records = zip[fileNameRecords];
+                            using (MemoryStream mem = new MemoryStream((int)zip_records.UncompressedSize))
+                            {
+                                zip_records.Extract(mem);
+                                mem.Position = 0;
+                                records = RecordsStorage.LoadBenchmarksRecords(mem);
+                            }
+
+                            var zip_records_summary = zip[fileNameRecordsSummary];
+                            using (MemoryStream mem = new MemoryStream((int)zip_records_summary.UncompressedSize))
+                            {
+                                zip_records_summary.Extract(mem);
+                                mem.Position = 0;
+                                records_summary = RecordsStorage.LoadSummaryRecords(mem);
+                            }
                         }
                     }
                 }
@@ -237,7 +270,7 @@ namespace AzurePerformanceTest
             return Tuple.Create(summary, new RecordsTable(records, records_summary), etag);
         }
 
-        private async Task UploadSummary(string summaryName, Table summary, RecordsTable records, string etag)
+        private async Task UploadSummary(string timelineName, Table summary, RecordsTable records, string etag)
         {
             using (Stream zipStream = new MemoryStream())
             {
@@ -263,7 +296,7 @@ namespace AzurePerformanceTest
 
                 zipStream.Position = 0;
 
-                var blobName = string.Format("{0}.zip", AzureUtils.ToBinaryPackBlobName(summaryName));
+                var blobName = string.Format("{0}.zip", AzureUtils.ToBinaryPackBlobName(timelineName));
                 var blob = summaryContainer.GetBlockBlobReference(blobName);
 
                 await blob.UploadFromStreamAsync(zipStream, etag == null ? AccessCondition.GenerateIfNotExistsCondition() : AccessCondition.GenerateIfMatchCondition(etag),

@@ -27,7 +27,7 @@ namespace Nightly
         public DateTime _startTime = DateTime.Now;
         private uint _listLimit = 1000;
         private Dictionary<string, string> _defaultParams = null;
-        private ExperimentsViewModel vm;
+        private Timeline vm;
         private Settings config = Settings.Default;
 
         public static CultureInfo culture = new CultureInfo("en-US");
@@ -50,7 +50,12 @@ namespace Nightly
                     summaryName = summaryName == null ? config.SummaryName : summaryName;
                     _defaultParams.Add("summary", summaryName);
 
-                    vm = await Helpers.GetExperimentsViewModel(summaryName);
+
+                    var connectionString = await Helpers.GetConnectionString();
+                    var expManager = AzureExperimentManager.Open(connectionString);
+                    var summaryManager = new AzureSummaryManager(connectionString, Helpers.GetDomainResolver());
+
+                    vm = await Helpers.GetTimeline(summaryName, expManager, summaryManager);
 
                     buildCategoryPanels();
                 }
@@ -1006,12 +1011,12 @@ namespace Nightly
             return tabSummary;
         }
 
-        TabPanel buildStatsTab(ExperimentViewModel exp, string category)
+        TabPanel buildStatsTab(ExperimentViewModel exp, ExperimentStatusSummary expStatus, string category)
         {
             TabPanel res = new TabPanel();
             res.HeaderTemplate = new TabHeaderTemplate(AlertLevel.None, "Statistics", "Statistical information about the job.");
             res.ContentTemplate = new TabContentTemplate(new List<string>());
-            res.Controls.Add(buildStatistics(exp, category));
+            res.Controls.Add(buildStatistics(exp, expStatus, category));
             return res;
         }
 
@@ -1067,7 +1072,7 @@ namespace Nightly
             return row;
         }
 
-        Control buildStatistics(ExperimentViewModel exp, string category)
+        Control buildStatistics(ExperimentViewModel exp, ExperimentStatusSummary expStatus, string category)
         {
             var cs = exp[category];
 
@@ -1079,6 +1084,10 @@ namespace Nightly
                 st += " <font color=red>unfinished</font>";
             t.Rows.Add(buildStatisticsRow("Experiment submission time:", st, "", Color.Black));
             string id_msg = exp.Id.ToString();
+            if (expStatus.ReferenceId.HasValue)
+                id_msg += " (Reference: " + expStatus.ReferenceId.Value + ")";
+            else
+                id_msg += " (no reference)";
 
             int sat = cs.Properties.ContainsKey(Z3Domain.KeySat) ? int.Parse(cs.Properties[Z3Domain.KeySat]) : 0;
             int unsat = cs.Properties.ContainsKey(Z3Domain.KeyUnsat) ? int.Parse(cs.Properties[Z3Domain.KeyUnsat]) : 0;
@@ -1127,7 +1136,7 @@ namespace Nightly
             tc.ScrollBars = ScrollBars.Vertical;
 
             tc.Tabs.Add(buildSummaryTab(category, alliswelltext, alerts));
-            tc.Tabs.Add(buildStatsTab(exp, category));
+            tc.Tabs.Add(buildStatsTab(exp, expStatus, category));
 
             tc.Tabs.Add(buildListTab("Errors", AlertLevel.Warning, GetStatuses(expStatus.ErrorsByCategory, category), "A benchmark is classified as erroneous when its return value is non-zero (except for memory outs)."));
             tc.Tabs.Add(buildListTab("Bugs", AlertLevel.Critical, GetStatuses(expStatus.BugsByCategory, category), "A benchmark is classified as buggy when its result does not agree with its annotation."));

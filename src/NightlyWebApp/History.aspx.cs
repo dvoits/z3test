@@ -1,4 +1,5 @@
 ﻿using AzurePerformanceTest;
+using PerformanceTest;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -14,7 +15,8 @@ namespace Nightly
         public DateTime _startTime = DateTime.Now;
         Dictionary<string, string> _defaultParams = null;
 
-        private ExperimentsViewModel vm;
+        private Timeline vm;
+        private Tags tags;
 
         public TimeSpan RenderTime
         {
@@ -34,7 +36,12 @@ namespace Nightly
                     summaryName = summaryName == null ? Properties.Settings.Default.SummaryName : summaryName;
                     _defaultParams.Add("summary", summaryName);
 
-                    vm = await Helpers.GetExperimentsViewModel(summaryName);
+                    var connectionString = await Helpers.GetConnectionString();
+                    var expManager = AzureExperimentManager.Open(connectionString);
+                    var summaryManager = new AzureSummaryManager(connectionString, Helpers.GetDomainResolver());
+
+                    vm = await Helpers.GetTimeline(summaryName, expManager, summaryManager);
+                    tags = await Helpers.GetTags(summaryName, summaryManager);
 
                     BuildEntries();
                 }
@@ -53,8 +60,16 @@ namespace Nightly
         protected void BuildEntries()
         {
             var last_job = vm.GetLastExperiment();
-            var last_tag_id = Properties.Settings.Default.TagId;
-            string last_tag_name = Properties.Settings.Default.TagName;
+            int last_tag_id = 0;
+            string last_tag_name = "";
+            foreach (KeyValuePair<string, int> kvp in tags)
+            {
+                if (kvp.Value > last_tag_id)
+                {
+                    last_tag_name = kvp.Key;
+                    last_tag_id = kvp.Value;
+                }
+            }
 
             TableRow tr;
             TableCell tc;

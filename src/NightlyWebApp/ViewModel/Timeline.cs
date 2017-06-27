@@ -9,7 +9,7 @@ using PerformanceTest.Records;
 
 namespace Nightly
 {
-    public class ExperimentsViewModel
+    public class Timeline
     {
         private readonly AzureExperimentManager expManager;
         private readonly AzureSummaryManager summaryManager;
@@ -17,12 +17,9 @@ namespace Nightly
         /// <summary>Ordered by submission time, most recent is last.</summary>
         private readonly ExperimentViewModel[] experiments;
 
-        public static async Task<ExperimentsViewModel> Initialize(string connectionString, string summaryName, IDomainResolver domainResolver)
+        public static async Task<Timeline> Initialize(string connectionString, string summaryName, AzureExperimentManager expManager, AzureSummaryManager summaryManager)
         {
-            var expManager = AzureExperimentManager.Open(connectionString);
-            var summaryManager = new AzureSummaryManager(connectionString, domainResolver);
-
-            var summRec = await summaryManager.GetSummariesAndRecords(summaryName);
+            var summRec = await summaryManager.GetTimelineAndRecords(summaryName);
             var summ = summRec.Item1;
             var records = summRec.Item2;
             var now = DateTime.Now;
@@ -56,10 +53,10 @@ namespace Nightly
                 });
 
             var experiments = await Task.WhenAll(expTasks);
-            return new ExperimentsViewModel(expManager, summaryManager, summaryName, experiments, records);
+            return new Timeline(expManager, summaryManager, summaryName, experiments, records);
         }
 
-        private ExperimentsViewModel(AzureExperimentManager expManager, AzureSummaryManager summaryManager, string summaryName, ExperimentViewModel[] experiments, RecordsTable records)
+        private Timeline(AzureExperimentManager expManager, AzureSummaryManager summaryManager, string summaryName, ExperimentViewModel[] experiments, RecordsTable records)
         {
             this.expManager = expManager;
             this.summaryManager = summaryManager;
