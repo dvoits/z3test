@@ -16,7 +16,7 @@ namespace PerformanceTest.Management
     {
         private readonly int id;
         private readonly double timeout;
-        private readonly ExperimentExecutionState? jobStatus;
+        private readonly ExperimentExecutionStateVM? jobStatus;
         private readonly ExperimentManager manager;
         private readonly AzureExperimentManagerViewModel managerVm;
         private readonly IUIService uiService;
@@ -28,7 +28,7 @@ namespace PerformanceTest.Management
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public ShowResultsViewModel(int id, ExperimentExecutionState? jobStatus, string benchmarkContainerUri, double timeout, string sharedDirectory, ExperimentManager manager, AzureExperimentManagerViewModel managerVm, RecentValuesStorage recentValues, IUIService uiService)
+        public ShowResultsViewModel(int id, ExperimentExecutionStateVM? jobStatus, string benchmarkContainerUri, double timeout, string sharedDirectory, ExperimentManager manager, AzureExperimentManagerViewModel managerVm, RecentValuesStorage recentValues, IUIService uiService)
         {
             if (manager == null) throw new ArgumentNullException("manager");
             if (managerVm == null) throw new ArgumentNullException(nameof(managerVm));
@@ -44,7 +44,7 @@ namespace PerformanceTest.Management
             this.recentValues = recentValues;
             RefreshResultsAsync();
         }
-        public ExperimentExecutionState? JobStatus
+        public ExperimentExecutionStateVM? JobStatus
         {
             get { return jobStatus; }
         }

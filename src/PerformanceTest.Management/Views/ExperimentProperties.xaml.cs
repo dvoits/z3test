@@ -88,23 +88,25 @@ namespace PerformanceTest.Management
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            ExperimentExecutionState? state = value as ExperimentExecutionState?;
+            ExperimentExecutionStateVM? state = value as ExperimentExecutionStateVM?;
             if (value == null)
             {
                 if (parameter is string && parameter != null) return parameter;
-                return "(loading...)";
+                return "";
             }
             else
             {
                 switch (state)
                 {
-                    case ExperimentExecutionState.NotFound:
+                    case ExperimentExecutionStateVM.Loading:
+                        return "(loading...)";
+                    case ExperimentExecutionStateVM.NotFound:
                         return "Not found";
-                    case ExperimentExecutionState.Completed:
+                    case ExperimentExecutionStateVM.Completed:
                         return "Completed";
-                    case ExperimentExecutionState.Terminated:
+                    case ExperimentExecutionStateVM.Terminated:
                         return "Terminated";
-                    case ExperimentExecutionState.Active:
+                    case ExperimentExecutionStateVM.Active:
                         return "Active";
                     default:
                         return "Unknown";

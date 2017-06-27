@@ -36,7 +36,7 @@ namespace PerformanceTest.Management
         private void canReclassify(object sender, CanExecuteRoutedEventArgs e)
         {
             var vm = DataContext as ShowResultsViewModel;
-            if (vm.JobStatus != ExperimentExecutionState.Completed)
+            if (vm.JobStatus != ExperimentExecutionStateVM.Completed)
             {
                 e.CanExecute = false;
                 return;
@@ -82,7 +82,7 @@ namespace PerformanceTest.Management
         private void canRequeue(object sender, CanExecuteRoutedEventArgs e)
         {
             var vm = DataContext as ShowResultsViewModel;
-            if (vm.JobStatus == ExperimentExecutionState.Active)
+            if (vm.JobStatus == ExperimentExecutionStateVM.Active || vm.JobStatus == ExperimentExecutionStateVM.Loading)
             {
                 e.CanExecute = false;
                 return;

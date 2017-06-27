@@ -447,7 +447,7 @@ namespace PerformanceTest.Management
                         }
                         else if (args.PropertyName == nameof(vm.ExecutionStatus) && vm.ExecutionStatus != null)
                         {
-                            item.JobStatus = vm.ExecutionStatus;
+                            item.JobStatus = (ExperimentExecutionStateVM)vm.ExecutionStatus;
                         }
                     }
                     catch (Exception ex)
@@ -669,7 +669,7 @@ namespace PerformanceTest.Management
                 for (var i = 0; i < sts.Length; i++)
                 {
                     var rc = sts[i].JobStatus;
-                    if (rc == ExperimentExecutionState.Active)
+                    if (rc == ExperimentExecutionStateVM.Active || rc == ExperimentExecutionStateVM.Loading)
                     {
                         e.CanExecute = false;
                         return;
@@ -705,7 +705,7 @@ namespace PerformanceTest.Management
                 for (var i = 0; i < sts.Length; i++)
                 {
                     var rc = sts[i].JobStatus;
-                    if (rc == ExperimentExecutionState.Active)
+                    if (rc == ExperimentExecutionStateVM.Active || rc == ExperimentExecutionStateVM.Loading)
                     {
                         e.CanExecute = false;
                         return;
