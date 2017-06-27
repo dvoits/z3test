@@ -294,7 +294,7 @@ namespace PerformanceTest.Management
         }
         public string WorkerInformation
         {
-            get;
+            get { return status.WorkerInformation; }
         }
         public string Parameters
         {
