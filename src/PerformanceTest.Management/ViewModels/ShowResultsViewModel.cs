@@ -19,6 +19,7 @@ namespace PerformanceTest.Management
         private readonly ExperimentExecutionStateVM? jobStatus;
         private readonly ExperimentManager manager;
         private readonly AzureExperimentManagerViewModel managerVm;
+        private readonly ExperimentListViewModel experimentsVm;
         private readonly IUIService uiService;
         private readonly string sharedDirectory;
         private string benchmarkContainerUri;
@@ -28,13 +29,16 @@ namespace PerformanceTest.Management
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public ShowResultsViewModel(int id, ExperimentExecutionStateVM? jobStatus, string benchmarkContainerUri, double timeout, string sharedDirectory, ExperimentManager manager, AzureExperimentManagerViewModel managerVm, RecentValuesStorage recentValues, IUIService uiService)
+        public ShowResultsViewModel(int id, ExperimentExecutionStateVM? jobStatus, string benchmarkContainerUri, double timeout, string sharedDirectory, ExperimentManager manager, 
+            AzureExperimentManagerViewModel managerVm, ExperimentListViewModel experimentsVm, RecentValuesStorage recentValues, IUIService uiService)
         {
             if (manager == null) throw new ArgumentNullException("manager");
             if (managerVm == null) throw new ArgumentNullException(nameof(managerVm));
             if (uiService == null) throw new ArgumentNullException("uiService");
+            if (experimentsVm == null) throw new ArgumentNullException(nameof(experimentsVm));
             this.manager = manager;
             this.managerVm = managerVm;
+            this.experimentsVm = experimentsVm;
             this.uiService = uiService;
             this.id = id;
             this.sharedDirectory = sharedDirectory;
@@ -221,6 +225,7 @@ namespace PerformanceTest.Management
                 {
                     manager.BatchPoolID = requeueSettingsVm.Pool;
                     await manager.RestartBenchmarks(id, benchmarkNames, requeueSettingsVm.BenchmarkContainerUri);
+                    experimentsVm.Refresh();
                 }
                 catch (Exception ex)
                 {

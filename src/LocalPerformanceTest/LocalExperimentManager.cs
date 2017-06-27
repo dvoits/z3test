@@ -69,7 +69,7 @@ namespace PerformanceTest
             get { return storage.Location; }
         }
 
-        public override async Task<ExperimentID> StartExperiment(ExperimentDefinition definition, string creator = null, string note = null)
+        public override async Task<ExperimentID> StartExperiment(ExperimentDefinition definition, string creator = null, string note = null, string summaryName = null)
         {
             definition = MakeRelativeDefinition(storage.Location, definition);
 

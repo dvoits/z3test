@@ -26,6 +26,7 @@ namespace AzurePerformanceTest
         private CloudBlobClient blobClient;
         private CloudBlobContainer binContainer;
         private CloudBlobContainer resultsContainer;
+        private CloudBlobContainer summaryContainer;
         private CloudBlobContainer outputContainer;
         private CloudBlobContainer configContainer;
         private CloudBlobContainer tempContainer;
@@ -41,6 +42,7 @@ namespace AzurePerformanceTest
         public const string KeyFileName = "fileName";
 
         private const string resultsContainerName = "results";
+        private const string summaryContainerName = "summary";
         private const string binContainerName = "bin";
         private const string outputContainerName = "output";
         private const string configContainerName = "config";
@@ -62,6 +64,7 @@ namespace AzurePerformanceTest
             configContainer = blobClient.GetContainerReference(configContainerName);
             resultsContainer = blobClient.GetContainerReference(resultsContainerName);
             tempContainer = blobClient.GetContainerReference(tempContainerName);
+            summaryContainer = blobClient.GetContainerReference(summaryContainerName);
 
             tableClient = storageAccount.CreateCloudTableClient();
             experimentsTable = tableClient.GetTableReference(experimentsTableName);
@@ -76,7 +79,8 @@ namespace AzurePerformanceTest
                 resultsTable.CreateIfNotExistsAsync(),
                 experimentsTable.CreateIfNotExistsAsync(),
                 resultsContainer.CreateIfNotExistsAsync(),
-                tempContainer.CreateIfNotExistsAsync()
+                tempContainer.CreateIfNotExistsAsync(),
+                summaryContainer.CreateIfNotExistsAsync()
             };
             Task.WaitAll(cloudEntityCreationTasks);
 
@@ -131,6 +135,25 @@ namespace AzurePerformanceTest
                 prop.Writable = true;
                 return prop;
             }
+        }
+
+        public async Task AppendOrReplaceSummary(string summaryName, int epxerimentId, ExperimentSummary experimentSummary)
+        {
+            if (summaryName == null) throw new ArgumentNullException(nameof(summaryName));
+            if (experimentSummary == null) throw new ArgumentNullException(nameof(experimentSummary));
+
+            string blobName = string.Format("{0}.csv", AzureUtils.ToBinaryPackBlobName(summaryName));
+            var blob = summaryContainer.GetBlockBlobReference(blobName);
+
+            const int attempts = 100;
+            bool success = await BlobModifier.Modify(blob, (Stream content) =>
+            {
+                Stream memoryStream = new MemoryStream();
+                ExperimentSummaryStorage.AppendOrReplace(content, experimentSummary, memoryStream);
+                memoryStream.Position = 0;
+                return memoryStream;
+            }, attempts);
+            if (!success) throw new Exception(string.Format("Failed to modify the blob after {0} attempts", attempts));
         }
 
         public async Task<Dictionary<ExperimentID, ExperimentEntity>> GetExperiments(ExperimentManager.ExperimentFilter? filter = default(ExperimentManager.ExperimentFilter?))

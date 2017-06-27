@@ -18,7 +18,7 @@ namespace PerformanceTest
         /// </summary>
         /// <param name="definition">Describes the experiment to be performed.</param>
         /// <returns>Identifier of the new experiment for further reference.</returns>
-        public abstract Task<ExperimentID> StartExperiment(ExperimentDefinition definition, string creator = null, string note = null);
+        public abstract Task<ExperimentID> StartExperiment(ExperimentDefinition definition, string creator = null, string note = null, string summaryName = null);
 
         /// <summary>
         /// Restarts selected benchmarks within an experiment.

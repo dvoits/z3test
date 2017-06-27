@@ -200,6 +200,10 @@ namespace PerformanceTest.Management
         {
             get { return status.SubmissionTime; }
         }
+        public string BenchmarkContainerUri
+        {
+            get { return definition.BenchmarkContainerUri; }
+        }
         public string Category
         {
             get { return definition.Category; }

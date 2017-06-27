@@ -148,6 +148,8 @@ namespace PerformanceTest.Management
             {
                 benchmarkContainerUri = value;
                 NotifyPropertyChanged();
+                BenchmarkDirectory = "";
+                Categories = "";
             }
         }
         public string BenchmarkContainerUriNotDefault
