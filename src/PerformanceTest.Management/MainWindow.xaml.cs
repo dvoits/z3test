@@ -656,33 +656,37 @@ namespace PerformanceTest.Management
         {
             throw new NotImplementedException();
         }
-        private async void canRequeueIErrors(object sender, CanExecuteRoutedEventArgs e)
+        private void canRequeueIErrors(object sender, CanExecuteRoutedEventArgs e)
         {
             if (managerVm == null || dataGrid.SelectedItems.Count < 1)
             {
                 e.CanExecute = false;
                 return;
             }
-            else
-            {
+            e.CanExecute = true;
+        }
+        private async void requeueIErrors(object target, ExecutedRoutedEventArgs e)
+        {
+            var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().ToArray();
 
-                var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().ToArray();
+            var handle = uiService.StartIndicateLongOperation("Check job status...");
+            try
+            {
                 for (var i = 0; i < sts.Length; i++)
                 {
                     await sts[i].UpdateJobStatus();
                     var rc = sts[i].JobStatus;
                     if (rc == ExperimentExecutionStateVM.Active || rc == ExperimentExecutionStateVM.Loading)
                     {
-                        e.CanExecute = false;
+                        uiService.ShowError("Can't resolve infrastructure errors. Experiments are not completed.", "Failed to resolve infrastructure errors");
                         return;
                     }
                 }
             }
-            e.CanExecute = true;
-        }
-        private void requeueIErrors(object target, ExecutedRoutedEventArgs e)
-        {
-            var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().ToArray();
+            finally
+            {
+                uiService.StopIndicateLongOperation(handle);
+            }
             managerVm.RequeueIErrors(sts, recentValues);
             experimentsVm.Refresh();
         }
@@ -694,34 +698,38 @@ namespace PerformanceTest.Management
         {
             throw new NotImplementedException();
         }
-        private async void canShowDuplicates(object sender, CanExecuteRoutedEventArgs e)
+        private void canShowDuplicates(object sender, CanExecuteRoutedEventArgs e)
         {
             if (managerVm == null || dataGrid.SelectedItems.Count < 1)
             {
                 e.CanExecute = false;
                 return;
             }
-            else
+            e.CanExecute = true;
+        }
+        private async void showDuplicates(object target, ExecutedRoutedEventArgs e)
+        {
+            var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().ToArray();
+            var handle = uiService.StartIndicateLongOperation("Check job status...");
+            try
             {
-
-                var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().ToArray();
                 for (var i = 0; i < sts.Length; i++)
                 {
                     await sts[i].UpdateJobStatus();
                     var rc = sts[i].JobStatus;
                     if (rc == ExperimentExecutionStateVM.Active || rc == ExperimentExecutionStateVM.Loading)
                     {
-                        e.CanExecute = false;
+                        uiService.ShowError("Can't resolve infrastructure errors. Experiments are not completed.", "Failed to resolve infrastructure errors");
                         return;
                     }
                 }
             }
-            e.CanExecute = true;
-        }
-        private async void showDuplicates(object target, ExecutedRoutedEventArgs e)
-        {
-            var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().Select(item => item.ID).ToArray();
-            await managerVm.BuildDuplicatesResolverView(sts, mnuOptResolveTimeoutDupes.IsChecked,
+            finally
+            {
+                uiService.StopIndicateLongOperation(handle);
+            }
+            var ids = sts.Select(i => i.ID).ToArray();
+            await managerVm.BuildDuplicatesResolverView(ids, mnuOptResolveTimeoutDupes.IsChecked,
                     mnuOptResolveSameTimeDupes.IsChecked, mnuOptResolveSlowestDupes.IsChecked, mnuOptResolveInErrorsDupes.IsChecked);
         }
         private void btnEdit_Click(object sender, RoutedEventArgs e)
