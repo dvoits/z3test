@@ -719,7 +719,7 @@ namespace PerformanceTest.Management
                     var rc = sts[i].JobStatus;
                     if (rc == ExperimentExecutionStateVM.Active || rc == ExperimentExecutionStateVM.Loading)
                     {
-                        uiService.ShowError("Can't resolve infrastructure errors. Experiments are not completed.", "Failed to resolve infrastructure errors");
+                        uiService.ShowError("Can't resolve duplicates. Experiments are not completed.", "Failed to resolve duplicates");
                         return;
                     }
                 }
