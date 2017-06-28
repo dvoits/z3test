@@ -16,7 +16,8 @@ namespace PerformanceTest.Management
     {
         private readonly int id;
         private readonly double timeout;
-        private readonly ExperimentExecutionStateVM? jobStatus;
+        private ExperimentExecutionStateVM? jobStatus;
+        private readonly ExperimentStatusViewModel statusVm;
         private readonly ExperimentManager manager;
         private readonly AzureExperimentManagerViewModel managerVm;
         private readonly ExperimentListViewModel experimentsVm;
@@ -29,7 +30,7 @@ namespace PerformanceTest.Management
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public ShowResultsViewModel(int id, ExperimentExecutionStateVM? jobStatus, string benchmarkContainerUri, double timeout, string sharedDirectory, ExperimentManager manager, 
+        public ShowResultsViewModel(ExperimentStatusViewModel st, string sharedDirectory, ExperimentManager manager, 
             AzureExperimentManagerViewModel managerVm, ExperimentListViewModel experimentsVm, RecentValuesStorage recentValues, IUIService uiService)
         {
             if (manager == null) throw new ArgumentNullException("manager");
@@ -40,17 +41,23 @@ namespace PerformanceTest.Management
             this.managerVm = managerVm;
             this.experimentsVm = experimentsVm;
             this.uiService = uiService;
-            this.id = id;
+            this.statusVm = st;
+            this.id = st.ID;
             this.sharedDirectory = sharedDirectory;
-            this.timeout = timeout;
-            this.jobStatus = jobStatus;
-            this.benchmarkContainerUri = benchmarkContainerUri;
+            this.timeout = st.Definition.BenchmarkTimeout.TotalSeconds;
+            this.jobStatus = ExperimentExecutionStateVM.Loading;
+            this.benchmarkContainerUri = st.Definition.BenchmarkContainerUri;
             this.recentValues = recentValues;
             RefreshResultsAsync();
         }
         public ExperimentExecutionStateVM? JobStatus
         {
             get { return jobStatus; }
+            private set
+            {
+                jobStatus = value;
+                NotifyPropertyChanged();
+            }
         }
         public bool IsFiltering
         {
@@ -62,6 +69,11 @@ namespace PerformanceTest.Management
             }
         }
 
+        private async void RefreshJobStatus()
+        {
+            await statusVm.UpdateJobStatus();
+            JobStatus = statusVm.JobStatus;
+        }
         private async void RefreshResultsAsync()
         {
             var handle = uiService.StartIndicateLongOperation("Loading experiment results...");
@@ -70,6 +82,7 @@ namespace PerformanceTest.Management
                 allResults = Results = null;
                 var res = await Task.Run(() => manager.GetResults(id));
                 allResults = Results = res.Benchmarks.Select(e => new BenchmarkResultViewModel(e, uiService)).ToArray();
+                RefreshJobStatus();
             }
             catch (Exception ex)
             {
@@ -226,6 +239,7 @@ namespace PerformanceTest.Management
                     manager.BatchPoolID = requeueSettingsVm.Pool;
                     await manager.RestartBenchmarks(id, benchmarkNames, requeueSettingsVm.BenchmarkContainerUri);
                     experimentsVm.Refresh();
+                    RefreshJobStatus();
                 }
                 catch (Exception ex)
                 {

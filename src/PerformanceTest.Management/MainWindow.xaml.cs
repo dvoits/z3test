@@ -542,7 +542,7 @@ namespace PerformanceTest.Management
             }
 
         }
-        private void dataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private async void dataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (dataGrid.SelectedItems.Count != 1)
                 return;
@@ -556,7 +556,8 @@ namespace PerformanceTest.Management
             }
             else sharedDirectory = st.Definition.Category;
 
-            var vm = managerVm.BuildResultsView(st.ID, st.JobStatus, st.Definition.BenchmarkContainerUri, st.Definition.BenchmarkTimeout.TotalSeconds, sharedDirectory, experimentsVm, recentValues);
+            await st.UpdateJobStatus();
+            var vm = managerVm.BuildResultsView(st, sharedDirectory, experimentsVm, recentValues);
             dlg.DataContext = vm;
             dlg.Owner = this;
             dlg.Show();

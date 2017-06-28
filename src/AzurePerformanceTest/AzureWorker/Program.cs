@@ -12,12 +12,12 @@ using Microsoft.WindowsAzure.Storage;
 using Microsoft.Azure.Batch;
 using Microsoft.WindowsAzure.Storage.Blob;
 using System.Diagnostics;
-using AzurePerformanceTest;
 using Microsoft.WindowsAzure.Storage.Queue;
 using System.Runtime.Serialization.Formatters.Binary;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System.Threading;
+using AzurePerformanceTest;
 
 namespace AzureWorker
 {
@@ -305,7 +305,7 @@ namespace AzureWorker
                 if (summaryName != null)
                 {
                     Trace.WriteLine(string.Format("Building summary for experiment {0} and summary name {1}...", experimentId, summaryName));
-                    AzureSummaryManager manager = new AzureSummaryManager(credentials.WithoutBatchData().ToString());
+                    AzureSummaryManager manager = new AzureSummaryManager(credentials.WithoutBatchData().ToString(), Helpers.GetDomainResolver());
                     await AppendSummary(summaryName, experimentId, domain, manager);
                 }
                 else
