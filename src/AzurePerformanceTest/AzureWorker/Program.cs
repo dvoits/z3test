@@ -103,7 +103,7 @@ namespace AzureWorker
             // We can't tell bad results we got during previous runs on the same experiment from bad results
             // we got during this run when job manager crashed, so we put them all into 'good' list.
             // 'Fresh' (and, therefore, duplicate) bad results will be removed during deduplication.
-            goodResults = (await storage.GetAzureExperimentResults(experimentId)).ToList();
+            goodResults = (await storage.GetAzureExperimentResults(experimentId)).Item1.ToList();
             Console.WriteLine("Fetched existing results");
             Domain domain = ResolveDomain(expInfo.DomainName);
 
@@ -367,7 +367,7 @@ namespace AzureWorker
 
         static async Task FetchSavedResults(int experimentId, AzureExperimentStorage storage)
         {
-            var results = (await storage.GetAzureExperimentResults(experimentId));
+            var results = (await storage.GetAzureExperimentResults(experimentId)).Item1;
             goodResults = new List<AzureBenchmarkResult>();
             badResults = new List<AzureBenchmarkResult>();
             foreach (var r in results)
@@ -406,7 +406,7 @@ namespace AzureWorker
                 var tuple = SortCountUniqueNamesAndRemoveExactDuplicates(results);
                 processedBenchmarks = tuple.Item1;
                 results = tuple.Item2;
-                await storage.PutAzureExperimentResults(experimentId, results.ToArray(), true);
+                await storage.PutAzureExperimentResults(experimentId, results.ToArray(), AzureExperimentStorage.UploadBlobMode.CreateOrReplace);
                 int completedBenchmarks = totalBenchmarks == -1 ? processedBenchmarks : totalBenchmarks - totalBenchmarksToProcess + completedTasksCount;
                 await storage.SetCompletedBenchmarks(experimentId, completedBenchmarks);
                 Console.WriteLine("Setting completed benchmarks to {0}.\nTotal benchmarks: {1}\nProcessed benchmarks: {2}\nTotal to process: {3}\nCompleted tasks: {4}\nMessage count: {5}", completedBenchmarks, totalBenchmarks, processedBenchmarks, totalBenchmarksToProcess, completedTasksCount, messageCount);

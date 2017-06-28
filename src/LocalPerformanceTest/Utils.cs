@@ -12,7 +12,7 @@ namespace PerformanceTest
     {
         public static Stream StringToStream(string s)
         {
-            byte[] byteArray = Encoding.UTF8.GetBytes(s);
+            byte[] byteArray = Encoding.UTF8.GetBytes(s == null ? string.Empty : s);
             MemoryStream stream = new MemoryStream(byteArray);
             stream.Position = 0;
             return stream;

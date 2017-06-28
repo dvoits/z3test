@@ -9,19 +9,17 @@ using PerformanceTest.Records;
 
 namespace Nightly
 {
-    public class MainPageViewModel
+    public class Timeline
     {
         private readonly AzureExperimentManager expManager;
         private readonly AzureSummaryManager summaryManager;
         private readonly string summaryName;
+        /// <summary>Ordered by submission time, most recent is last.</summary>
         private readonly ExperimentViewModel[] experiments;
 
-        public static async Task<MainPageViewModel> Initialize(string connectionString, string summaryName)
+        public static async Task<Timeline> Initialize(string connectionString, string summaryName, AzureExperimentManager expManager, AzureSummaryManager summaryManager)
         {
-            var expManager = AzureExperimentManager.Open(connectionString);
-            var summaryManager = new AzureSummaryManager(connectionString);
-
-            var summRec = await summaryManager.GetSummariesAndRecords(summaryName);
+            var summRec = await summaryManager.GetTimelineAndRecords(summaryName);
             var summ = summRec.Item1;
             var records = summRec.Item2;
             var now = DateTime.Now;
@@ -55,10 +53,10 @@ namespace Nightly
                 });
 
             var experiments = await Task.WhenAll(expTasks);
-            return new MainPageViewModel(expManager, summaryManager, summaryName, experiments, records);
+            return new Timeline(expManager, summaryManager, summaryName, experiments, records);
         }
 
-        private MainPageViewModel(AzureExperimentManager expManager, AzureSummaryManager summaryManager, string summaryName, ExperimentViewModel[] experiments, RecordsTable records)
+        private Timeline(AzureExperimentManager expManager, AzureSummaryManager summaryManager, string summaryName, ExperimentViewModel[] experiments, RecordsTable records)
         {
             this.expManager = expManager;
             this.summaryManager = summaryManager;
@@ -90,6 +88,21 @@ namespace Nightly
         public ExperimentViewModel GetLastExperiment()
         {
             return experiments.Last();
+        }
+
+        public async Task<ExperimentStatusSummary> GetStatusSummary(int id)
+        {
+            for (int i = experiments.Length; --i >= 0;)
+            {
+                if(experiments[i].Id == id)
+                {
+                    int? refId = null;
+                    if (i > 0) refId = experiments[i - 1].Id;
+                    var summary = await summaryManager.GetStatusSummary(id, refId);
+                    return summary;
+                }
+            }
+            throw new KeyNotFoundException("Experiment " + id + " not found");
         }
     }
 }

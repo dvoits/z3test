@@ -18,7 +18,7 @@ namespace PerformanceTest.Management
     public class SaveData
     {
         SaveData () {}
-        private static int[] computeUnique(ExperimentStatusViewModel[] experiments, BenchmarkResult[][] b)
+        private static int[] computeUnique(ExperimentStatusViewModel[] experiments, ExperimentResults[] b)
         {
             int[] res = new int[experiments.Length];
             for (int i = 0; i < experiments.Length; i++) res[i] = 0;
@@ -29,9 +29,10 @@ namespace PerformanceTest.Management
             for (int i = 0; i < experiments.Length; i++)
             {
                 int id = experiments[i].ID;
-                for (int j = 0; j < b[i].Length; j++)
+                var bi = b[i].Benchmarks;
+                for (int j = 0; j < bi.Length; j++)
                 {
-                    BenchmarkResult bij = b[i][j];
+                    BenchmarkResult bij = bi[j];
                     string filename = experiments[i].Category + "/" + bij.BenchmarkFileName;
                     if (!data.ContainsKey(filename))
                         data.Add(filename, new Dictionary<int, int?>());
@@ -75,13 +76,13 @@ namespace PerformanceTest.Management
                 StreamWriter f = new StreamWriter(filename, false);
                 f.WriteLine("\"ID\",\"# Total\",\"# SAT\",\"# UNSAT\",\"# UNKNOWN\",\"# Timeout\",\"# Memout\",\"# Bug\",\"# Error\",\"# Unique\",\"Parameters\",\"Note\"");
                 var count = experiments.Length;
-                BenchmarkResult[][] b = new BenchmarkResult[count][];
+                var b = new ExperimentResults[count];
                 b = await DownloadResultsAsync(experiments, manager);
                 var unique = computeUnique(experiments, b);
                 for (var i = 0; i < count; i++)
                 {
                     var domain = domainResolver.GetDomain(experiments[i].Definition.DomainName ?? "Z3");
-                    var aggr = domain.Aggregate(b[i].Select(r => new ProcessRunResults(new ProcessRunAnalysis(r.Status, r.Properties), r.NormalizedRuntime)));
+                    var aggr = domain.Aggregate(b[i].Benchmarks.Select(r => new ProcessRunResults(new ProcessRunAnalysis(r.Status, r.Properties), r.NormalizedRuntime)));
                     var statistics = new ExperimentStatistics(aggr);
                     var def = experiments[i].Definition;
                     string ps = def.Parameters.Trim(' ');
@@ -148,7 +149,7 @@ namespace PerformanceTest.Management
                     f.Write(",,,,");
 
                     double error_line = 10.0 * ex_timeout;
-                    var benchmarks = benchs[i];
+                    var benchmarks = benchs[i].Benchmarks;
                     bool HasDuplicates = false;
                     for (var j = 0; j < benchmarks.Length; j++)
                     {
@@ -247,7 +248,7 @@ namespace PerformanceTest.Management
                     double total = 0.0;
                     Directory.CreateDirectory(drctry);
                     var benchs = await manager.GetResults(experiment.ID);
-                    var benchsVm = benchs.Select(e => new BenchmarkResultViewModel(e, manager, uiService)).ToArray();
+                    var benchsVm = benchs.Benchmarks.Select(e => new BenchmarkResultViewModel(e, uiService)).ToArray();
                     total = benchsVm.Length;
 
                     for (int i = 0; i < total; i++)
@@ -286,7 +287,7 @@ namespace PerformanceTest.Management
 
 
         }
-        private static void MakeMatrix(ExperimentStatusViewModel[] experiments, BenchmarkResult[][] b, StreamWriter f, int condition, string name)
+        private static void MakeMatrix(ExperimentStatusViewModel[] experiments, ExperimentResults[] b, StreamWriter f, int condition, string name)
         {
             int numItems = experiments.Length;
             f.WriteLine(@"\begin{table}");
@@ -319,7 +320,7 @@ namespace PerformanceTest.Management
                         f.Write(@" & $\pm 0$");
                     else
                     {
-                        int q = FindSimilarBenchmarks(b[i], b[j], condition, false);
+                        int q = FindSimilarBenchmarks(b[i].Benchmarks, b[j].Benchmarks, condition, false);
                         f.Write(@" & $" + (q > 0 ? @"+" : (q == 0) ? @"\pm" : @"") + q.ToString() + "$");
                         if (i == 1 && j == 0) example_value = q;
                     }
@@ -354,7 +355,7 @@ namespace PerformanceTest.Management
                     f.WriteLine(@"\usepackage{rotating}");
                     f.WriteLine(@"\begin{document}");
                     int count = experiments.Length;
-                    BenchmarkResult[][] b = new BenchmarkResult[count][];
+                    ExperimentResults[] b = new ExperimentResults[count];
                     b = await DownloadResultsAsync(experiments, manager);
 
                     MakeMatrix(experiments, b, f, 0, "SAT+UNSAT");
@@ -373,16 +374,16 @@ namespace PerformanceTest.Management
                 uiService.StopIndicateLongOperation(handle);
             }
         }
-        private static async Task<BenchmarkResult[][]> DownloadResultsAsync(ExperimentStatusViewModel[] experiments, ExperimentManager manager)
+        private static async Task<ExperimentResults[]> DownloadResultsAsync(ExperimentStatusViewModel[] experiments, ExperimentManager manager)
         {
             var count = experiments.Length;
-            var t = new Task<BenchmarkResult[]>[count];
+            var t = new Task<ExperimentResults>[count];
             for (int i = 0; i < count; i++)
             {
                 int index = i;
                 t[index] = Task.Run(() => manager.GetResults(experiments[index].ID));
             }
-            var b = new BenchmarkResult[count][];
+            var b = new ExperimentResults[count];
             for (int j = 0; j < count; j++)
             {
                 int index = j;

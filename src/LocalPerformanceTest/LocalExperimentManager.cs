@@ -150,15 +150,15 @@ namespace PerformanceTest
             storage.ReplaceExperimentRow(newRow);
             return Task.FromResult(0);
         }
-        public override async Task<BenchmarkResult[]> GetResults(int id)
+        public override async Task<ExperimentResults> GetResults(int id)
         {
             ExperimentInstance experiment;
             if (runningExperiments.TryGetValue(id, out experiment))
             {
                 //return experiment.Results;
-                return await Task.WhenAll(experiment.Results);
+                return new ExperimentResults(id, await Task.WhenAll(experiment.Results));
             }
-            return storage.GetResults(id).ToArray();
+            return new ExperimentResults(id, storage.GetResults(id).ToArray());
         }
 
         public override Task<Experiment> TryFindExperiment(int id)

@@ -717,11 +717,11 @@ namespace PerformanceTest.Management
             }
             e.CanExecute = true;
         }
-        private void showDuplicates(object target, ExecutedRoutedEventArgs e)
+        private async void showDuplicates(object target, ExecutedRoutedEventArgs e)
         {
             var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().Select(item => item.ID).ToArray();
-            managerVm.BuildDuplicatesResolverView(sts, mnuOptResolveTimeoutDupes.IsChecked,
-                 mnuOptResolveSameTimeDupes.IsChecked, mnuOptResolveSlowestDupes.IsChecked, mnuOptResolveInErrorsDupes.IsChecked);
+            await managerVm.BuildDuplicatesResolverView(sts, mnuOptResolveTimeoutDupes.IsChecked,
+                    mnuOptResolveSameTimeDupes.IsChecked, mnuOptResolveSlowestDupes.IsChecked, mnuOptResolveInErrorsDupes.IsChecked);
         }
         private void btnEdit_Click(object sender, RoutedEventArgs e)
         {

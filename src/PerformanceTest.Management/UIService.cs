@@ -41,7 +41,19 @@ namespace PerformanceTest.Management
         /// Returns true if yes, false if no, and null if cancel.
         /// </summary>
         bool? AskYesNoCancel(string message, string caption);
-        void ShowDuplicatesWindow(DuplicatesViewModel vm);
+
+        /// <summary>
+        /// Returns true if yes, false if no.
+        /// </summary>
+        bool AskYesNo(string message, string caption);
+
+        /// <summary>
+        /// Chooses one of the given results.
+        /// </summary>
+        /// <param name="id">Experiment id.</param>
+        /// <returns>Null, if operation was cancelled; otherwise, returns one of the elements of the given array.</returns>
+        BenchmarkResult ResolveDuplicatedResults(int id, BenchmarkResult[] duplicates);
+
         RequeueSettingsViewModel ShowRequeueSettings(RequeueSettingsViewModel vm);
     }
 
@@ -90,6 +102,18 @@ namespace PerformanceTest.Management
                 case MessageBoxResult.Cancel:
                 default:
                     return null;
+            }
+        }
+
+        public bool AskYesNo(string message, string caption)
+        {
+            var r = MessageBox.Show(message, caption, MessageBoxButton.YesNo, MessageBoxImage.Question);
+            switch (r)
+            {
+                case MessageBoxResult.Yes:
+                    return true;
+                default:
+                    return false;
             }
         }
 
@@ -196,7 +220,7 @@ namespace PerformanceTest.Management
                 StopIndicateLongOperation(handle);
             }
 
-            if(dlg.ShowDialog() == true)
+            if (dlg.ShowDialog() == true)
             {
                 return vm.SelectedPath != null ? vm.SelectedPath.Select(t => t.Text).ToArray() : new string[0];
             }
@@ -236,17 +260,18 @@ namespace PerformanceTest.Management
 
         public void StopIndicateLongOperation(long handle)
         {
-            for (int i = statuses.Count; --i>=0; )
+            for (int i = statuses.Count; --i >= 0;)
             {
                 var s = statuses[i];
-                if(s.Item1 == handle)
+                if (s.Item1 == handle)
                 {
                     statuses.RemoveAt(i);
                     if (statuses.Count == 0)
                     {
                         Mouse.OverrideCursor = null;
                         statusVm.Status = "Ready.";
-                    }else
+                    }
+                    else
                     {
                         statusVm.Status = statuses.Last().Item2;
                     }
@@ -255,10 +280,22 @@ namespace PerformanceTest.Management
             }
         }
 
-        public void ShowDuplicatesWindow(DuplicatesViewModel vm)
+        public BenchmarkResult ResolveDuplicatedResults(int id, BenchmarkResult[] duplicates)
         {
-            Duplicates dlg = new Duplicates(vm);
-            dlg.ShowDialog();
+            try
+            {
+                var vm = new DuplicatesManualResolutionViewModel(id, duplicates, this);
+
+                Duplicates dlg = new Duplicates();
+                dlg.DataContext = vm;
+                if (dlg.ShowDialog() == true)
+                    return vm.SelectedResult;
+            }
+            catch (Exception ex)
+            {
+                ShowError(ex, "Error while resolving duplicates");
+            }
+            return null;
         }
         public RequeueSettingsViewModel ShowRequeueSettings(RequeueSettingsViewModel vm)
         {

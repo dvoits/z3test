@@ -69,7 +69,7 @@ namespace PerformanceTest.Management
             {
                 allResults = Results = null;
                 var res = await Task.Run(() => manager.GetResults(id));
-                allResults = Results = res.Select(e => new BenchmarkResultViewModel(e, manager, uiService)).ToArray();
+                allResults = Results = res.Benchmarks.Select(e => new BenchmarkResultViewModel(e, uiService)).ToArray();
             }
             catch (Exception ex)
             {
@@ -196,7 +196,7 @@ namespace PerformanceTest.Management
                 BenchmarkResult old_result = res.GetBenchmarkResult();
                 BenchmarkResult new_result = (rc == ResultStatus.Timeout) ? 
                     new BenchmarkResult(old_result.ExperimentID, old_result.BenchmarkFileName,
-                        old_result.AcquireTime, timeout, old_result.TotalProcessorTime, old_result.WallClockTime,
+                        old_result.AcquireTime, timeout, TimeSpan.FromSeconds(timeout), TimeSpan.FromSeconds(timeout),
                         old_result.PeakMemorySizeMB, rc, old_result.ExitCode, old_result.StdOut, old_result.StdErr, old_result.Properties):
                     new BenchmarkResult(old_result.ExperimentID, old_result.BenchmarkFileName, 
                         old_result.AcquireTime, old_result.NormalizedRuntime, old_result.TotalProcessorTime, old_result.WallClockTime, 

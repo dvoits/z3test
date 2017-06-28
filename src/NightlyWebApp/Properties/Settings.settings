@@ -21,7 +21,7 @@
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="SummaryName" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">test</Value>
+      <Value Profile="(Default)">Z3Nightly</Value>
     </Setting>
   </Settings>
 </SettingsFile>

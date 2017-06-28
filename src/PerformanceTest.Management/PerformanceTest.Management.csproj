@@ -85,7 +85,7 @@
     <Compile Include="Views\Duplicates.xaml.cs">
       <DependentUpon>Duplicates.xaml</DependentUpon>
     </Compile>
-    <Compile Include="ViewModels\DuplicatesViewModel.cs" />
+    <Compile Include="ViewModels\DuplicatesManualResolutionViewModel.cs" />
     <Compile Include="RecentValuesStorage.cs" />
     <Compile Include="SaveData.cs" />
     <Compile Include="ViewModels\BenchmarkResultViewModel.cs" />
