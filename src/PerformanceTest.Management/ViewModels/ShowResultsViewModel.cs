@@ -213,7 +213,6 @@ namespace PerformanceTest.Management
         }
         public async void RequeueResults(BenchmarkResultViewModel[] items)
         {
-            
             string[] benchmarkNames = items.Select(e => e.Filename).Distinct().ToArray();
 
             RequeueSettingsViewModel requeueSettingsVm = new RequeueSettingsViewModel(benchmarkContainerUri, managerVm, recentValues, uiService);
@@ -226,6 +225,7 @@ namespace PerformanceTest.Management
                     manager.BatchPoolID = requeueSettingsVm.Pool;
                     await manager.RestartBenchmarks(id, benchmarkNames, requeueSettingsVm.BenchmarkContainerUri);
                     experimentsVm.Refresh();
+                    uiService.ShowInfo(string.Format("{0} benchmark(s) requeued.", benchmarkNames.Length));
                 }
                 catch (Exception ex)
                 {

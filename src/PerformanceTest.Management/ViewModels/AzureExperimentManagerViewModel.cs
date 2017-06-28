@@ -74,7 +74,7 @@ namespace PerformanceTest.Management
                             else
                             {
                                 if (!uiService.AskYesNo(
-                                    string.Format("Results of the experiment {0} have been changed since resolution started. Repeat the resolution for the experiment again?", eid), 
+                                    string.Format("Results of the experiment {0} have been changed since resolution started. Resolve again?", eid), 
                                     "Conflict when saving results"))
                                     return;
                             }
