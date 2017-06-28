@@ -23,6 +23,9 @@
     <Setting Name="BenchmarkTimeoutSeconds" Type="System.Double" Scope="Application">
       <Value Profile="(Default)">1200</Value>
     </Setting>
+	<Setting Name="ExperimentTimeoutSeconds" Type="System.Double" Scope="Application">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
     <Setting Name="MemoryLimitMegabytes" Type="System.Double" Scope="Application">
       <Value Profile="(Default)">2048</Value>
     </Setting>
@@ -64,6 +67,9 @@
     </Setting>
     <Setting Name="KeyVaultUrl" Type="System.String" Scope="Application">
       <Value Profile="(Default)">https://z3perftest.vault.azure.net</Value>
+    </Setting>
+    <Setting Name="SummaryName" Type="System.String" Scope="Application">
+      <Value Profile="(Default)" />
     </Setting>
   </Settings>
 </SettingsFile>

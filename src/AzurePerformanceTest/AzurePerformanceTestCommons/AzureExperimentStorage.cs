@@ -137,25 +137,6 @@ namespace AzurePerformanceTest
             }
         }
 
-        public async Task AppendOrReplaceSummary(string summaryName, int epxerimentId, ExperimentSummary experimentSummary)
-        {
-            if (summaryName == null) throw new ArgumentNullException(nameof(summaryName));
-            if (experimentSummary == null) throw new ArgumentNullException(nameof(experimentSummary));
-
-            string blobName = string.Format("{0}.csv", AzureUtils.ToBinaryPackBlobName(summaryName));
-            var blob = summaryContainer.GetBlockBlobReference(blobName);
-
-            const int attempts = 100;
-            bool success = await BlobModifier.Modify(blob, (Stream content) =>
-            {
-                Stream memoryStream = new MemoryStream();
-                ExperimentSummaryStorage.AppendOrReplace(content, experimentSummary, memoryStream);
-                memoryStream.Position = 0;
-                return memoryStream;
-            }, attempts);
-            if (!success) throw new Exception(string.Format("Failed to modify the blob after {0} attempts", attempts));
-        }
-
         public async Task<Dictionary<ExperimentID, ExperimentEntity>> GetExperiments(ExperimentManager.ExperimentFilter? filter = default(ExperimentManager.ExperimentFilter?))
         {
             var dict = new Dictionary<ExperimentID, ExperimentEntity>();
