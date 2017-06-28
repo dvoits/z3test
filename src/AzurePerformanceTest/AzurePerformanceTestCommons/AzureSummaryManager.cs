@@ -98,7 +98,7 @@ namespace AzurePerformanceTest
             var exp = await storage.GetExperiment(experimentId); // fails if not found
             var domain = resolveDomain.GetDomain(exp.DomainName);
 
-            var results = await storage.GetResults(experimentId);
+            var results = (await storage.GetResults(experimentId)).Benchmarks;
 
             Trace.WriteLine("Building summary for the experiment...");
             var catSummary = ExperimentSummary.Build(results, domain, ExperimentSummary.DuplicateResolution.Ignore);
@@ -127,13 +127,13 @@ namespace AzurePerformanceTest
             var domain = resolveDomain.GetDomain(exp.DomainName);
 
             Trace.WriteLine("Downloading experiment results...");
-            BenchmarkResult[] results = await storage.GetResults(expId);
+            BenchmarkResult[] results = (await storage.GetResults(expId)).Benchmarks;
 
             BenchmarkResult[] refResults = null;
             if (refExpId.HasValue)
             {
                 Trace.WriteLine("Downloading another experiment results...");
-                refResults = await storage.GetResults(refExpId.Value);
+                refResults = (await storage.GetResults(refExpId.Value)).Benchmarks;
             }
 
             Trace.WriteLine("Building summary...");

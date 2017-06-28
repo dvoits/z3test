@@ -60,7 +60,7 @@ namespace UnitTests
             ExperimentManager manager = NewManager();
             var expId = await manager.StartExperiment(def);
 
-            var results = await manager.GetResults(expId);
+            var results = (await manager.GetResults(expId)).Benchmarks;
             Assert.AreEqual(1, results.Length, "Number of completed benchmarks");
 
             var res = results[0];
@@ -78,7 +78,7 @@ namespace UnitTests
             ExperimentManager manager = NewManager();
             var expId = await manager.StartExperiment(def);
 
-            var results = await manager.GetResults(expId);
+            var results = (await manager.GetResults(expId)).Benchmarks;
             Assert.AreEqual(3, results.Length, "Number of completed benchmarks");
 
             foreach (var res in results)

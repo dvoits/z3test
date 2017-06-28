@@ -223,8 +223,8 @@ namespace PerformanceTest.Management
 
                 var t1 = Task.Run(() => manager.GetResults(id1));
                 var t2 = Task.Run(() => manager.GetResults(id2));
-                allResults1 = await t1;
-                allResults2 = await t2;
+                allResults1 = (await t1).Benchmarks;
+                allResults2 = (await t2).Benchmarks;
 
                 JoinResults();
                 IsFiltering = false;
@@ -245,7 +245,7 @@ namespace PerformanceTest.Management
             if (allResults1 == null || allResults2 == null) return;
 
             var param = new CheckboxParameters(checkIgnoreCategory, checkIgnorePrefix, checkIgnorePostfix, category1, category2, extension1, extension2, sharedDirectory1, sharedDirectory2);
-            var join = InnerJoinOrderedResults(allResults1, allResults2, manager, param, uiService);
+            var join = InnerJoinOrderedResults(allResults1, allResults2, param, uiService);
             Array.Sort<CompareBenchmarksViewModel>(join, new VMComparer());
             CompareItems = allResults = join;
         }
@@ -266,7 +266,7 @@ namespace PerformanceTest.Management
             }
         }
 
-        private static CompareBenchmarksViewModel[] InnerJoinOrderedResults(BenchmarkResult[] r1, BenchmarkResult[] r2, ExperimentManager manager, CheckboxParameters param, IUIService uiService)
+        private static CompareBenchmarksViewModel[] InnerJoinOrderedResults(BenchmarkResult[] r1, BenchmarkResult[] r2, CheckboxParameters param, IUIService uiService)
         {
             int n1 = r1.Length;
             int n2 = r2.Length;
@@ -292,8 +292,8 @@ namespace PerformanceTest.Management
                 if (cmp == 0)
                 {
                     join[i++] = new CompareBenchmarksViewModel(filename1,
-                        new BenchmarkResultViewModel(r1[i1], manager, uiService),
-                        new BenchmarkResultViewModel(r2[i2], manager, uiService),
+                        new BenchmarkResultViewModel(r1[i1], uiService),
+                        new BenchmarkResultViewModel(r2[i2], uiService),
                         uiService);
                     i1++; i2++;
                 }

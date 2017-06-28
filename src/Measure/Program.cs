@@ -89,7 +89,7 @@ namespace Measure
             if (history.Length != 0)
             {
                 var lastResults = await manager.GetResults(history.Max(e => e.ID));
-                foreach (var b in lastResults)
+                foreach (var b in lastResults.Benchmarks)
                 {
                     lastBenchmarks[b.BenchmarkFileName] = b;
                 }
@@ -102,7 +102,7 @@ namespace Measure
                         PrintError(String.Format("Failed to complete benchmarks {0}", task.Exception.Message));
                         return;
                     }
-                    BenchmarkResult[] benchmarks = task.Result;
+                    BenchmarkResult[] benchmarks = task.Result.Benchmarks;
                     foreach (var benchmark in benchmarks)
                     {
                         BenchmarkResult lastBenchmark = null;

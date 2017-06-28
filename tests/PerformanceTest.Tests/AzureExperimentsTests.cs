@@ -44,9 +44,10 @@ namespace PerformanceTest.Tests
 
             Stopwatch sw1 = Stopwatch.StartNew();
             var results = await manager.GetResults(TestExperimentId);
+            Assert.AreEqual(TestExperimentId, results.ExperimentId);
             sw1.Stop();
             Trace.WriteLine("1st time: " + sw1.ElapsedMilliseconds);
-            Assert.AreEqual(103814, results.Length);
+            Assert.AreEqual(103814, results.Benchmarks.Length);
 
             /// Again, should read from local disk:
             Stopwatch sw2 = Stopwatch.StartNew();
@@ -54,7 +55,7 @@ namespace PerformanceTest.Tests
             sw2.Stop();
             Trace.WriteLine("2nd time: " + sw2.ElapsedMilliseconds);
 
-            Assert.AreEqual(103814, results2.Length);
+            Assert.AreEqual(103814, results2.Benchmarks.Length);
         }
 
         [TestMethod]

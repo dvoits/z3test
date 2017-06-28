@@ -103,7 +103,7 @@ namespace AzureWorker
             // We can't tell bad results we got during previous runs on the same experiment from bad results
             // we got during this run when job manager crashed, so we put them all into 'good' list.
             // 'Fresh' (and, therefore, duplicate) bad results will be removed during deduplication.
-            goodResults = (await storage.GetAzureExperimentResults(experimentId)).ToList();
+            goodResults = (await storage.GetAzureExperimentResults(experimentId)).Item1.ToList();
             Console.WriteLine("Fetched existing results");
             Domain domain = ResolveDomain(expInfo.DomainName);
 
@@ -348,7 +348,7 @@ namespace AzureWorker
 
         static async Task FetchSavedResults(int experimentId, AzureExperimentStorage storage)
         {
-            var results = (await storage.GetAzureExperimentResults(experimentId));
+            var results = (await storage.GetAzureExperimentResults(experimentId)).Item1;
             goodResults = new List<AzureBenchmarkResult>();
             badResults = new List<AzureBenchmarkResult>();
             foreach (var r in results)

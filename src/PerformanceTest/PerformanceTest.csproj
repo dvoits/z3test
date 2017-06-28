@@ -54,6 +54,8 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DuplicateResolver.cs" />
+    <Compile Include="ExperimentResults.cs" />
     <Compile Include="DomainResolver.cs" />
     <Compile Include="Experiment.cs" />
     <Compile Include="ExperimentAlerts.cs" />

@@ -11,7 +11,6 @@ namespace PerformanceTest.Management
 
     public class BenchmarkResultViewModel : INotifyPropertyChanged
     {
-        private readonly ExperimentManager manager;
         private readonly IUIService uiService;
 
         private BenchmarkResult result;
@@ -21,14 +20,11 @@ namespace PerformanceTest.Management
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public BenchmarkResultViewModel(BenchmarkResult res, ExperimentManager manager, IUIService message)
+        public BenchmarkResultViewModel(BenchmarkResult res, IUIService service)
         {
             if (res == null) throw new ArgumentNullException("benchmark");
-            if (manager == null) throw new ArgumentNullException("manager");
-            if (message == null) throw new ArgumentNullException("message");
             this.result = res;
-            this.manager = manager;
-            this.uiService = message;
+            this.uiService = service;
 
             this.status = res.Status;
             this.runtime = res.NormalizedRuntime;

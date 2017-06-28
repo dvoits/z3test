@@ -25,13 +25,20 @@ namespace AzurePerformanceTest
         const int MaxStdErrLength = 4096;
 
 
-        public async Task<BenchmarkResult[]> GetResults(ExperimentID experimentId)
+        public async Task<AzureExperimentResults> GetResults(ExperimentID experimentId)
         {
-            AzureBenchmarkResult[] azureResults = await GetAzureExperimentResults(experimentId);
+            var result = await GetAzureExperimentResults(experimentId);
+            AzureBenchmarkResult[] azureResults = result.Item1;
+            string etag = result.Item2;
 
-            BenchmarkResult[] results = azureResults.Select(ParseAzureBenchmarkResult).ToArray();
+            int n = azureResults.Length;
+            BenchmarkResult[] results = new BenchmarkResult[n];
+            for (int i = 0; i < n; i++)
+            {
+                results[i] = ParseAzureBenchmarkResult(azureResults[i]);
+            }
 
-            return results;
+            return new AzureExperimentResults(experimentId, results, etag);
         }
 
 
@@ -288,7 +295,7 @@ namespace AzurePerformanceTest
             }
         }
 
-        public async Task<AzureBenchmarkResult[]> GetAzureExperimentResults(ExperimentID experimentId)
+        public async Task<Tuple<AzureBenchmarkResult[], string>> GetAzureExperimentResults(ExperimentID experimentId)
         {
             AzureBenchmarkResult[] results;
 
@@ -312,17 +319,15 @@ namespace AzurePerformanceTest
                         using (var tableStream = entry.Open())
                         {
                             results = AzureBenchmarkResult.LoadBenchmarks(experimentId, tableStream);
+                            return Tuple.Create(results, blob.Properties.ETag);
                         }
                     }
                 }
             }
-            catch (StorageException ex)
+            catch (StorageException ex) when (ex.RequestInformation.HttpStatusCode == 404) // Not found == no results
             {
-                if (ex.RequestInformation.HttpStatusCode == 404) // Not found == no results
-                    return new AzureBenchmarkResult[] { };
-                throw;
+                return Tuple.Create(new AzureBenchmarkResult[0], (string)null);
             }
-            return results;
         }
     }
 }

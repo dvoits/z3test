@@ -48,26 +48,46 @@ namespace PerformanceTest.Management
         }
         public async void BuildDuplicatesResolverView(int[] ids, bool resolveTimeouts, bool resolveSameTime, bool resolveSlowest, bool resolveInErrors)
         {
-            bool zero_duplicates = true;
             var handle = uiService.StartIndicateLongOperation("Resolving duplicates...");
             try
             {
                 for (int i = 0; i < ids.Length; i++)
                 {
                     int eid = ids[i];
-                    var vm = new DuplicatesViewModel(eid, resolveTimeouts, resolveSameTime, resolveSlowest, resolveInErrors, manager, uiService);
-                    bool hadDuplicates = await vm.DownloadResultsAsync();
-                    if (hadDuplicates) zero_duplicates = false;
-                }
 
-                if (zero_duplicates)
-                {
-                    uiService.ShowInfo("There are no duplicates to resolve.", "No duplicates");
+                    bool resolved = false;
+                    do
+                    {
+                        var results = await manager.GetResults(eid);
+                        var duplicates = DuplicateResolver.Resolve(results.Benchmarks, resolveTimeouts, resolveSameTime, resolveSlowest, resolveInErrors, conflicts => uiService.ResolveDuplicatedResults(eid, conflicts));
+
+                        if (duplicates == null)
+                        {
+                            uiService.ShowInfo("Duplicates resolution cancelled.", "Resolution cancelled");
+                            return; // cancelling operation
+                        }
+                        if (duplicates.Length > 0)
+                        {
+                            resolved = await results.TryDelete(duplicates);
+                            if (resolved)
+                                uiService.ShowInfo(string.Format("{0} item(s) removed from the experiment {1}.", duplicates.Length, eid), "Duplicates resolved");
+                            else
+                            {
+                                if (!uiService.AskYesNo("Results of the experiments were changed since they resolution started. Repeat the resolution for the experiment again?", "Conflict when saving results"))
+                                    return;
+                            }
+                        }
+                        else
+                        {
+                            resolved = true;
+                            uiService.ShowInfo("There are no duplicates in the experiment " + eid, "No duplicates");
+                        }
+                    } while (!resolved);
                 }
             }
             catch (Exception ex)
             {
-                uiService.ShowError(ex, "Failed to resolve duplicates in experiment");
+                uiService.ShowError(ex, "Error when resolving duplicates");
             }
             finally
             {
@@ -85,7 +105,7 @@ namespace PerformanceTest.Management
                 {
                     int eid = ids[i].ID;
                     var results = await manager.GetResults(eid);
-                    var ieResults = results.Where(r => r.Status == Measurement.ResultStatus.InfrastructureError).Select(r => r.BenchmarkFileName).Distinct();
+                    var ieResults = results.Benchmarks.Where(r => r.Status == Measurement.ResultStatus.InfrastructureError).Select(r => r.BenchmarkFileName).Distinct();
                     if (ieResults.Count() > 0)
                     {
                         string benchmarkCont = ids[i].Definition.BenchmarkContainerUri;
@@ -122,7 +142,7 @@ namespace PerformanceTest.Management
             if (baseDirectory == null) throw new ArgumentNullException("baseDirectory");
             var expStorage = manager.Storage;
             var benchStorage = benchmarkContainerUri == "default" ? expStorage.DefaultBenchmarkStorage : new AzureBenchmarkStorage(benchmarkContainerUri);
-            
+
             return Task.Run(() =>
             {
                 string[] dirs;
@@ -144,7 +164,7 @@ namespace PerformanceTest.Management
         {
             // Uploading package with binaries
             string creator = newExperiment.Creator;
-            string packageName;            
+            string packageName;
             if (newExperiment.UseMostRecentExecutable)
             {
                 packageName = await newExperiment.GetRecentExecutable();
@@ -161,7 +181,7 @@ namespace PerformanceTest.Management
 
                 if (newExperiment.ExecutableFileNames.Length == 1) // single file will be uploaded as is
                 {
-                    string fileName = Path.GetFileName(newExperiment.ExecutableFileNames[0]);                    
+                    string fileName = Path.GetFileName(newExperiment.ExecutableFileNames[0]);
                     using (Stream stream = File.Open(newExperiment.ExecutableFileNames[0], FileMode.Open, FileAccess.Read, FileShare.Read))
                     {
                         packageName = await manager.Storage.UploadNewExecutable(stream, fileName, creator);

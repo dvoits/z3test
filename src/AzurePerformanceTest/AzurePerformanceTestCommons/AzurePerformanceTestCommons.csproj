@@ -141,6 +141,7 @@
   <ItemGroup>
     <Compile Include="AzureBenchmarkResult.cs" />
     <Compile Include="AzureBenchmarkStorage.cs" />
+    <Compile Include="AzureExperimentResults.cs" />
     <Compile Include="AzureExperimentStorage.cs" />
     <Compile Include="AzureSummaryManager.cs" />
     <Compile Include="ConnectionString.cs" />

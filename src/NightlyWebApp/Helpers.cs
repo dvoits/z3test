@@ -48,7 +48,7 @@ namespace AzurePerformanceTest
             var exp = await expManager.TryFindExperiment(id);
             if (exp == null) throw new KeyNotFoundException("Experiment "+ id + " not found");
 
-            var benchResults = await expManager.GetResults(id);
+            var benchResults = (await expManager.GetResults(id)).Benchmarks;
             ComparableResult[] results = new ComparableResult[benchResults.Length];
             double maxTimeout = 0;
             for (int i = 0; i < benchResults.Length; i++)
