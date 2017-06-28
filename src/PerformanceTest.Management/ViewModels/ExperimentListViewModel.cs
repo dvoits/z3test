@@ -334,6 +334,11 @@ namespace PerformanceTest.Management
                 uiService.ShowError(ex, "Failed to update experiment status flag");
             }
         }
+        public async Task UpdateJobStatus()
+        {
+            var state = await Task.Run(() => manager.GetExperimentJobState(new[] { status.ID }));
+            JobStatus = (ExperimentExecutionStateVM)state[0];
+        }
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

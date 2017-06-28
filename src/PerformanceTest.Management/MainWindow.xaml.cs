@@ -655,7 +655,7 @@ namespace PerformanceTest.Management
         {
             throw new NotImplementedException();
         }
-        private void canRequeueIErrors(object sender, CanExecuteRoutedEventArgs e)
+        private async void canRequeueIErrors(object sender, CanExecuteRoutedEventArgs e)
         {
             if (managerVm == null || dataGrid.SelectedItems.Count < 1)
             {
@@ -668,6 +668,7 @@ namespace PerformanceTest.Management
                 var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().ToArray();
                 for (var i = 0; i < sts.Length; i++)
                 {
+                    await sts[i].UpdateJobStatus();
                     var rc = sts[i].JobStatus;
                     if (rc == ExperimentExecutionStateVM.Active || rc == ExperimentExecutionStateVM.Loading)
                     {
@@ -692,7 +693,7 @@ namespace PerformanceTest.Management
         {
             throw new NotImplementedException();
         }
-        private void canShowDuplicates(object sender, CanExecuteRoutedEventArgs e)
+        private async void canShowDuplicates(object sender, CanExecuteRoutedEventArgs e)
         {
             if (managerVm == null || dataGrid.SelectedItems.Count < 1)
             {
@@ -705,6 +706,7 @@ namespace PerformanceTest.Management
                 var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().ToArray();
                 for (var i = 0; i < sts.Length; i++)
                 {
+                    await sts[i].UpdateJobStatus();
                     var rc = sts[i].JobStatus;
                     if (rc == ExperimentExecutionStateVM.Active || rc == ExperimentExecutionStateVM.Loading)
                     {
