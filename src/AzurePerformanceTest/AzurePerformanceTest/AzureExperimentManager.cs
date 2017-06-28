@@ -285,7 +285,7 @@ namespace AzurePerformanceTest
             return result;
         }
 
-        public override async Task<ExperimentID> StartExperiment(ExperimentDefinition definition, string creator = null, string note = null)
+        public override async Task<ExperimentID> StartExperiment(ExperimentDefinition definition, string creator = null, string note = null, string summaryName = null)
         {
             if (!CanStart) throw new InvalidOperationException("Cannot start experiment since the manager is in read mode");
 
@@ -371,7 +371,7 @@ namespace AzurePerformanceTest
                 job.Constraints.MaxTaskRetryCount = MaxTaskRetryCount;
                 string taskId = "taskStarter";
 
-                string taskCommandLine = string.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\%AZ_BATCH_JOB_ID%\\AzureWorker.exe --manage-tasks {0}", id);
+                string taskCommandLine = string.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\%AZ_BATCH_JOB_ID%\\AzureWorker.exe --manage-tasks {0}", id, summaryName ?? "");
 
                 job.JobManagerTask = new JobManagerTask(taskId, taskCommandLine);
 

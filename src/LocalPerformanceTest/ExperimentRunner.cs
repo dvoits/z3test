@@ -94,7 +94,6 @@ namespace PerformanceTest
             TimeSpan total = TimeSpan.FromSeconds(0);
             ProcessRunAnalysis analysis = null;
             ProcessRunMeasure m;
-
             do
             {
                 m = ProcessMeasurer.Measure(executable, args, timeOut, memLimitMB, ouputLimit, errorLimit);

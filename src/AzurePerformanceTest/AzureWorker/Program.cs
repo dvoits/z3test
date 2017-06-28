@@ -168,6 +168,7 @@ namespace AzureWorker
         static async Task ManageTasks(string[] args)
         {
             int experimentId = int.Parse(args[0]);
+            string summaryName = args[1];
             //Console.WriteLine(String.Format("Params are:\n id: {0}\ncontainer: {8}\ndirectory:{9}\ncategory: {1}\nextensions: {10}\ndomain: {11}\nexec: {2}\nargs: {3}\ntimeout: {4}\nmemlimit: {5}\noutlimit: {6}\nerrlimit: {7}", experimentId, benchmarkCategory, executable, arguments, timeout, memoryLimit, outputLimit, errorLimit, benchmarkContainerUri, benchmarkDirectory, extensionsString, domainString));
 
             string jobId = Environment.GetEnvironmentVariable(JobIdEnvVariableName);
@@ -194,6 +195,7 @@ namespace AzureWorker
             double memoryLimit = expInfo.MemoryLimitMB;// 0; // no limit
             int maxRepetitions = expInfo.AdaptiveRunMaxRepetitions;
             double maxTime = expInfo.AdaptiveRunMaxTimeInSeconds;
+            
             //long? outputLimit = null;
             //long? errorLimit = null;
             //if (args.Length > 9)
@@ -298,10 +300,29 @@ namespace AzureWorker
 
                 MonitorTasksUntilCompletion(experimentId, jobId, collectionTask, batchClient);
 
+                if (summaryName != null)
+                {
+                    Trace.WriteLine(string.Format("Building summary for experiment {0} and summary name {1}...", experimentId, summaryName));
+                    await AppendSummary(summaryName, experimentId, domain, storage);
+                }
+                else
+                {
+                    Trace.WriteLine("No summary requested.");
+                }
                 Console.WriteLine("Closing.");
             }
         }
-
+        private static async Task AppendSummary(string summaryName, int experimentId, Domain domain, AzureExperimentStorage storage)
+        {
+            Trace.WriteLine(string.Format("Downloading results for experiment {0}...", experimentId));
+            var results = await storage.GetResults(experimentId);
+            Trace.WriteLine("Building summary...");
+            var catSummary = ExperimentSummary.Build(results, domain);
+            var expSummary = new ExperimentSummary(experimentId, DateTimeOffset.Now, catSummary);
+            Trace.WriteLine("Uploading new summary...");
+            await storage.AppendOrReplaceSummary(summaryName, experimentId, expSummary);
+            Trace.WriteLine("Done.");
+        }
         private static void MonitorTasksUntilCompletion(int experimentId, string jobId, Task collectionTask, BatchClient batchClient)
         {
             // Monitoring tasks

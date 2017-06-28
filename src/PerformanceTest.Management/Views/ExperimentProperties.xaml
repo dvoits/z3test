@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PerformanceTest.Management"
         mc:Ignorable="d"
-        Title="{Binding Title}" Height="560" Width="457" WindowStartupLocation="CenterOwner" 
+        Title="{Binding Title}" Height="585" Width="457" WindowStartupLocation="CenterOwner" 
         ShowInTaskbar="False" ResizeMode="NoResize" Icon="/PerformanceTest.Management;component/Images/servers.ico"
         >
     <Window.Resources>
@@ -39,12 +39,15 @@
 
         <TextBlock Text="Submission Time:" Grid.Row="1" Grid.Column="0" />
         <TextBox Name="txtSubmissionTime" IsReadOnly="True" Grid.Row="1" Grid.Column="1" Text="{Binding SubmissionTime, Mode=OneWay}"/>
+        
+        <TextBlock Text="SAS url:" Grid.Row="2" Grid.Column="0" />
+        <TextBox Name="txtSasUri" IsReadOnly="True" Grid.Row="2" Grid.Column="1" Text="{Binding BenchmarkContainerUri, Mode=OneWay}"/>
+        
+        <TextBlock Text="Category:" Grid.Row="3" Grid.Column="0" />
+        <TextBox Name="txtCategory" IsReadOnly="True" Grid.Row="3" Grid.Column="1" Text="{Binding Category, Mode=OneWay}"/>
 
-        <TextBlock Text="Category:" Grid.Row="2" Grid.Column="0" />
-        <TextBox Name="txtCategory" IsReadOnly="True" Grid.Row="2" Grid.Column="1" Text="{Binding Category, Mode=OneWay}"/>
-
-        <TextBlock Text="Progress:" Grid.Row="3" Grid.Column="0"/>
-        <Grid Grid.Row="3" Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Stretch">
+        <TextBlock Text="Progress:" Grid.Row="4" Grid.Column="0"/>
+        <Grid Grid.Row="4" Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Stretch">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -63,8 +66,8 @@
                    Foreground="{Binding BenchmarksQueued, Mode=OneWay, Converter={StaticResource countToBrush}, ConverterParameter=Green}" Content="{Binding BenchmarksQueued, Mode=OneWay, FallbackValue=?}"/>
         </Grid>
 
-        <TextBlock Name="lblInfrastructureErrors" Foreground="Red" Text="" Grid.Row="4" Grid.Column="0" HorizontalAlignment="Left"/>
-        <Grid Grid.Row="4" Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Stretch">
+        <TextBlock Name="lblInfrastructureErrors" Foreground="Red" Text="" Grid.Row="5" Grid.Column="0" HorizontalAlignment="Left"/>
+        <Grid Grid.Row="5" Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Stretch">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -76,8 +79,8 @@
             <Label Name="lblClusterStatus" Content="{Binding ExecutionStatus, Mode=OneWay, Converter={StaticResource executionStatus}, FallbackValue=?}" Grid.Row="1" Grid.Column="0" HorizontalContentAlignment="Right" />
         </Grid>
 
-        <TextBlock Text="Statistics:" Grid.Row="5" Grid.Column="0" />
-        <StackPanel Grid.Row="5" Grid.Column="1" >
+        <TextBlock Text="Statistics:" Grid.Row="6" Grid.Column="0" />
+        <StackPanel Grid.Row="6" Grid.Column="1" >
             <Grid HorizontalAlignment="Right">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -112,8 +115,8 @@
             </Grid>
         </StackPanel>
 
-        <TextBlock Text="Problems:" Grid.Row="6" Grid.Column="0" />
-        <Grid Grid.Row="6" Grid.Column="1" HorizontalAlignment="Right">
+        <TextBlock Text="Problems:" Grid.Row="7" Grid.Column="0" />
+        <Grid Grid.Row="7" Grid.Column="1" HorizontalAlignment="Right">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -138,8 +141,8 @@
                    Foreground="{Binding ProblemTimeout, Mode=OneWay, Converter={StaticResource countToBrush}}" Content="{Binding ProblemTimeout, Mode=OneWay, FallbackValue=0}"/>
         </Grid>
 
-        <TextBlock Text="Timeout:" Grid.Row="7" Grid.Column="0" />
-        <StackPanel Orientation="Horizontal" Grid.Row="7" Grid.Column="1" HorizontalAlignment="Right">
+        <TextBlock Text="Timeout:" Grid.Row="8" Grid.Column="0" />
+        <StackPanel Orientation="Horizontal" Grid.Row="8" Grid.Column="1" HorizontalAlignment="Right">
             <TextBox Name="txtTimeout" IsReadOnly="True" Width="80" HorizontalContentAlignment="Right" Text="{Binding TimeOut, Mode=OneWay, FallbackValue=0}"/>
             <Label Content="sec" HorizontalAlignment="Right"/>
             <Label Content="Memory out:" HorizontalAlignment="Right" />
@@ -147,19 +150,19 @@
             <Label Content="MB" HorizontalAlignment="Right"/>
         </StackPanel>
 
-        <TextBlock Text="Parameters:" Grid.Row="8" Grid.Column="0" />
-        <TextBox Name="txtParameters" IsReadOnly="True" Grid.Row="8" Grid.Column="1" Text="{Binding Parameters, Mode=OneWay}"/>
+        <TextBlock Text="Parameters:" Grid.Row="9" Grid.Column="0" />
+        <TextBox Name="txtParameters" IsReadOnly="True" Grid.Row="9" Grid.Column="1" Text="{Binding Parameters, Mode=OneWay}"/>
 
-        <TextBlock Text="Machine:" Grid.Row="9" Grid.Column="0" />
-        <TextBox Name="txtMachine" IsReadOnly="True" Grid.Row="9" Grid.Column="1" Text="{Binding WorkerInformation, Mode=OneWay}"/>
-        <TextBlock Text="Creator:" Grid.Row="10" Grid.Column="0" />
-        <TextBox Name="txtCreator" IsReadOnly="True" Grid.Row="10" Grid.Column="1" Text="{Binding Creator, Mode=OneWay}"/>
-        <TextBlock Grid.Row="11" Grid.Column="0">
+        <TextBlock Text="Machine:" Grid.Row="10" Grid.Column="0" />
+        <TextBox Name="txtMachine" IsReadOnly="True" Grid.Row="10" Grid.Column="1" Text="{Binding WorkerInformation, Mode=OneWay}"/>
+        <TextBlock Text="Creator:" Grid.Row="11" Grid.Column="0" />
+        <TextBox Name="txtCreator" IsReadOnly="True" Grid.Row="11" Grid.Column="1" Text="{Binding Creator, Mode=OneWay}"/>
+        <TextBlock Grid.Row="12" Grid.Column="0">
             Note<Run Text="{Binding NoteChanged, Converter={StaticResource boolToAsterisk}, Mode=OneWay}" />:
         </TextBlock>
-        <TextBox Name="txtNote" IsReadOnly="False" Grid.Row="11" Grid.Column="1" MaxLength="256" Text="{Binding Note, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+        <TextBox Name="txtNote" IsReadOnly="False" Grid.Row="12" Grid.Column="1" MaxLength="256" Text="{Binding Note, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
-        <StackPanel Grid.Column="1" Grid.Row="13" Orientation="Horizontal" HorizontalAlignment="Right">
+        <StackPanel Grid.Column="1" Grid.Row="14" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Name="updateButton" IsDefault="False" Width="80" Command="{Binding Sync}" TabIndex="16" IsCancel="True" Margin="0,0,10,0">Update</Button>
             <Button Name="closeButton" IsDefault="False" Width="80" Click="closeButton_Click" TabIndex="16" IsCancel="True">Close</Button>
         </StackPanel>
