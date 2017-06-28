@@ -317,7 +317,7 @@ namespace AzureWorker
             Trace.WriteLine(string.Format("Downloading results for experiment {0}...", experimentId));
             var results = await storage.GetResults(experimentId);
             Trace.WriteLine("Building summary...");
-            var catSummary = ExperimentSummary.Build(results, domain);
+            var catSummary = ExperimentSummary.Build(results.Benchmarks, domain);
             var expSummary = new ExperimentSummary(experimentId, DateTimeOffset.Now, catSummary);
             Trace.WriteLine("Uploading new summary...");
             await storage.AppendOrReplaceSummary(summaryName, experimentId, expSummary);
