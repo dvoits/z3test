@@ -46,7 +46,7 @@ namespace PerformanceTest.Management
         {
             return ExperimentPropertiesViewModel.CreateAsync(manager, id, domainResolver, uiService);
         }
-        public async void BuildDuplicatesResolverView(int[] ids, bool resolveTimeouts, bool resolveSameTime, bool resolveSlowest, bool resolveInErrors)
+        public async Task BuildDuplicatesResolverView(int[] ids, bool resolveTimeouts, bool resolveSameTime, bool resolveSlowest, bool resolveInErrors)
         {
             var handle = uiService.StartIndicateLongOperation("Resolving duplicates...");
             try
@@ -73,7 +73,9 @@ namespace PerformanceTest.Management
                                 uiService.ShowInfo(string.Format("{0} item(s) removed from the experiment {1}.", duplicates.Length, eid), "Duplicates resolved");
                             else
                             {
-                                if (!uiService.AskYesNo("Results of the experiments were changed since they resolution started. Repeat the resolution for the experiment again?", "Conflict when saving results"))
+                                if (!uiService.AskYesNo(
+                                    string.Format("Results of the experiment {0} have been changed since resolution started. Repeat the resolution for the experiment again?", eid), 
+                                    "Conflict when saving results"))
                                     return;
                             }
                         }
@@ -93,8 +95,8 @@ namespace PerformanceTest.Management
             {
                 uiService.StopIndicateLongOperation(handle);
             }
-
         }
+
         public async void RequeueIErrors(ExperimentStatusViewModel[] ids, RecentValuesStorage recentValues)
         {
             var handle = uiService.StartIndicateLongOperation("Requeue infrastructure errors...");

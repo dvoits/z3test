@@ -9,7 +9,7 @@ namespace PerformanceTest
     public class ExperimentResults
     {
         private readonly int id;
-        private readonly BenchmarkResult[] results;
+        private BenchmarkResult[] results;
 
         public ExperimentResults(int expId, BenchmarkResult[] results)
         {
@@ -31,9 +31,23 @@ namespace PerformanceTest
             get { return results; }
         }
 
-        public async Task<bool> TryDelete(IEnumerable<BenchmarkResult> toRemove)
+        /// <summary>
+        /// Deletes the given results from the experiment results table.
+        /// </summary>
+        /// <returns>
+        /// True, if succeeded.
+        /// False, if the results table has been modified or deleted since the local results were received;
+        /// nothing was deleted.
+        /// </returns>
+        public virtual async Task<bool> TryDelete(IEnumerable<BenchmarkResult> toRemove)
         {
             throw new NotImplementedException();
+        }
+
+        protected void Replace(BenchmarkResult[] newBenchmarks)
+        {
+            if (newBenchmarks == null) throw new ArgumentNullException(nameof(newBenchmarks));
+            results = newBenchmarks;
         }
     }
 }

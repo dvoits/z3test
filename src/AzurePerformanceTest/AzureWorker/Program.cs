@@ -387,7 +387,7 @@ namespace AzureWorker
                 var tuple = SortCountUniqueNamesAndRemoveExactDuplicates(results);
                 processedBenchmarks = tuple.Item1;
                 results = tuple.Item2;
-                await storage.PutAzureExperimentResults(experimentId, results.ToArray(), true);
+                await storage.PutAzureExperimentResults(experimentId, results.ToArray(), AzureExperimentStorage.UploadBlobMode.CreateOrReplace);
                 int completedBenchmarks = totalBenchmarks == -1 ? processedBenchmarks : totalBenchmarks - totalBenchmarksToProcess + completedTasksCount;
                 await storage.SetCompletedBenchmarks(experimentId, completedBenchmarks);
                 Console.WriteLine("Setting completed benchmarks to {0}.\nTotal benchmarks: {1}\nProcessed benchmarks: {2}\nTotal to process: {3}\nCompleted tasks: {4}\nMessage count: {5}", completedBenchmarks, totalBenchmarks, processedBenchmarks, totalBenchmarksToProcess, completedTasksCount, messageCount);

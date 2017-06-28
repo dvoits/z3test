@@ -27,6 +27,7 @@ namespace PerformanceTest.Management
             {
                 var item = (BenchmarkResultViewModel)dataGrid.SelectedItem;
                 (DataContext as DuplicatesManualResolutionViewModel).Pick(item);
+                DialogResult = true;
                 Close();
             }
         }
