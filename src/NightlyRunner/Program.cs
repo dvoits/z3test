@@ -168,11 +168,6 @@ namespace NightlyRunner
             return recent;
         }
 
-        static string ReadConnectionString()
-        {
-            return File.ReadAllText("connectionString.txt");
-        }
-
         static string GetCommitSha(string fileName)
         {
             if (fileName == null) return null;
