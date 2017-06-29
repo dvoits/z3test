@@ -22,7 +22,7 @@ namespace LaunchExperiment
 
             // storage.SaveReferenceExperiment(refExp).Wait();
 
-            var id = manager.StartExperiment(ExperimentDefinition.Create("z3.zip", ExperimentDefinition.DefaultContainerUri, "QF_BV", "smt2", "model_validate=true -smt2 -file:{0}", TimeSpan.FromSeconds(1200), TimeSpan.FromSeconds(0), "Z3", "asp", 2048, 1, 0), "Dmitry K", "test").Result;
+            var id = manager.StartExperiment(ExperimentDefinition.Create("z3.zip", ExperimentDefinition.DefaultContainerUri, "QF_BV", "smt2", "model_validate=true -smt2 -file:{0}", TimeSpan.FromSeconds(1200), TimeSpan.FromSeconds(0), "Z3", "asp", 2048, 1, 0), "Dmitry K").Result;
 
             Console.WriteLine("Experiment id:" + id);
 

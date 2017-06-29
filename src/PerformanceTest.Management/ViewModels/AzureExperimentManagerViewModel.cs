@@ -34,9 +34,9 @@ namespace PerformanceTest.Management
         {
             return new ExperimentListViewModel(manager, uiService);
         }
-        public ShowResultsViewModel BuildResultsView(int id, ExperimentExecutionStateVM? jobStatus, string benchmarkContainerUri, TimeSpan benchmarkTimeout, string directory, ExperimentListViewModel experimentsVm, RecentValuesStorage recentValues)
+        public ShowResultsViewModel BuildResultsView(ExperimentStatusViewModel st, string directory, ExperimentListViewModel experimentsVm, RecentValuesStorage recentValues)
         {
-            return new ShowResultsViewModel(id, jobStatus, benchmarkContainerUri, benchmarkTimeout, directory, manager, this, experimentsVm, recentValues, uiService);
+            return new ShowResultsViewModel(st, directory, manager, this, experimentsVm, recentValues, uiService);
         }
         public CompareExperimentsViewModel BuildComparingResults(int id1, int id2, ExperimentDefinition def1, ExperimentDefinition def2)
         {

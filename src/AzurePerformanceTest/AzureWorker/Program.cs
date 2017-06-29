@@ -12,12 +12,12 @@ using Microsoft.WindowsAzure.Storage;
 using Microsoft.Azure.Batch;
 using Microsoft.WindowsAzure.Storage.Blob;
 using System.Diagnostics;
-using AzurePerformanceTest;
 using Microsoft.WindowsAzure.Storage.Queue;
 using System.Runtime.Serialization.Formatters.Binary;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System.Threading;
+using AzurePerformanceTest;
 
 namespace AzureWorker
 {
@@ -168,7 +168,9 @@ namespace AzureWorker
         static async Task ManageTasks(string[] args)
         {
             int experimentId = int.Parse(args[0]);
-            string summaryName = args[1];
+            string summaryName = null;
+            if (args.Length > 1)
+                summaryName = args[1];
             //Console.WriteLine(String.Format("Params are:\n id: {0}\ncontainer: {8}\ndirectory:{9}\ncategory: {1}\nextensions: {10}\ndomain: {11}\nexec: {2}\nargs: {3}\ntimeout: {4}\nmemlimit: {5}\noutlimit: {6}\nerrlimit: {7}", experimentId, benchmarkCategory, executable, arguments, timeout, memoryLimit, outputLimit, errorLimit, benchmarkContainerUri, benchmarkDirectory, extensionsString, domainString));
 
             string jobId = Environment.GetEnvironmentVariable(JobIdEnvVariableName);
@@ -303,7 +305,8 @@ namespace AzureWorker
                 if (summaryName != null)
                 {
                     Trace.WriteLine(string.Format("Building summary for experiment {0} and summary name {1}...", experimentId, summaryName));
-                    await AppendSummary(summaryName, experimentId, domain, storage);
+                    AzureSummaryManager manager = new AzureSummaryManager(credentials.WithoutBatchData().ToString(), MEFDomainResolver.Instance);
+                    await AppendSummary(summaryName, experimentId, domain, manager);
                 }
                 else
                 {
@@ -312,15 +315,10 @@ namespace AzureWorker
                 Console.WriteLine("Closing.");
             }
         }
-        private static async Task AppendSummary(string summaryName, int experimentId, Domain domain, AzureExperimentStorage storage)
+        private static async Task AppendSummary(string summaryName, int experimentId, Domain domain, AzureSummaryManager manager)
         {
-            Trace.WriteLine(string.Format("Downloading results for experiment {0}...", experimentId));
-            var results = await storage.GetResults(experimentId);
             Trace.WriteLine("Building summary...");
-            var catSummary = ExperimentSummary.Build(results.Benchmarks, domain);
-            var expSummary = new ExperimentSummary(experimentId, DateTimeOffset.Now, catSummary);
-            Trace.WriteLine("Uploading new summary...");
-            await storage.AppendOrReplaceSummary(summaryName, experimentId, expSummary);
+            await manager.Update(summaryName, experimentId);
             Trace.WriteLine("Done.");
         }
         private static void MonitorTasksUntilCompletion(int experimentId, string jobId, Task collectionTask, BatchClient batchClient)

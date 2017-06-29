@@ -371,7 +371,7 @@ namespace AzurePerformanceTest
                 job.Constraints.MaxTaskRetryCount = MaxTaskRetryCount;
                 string taskId = "taskStarter";
 
-                string taskCommandLine = string.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\%AZ_BATCH_JOB_ID%\\AzureWorker.exe --manage-tasks {0}", id, summaryName ?? "");
+                string taskCommandLine = string.Format("cmd /c %AZ_BATCH_NODE_SHARED_DIR%\\%AZ_BATCH_JOB_ID%\\AzureWorker.exe --manage-tasks {0} \"{1}\"", id, summaryName ?? "");
 
                 job.JobManagerTask = new JobManagerTask(taskId, taskCommandLine);
 

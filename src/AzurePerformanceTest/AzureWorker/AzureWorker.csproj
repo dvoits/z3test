@@ -136,6 +136,10 @@
       <Project>{212c3662-8342-43d1-ac51-36ab067b13d7}</Project>
       <Name>AzurePerformanceTestCommons</Name>
     </ProjectReference>
+    <ProjectReference Include="..\AzurePerformanceTest\AzurePerformanceTest.csproj">
+      <Project>{f7988676-db1b-49e3-8821-edb017290120}</Project>
+      <Name>AzurePerformanceTest</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

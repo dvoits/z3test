@@ -42,7 +42,7 @@ namespace PerformanceTest.Management
 
             recentValues = new RecentValuesStorage();
             connectionString.Text = recentValues.ConnectionString;
-            
+
             ProgramStatusViewModel statusVm = new ProgramStatusViewModel();
             statusBar.DataContext = statusVm;
             uiService = new UIService(statusVm);
@@ -502,7 +502,7 @@ namespace PerformanceTest.Management
             {
                 string name = dlg.txtGroupName.Text;
                 string note = dlg.txtNote.Text;
-     
+
                 throw new NotImplementedException();
             }
         }
@@ -542,24 +542,32 @@ namespace PerformanceTest.Management
             }
 
         }
-        private void dataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private async void dataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (dataGrid.SelectedItems.Count != 1)
                 return;
 
-            var st = (ExperimentStatusViewModel)dataGrid.SelectedItem;
-            ShowResults dlg = new ShowResults();
-            string sharedDirectory = "";
-            if (st.Definition.BenchmarkDirectory != null && st.Definition.BenchmarkDirectory != "")
+            try
             {
-                sharedDirectory = st.Definition.BenchmarkDirectory + "/" + st.Definition.Category;
-            }
-            else sharedDirectory = st.Definition.Category;
+                var st = (ExperimentStatusViewModel)dataGrid.SelectedItem;
+                ShowResults dlg = new ShowResults();
+                string sharedDirectory = "";
+                if (st.Definition.BenchmarkDirectory != null && st.Definition.BenchmarkDirectory != "")
+                {
+                    sharedDirectory = st.Definition.BenchmarkDirectory + "/" + st.Definition.Category;
+                }
+                else sharedDirectory = st.Definition.Category;
 
-            var vm = managerVm.BuildResultsView(st.ID, st.JobStatus, st.Definition.BenchmarkContainerUri, st.Definition.BenchmarkTimeout, sharedDirectory, experimentsVm, recentValues);
-            dlg.DataContext = vm;
-            dlg.Owner = this;
-            dlg.Show();
+                await st.UpdateJobStatus();
+                var vm = managerVm.BuildResultsView(st, sharedDirectory, experimentsVm, recentValues);
+                dlg.DataContext = vm;
+                dlg.Owner = this;
+                dlg.Show();
+            }
+            catch (Exception ex)
+            {
+                uiService.ShowError(ex);
+            }
         }
         private void canSaveBinary(object sender, CanExecuteRoutedEventArgs e)
         {
@@ -662,27 +670,34 @@ namespace PerformanceTest.Management
                 e.CanExecute = false;
                 return;
             }
-            else
-            {
+            e.CanExecute = true;
+        }
+        private async void requeueIErrors(object target, ExecutedRoutedEventArgs e)
+        {
+            var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().ToArray();
 
-                var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().ToArray();
+            var handle = uiService.StartIndicateLongOperation("Requeueing benchmarks...");
+            try
+            {
                 for (var i = 0; i < sts.Length; i++)
                 {
+                    await sts[i].UpdateJobStatus();
                     var rc = sts[i].JobStatus;
                     if (rc == ExperimentExecutionStateVM.Active || rc == ExperimentExecutionStateVM.Loading)
                     {
-                        e.CanExecute = false;
+                        uiService.ShowError("Can't resolve infrastructure errors. Experiments are not completed.", "Failed to resolve infrastructure errors");
                         return;
                     }
                 }
             }
-            e.CanExecute = true;
-        }
-        private void requeueIErrors(object target, ExecutedRoutedEventArgs e)
-        {
-            var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().ToArray();
-            managerVm.RequeueIErrors(sts, recentValues);
-            experimentsVm.Refresh();
+            catch (Exception ex)
+            {
+                uiService.ShowError(ex);
+            }
+            finally
+            {
+                uiService.StopIndicateLongOperation(handle);
+            }
         }
         private void canRecovery(object sender, CanExecuteRoutedEventArgs e)
         {
@@ -699,26 +714,31 @@ namespace PerformanceTest.Management
                 e.CanExecute = false;
                 return;
             }
-            else
-            {
-
-                var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().ToArray();
-                for (var i = 0; i < sts.Length; i++)
-                {
-                    var rc = sts[i].JobStatus;
-                    if (rc == ExperimentExecutionStateVM.Active || rc == ExperimentExecutionStateVM.Loading)
-                    {
-                        e.CanExecute = false;
-                        return;
-                    }
-                }
-            }
             e.CanExecute = true;
         }
         private async void showDuplicates(object target, ExecutedRoutedEventArgs e)
         {
-            var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().Select(item => item.ID).ToArray();
-            await managerVm.BuildDuplicatesResolverView(sts, mnuOptResolveTimeoutDupes.IsChecked,
+            var sts = dataGrid.SelectedItems.Cast<ExperimentStatusViewModel>().ToArray();
+            var handle = uiService.StartIndicateLongOperation("Check job status...");
+            try
+            {
+                for (var i = 0; i < sts.Length; i++)
+                {
+                    await sts[i].UpdateJobStatus();
+                    var rc = sts[i].JobStatus;
+                    if (rc == ExperimentExecutionStateVM.Active || rc == ExperimentExecutionStateVM.Loading)
+                    {
+                        uiService.ShowError("Can't resolve duplicates. Experiments are not completed.", "Failed to resolve duplicates");
+                        return;
+                    }
+                }
+            }
+            finally
+            {
+                uiService.StopIndicateLongOperation(handle);
+            }
+            var ids = sts.Select(i => i.ID).ToArray();
+            await managerVm.BuildDuplicatesResolverView(ids, mnuOptResolveTimeoutDupes.IsChecked,
                     mnuOptResolveSameTimeDupes.IsChecked, mnuOptResolveSlowestDupes.IsChecked, mnuOptResolveInErrorsDupes.IsChecked);
         }
         private void btnEdit_Click(object sender, RoutedEventArgs e)
@@ -779,7 +799,7 @@ namespace PerformanceTest.Management
             {
                 uiService.ShowError(ex, "Failed to find domains");
             }
-            if(domainResolver == null || domainResolver.Domains.Length == 0)
+            if (domainResolver == null || domainResolver.Domains.Length == 0)
             {
                 domainResolver = new DomainResolver(new[] { new Measurement.Z3Domain() });
                 uiService.ShowWarning("No domains found; only Z3 domain will be available.");
