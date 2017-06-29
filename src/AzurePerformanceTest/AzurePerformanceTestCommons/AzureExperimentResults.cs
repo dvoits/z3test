@@ -1,4 +1,5 @@
-﻿using PerformanceTest;
+﻿using Measurement;
+using PerformanceTest;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -35,6 +36,8 @@ namespace AzurePerformanceTest
 
         public override async Task<bool> TryDelete(IEnumerable<BenchmarkResult> toRemove)
         {
+            if (toRemove == null) throw new ArgumentNullException(nameof(toRemove));
+
             var benchmarks = Benchmarks;
             var removeSet = new HashSet<BenchmarkResult>(toRemove);
             if (removeSet.Count == 0) return true;
@@ -43,7 +46,7 @@ namespace AzurePerformanceTest
             List<AzureBenchmarkResult> newAzureResults = new List<AzureBenchmarkResult>(n);
             List<BenchmarkResult> newResults = new List<BenchmarkResult>(n);
             List<AzureBenchmarkResult> deleteOuts = new List<AzureBenchmarkResult>();
-            for (int i = 0, j = 0; i < n; i++)
+            for (int i = 0; i < n; i++)
             {
                 var b = benchmarks[i];
                 if (!removeSet.Contains(b)) // remains
@@ -66,12 +69,7 @@ namespace AzurePerformanceTest
             if (removeSet.Count != 0) throw new ArgumentException("Some of the given results to remove do not belong to the experiment results");
 
             // Updating blob with results table
-            bool success;
-            if (etag != null) // blob already exists
-                success = await storage.PutAzureExperimentResults(expId, newAzureResults.ToArray(), UploadBlobMode.ReplaceExact, etag);
-            else // blob didn't exist
-                success = await storage.PutAzureExperimentResults(expId, newAzureResults.ToArray(), UploadBlobMode.CreateNew);
-
+            bool success = await Upload(newAzureResults.ToArray());
             if (!success) return false;
 
             // Update benchmarks array
@@ -91,6 +89,71 @@ namespace AzurePerformanceTest
             }
 
             return true;
+        }
+
+        public override async Task<Dictionary<BenchmarkResult, BenchmarkResult>> TryUpdateStatus(IEnumerable<BenchmarkResult> toModify, ResultStatus status)
+        {
+            if (toModify == null) throw new ArgumentNullException(nameof(toModify));
+
+            var mod = new Dictionary<BenchmarkResult, BenchmarkResult>();
+            foreach (var oldRes in toModify) mod.Add(oldRes, null);
+            if (mod.Count == 0) return mod;
+
+            int n = Benchmarks.Length;
+            var newBenchmarks = (BenchmarkResult[])Benchmarks.Clone();
+            var newAzureBenchmarks = new AzureBenchmarkResult[n];
+
+            for (int i = 0; i < n; i++)
+            {
+                var b = newBenchmarks[i];
+
+                if (mod.ContainsKey(b))
+                {
+                    if (b.Status != status) // updating status of this result
+                    {
+                        newBenchmarks[i] = new BenchmarkResult(b.ExperimentID, b.BenchmarkFileName,
+                            b.AcquireTime, b.NormalizedRuntime, b.TotalProcessorTime, b.WallClockTime,
+                            b.PeakMemorySizeMB,
+                            status, // <-- new status
+                            b.ExitCode, b.StdOut, b.StdErr, b.Properties);
+
+                        newAzureBenchmarks[i] = AzureExperimentStorage.ToAzureBenchmarkResult(newBenchmarks[i]);
+
+                        mod[b] = newBenchmarks[i];
+                    }
+                    else // status is as required already
+                    {
+                        newAzureBenchmarks[i] = AzureExperimentStorage.ToAzureBenchmarkResult(b);
+                        mod.Remove(b);
+                    }
+                }
+                else // result doesn't change
+                {
+                    newAzureBenchmarks[i] = AzureExperimentStorage.ToAzureBenchmarkResult(b);
+                }
+            }
+
+            if (mod.Count == 0) return new Dictionary<BenchmarkResult, BenchmarkResult>(); // no changes
+            foreach (var item in mod)
+                if (item.Value == null) throw new ArgumentException("Some of the given results to update do not belong to the experiment results");
+
+            bool success = await Upload(newAzureBenchmarks);
+            if (!success) return null;
+
+            // Update benchmarks array
+            Replace(newBenchmarks.ToArray());
+
+            return mod;
+        }
+
+        private async Task<bool> Upload(AzureBenchmarkResult[] newAzureBenchmarks)
+        {
+            bool success;
+            if (etag != null) // blob already exists
+                success = await storage.PutAzureExperimentResults(expId, newAzureBenchmarks, UploadBlobMode.ReplaceExact, etag);
+            else // blob didn't exist
+                success = await storage.PutAzureExperimentResults(expId, newAzureBenchmarks, UploadBlobMode.CreateNew);
+            return success;
         }
 
         private static BenchmarkResult[] Parse(AzureBenchmarkResult[] results, AzureExperimentStorage storage)

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Measurement;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -39,7 +40,18 @@ namespace PerformanceTest
         /// False, if the results table has been modified or deleted since the local results were received;
         /// nothing was deleted.
         /// </returns>
-        public virtual async Task<bool> TryDelete(IEnumerable<BenchmarkResult> toRemove)
+        public virtual Task<bool> TryDelete(IEnumerable<BenchmarkResult> toRemove)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Updates status of the given results.
+        /// Returns a map from old result to updated result if its original status was different.
+        /// Returns null, if the results table has been modified or deleted since the local results were received;
+        /// nothing was updated.
+        /// </summary>
+        public virtual Task<Dictionary<BenchmarkResult, BenchmarkResult>> TryUpdateStatus(IEnumerable<BenchmarkResult> toModify, ResultStatus status)
         {
             throw new NotImplementedException();
         }

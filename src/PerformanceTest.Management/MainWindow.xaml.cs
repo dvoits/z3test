@@ -556,7 +556,7 @@ namespace PerformanceTest.Management
             }
             else sharedDirectory = st.Definition.Category;
 
-            var vm = managerVm.BuildResultsView(st.ID, st.JobStatus, st.Definition.BenchmarkContainerUri, st.Definition.BenchmarkTimeout.TotalSeconds, sharedDirectory, experimentsVm, recentValues);
+            var vm = managerVm.BuildResultsView(st.ID, st.JobStatus, st.Definition.BenchmarkContainerUri, st.Definition.BenchmarkTimeout, sharedDirectory, experimentsVm, recentValues);
             dlg.DataContext = vm;
             dlg.Owner = this;
             dlg.Show();

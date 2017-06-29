@@ -1,8 +1,10 @@
 ﻿using Measurement;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
@@ -12,11 +14,7 @@ namespace PerformanceTest.Management
     public class BenchmarkResultViewModel : INotifyPropertyChanged
     {
         private readonly IUIService uiService;
-
         private BenchmarkResult result;
-        private ResultStatus status;
-
-        private double runtime;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -25,9 +23,6 @@ namespace PerformanceTest.Management
             if (res == null) throw new ArgumentNullException("benchmark");
             this.result = res;
             this.uiService = service;
-
-            this.status = res.Status;
-            this.runtime = res.NormalizedRuntime;
         }
         public int ID
         {
@@ -51,7 +46,7 @@ namespace PerformanceTest.Management
         }
         public ResultStatus Status
         {
-            get { return status; }
+            get { return result.Status; }
         }
         public int Sat
         {
@@ -79,12 +74,7 @@ namespace PerformanceTest.Management
         }
         public double NormalizedRuntime
         {
-            get { return runtime; }
-            set
-            {
-                runtime = value;
-                NotifyPropertyChanged();
-            }
+            get { return result.NormalizedRuntime; }
         }
 
         public double MemorySizeMB
@@ -144,13 +134,48 @@ namespace PerformanceTest.Management
             return text;
         }
 
-        public BenchmarkResult GetBenchmarkResult ()
+        private void UpdateResult(BenchmarkResult newResult)
         {
-            return result;
+            if (newResult == null) throw new ArgumentNullException(nameof(newResult));
+            this.result = newResult;
+            NotifyPropertyChanged(nameof(Filename));
+            NotifyPropertyChanged(nameof(ExitCode));
+            NotifyPropertyChanged(nameof(WallClockTime));
+            NotifyPropertyChanged(nameof(TotalProcessorTime));
+            NotifyPropertyChanged(nameof(Status));
+            NotifyPropertyChanged(nameof(Sat));
+            NotifyPropertyChanged(nameof(Unsat));
+            NotifyPropertyChanged(nameof(Unknown));
+            NotifyPropertyChanged(nameof(TargetSat));
+            NotifyPropertyChanged(nameof(TargetUnsat));
+            NotifyPropertyChanged(nameof(TargetUnknown));
+            NotifyPropertyChanged(nameof(NormalizedRuntime));
+            NotifyPropertyChanged(nameof(MemorySizeMB));
         }
+
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        public static async Task<bool> TryReclassifyResults(BenchmarkResultViewModel[] resultsToUpdate, ResultStatus newStatus, TimeSpan benchmarkTimeout, ExperimentResults results)
+        {
+            if (results == null) throw new ArgumentNullException(nameof(results));
+            if (resultsToUpdate == null) throw new ArgumentNullException(nameof(resultsToUpdate));
+            if (resultsToUpdate.Length == 0) return true;
+
+            var changes = await results.TryUpdateStatus(resultsToUpdate.Select(r => r.result), newStatus);
+            if (changes != null) // ok
+            {
+                foreach (var c in changes)
+                {
+                    BenchmarkResultViewModel vm = resultsToUpdate.First(r => r.result == c.Key);
+                    // replace and notify about new status
+                    vm.UpdateResult(c.Value);
+                }
+                return true;
+            }
+            return false;
         }
     }
 

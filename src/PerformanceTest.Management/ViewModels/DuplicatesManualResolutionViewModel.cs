@@ -18,7 +18,6 @@ namespace PerformanceTest.Management
         private readonly BenchmarkResult[] duplicates;
         private BenchmarkResult pick;
 
-        private bool resolveTimeouts, resolveSameTime, resolveSlowest, resolveInErrors;
         public event PropertyChangedEventHandler PropertyChanged;
 
         public DuplicatesManualResolutionViewModel(int id, BenchmarkResult[] duplicates, IUIService uiService)
