@@ -419,7 +419,7 @@ namespace AzurePerformanceTest
                 job.PoolInformation = new PoolInformation { PoolId = poolId };
                 job.JobPreparationTask = new JobPreparationTask
                 {
-                    CommandLine = "cmd /c (robocopy %AZ_BATCH_TASK_WORKING_DIR% %AZ_BATCH_NODE_SHARED_DIR%\\%AZ_BATCH_JOB_ID% / e /purge) ^& IF %ERRORLEVEL% LEQ 1 exit 0",
+                    CommandLine = "cmd /c (robocopy %AZ_BATCH_TASK_WORKING_DIR% %AZ_BATCH_NODE_SHARED_DIR%\\%AZ_BATCH_JOB_ID% /e /purge) ^& IF %ERRORLEVEL% LEQ 1 exit 0",
                     ResourceFiles = new List<ResourceFile>(),
                     WaitForSuccess = true
                 };
