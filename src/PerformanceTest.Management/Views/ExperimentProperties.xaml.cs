@@ -108,6 +108,8 @@ namespace PerformanceTest.Management
                         return "Terminated";
                     case ExperimentExecutionStateVM.Active:
                         return "Active";
+                    case ExperimentExecutionStateVM.Failed:
+                        return "Failed";
                     default:
                         return "Unknown";
                 }

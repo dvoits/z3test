@@ -219,6 +219,7 @@ namespace PerformanceTest.Management
         Completed,
         Terminated,
         NotFound,
+        Failed,
         Loading
     }
     public class ExperimentStatusViewModel : INotifyPropertyChanged

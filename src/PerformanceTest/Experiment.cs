@@ -164,7 +164,8 @@ namespace PerformanceTest
         Active,
         Completed,
         Terminated,
-        NotFound
+        NotFound,
+        Failed
     }
 
 

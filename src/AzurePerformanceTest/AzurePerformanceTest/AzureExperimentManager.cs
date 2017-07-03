@@ -182,7 +182,11 @@ namespace AzurePerformanceTest
                                     states.Add(ExperimentExecutionState.Active);
                                     break;
                                 case JobState.Completed:
-                                    states.Add(ExperimentExecutionState.Completed);
+                                    var jmTask = await job.GetTaskAsync(job.JobManagerTask.Id);
+                                    if (!jmTask.ExecutionInformation.ExitCode.HasValue || jmTask.ExecutionInformation.ExitCode.Value != 0)
+                                        states.Add(ExperimentExecutionState.Failed);
+                                    else
+                                        states.Add(ExperimentExecutionState.Completed);
                                     break;
                                 case JobState.Terminating:
                                 case JobState.Deleting:
