@@ -12,9 +12,57 @@ An *experiment* is a set of performance tests for a single target executable, sa
 
 Regular experiments allow to track how changes in the source codes affect the target executable performance on same set of benchmarks. 
 
+A *domain* determines specific settings for a certain target executable, such as input file extensions, command line syntax, how to interpret input and output of program run,
+how to analyse and aggregate multiple runs.
+
 # Azure-based performance tests
 
-## Experiments and results storage
+Azure-based performance tests require Azure Storage Account, Azure Batch Account and Azure Key Vault.
+
+Azure Storage Account stores a table of experiments, results of tests, executable binaries the tests were run for, summaries and configurations.
+
+## Table of experiments
+
+A table of experiments is stored as an Azure Table called `experiments`. Its structure is:
+
+- `PartitionKey` must be `default` for all experiments.
+- `RowKey` is an integer ID of an experiment. It is unique among experiments of the table.
+- `BenchmarkContainerUri` is either a string `"default"` or a Shared Access Signature URL. In 
+the former case, the `input` container of the table's Storage Account is a benchmark
+container for this experiment. Otherwise, the URL points the benchmark container explicitly and it can belong to a different Storage Account. Note that SAS expires after some time.
+- `BenchmarkDirectory` is a path to a directory within the benchmark container that contains benchmark files. An empty string indicates a root of the container. The folder separator must be `/`.
+- `BenchmarkFileExtension` is the extension(s) of benchmark files, e.g., "smt2" for SMT-Lib version 2 files. It may contain multiple extensions concatenated through the pipe symbol, e.g. "smt|smt2".
+- `BenchmarkTimeout` is a time limit in seconds per benchmark. If test runs for more than the given time span, it is stopped.
+- `Category` is a folder within the `BenchmarkDirectory` to draw benchmarks from. 
+If it is empty, all benchmarks of the benchmark directory are tested.
+- `CompletedBenchmarks` is a number of completed benchmarks. Updated by the 
+Azure Batch worker as tests complete.
+- `Creator` keeps a custom name of one who have submitted the experiment.
+- `DomainName` allows to identify and construct an instance of a `Domain` class that determines an additional analysis and results interpretation.
+- `Executable` is a blob name in the `bin` container which contains either an executable file or a zip file with a main executable and supporting files. The executable will run for multiple specified benchmark files to measure its performance.
+- `ExperimentTimeout` is a time limit in seconds per experiment. It time passed since the experiment submission exceeds this time span,  the experiment is stopped. 
+Zero means no limits.
+- `Flag` is either 'false' or 'true' and is switched by a user.
+- `MemoryLimitMB` is the memory limit per benchmark in megabytes. Zero means no limit.
+- `Note`
+- `Parameters`
+- `Submitted`
+- `TotalBenchmarks`
+- `TotalRuntime`
+- `WorkerInformation`
+- `AdaptiveRunMaxRepetitions`
+- `AdaptiveRunMaxTimeInSeconds`
+
+To enable automatic numbering of new experiments, in the table there is one row which contains next experiment ID to be assigned.
+Its `PartitionKey` is `NextIDPartition` and `RowKey` is `NextIDRow`.
+
+## Experiment results
+
+## Configuration
+
+## Binaries
+
+## Summaries
 
 ## Running performance tests
 
@@ -26,6 +74,11 @@ Regular experiments allow to track how changes in the source codes affect the ta
 * `/PerformanceTests.sln` is a Visual Studio 2015 solution which contains following projects:
   * `PerformanceTests.Management` is a WPF application to view, manage and submit performance 
   experiments.
+  * `NightlyWebApp` is ASP.NET web application that shows history of performance tests runs.
+  * `NightlyRunner` is a command line application that submits performance tests when new Z3 nightly build is available on the github.
+  See details [here](#setup-nightly-performance-tests).
+  * `Summary` is a command line application that computes summary and records for specified experiment and then updates corresponding data in the Azure Storage.
+  It is execute automatically for nightly Z3 experiments. See details [here](#how-to-update-experiment-summary).
   * `AzurePerformanceTest` is a .NET class library holding the `AzureExperimentManager` class which exposes API to manage experiments based on Microsoft Azure.
   * `PerformanceTest` is a .NET class library containing abstract types for experiments management.
   * `Measurement` is a .NET class library allowing to measure process run time and memory usage.
@@ -54,7 +107,8 @@ Regular experiments allow to track how changes in the source codes affect the ta
 The .NET application `/src/NightlyRunner` allows to submit performance tests for the latest nightly build of Z3. 
 It does the following:
 
-1. Finds most recent x86 binary package at https://github.com/Z3Prover/bin/tree/master/nightly. If there are multiple files found, takes commit sha from the file names and looks to the commit history of the Z3 repository to determine which is most recent.
+1. Finds most recent x86 binary package at [https://github.com/Z3Prover/bin/tree/master/nightly](https://github.com/Z3Prover/bin/tree/master/nightly). 
+If there are multiple files found, takes commit sha from the file names and looks to the commit history of the Z3 repository to determine which is most recent.
 2. Finds the last nightly performance experiment.
 3. If the most recent build differs from the last experiment executable, does the following:
   
@@ -129,8 +183,8 @@ New-AzureBatchJobSchedule -Id "NightlyRunSchedule" -Schedule $Schedule -JobSpeci
 
 ## How to update experiment summary
 
-The .NET application `/src/Summary` allows to compute summary for an experiment and then either append or replace
-corresponding row in a given summary table. If the given experiment is missing, it is deleted from the summary table.
+The .NET application `/src/Summary` allows to compute summary and records for an experiment and then either append or replace
+corresponding row in a given summary table. If the given experiment is missing, the program fails.
 
 Summary tables are stored in the `summary` container as CSV files, one row per experiment.
 
