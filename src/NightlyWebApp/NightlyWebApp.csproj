@@ -49,6 +49,9 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
+  <PropertyGroup>
+    <DeployOnBuild Condition=" '$(DeployNightlyWebApp)'!='' ">$(DeployNightlyWebApp)</DeployOnBuild>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="AjaxControlToolkit, Version=17.1.1.0, Culture=neutral, PublicKeyToken=28f01b0e84b6d53e, processorArchitecture=MSIL">
       <HintPath>..\..\packages\AjaxControlToolkit.17.1.1.0\lib\net40\AjaxControlToolkit.dll</HintPath>
@@ -370,6 +373,7 @@
   <ItemGroup>
     <Content Include="packages.config" />
     <None Include="Properties\PublishProfiles\Azure Z3 Nightly.pubxml" />
+    <None Include="Properties\PublishProfiles\DeploymentFolder.pubxml" />
     <None Include="Properties\PublishProfiles\Profile1.pubxml" />
     <Content Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

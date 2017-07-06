@@ -2,6 +2,8 @@
 
 tests/PerformanceTest.Tests/**/ConnectionString.txt
 src/AzurePerformanceTest/LaunchExperiment/keys.json
+deployment/*.pfx
+deployment/AzureWorker/*
 
 *.produced.out
 *~
