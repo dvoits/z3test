@@ -287,6 +287,7 @@ namespace PerformanceTest.Management
                 var vm = new DuplicatesManualResolutionViewModel(id, duplicates, this);
 
                 Duplicates dlg = new Duplicates();
+                dlg.Owner = Application.Current.MainWindow;
                 dlg.DataContext = vm;
                 if (dlg.ShowDialog() == true)
                     return vm.SelectedResult;

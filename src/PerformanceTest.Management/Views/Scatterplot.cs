@@ -42,7 +42,7 @@ namespace PerformanceTest.Management
             if (uiService == null) throw new ArgumentNullException("uiService");
 
             this.uiService = uiService;
-
+            this.StartPosition = FormStartPosition.CenterScreen;
             InitializeComponent();
             this.vm = vm;
             this.experiment1 = exp1;
