@@ -191,5 +191,5 @@ Summary tables are stored in the `summary` container as CSV files, one row per e
 For example, following command updates or adds summary for the experiment 100 in `z3-nightly.csv` table:
 
 ```
-> Summary.exe 100 z3-nightly
+> Summary.exe 100 Z3Nightly
 ```
