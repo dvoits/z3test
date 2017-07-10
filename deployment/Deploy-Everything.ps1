@@ -27,7 +27,16 @@ param(
  $keyVaultName,
 
  [string]
- $webAppName
+ $webAppName,
+ 
+ [string]
+ $referenceJsonPath,
+ 
+ [string]
+ $referenceExecutablePath,
+ 
+ [string]
+ $referenceInputPath
  )
 
 $ErrorActionPreference = "Stop"
@@ -78,7 +87,9 @@ if($certPfxPath) {
 [Microsoft.Azure.Commands.KeyVault.Models.PSVault]$vault = .\Deploy-KeyVault.ps1 $keyVaultName $rg $connectionStringSecretName $storage $batch $sp
 .\Deploy-AzureWorker.ps1 $rg $connectionStringSecretName $storage $vault $sp $cert.Thumbprint
 [Microsoft.Azure.Management.WebSites.Models.Site]$webApp = .\Deploy-WebApp.ps1 $webAppName $rg $connectionStringSecretName $storage $vault $sp $cert $certPassword
-
+if ($referenceJsonPath -and $referenceExecutablePath) {
+    .\Deploy-ReferenceExperiment.ps1 $rg $storage $referenceJsonPath $referenceExecutablePath $referenceInputPath
+}
 
 Remove-Item -Path ("Cert:\CurrentUser\My\" + $cert.Thumbprint) -DeleteKey
 
