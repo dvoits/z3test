@@ -688,7 +688,10 @@ namespace PerformanceTest.Management
                         uiService.ShowError("Can't resolve infrastructure errors. Experiments are not completed.", "Failed to resolve infrastructure errors");
                         return;
                     }
+
                 }
+                managerVm.RequeueIErrors(sts, recentValues);
+                experimentsVm.Refresh();
             }
             catch (Exception ex)
             {

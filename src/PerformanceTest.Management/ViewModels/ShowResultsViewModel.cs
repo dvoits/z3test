@@ -245,8 +245,8 @@ namespace PerformanceTest.Management
                 {
                     manager.BatchPoolID = requeueSettingsVm.Pool;
                     await manager.RestartBenchmarks(id, benchmarkNames, requeueSettingsVm.BenchmarkContainerUri);
-                    experimentsVm.Refresh();
                     RefreshJobStatus();
+                    experimentsVm.Refresh();
                     uiService.ShowInfo(string.Format("{0} benchmark(s) requeued.", benchmarkNames.Length));
                 }
                 catch (Exception ex)
