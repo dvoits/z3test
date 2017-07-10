@@ -131,13 +131,13 @@ namespace ImportTimeline
 
                     try
                     {
-                        await storage.PutAzureExperimentResults(expId, entities, false);
+                        await storage.PutAzureExperimentResults(expId, entities, AzureExperimentStorage.UploadBlobMode.CreateNew);
                         Console.WriteLine("Done uploading results for {0}.", expId);
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine("Failed to upload experiment results of {0}: {1}", expId, ex.ToString());
-                    }                    
+                    }
                     return 0;
                 });
 
@@ -220,40 +220,12 @@ namespace ImportTimeline
                 Status = ResultCodeToStatus(r.ResultCode),
                 StdErr = r.StdErr,
                 StdOut = r.StdOut,
-                StdErrStoredExternally = false,
-                StdOutStoredExternally = false,
+                StdErrExtStorageIdx = "",
+                StdOutExtStorageIdx = "",
                 TotalProcessorTime = TimeSpan.FromSeconds(r.Runtime),
                 WallClockTime = TimeSpan.FromSeconds(r.Runtime),
-                WorkerInformation = ""
             };
             return b;
-        }
-
-        private static async Task<string> UploadOutput(string content, ConcurrentDictionary<string, string> uploadedOutputs, AzureExperimentStorage storage, string blobName)
-        {
-            if (String.IsNullOrEmpty(content))
-            {
-                return String.Empty;
-            }
-
-            if (uploadedOutputs.Count == 50000) uploadedOutputs.Clear();
-
-            string blob = uploadedOutputs.GetOrAdd(content, blobName);
-            if (blob != blobName)
-            {
-                return blob;
-            }
-            else
-            {
-                using (var stream = PerformanceTest.Utils.StringToStream(content))
-                {
-                    await storage.UploadOutput(blobName, stream, false);
-                }
-                Trace.WriteLine(string.Format("Output blob uploaded {0}", blobName));
-
-                uploadedOutputs[content] = blobName;
-                return blobName;
-            }
         }
 
         private static ResultStatus ResultCodeToStatus(uint resultCode)
