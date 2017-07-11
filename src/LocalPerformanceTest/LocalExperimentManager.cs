@@ -253,6 +253,10 @@ namespace PerformanceTest
         {
             throw new NotImplementedException();
         }
+        public override Task<string[]> GetExperimentPoolId(IEnumerable<int> ids)
+        {
+            throw new NotImplementedException();
+        }
 
         private string GetWorkerInformation()
         {

@@ -1,6 +1,7 @@
 ﻿using Measurement;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -87,9 +88,9 @@ namespace PerformanceTest.Management
                     var def = experiments[i].Definition;
                     string ps = def.Parameters.Trim(' ');
                     string note = experiments[i].Note.Trim(' ');
-                    int? sat = statistics == null ? null : (int?)int.Parse(statistics.AggregatedResults.Properties[Z3Domain.KeySat]);
-                    int? unsat = statistics == null ? null : (int?)int.Parse(statistics.AggregatedResults.Properties[Z3Domain.KeyUnsat]);
-                    int? unknown = statistics == null ? null : (int?)int.Parse(statistics.AggregatedResults.Properties[Z3Domain.KeyUnknown]);
+                    int? sat = statistics == null ? null : (int?)int.Parse(statistics.AggregatedResults.Properties[Z3Domain.KeySat], CultureInfo.InvariantCulture);
+                    int? unsat = statistics == null ? null : (int?)int.Parse(statistics.AggregatedResults.Properties[Z3Domain.KeyUnsat], CultureInfo.InvariantCulture);
+                    int? unknown = statistics == null ? null : (int?)int.Parse(statistics.AggregatedResults.Properties[Z3Domain.KeyUnknown], CultureInfo.InvariantCulture);
                     int? bugs = statistics == null ? null : (int?)statistics.AggregatedResults.Bugs;
                     int? errors = statistics == null ? null : (int?)statistics.AggregatedResults.Errors;
                     int? timeouts = statistics == null ? null : (int?)statistics.AggregatedResults.Timeouts;
@@ -157,9 +158,9 @@ namespace PerformanceTest.Management
                         CSVDatum cur = new CSVDatum();
                         cur.rv = b.ExitCode.Equals(DBNull.Value) ? null : (int?)b.ExitCode;
                         cur.runtime = b.NormalizedRuntime.Equals(DBNull.Value) ? ex_timeout : b.NormalizedRuntime;
-                        cur.sat = Int32.Parse(b.Properties[Z3Domain.KeySat]);
-                        cur.unsat = Int32.Parse(b.Properties[Z3Domain.KeyUnsat]);
-                        cur.unknown = Int32.Parse(b.Properties[Z3Domain.KeyUnknown]);
+                        cur.sat = Int32.Parse(b.Properties[Z3Domain.KeySat], CultureInfo.InvariantCulture);
+                        cur.unsat = Int32.Parse(b.Properties[Z3Domain.KeyUnsat], CultureInfo.InvariantCulture);
+                        cur.unknown = Int32.Parse(b.Properties[Z3Domain.KeyUnknown], CultureInfo.InvariantCulture);
 
                         bool rv_ok = b.Status != ResultStatus.Error && b.Status != ResultStatus.InfrastructureError &&
                                      (b.Status == ResultStatus.Timeout && cur.rv == null ||
@@ -397,13 +398,13 @@ namespace PerformanceTest.Management
                               (elem1.ExitCode == 0 && elem2.ExitCode != 0 || 
                                elem1.Status == ResultStatus.Success && elem2.Status == ResultStatus.Success && elem1.NormalizedRuntime < elem2.NormalizedRuntime);
 
-            int sat1 = int.Parse(elem1.Properties[Z3Domain.KeySat]);
-            int unsat1 = int.Parse(elem1.Properties[Z3Domain.KeyUnsat]);
-            int unk1 = int.Parse(elem1.Properties[Z3Domain.KeyUnknown]);
+            int sat1 = int.Parse(elem1.Properties[Z3Domain.KeySat], CultureInfo.InvariantCulture);
+            int unsat1 = int.Parse(elem1.Properties[Z3Domain.KeyUnsat], CultureInfo.InvariantCulture);
+            int unk1 = int.Parse(elem1.Properties[Z3Domain.KeyUnknown], CultureInfo.InvariantCulture);
 
-            int sat2 = int.Parse(elem2.Properties[Z3Domain.KeySat]);
-            int unsat2 = int.Parse(elem2.Properties[Z3Domain.KeyUnsat]);
-            int unk2 = int.Parse(elem2.Properties[Z3Domain.KeyUnknown]);
+            int sat2 = int.Parse(elem2.Properties[Z3Domain.KeySat], CultureInfo.InvariantCulture);
+            int unsat2 = int.Parse(elem2.Properties[Z3Domain.KeyUnsat], CultureInfo.InvariantCulture);
+            int unk2 = int.Parse(elem2.Properties[Z3Domain.KeyUnknown], CultureInfo.InvariantCulture);
 
             if (condition == 0) condition1 = condition1 && (unsat1 + unsat2 > 0 || sat1 + sat2 > 0);
             if (condition == 1) condition1 = condition1 && (sat1 + sat2 > 0);

@@ -10,6 +10,7 @@ using Angara.Data;
 using Angara.Data.DelimitedFile;
 using Microsoft.FSharp.Core;
 using PerformanceTest;
+using System.Globalization;
 
 namespace AzurePerformanceTest
 {
@@ -205,20 +206,20 @@ namespace AzurePerformanceTest
                 }
 
                 results[i] = new AzureBenchmarkResult();
-                results[i].AcquireTime = DateTime.Parse(acq[i], System.Globalization.CultureInfo.InvariantCulture);
+                results[i].AcquireTime = DateTime.Parse(acq[i], CultureInfo.InvariantCulture);
                 results[i].BenchmarkFileName = fileName[i];
-                results[i].ExitCode = string.IsNullOrEmpty(exitcode[i]) ? null : (int?)int.Parse(exitcode[i]);
+                results[i].ExitCode = string.IsNullOrEmpty(exitcode[i]) ? null : (int?)int.Parse(exitcode[i], CultureInfo.InvariantCulture);
                 results[i].ExperimentID = expId;
-                results[i].NormalizedRuntime = double.Parse(norm[i]);
-                results[i].PeakMemorySizeMB = double.Parse(mem[i]);
+                results[i].NormalizedRuntime = double.Parse(norm[i], CultureInfo.InvariantCulture);
+                results[i].PeakMemorySizeMB = double.Parse(mem[i], CultureInfo.InvariantCulture);
                 results[i].Properties = props;
                 results[i].Status = StatusFromString(stat[i]);
                 results[i].StdErr = stderr[i];
                 results[i].StdErrExtStorageIdx = stderrext[i];
                 results[i].StdOut = stdout[i];
                 results[i].StdOutExtStorageIdx = stdoutext[i];
-                results[i].TotalProcessorTime = TimeSpan.FromSeconds(double.Parse(runtime[i]));
-                results[i].WallClockTime = TimeSpan.FromSeconds(double.Parse(wctime[i]));
+                results[i].TotalProcessorTime = TimeSpan.FromSeconds(double.Parse(runtime[i], CultureInfo.InvariantCulture));
+                results[i].WallClockTime = TimeSpan.FromSeconds(double.Parse(wctime[i], CultureInfo.InvariantCulture));
             }
             return results;
         }

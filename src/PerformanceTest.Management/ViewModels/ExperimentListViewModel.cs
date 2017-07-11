@@ -108,7 +108,6 @@ namespace PerformanceTest.Management
             var handle = ui.StartIndicateLongOperation("Loading table of experiments...");
             try
             {
-                Items = null;
                 var exp = await Task.Run(() => manager.FindExperiments());
                 allExperiments = exp.Select(e => new ExperimentStatusViewModel(e, manager, ui)).ToArray();
                 Items = FilterExperiments(allExperiments, keyword);
@@ -128,16 +127,23 @@ namespace PerformanceTest.Management
                 var now = DateTime.Now;
                 foreach (var vm in allExperiments)
                 {
-                    if (now.Subtract(vm.Submitted).TotalDays > 7) break;
+                    if (now.Subtract(vm.Submitted).TotalDays > 7) break; 
                     vm.JobStatus = ExperimentExecutionStateVM.Loading;
+                    vm.PoolID = "(loading...)";
                     items.Add(vm);
                 }
 
                 var states = await Task.Run(() => manager.GetExperimentJobState(items.Select(item => item.ID)));
+                var pools = await Task.Run(() => manager.GetExperimentPoolId(items.Select(item => item.ID)));
                 int n = Math.Min(states.Length, items.Count);
                 for (int i = 0; i < n; i++)
                 {
                     items[i].JobStatus = (ExperimentExecutionStateVM)states[i];
+                }
+                int m = Math.Min(pools.Length, items.Count);
+                for (int i = 0; i < n; i++)
+                {
+                    items[i].PoolID = pools[i];
                 }
             }
             catch (Exception ex)
@@ -232,7 +238,7 @@ namespace PerformanceTest.Management
 
         private bool flag;
         private ExperimentExecutionStateVM? jobStatus;
-
+        private string poolId;
         public event PropertyChangedEventHandler PropertyChanged;
 
         public ExperimentStatusViewModel(Experiment exp, ExperimentManager manager, IUIService message)
@@ -286,7 +292,7 @@ namespace PerformanceTest.Management
         {
             get
             {
-                if (definition.AdaptiveRunMaxRepetitions == 1 || definition.AdaptiveRunMaxTimeInSeconds == 0)
+                if (definition.AdaptiveRunMaxRepetitions == 1 && definition.AdaptiveRunMaxTimeInSeconds == 0)
                     return "Run Once";
                 else
                     return String.Format("Auto({0} times,{1} sec)", definition.AdaptiveRunMaxRepetitions, definition.AdaptiveRunMaxTimeInSeconds);
@@ -302,7 +308,16 @@ namespace PerformanceTest.Management
                 NotifyPropertyChanged();
             }
         }
-
+        public string PoolID
+        {
+            get { return poolId; }
+            set
+            {
+                if (poolId == value) return;
+                poolId = value;
+                NotifyPropertyChanged();
+            }
+        }
         public void NewStatus(ExperimentStatus newStatus)
         {
             if (newStatus == null) throw new ArgumentNullException("newStatus");

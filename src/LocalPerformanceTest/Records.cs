@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -53,7 +54,7 @@ namespace PerformanceTest
             var dict = new Dictionary<string, Record>(table.RowsCount);
             for (int i = 0; i < files.Length; i++)
             {
-                dict.Add(files[i], new Record(int.Parse(ids[i]), double.Parse(times[i])));
+                dict.Add(files[i], new Record(int.Parse(ids[i], CultureInfo.InvariantCulture), double.Parse(times[i], CultureInfo.InvariantCulture)));
             }
 
             return dict;
@@ -109,7 +110,7 @@ namespace PerformanceTest
             var dict = new Dictionary<string, CategoryRecord>(table.RowsCount);
             for (int i = 0; i < category.Length; i++)
             {
-                dict.Add(category[i], new CategoryRecord(double.Parse(times[i]), int.Parse(files[i])));
+                dict.Add(category[i], new CategoryRecord(double.Parse(times[i], CultureInfo.InvariantCulture), int.Parse(files[i], CultureInfo.InvariantCulture)));
             }
 
             return dict;

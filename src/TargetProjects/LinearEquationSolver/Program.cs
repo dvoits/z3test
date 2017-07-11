@@ -9,6 +9,7 @@ using MathNet.Numerics.LinearAlgebra;
 using Microsoft.FSharp.Core;
 using MathNet.Numerics.LinearAlgebra.Solvers;
 using MathNet.Numerics.LinearAlgebra.Double.Solvers;
+using System.Globalization;
 
 namespace LinearEquationSolver
 {
@@ -26,7 +27,7 @@ namespace LinearEquationSolver
             if (table.Count <= 1) throw new Exception("Expecting 2 or more columns");
 
 
-            var n = args.Length >= 2 ? int.Parse(args[1]) : 1;
+            var n = args.Length >= 2 ? int.Parse(args[1], CultureInfo.InvariantCulture) : 1;
             
             var columns = table.Select(column => column.Rows.AsReal as IEnumerable<double>);
             var A = Matrix<double>.Build.DenseOfColumns(columns.Where((_,i) => i < table.Count - 1));

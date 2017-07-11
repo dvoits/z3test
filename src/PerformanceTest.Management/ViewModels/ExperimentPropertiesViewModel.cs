@@ -224,7 +224,7 @@ namespace PerformanceTest.Management
         private int? GetProperty(string prop)
         {
             if (statistics == null) return null;
-            return int.Parse(statistics.AggregatedResults.Properties[prop]);
+            return int.Parse(statistics.AggregatedResults.Properties[prop], System.Globalization.CultureInfo.InvariantCulture);
         }
 
         public int? Sat

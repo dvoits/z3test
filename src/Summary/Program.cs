@@ -26,7 +26,7 @@ namespace Summary
 
             try
             {
-                int expId = int.Parse(args[0]);
+                int expId = int.Parse(args[0], System.Globalization.CultureInfo.InvariantCulture);
                 string summaryName = args[1];
 
                 Run(expId, summaryName).Wait();

@@ -31,7 +31,7 @@ namespace PerformanceTest
                 var names = table["Name"].Rows.AsString;
                 for (int i = 0; i < ids.Length; i++)
                 {
-                    idToName[int.Parse(ids[i])] = names[i];
+                    idToName[int.Parse(ids[i], System.Globalization.CultureInfo.InvariantCulture)] = names[i];
                 }
             }
             return new Tags(idToName);

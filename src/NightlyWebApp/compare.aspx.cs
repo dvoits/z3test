@@ -87,7 +87,7 @@ namespace Nightly
 
                     if (px != null)
                     {
-                        if (tags.HasID(int.Parse(px)))
+                        if (tags.HasID(int.Parse(px, CultureInfo.InvariantCulture)))
                         {
                             rbnTagX.Checked = true;
                             lstTagX.SelectedValue = px;
@@ -100,7 +100,7 @@ namespace Nightly
 
                     if (py != null)
                     {
-                        if (tags.HasID(int.Parse(py)))
+                        if (tags.HasID(int.Parse(py, CultureInfo.InvariantCulture)))
                         {
                             rbnTagY.Checked = true;
                             lstTagY.Items.FindByText(py.ToString());
@@ -121,8 +121,8 @@ namespace Nightly
                 try
                 {
                     AzureExperimentManager expMan = AzureExperimentManager.Open(connectionString);
-                    var t1 = Task.Run(() => Helpers.GetComparableExperiment(int.Parse(JX), expMan));
-                    var t2 = Task.Run(() => Helpers.GetComparableExperiment(int.Parse(JY), expMan));
+                    var t1 = Task.Run(() => Helpers.GetComparableExperiment(int.Parse(JX, CultureInfo.InvariantCulture), expMan));
+                    var t2 = Task.Run(() => Helpers.GetComparableExperiment(int.Parse(JY, CultureInfo.InvariantCulture), expMan));
 
                     jX = await t1;
                     jY = await t2;

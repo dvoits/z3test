@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -63,7 +64,7 @@ namespace PerformanceTest
 
             // If the table already has summary for the experiment, it will be replaced
             if (table.Count > 0) // if not empty then must contain ID
-                table = Table.Filter(new[] { "ID" }, FSharpFunc<string, bool>.FromConverter(id => int.Parse(id) != newSummary.Id), table);
+                table = Table.Filter(new[] { "ID" }, FSharpFunc<string, bool>.FromConverter(id => int.Parse(id, CultureInfo.InvariantCulture) != newSummary.Id), table);
 
             List<Column> finalColumns = new List<Column>();
             foreach (var existingColumn in table)
@@ -98,7 +99,7 @@ namespace PerformanceTest
         {
             // If the table already has summary for the experiment, it will be replaced
             if (table.Count > 0) // if not empty then must contain ID
-                table = Table.Filter(new[] { "ID" }, FSharpFunc<string, bool>.FromConverter(_id => int.Parse(_id) != id), table);
+                table = Table.Filter(new[] { "ID" }, FSharpFunc<string, bool>.FromConverter(_id => int.Parse(_id, CultureInfo.InvariantCulture) != id), table);
 
             return table;
         }
@@ -153,7 +154,7 @@ namespace PerformanceTest
             var results = new ExperimentSummary[table.RowsCount];
             for (int row = 0; row < rowsCount; row++)
             {
-                int expId = int.Parse(id[row]);
+                int expId = int.Parse(id[row], CultureInfo.InvariantCulture);
                 DateTimeOffset expDate = DateTimeOffset.ParseExact(date[row], dateFormat, System.Globalization.CultureInfo.InvariantCulture);
 
                 Dictionary<string, AggregatedAnalysis> catSum = new Dictionary<string, AggregatedAnalysis>();
@@ -177,12 +178,12 @@ namespace PerformanceTest
                         if (!string.IsNullOrEmpty(val))
                             switch (p.Item1)
                             {
-                                case KeyBug: bugs = int.Parse(val); break;
-                                case KeyError: errors = int.Parse(val); break;
-                                case KeyInferr: infrastructureErrors = int.Parse(val); break;
-                                case KeyMemoryOut: memouts = int.Parse(val); break;
-                                case KeyTimeOut: timeouts = int.Parse(val); break;
-                                case KeyFiles: files = int.Parse(val); break;
+                                case KeyBug: bugs = int.Parse(val, CultureInfo.InvariantCulture); break;
+                                case KeyError: errors = int.Parse(val, CultureInfo.InvariantCulture); break;
+                                case KeyInferr: infrastructureErrors = int.Parse(val, CultureInfo.InvariantCulture); break;
+                                case KeyMemoryOut: memouts = int.Parse(val, CultureInfo.InvariantCulture); break;
+                                case KeyTimeOut: timeouts = int.Parse(val, CultureInfo.InvariantCulture); break;
+                                case KeyFiles: files = int.Parse(val, CultureInfo.InvariantCulture); break;
                                 default: props[p.Item1] = val; break;
                             }
                     }

@@ -1089,11 +1089,11 @@ namespace Nightly
             else
                 id_msg += " (no reference)";
 
-            int sat = cs.Properties.ContainsKey(Z3Domain.KeySat) ? int.Parse(cs.Properties[Z3Domain.KeySat]) : 0;
-            int unsat = cs.Properties.ContainsKey(Z3Domain.KeyUnsat) ? int.Parse(cs.Properties[Z3Domain.KeyUnsat]) : 0;
-            int unk = cs.Properties.ContainsKey(Z3Domain.KeyUnknown) ? int.Parse(cs.Properties[Z3Domain.KeyUnknown]) : 0;
-            double timesat = cs.Properties.ContainsKey(Z3Domain.KeyTimeSat) ? double.Parse(cs.Properties[Z3Domain.KeyTimeSat]) : 0;
-            double timeunsat = cs.Properties.ContainsKey(Z3Domain.KeyTimeUnsat) ? double.Parse(cs.Properties[Z3Domain.KeyTimeUnsat]) : 0;
+            int sat = cs.Properties.ContainsKey(Z3Domain.KeySat) ? int.Parse(cs.Properties[Z3Domain.KeySat], CultureInfo.InvariantCulture) : 0;
+            int unsat = cs.Properties.ContainsKey(Z3Domain.KeyUnsat) ? int.Parse(cs.Properties[Z3Domain.KeyUnsat], CultureInfo.InvariantCulture) : 0;
+            int unk = cs.Properties.ContainsKey(Z3Domain.KeyUnknown) ? int.Parse(cs.Properties[Z3Domain.KeyUnknown], CultureInfo.InvariantCulture) : 0;
+            double timesat = cs.Properties.ContainsKey(Z3Domain.KeyTimeSat) ? double.Parse(cs.Properties[Z3Domain.KeyTimeSat], CultureInfo.InvariantCulture) : 0;
+            double timeunsat = cs.Properties.ContainsKey(Z3Domain.KeyTimeUnsat) ? double.Parse(cs.Properties[Z3Domain.KeyTimeUnsat], CultureInfo.InvariantCulture) : 0;
 
             t.Rows.Add(buildStatisticsRow("Experiment ID:", id_msg, "", Color.Black));
             t.Rows.Add(buildStatisticsRow("Files:", cs.Files, "", Color.Black));
@@ -1256,7 +1256,7 @@ namespace Nightly
             {
                 try
                 {
-                    int id = int.Parse(jobid);
+                    int id = int.Parse(jobid, CultureInfo.InvariantCulture);
                     ExperimentViewModel exp = vm.GetExperiment(id);
                     var statusSummary = await vm.GetStatusSummary(id);
 

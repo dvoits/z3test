@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.ComponentModel.Composition;
 using static Measurement.Measure;
+using System.Globalization;
 
 namespace Measurement
 {
@@ -113,12 +114,12 @@ namespace Measurement
             foreach (ProcessRunResults result in results)
             {
                 ProcessRunAnalysis analysis = result.Analysis;
-                int _sat = int.Parse(analysis.OutputProperties[KeySat]);
-                int _unsat = int.Parse(analysis.OutputProperties[KeyUnsat]);
-                int _unk = int.Parse(analysis.OutputProperties[KeyUnknown]);
-                int _tsat = int.Parse(analysis.OutputProperties[KeyTargetSat]);
-                int _tunsat = int.Parse(analysis.OutputProperties[KeyTargetUnsat]);
-                int _tunk = int.Parse(analysis.OutputProperties[KeyTargetUnknown]);
+                int _sat = int.Parse(analysis.OutputProperties[KeySat], CultureInfo.InvariantCulture);
+                int _unsat = int.Parse(analysis.OutputProperties[KeyUnsat], CultureInfo.InvariantCulture);
+                int _unk = int.Parse(analysis.OutputProperties[KeyUnknown], CultureInfo.InvariantCulture);
+                int _tsat = int.Parse(analysis.OutputProperties[KeyTargetSat], CultureInfo.InvariantCulture);
+                int _tunsat = int.Parse(analysis.OutputProperties[KeyTargetUnsat], CultureInfo.InvariantCulture);
+                int _tunk = int.Parse(analysis.OutputProperties[KeyTargetUnknown], CultureInfo.InvariantCulture);
 
                 if (analysis.Status != ResultStatus.Bug)
                 {
@@ -156,9 +157,9 @@ namespace Measurement
 
         public override bool CanConsiderAsRecord(ProcessRunAnalysis result)
         {
-            int _sat = int.Parse(result.OutputProperties[KeySat]);
-            int _unsat = int.Parse(result.OutputProperties[KeyUnsat]);
-            int _unk = int.Parse(result.OutputProperties[KeyUnknown]);
+            int _sat = int.Parse(result.OutputProperties[KeySat], CultureInfo.InvariantCulture);
+            int _unsat = int.Parse(result.OutputProperties[KeyUnsat], CultureInfo.InvariantCulture);
+            int _unk = int.Parse(result.OutputProperties[KeyUnknown], CultureInfo.InvariantCulture);
 
             return result.Status == ResultStatus.Success &&
                 _unk == 0 &&
@@ -167,12 +168,12 @@ namespace Measurement
 
         public override string[] GetTags(ProcessRunAnalysis result)
         {
-            int _sat = int.Parse(result.OutputProperties[KeySat]);
-            int _unsat = int.Parse(result.OutputProperties[KeyUnsat]);
-            int _unk = int.Parse(result.OutputProperties[KeyUnknown]);
-            int _tsat = int.Parse(result.OutputProperties[KeyTargetSat]);
-            int _tunsat = int.Parse(result.OutputProperties[KeyTargetUnsat]);
-            int _tunk = int.Parse(result.OutputProperties[KeyTargetUnknown]);
+            int _sat = int.Parse(result.OutputProperties[KeySat], CultureInfo.InvariantCulture);
+            int _unsat = int.Parse(result.OutputProperties[KeyUnsat], CultureInfo.InvariantCulture);
+            int _unk = int.Parse(result.OutputProperties[KeyUnknown], CultureInfo.InvariantCulture);
+            int _tsat = int.Parse(result.OutputProperties[KeyTargetSat], CultureInfo.InvariantCulture);
+            int _tunsat = int.Parse(result.OutputProperties[KeyTargetUnsat], CultureInfo.InvariantCulture);
+            int _tunk = int.Parse(result.OutputProperties[KeyTargetUnknown], CultureInfo.InvariantCulture);
 
             if (_sat + _unsat < _tsat + _tunsat || _unk > _tunk) return new string[] { TagUnderperformers };
             return new string[0];
