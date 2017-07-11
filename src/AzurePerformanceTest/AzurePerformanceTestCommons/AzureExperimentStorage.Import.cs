@@ -13,9 +13,20 @@ namespace AzurePerformanceTest
     public partial class AzureExperimentStorage
     {
         private const int azureStorageBatchSize = 100;
-               
+
+        /// <summary>
+        /// Replaces existing experiments and their results which have same ID.
+        /// </summary>
+        /// <param name="experiments"></param>
+        /// <returns></returns>
         public async Task ImportExperiments(IEnumerable<ExperimentEntity> experiments)
         {
+            var nextIdQuery = QueryForNextId();
+            var list = (await experimentsTable.ExecuteQuerySegmentedAsync(nextIdQuery, null)).ToList();
+            int nextId = 0;
+            if (list.Count != 0)
+                nextId = list[0].Id;
+
             var upload =
                 GroupExperiments(experiments, azureStorageBatchSize)
                 .Select(batch =>
@@ -24,7 +35,7 @@ namespace AzurePerformanceTest
                     int maxID = 0;
                     foreach (var item in batch)
                     {
-                        opsBatch.Insert(item);
+                        opsBatch.InsertOrReplace(item);
                         int id = int.Parse(item.RowKey);
                         if (id > maxID) maxID = id;
                     }
@@ -32,13 +43,16 @@ namespace AzurePerformanceTest
                 })
                 .ToArray();
 
-            var nextId = upload.Length > 0 ? upload.Max(t => t.Item2) + 1 : 1;
+            var maxId = upload.Length > 0 ? upload.Max(t => t.Item2) + 1 : 1;
             var inserts = upload.Select(t => t.Item1);
             await Task.WhenAll(inserts);
 
-            var nextIdEnt = new NextExperimentIDEntity();
-            nextIdEnt.Id = nextId;
-            await experimentsTable.ExecuteAsync(TableOperation.Insert(nextIdEnt));
+            if (maxId > nextId)
+            {
+                var nextIdEnt = new NextExperimentIDEntity();
+                nextIdEnt.Id = nextId;
+                await experimentsTable.ExecuteAsync(TableOperation.InsertOrReplace(nextIdEnt));
+            }
         }
 
         private static IEnumerable<IEnumerable<ExperimentEntity>> GroupExperiments(IEnumerable<ExperimentEntity> seq, int n)

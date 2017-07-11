@@ -131,7 +131,7 @@ namespace ImportTimeline
 
                     try
                     {
-                        await storage.PutAzureExperimentResults(expId, entities, AzureExperimentStorage.UploadBlobMode.CreateNew);
+                        await storage.PutAzureExperimentResults(expId, entities, AzureExperimentStorage.UploadBlobMode.CreateOrReplace);
                         Console.WriteLine("Done uploading results for {0}.", expId);
                     }
                     catch (Exception ex)
@@ -211,7 +211,7 @@ namespace ImportTimeline
             var b = new AzureBenchmarkResult
             {
                 AcquireTime = submittedTime,
-                BenchmarkFileName = r.Filename,
+                BenchmarkFileName = r.Filename.Replace('\\','/'),
                 ExitCode = r.ReturnValue,
                 ExperimentID = expId,
                 NormalizedRuntime = r.Runtime,
