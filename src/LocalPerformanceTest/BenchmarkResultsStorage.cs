@@ -5,6 +5,7 @@ using Microsoft.FSharp.Core;
 using PerformanceTest;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -93,9 +94,9 @@ namespace PerformanceTest
                 }
 
                 results[i] = new BenchmarkResult(
-                    expId, fileName[i], DateTime.Parse(acq[i], System.Globalization.CultureInfo.InvariantCulture),
-                    double.Parse(norm[i]), TimeSpan.FromSeconds(double.Parse(runtime[i])), TimeSpan.FromSeconds(double.Parse(wctime[i])), double.Parse(mem[i]),
-                    StatusFromString(stat[i]), string.IsNullOrEmpty(exitcode[i]) ? null : (int?)int.Parse(exitcode[i]), Utils.StringToStream(stdout[i]), Utils.StringToStream(stderr[i]),
+                    expId, fileName[i], DateTime.Parse(acq[i], CultureInfo.InvariantCulture),
+                    double.Parse(norm[i], CultureInfo.InvariantCulture), TimeSpan.FromSeconds(double.Parse(runtime[i], CultureInfo.InvariantCulture)), TimeSpan.FromSeconds(double.Parse(wctime[i], CultureInfo.InvariantCulture)), double.Parse(mem[i], CultureInfo.InvariantCulture),
+                    StatusFromString(stat[i]), string.IsNullOrEmpty(exitcode[i]) ? null : (int?)int.Parse(exitcode[i], CultureInfo.InvariantCulture), Utils.StringToStream(stdout[i]), Utils.StringToStream(stderr[i]),
                     props);
             }
             return results;

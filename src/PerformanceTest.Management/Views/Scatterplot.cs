@@ -142,9 +142,9 @@ namespace PerformanceTest.Management
             t.Font = new Font(FontFamily.GenericSansSerif, 16.0f, FontStyle.Bold);
             chart.Titles.Add(t);
             string xTitle = "Experiment #" + experiment1.ID + ": " + experiment1.Note;
-            if (experiment1.Definition.AdaptiveRunMaxRepetitions != 1 && experiment1.Definition.AdaptiveRunMaxTimeInSeconds != 0) xTitle = xTitle + " (adaptive)";
+            if (experiment1.Definition.AdaptiveRunMaxRepetitions != 1 || experiment1.Definition.AdaptiveRunMaxTimeInSeconds != 0) xTitle = xTitle + " (adaptive)";
             string yTitle = "Experiment #" + experiment2.ID + ": " + experiment2.Note;
-            if (experiment2.Definition.AdaptiveRunMaxRepetitions != 1 && experiment2.Definition.AdaptiveRunMaxTimeInSeconds != 0) yTitle = yTitle + " (adaptive)";
+            if (experiment2.Definition.AdaptiveRunMaxRepetitions != 1 || experiment2.Definition.AdaptiveRunMaxTimeInSeconds != 0) yTitle = yTitle + " (adaptive)";
             chart.ChartAreas[0].AxisX.Title = xTitle;
             chart.ChartAreas[0].AxisY.Title = yTitle;
             chart.ChartAreas[0].AxisY.TextOrientation = TextOrientation.Rotated270;

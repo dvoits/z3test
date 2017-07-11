@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -38,7 +39,7 @@ namespace Measure
             int repetitions = 1;
             double referenceValue = 1.0;
             if (init) {
-                repetitions = int.Parse(args[k++]);
+                repetitions = int.Parse(args[k++], CultureInfo.InvariantCulture);
             }
 
             TimeSpan timeout = TimeSpan.FromHours(1);

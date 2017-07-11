@@ -2,6 +2,7 @@
 using PerformanceTest;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Web;
 
@@ -36,9 +37,9 @@ namespace Nightly
             if (result == null) throw new ArgumentNullException(nameof(result));
             this.result = result;
 
-            sat = int.Parse(result.Properties[Z3Domain.KeySat]);
-            unsat = int.Parse(result.Properties[Z3Domain.KeyUnsat]);
-            unknown = int.Parse(result.Properties[Z3Domain.KeyUnknown]);
+            sat = int.Parse(result.Properties[Z3Domain.KeySat], CultureInfo.InvariantCulture);
+            unsat = int.Parse(result.Properties[Z3Domain.KeyUnsat], CultureInfo.InvariantCulture);
+            unknown = int.Parse(result.Properties[Z3Domain.KeyUnknown], CultureInfo.InvariantCulture);
         }
 
         public string Filename { get { return result.BenchmarkFileName; } }

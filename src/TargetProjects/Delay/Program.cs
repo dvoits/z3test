@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,7 +17,7 @@ namespace Delay
                 return 42;
             }
 
-            int ms = int.Parse(args[0]);
+            int ms = int.Parse(args[0], CultureInfo.InvariantCulture);
             Console.Write("Starting delay for {0} ms...", ms);
             System.Threading.Thread.Sleep(ms);
             Console.WriteLine("Done.");

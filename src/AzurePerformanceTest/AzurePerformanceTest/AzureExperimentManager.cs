@@ -210,7 +210,37 @@ namespace AzurePerformanceTest
                 return null;
             }
         }
-
+        public override async Task<string[]> GetExperimentPoolId(IEnumerable<int> ids)
+        {
+            if (!CanStart) return null;
+            try
+            {
+                using (var bc = BatchClient.Open(batchCreds))
+                {
+                    List<string> pools = new List<string>();
+                    foreach (var expId in ids)
+                    {
+                        var jobId = BuildJobId(expId);
+                        try
+                        {
+                            var job = await bc.JobOperations.GetJobAsync(jobId);
+                            if (job.PoolInformation == null) pools.Add("Not Found");
+                            else pools.Add(job.PoolInformation.PoolId);
+                        }
+                        catch (BatchException batchExc) when (batchExc.RequestInformation != null && batchExc.RequestInformation.HttpStatusCode.HasValue && batchExc.RequestInformation.HttpStatusCode == System.Net.HttpStatusCode.NotFound)
+                        {
+                            pools.Add("Not Found");
+                        }
+                    }
+                    return pools.ToArray();
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceWarning("Failed to get pool id: " + ex);
+                return null;
+            }
+        }
         private ExperimentDefinition DefinitionFromEntity(ExperimentEntity experimentEntity)
         {
             return ExperimentDefinition.Create(
@@ -238,7 +268,7 @@ namespace AzurePerformanceTest
             // todo: can be done in a more efficient way
             var req = ids.Select(id => storage.GetExperiment(id));
             var exps = await Task.WhenAll(req);
-            return exps.Select(entity => ExperimentFromEntity(int.Parse(entity.RowKey), entity).Status);
+            return exps.Select(entity => ExperimentFromEntity(int.Parse(entity.RowKey, System.Globalization.CultureInfo.InvariantCulture), entity).Status);
         }
 
         public async Task<PoolDescription[]> GetAvailablePools()

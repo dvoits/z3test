@@ -25,7 +25,7 @@ namespace AzurePerformanceTest
                     foreach (var item in batch)
                     {
                         opsBatch.Insert(item);
-                        int id = int.Parse(item.RowKey);
+                        int id = int.Parse(item.RowKey, System.Globalization.CultureInfo.InvariantCulture);
                         if (id > maxID) maxID = id;
                     }
                     return Tuple.Create(experimentsTable.ExecuteBatchAsync(opsBatch), maxID);

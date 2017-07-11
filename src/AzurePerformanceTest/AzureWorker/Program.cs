@@ -18,6 +18,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System.Threading;
 using AzurePerformanceTest;
+using System.Globalization;
 
 namespace AzureWorker
 {
@@ -62,7 +63,7 @@ namespace AzureWorker
 
         static async Task ManageRetry(string[] args)
         {
-            int experimentId = int.Parse(args[0]);
+            int experimentId = int.Parse(args[0], CultureInfo.InvariantCulture);
             string benchmarkListBlobId = args[1];
             string benchmarkContainerUri = null;
             if (args.Length > 2)
@@ -167,7 +168,7 @@ namespace AzureWorker
 
         static async Task ManageTasks(string[] args)
         {
-            int experimentId = int.Parse(args[0]);
+            int experimentId = int.Parse(args[0], CultureInfo.InvariantCulture);
             string summaryName = null;
             if (args.Length > 1)
                 summaryName = args[1];
@@ -517,7 +518,7 @@ namespace AzureWorker
                 CloudTask task = new CloudTask(taskId, taskCommandLine);
                 task.ResourceFiles = new List<ResourceFile> { resourceFile };
                 task.Constraints = new TaskConstraints();
-                task.Constraints.MaxWallClockTime = TimeSpan.FromSeconds(double.Parse(timeout)) + ExtraTimeForOverhead;
+                task.Constraints.MaxWallClockTime = TimeSpan.FromSeconds(double.Parse(timeout, CultureInfo.InvariantCulture)) + ExtraTimeForOverhead;
                 task.DisplayName = blobName;
                 tasks.Add(task);
 
@@ -538,17 +539,17 @@ namespace AzureWorker
 
         static async Task Measure(string[] args)
         {
-            int experimentId = int.Parse(args[0]);
+            int experimentId = int.Parse(args[0], CultureInfo.InvariantCulture);
             string benchmarkId = args[1];
             string executable = args[2];
             string arguments = args[3];
             string targetFile = args[4];
-            TimeSpan timeout = TimeSpan.FromSeconds(double.Parse(args[5]));
+            TimeSpan timeout = TimeSpan.FromSeconds(double.Parse(args[5], CultureInfo.InvariantCulture));
             string domainName = args[6];
             Uri outputQueueUri = new Uri(args[7]);
             Uri outputBlobContainerUri = new Uri(args[8]);
-            int maxRepetitions = int.Parse(args[9]);
-            double maxTime = double.Parse(args[10]);
+            int maxRepetitions = int.Parse(args[9], CultureInfo.InvariantCulture);
+            double maxTime = double.Parse(args[10], CultureInfo.InvariantCulture);
             double memoryLimit = 0; // no limit
             long? outputLimit = null;
             long? errorLimit = null;
@@ -557,13 +558,13 @@ namespace AzureWorker
             //    workerInfo = args[6];
             if (args.Length > 11)
             {
-                memoryLimit = double.Parse(args[11]);
+                memoryLimit = double.Parse(args[11], CultureInfo.InvariantCulture);
                 if (args.Length > 12)
                 {
-                    outputLimit = args[12] == "null" ? null : (long?)long.Parse(args[12]);
+                    outputLimit = args[12] == "null" ? null : (long?)long.Parse(args[12], CultureInfo.InvariantCulture);
                     if (args.Length > 13)
                     {
-                        errorLimit = args[13] == "null" ? null : (long?)long.Parse(args[13]);
+                        errorLimit = args[13] == "null" ? null : (long?)long.Parse(args[13], CultureInfo.InvariantCulture);
                     }
                 }
             }
@@ -575,7 +576,7 @@ namespace AzureWorker
             string normalFilePath = Path.Combine(workerDir, PerformanceCoefficientFileName);
             if (File.Exists(normalFilePath))
             {
-                normal = double.Parse(File.ReadAllText(normalFilePath));
+                normal = double.Parse(File.ReadAllText(normalFilePath), CultureInfo.InvariantCulture);
                 Trace.WriteLine(string.Format("Normal found within file: {0}", normal));
             }
             else

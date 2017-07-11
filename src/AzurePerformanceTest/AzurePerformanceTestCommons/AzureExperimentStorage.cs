@@ -178,7 +178,7 @@ namespace AzurePerformanceTest
 
                 continuationToken = tableQueryResult.ContinuationToken;
                 foreach (var e in tableQueryResult.Results)
-                    dict.Add(int.Parse(e.RowKey), e);
+                    dict.Add(int.Parse(e.RowKey, System.Globalization.CultureInfo.InvariantCulture), e);
             } while (continuationToken != null);
 
             return dict;

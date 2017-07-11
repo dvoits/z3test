@@ -2,6 +2,7 @@
 using PerformanceTest;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Web;
 
@@ -55,15 +56,15 @@ namespace Nightly
             props = summary.Properties;
         }
 
-        public int Sat { get { return int.Parse(props[Z3Domain.KeySat]); } }
-        public int Unsat { get { return int.Parse(props[Z3Domain.KeyUnsat]); } }
+        public int Sat { get { return int.Parse(props[Z3Domain.KeySat], CultureInfo.InvariantCulture); } }
+        public int Unsat { get { return int.Parse(props[Z3Domain.KeyUnsat], CultureInfo.InvariantCulture); } }
 
-        public int TargetSat { get { return int.Parse(props[Z3Domain.KeyTargetSat]); } }
-        public int TargetUnsat { get { return int.Parse(props[Z3Domain.KeyTargetUnsat]); } }
-        public int TargetUnknown { get { return int.Parse(props[Z3Domain.KeyTargetUnknown]); } }
+        public int TargetSat { get { return int.Parse(props[Z3Domain.KeyTargetSat], CultureInfo.InvariantCulture); } }
+        public int TargetUnsat { get { return int.Parse(props[Z3Domain.KeyTargetUnsat], CultureInfo.InvariantCulture); } }
+        public int TargetUnknown { get { return int.Parse(props[Z3Domain.KeyTargetUnknown], CultureInfo.InvariantCulture); } }
 
-        public double TimeUnsat { get { return double.Parse(props[Z3Domain.KeyTimeUnsat]); } }
-        public double TimeSat { get { return double.Parse(props[Z3Domain.KeyTimeSat]); } }
+        public double TimeUnsat { get { return double.Parse(props[Z3Domain.KeyTimeUnsat], CultureInfo.InvariantCulture); } }
+        public double TimeSat { get { return double.Parse(props[Z3Domain.KeyTimeSat], CultureInfo.InvariantCulture); } }
 
         public static Z3SummaryProperties TryWrap(AggregatedAnalysis summary)
         {
