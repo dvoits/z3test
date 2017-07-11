@@ -48,9 +48,10 @@ namespace Summary
             var manager = new AzureSummaryManager(connectionString, MEFDomainResolver.Instance);
 
             // debug: var stsum = await manager.GetStatusSummary(184, 158);
-            await manager.Update(summaryName, id);
+            var result = await manager.Update(summaryName, id);
+            var refId = result.Item1[1];
             //string linkPage = "http://Z3-1/Nightly/Default.aspx";
-            //manager.SendReport(id, id/*refId*/, DateTime.Now/*submissionTime*/, rec, linkPage);
+            //await manager.SendReport(id, refId, DateTime.Now/*result.Item2*/, rec, linkPage);
         }
 
         private static async Task<string> GetConnectionString()

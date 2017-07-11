@@ -136,7 +136,6 @@ namespace PerformanceTest
         {
             var date = table["Date"].Rows.AsString;
             var id = table["ID"].Rows.AsString;
-
             var content = // category -> (parameter, value)
                 table
                     .Where(c => c.Name.Contains("|"))
@@ -195,5 +194,4 @@ namespace PerformanceTest
             return results;
         }
     }
-
 }

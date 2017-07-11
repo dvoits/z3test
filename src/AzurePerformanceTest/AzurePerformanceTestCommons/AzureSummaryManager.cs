@@ -91,7 +91,7 @@ namespace AzurePerformanceTest
             }
         }
 
-        public async Task Update(string timelineName, int experimentId)
+        public async Task<Tuple<int[], DateTimeOffset>> Update(string timelineName, int experimentId)
         {
             Trace.WriteLine("Downloading experiment results...");
             var all_summaries = await DownloadSummary(timelineName);
@@ -112,6 +112,9 @@ namespace AzurePerformanceTest
             var table = all_summaries.Item1;
             
             await UploadSummary(timelineName, sumTable, records, all_summaries.Item3);
+            var resultfromTable = ExperimentSummaryStorage.LoadFromTable(table);
+            Array.Sort(resultfromTable, (el1, el2) => el1.Date < el2.Date ? 1 : 0);
+            return Tuple.Create<int[], DateTimeOffset>(resultfromTable.Select(item => item.Id).ToArray(), resultfromTable[0].Date);
         }
 
         /// <summary>
@@ -153,7 +156,7 @@ namespace AzurePerformanceTest
             return summary;
         }
 
-        public async void SendReport(int expId, int refId, DateTime submissionTime, List<string> recipients, string linkPage)
+        public async Task SendReport(int expId, int refId, DateTime submissionTime, List<string> recipients, string linkPage)
         {
             var summary = await GetStatusSummary(expId, refId); 
             if (summary != null && (summary.BugsByCategory.Count > 0 || summary.ErrorsByCategory.Count > 0))
