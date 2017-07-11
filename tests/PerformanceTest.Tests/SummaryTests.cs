@@ -88,6 +88,8 @@ namespace PerformanceTest.Tests
             AreEqualArrays(new[] { "3", "" }, table2["a|SAT"].Rows.AsString.ToArray());
             AreEqualArrays(new[] { "2", "3" }, table2["b|SAT"].Rows.AsString.ToArray());
             AreEqualArrays(new[] { "", "2" }, table2["c|SAT"].Rows.AsString.ToArray());
+
+
         }
 
         [TestMethod]

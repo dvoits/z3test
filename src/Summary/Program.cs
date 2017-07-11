@@ -44,12 +44,13 @@ namespace Summary
         private static async Task Run(int id, string summaryName)
         {
             Console.WriteLine("Connecting to Azure...");
-            string connectionString = await GetConnectionString();
+            string connectionString = await GetConnectionString(); 
             var manager = new AzureSummaryManager(connectionString, MEFDomainResolver.Instance);
 
             // debug: var stsum = await manager.GetStatusSummary(184, 158);
-
             await manager.Update(summaryName, id);
+            //string linkPage = "http://Z3-1/Nightly/Default.aspx";
+            //manager.SendReport(id, id/*refId*/, DateTime.Now/*submissionTime*/, rec, linkPage);
         }
 
         private static async Task<string> GetConnectionString()
