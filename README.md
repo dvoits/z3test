@@ -81,20 +81,20 @@ If you don't have Visual Studio 2015, you can install the free [Visual Studio 20
 
 The performance test infrastructure has Microsoft Azure-based client-server architecture which consists of following components:
 
-1. *Storage* keeps following data:
+1. [Storage](#storage) keeps following data:
     * Configuration and system files.
-    * Table of completed and running experiments (see [Table of experiments](#table-of-experiments)).
+    * Table of completed and running experiments.
     * Results for each of the experiments.
     * Summaries and timelines for experiments.
     * Binaries that are tested.
     * Benchmark files.
 
-2. *Server-side components* use storage to prepare and run experiments, save results and build summary. 
+2. [Server-side components](#server-side-components) use storage to prepare and run experiments, save results and build summary. 
 These include:
     * [AzureWorker](#) runs an experiment and saves results.
     * [NightlyRunner](#) checks if there is new Z3 nightly build available and schedules an experiment for it.
 
-3. *Client applications* allow a user to manage experiments and analyze results. Two main applications are:
+3. [Client applications](#client-applications) allow a user to manage experiments and analyze results. Two main applications are:
     * Windows application *PerformanceTest.Management* shows a list of experiments and results for each of the experiments,
     compares two experiments and exposes set of features to manage experiments.
     * Web application *NightlyWebApp* is intended to show history of experiments for Z3 nightly builds and perform statistical analysis of results.
