@@ -10,15 +10,15 @@ This repository holds test infrastructure and benchmarks used to test Z3.
   - [Build requirements](#build-requirements)
   - [How to build](#how-to-build)
 - [Architecture](#architecture)
-  - Storage
+  - [Storage](#storage)
     - Table of experiments
     - Experiment results
     - Configuration
     - Binaries
     - Summaries
     - Running performance tests
-  - Server-side components
-  - Client applications
+  - [Server-side components](#server-side-components)
+  - [Client applications](#client-applications)
 - [Run and deploy](#run-and-deploy)
 - [How-to](#how-to)
 
@@ -81,25 +81,44 @@ If you don't have Visual Studio 2015, you can install the free [Visual Studio 20
 
 The performance test infrastructure has Microsoft Azure-based client-server architecture which consists of following components:
 
-1. [Storage](#storage) keeps following data:
+1. Storage is based on Azure Storage Account and Key Vault and keeps following data:
     * Configuration and system files.
     * Table of completed and running experiments.
     * Results for each of the experiments.
     * Summaries and timelines for experiments.
     * Binaries that are tested.
     * Benchmark files.
+    * Secrets.
 
-2. [Server-side components](#server-side-components) use storage to prepare and run experiments, save results and build summary. 
-These include:
+2. Server-side components use storage to prepare and run experiments, save results and build summary. 
+These components run on Azure Batch and include:
     * [AzureWorker](#) runs an experiment and saves results.
     * [NightlyRunner](#) checks if there is new Z3 nightly build available and schedules an experiment for it.
 
-3. [Client applications](#client-applications) allow a user to manage experiments and analyze results. Two main applications are:
+3. Client applications allow a user to manage experiments and analyze results. Two main applications are:
     * Windows application *PerformanceTest.Management* shows a list of experiments and results for each of the experiments,
     compares two experiments and exposes set of features to manage experiments.
     * Web application *NightlyWebApp* is intended to show history of experiments for Z3 nightly builds and perform statistical analysis of results.
 
+
 ## Storage
+
+Data is stored in an Azure Storage Account using one Azure table, multiple blob containers and an Azure Key Vault for secrets.
+
+### Configuration
+
+Configuration of the performance test infrastructure is represented as a bunch of files located in the blob container `config`.
+
+It includes:
+* Executable and supporting files that are run on Azure nodes and perform management and measurement of performance
+(`AzureWorker.exe`, `AzureWorker.exe.config` and DLLs).
+* .NET class libraries (as DLLs) with experiment domains (i.e. types derived from `Measurement.Domain` class). 
+There should be at least `Z3Domain.dll`. The types are loaded every time an experiment is running 
+using [MEF](https://docs.microsoft.com/en-us/dotnet/framework/mef/index)
+and therefore each domain type declaration must have an attribute `Export` with `Measurement.Domain` as a contract type.
+* Definition of the reference experiment as `reference.json` file. 
+Deployment of the test infrastructure requires a reference experiment to be provided. Reference experiment consists of a set of benchmarks located in the storage. 
+They are measured on each of the machines before performance tests are started to determine performance normalization coefficient.
 
 ### Table of experiments
 
@@ -144,9 +163,12 @@ Its `PartitionKey` is `NextIDPartition` and `RowKey` is `NextIDRow`.
 
 ### Summaries
 
-### Running performance tests
+### Secrets
 
 ## Server-side components
+
+### Running performance tests
+
 
 ## Client applications
 
