@@ -112,6 +112,13 @@ namespace AzurePerformanceTest
             await UploadSummary(timelineName, sumTable, records, all_summaries.Item3);
         }
 
+        /// <summary>
+        /// Returns summary by statuses for the given experiment.
+        /// If summary for the given parameters has not been computed yet,
+        /// builds the summary and saves it.
+        /// </summary>
+        /// <param name="expId">Target experiment.</param>
+        /// <param name="refExpId">Optional; another experiment to compare performance with.</param>
         public async Task<ExperimentStatusSummary> GetStatusSummary(int expId, int? refExpId)
         {
             Trace.WriteLine("Check if the summary already exists...");
