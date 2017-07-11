@@ -13,16 +13,9 @@ namespace AzurePerformanceTest
     public partial class AzureExperimentStorage
     {
         private const int azureStorageBatchSize = 100;
-
-        /// <summary>
-        /// Expects that the experiments table is empty or doesn't exist and initializes it from scratch with the given experiments.
-        /// </summary>
+               
         public async Task ImportExperiments(IEnumerable<ExperimentEntity> experiments)
         {
-            var nextIdQuery = QueryForNextId();
-            var list = (await experimentsTable.ExecuteQuerySegmentedAsync(nextIdQuery, null)).ToList();
-            if (list.Count != 0) throw new InvalidOperationException("The experiments table mustn't be initialized yet");
-
             var upload =
                 GroupExperiments(experiments, azureStorageBatchSize)
                 .Select(batch =>

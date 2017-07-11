@@ -215,7 +215,7 @@ namespace ImportTimeline
                 ExitCode = r.ReturnValue,
                 ExperimentID = expId,
                 NormalizedRuntime = r.Runtime,
-                PeakMemorySizeMB = -1,
+                PeakMemorySizeMB = 0,
                 Properties = properties,
                 Status = ResultCodeToStatus(r.ResultCode),
                 StdErr = r.StdErr,
