@@ -2,6 +2,17 @@
 
 This repository holds test infrastructure and benchmarks used to test Z3. 
 
+# Contents
+
+- [Glossary](#glossary)
+- [Structure of repository](#structure-of-repository)
+- [Build and test](#build-and-test)
+- [Architecture](#architecture)
+- [Run and deploy](#run-and-deploy)
+- [How-to](#how-to)
+
+# Glossary
+
 *Performance test* is measurement of execution of a target command line executable file for specific input file
 with certain command line parameters.
 For example, a performance test for Z3 is execution of `z3.exe` for the given parameters and certain smt2 file.
@@ -15,7 +26,37 @@ Regular experiments allow to track how changes in the source codes affect the ta
 A *domain* determines specific settings for a certain target executable, such as input file extensions, command line syntax, how to interpret input and output of program run,
 how to analyse and aggregate multiple runs.
 
-# Azure-based performance tests
+
+# Structure of the repository
+
+* `/PerformanceTests.sln` is a Visual Studio 2015 solution which contains following projects:
+  * `PerformanceTests.Management` is a WPF application to view, manage and submit performance 
+  experiments.
+  * `NightlyWebApp` is ASP.NET web application that shows history of performance tests runs.
+  * `NightlyRunner` is a command line application that submits performance tests when new Z3 nightly build is available on the github.
+  See details [here](#setup-nightly-performance-tests).
+  * `Summary` is a command line application that computes summary and records for specified experiment and then updates corresponding data in the Azure Storage.
+  It is execute automatically for nightly Z3 experiments. See details [here](#how-to-update-experiment-summary).
+  * `AzurePerformanceTest` is a .NET class library holding the `AzureExperimentManager` class which exposes API to manage experiments based on Microsoft Azure.
+  * `PerformanceTest` is a .NET class library containing abstract types for experiments management.
+  * `Measurement` is a .NET class library allowing to measure process run time and memory usage.
+  * `Z3Domain` is a .NET class library implementing Z3-specific analysis of the program execution.
+  * `AzureWorker` is a command line application that is run on Azure Batch nodes to prepare and execute performance tests.
+  * `AzurePerformanceTestCommons` is a .NET class library that contains functionality for Azure-based experiment management and is shared by `AzurePerformanceTest` and `AzureWorker`.
+
+* `/ImportData.sln` is a Visual Studio 2015 solution which allows to import experiments results from old format to Azure storage.
+
+* `/src/` contains Visual Studio projects included to the Visual Studio solutions.
+
+* `/tests/` contain Visual Studio unit test projects included to the Visual Studio solutions.
+
+# Build and test 
+
+## Build requirements
+
+## How to build
+
+# Architecture
 
 Azure-based performance tests require Azure Storage Account, Azure Batch Account and Azure Key Vault.
 
@@ -69,36 +110,7 @@ Its `PartitionKey` is `NextIDPartition` and `RowKey` is `NextIDRow`.
 
 
 
-# Structure of the repository
-
-* `/PerformanceTests.sln` is a Visual Studio 2015 solution which contains following projects:
-  * `PerformanceTests.Management` is a WPF application to view, manage and submit performance 
-  experiments.
-  * `NightlyWebApp` is ASP.NET web application that shows history of performance tests runs.
-  * `NightlyRunner` is a command line application that submits performance tests when new Z3 nightly build is available on the github.
-  See details [here](#setup-nightly-performance-tests).
-  * `Summary` is a command line application that computes summary and records for specified experiment and then updates corresponding data in the Azure Storage.
-  It is execute automatically for nightly Z3 experiments. See details [here](#how-to-update-experiment-summary).
-  * `AzurePerformanceTest` is a .NET class library holding the `AzureExperimentManager` class which exposes API to manage experiments based on Microsoft Azure.
-  * `PerformanceTest` is a .NET class library containing abstract types for experiments management.
-  * `Measurement` is a .NET class library allowing to measure process run time and memory usage.
-  * `Z3Domain` is a .NET class library implementing Z3-specific analysis of the program execution.
-  * `AzureWorker` is a command line application that is run on Azure Batch nodes to prepare and execute performance tests.
-  * `AzurePerformanceTestCommons` is a .NET class library that contains functionality for Azure-based experiment management and is shared by `AzurePerformanceTest` and `AzureWorker`.
-
-* `/ImportData.sln` is a Visual Studio 2015 solution which allows to import experiments results from old format to Azure storage.
-
-* `/src/` contains Visual Studio projects included to the Visual Studio solutions.
-
-* `/tests/` contain Visual Studio unit test projects included to the Visual Studio solutions.
-
-# Build and test 
-
-## Build requirements
-
-## How to build
-
-# Deploy
+# Run and deploy
 
 ## Update Azure Batch worker
 
