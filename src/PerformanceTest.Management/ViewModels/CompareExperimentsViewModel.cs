@@ -38,8 +38,8 @@ namespace PerformanceTest.Management
             this.checkIgnoreCategory = false;
             this.checkIgnorePostfix = false;
             this.checkIgnorePrefix = false;
-            this.extension1 = "." + def1.BenchmarkFileExtension;
-            this.extension2 = "." + def2.BenchmarkFileExtension;
+            this.extension1 = "." + def1.BenchmarkFileExtension.Split('|')[0];
+            this.extension2 = "." + def2.BenchmarkFileExtension.Split('|')[0];
             this.category1 = def1.Category;
             this.category2 = def2.Category;
             this.sharedDirectory1 = def1.BenchmarkDirectory;
