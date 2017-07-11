@@ -157,7 +157,56 @@ Its `PartitionKey` is `NextIDPartition` and `RowKey` is `NextIDRow`.
 
 ### Experiment results
 
-### Configuration
+Results of experiments are stored in the blob container `results`. 
+
+For each of the experiments, there is a single blob named `{id}.csv.zip` where `{id}` is an experiment id. It is a compressed CSV table 
+with rows corresponding to benchmarks. Rows are ordered by benchmark file name.
+
+While an experiment is running, the table is appended with new rows as benchmarks complete. 
+Due to infrastructure issues, there is a chance that there are more than one row per benchmark when the experiment is complete.
+Duplicates can be resolved using PerformanceTest.Management application.
+
+The application also allows to resubmit some of the benchmarks, this also leads to duplicates in this table.
+
+Table structure is:
+
+* `BenchmarkFileName` is name of a file that is passed as an argument to the target executable, 
+relative to the benchmark directory and category specified in the experiment definition.
+* `AcquireTime` is UTC time moment when the test started.
+* `NormalizedRuntime` equals total processor time for this benchmark divided by 
+total processor time of the reference experiment for the same machine.
+* `TotalProcessorTime` (seconds) indicates the amount of time that the test has spent utilizing the CPU.
+In case of multiple CPU cores were used, times for all cores are summed together so this value can exceed the wall clock time.
+* `WallClockTime` (seconds) indicates the amount of real time elapsed between the test process started and exited.
+* `PeakMemorySizeMB` (megabytes) is maximum amount of virtual memory used by the test run.
+* `Status` indicates how the test completed. The status is finally determined by the experiment domain.
+    * `Success` if successfully completed.
+    * `OutOfMemory` if out-of-memory exception occurred or the benchmark memory limit was exceeded.
+    * `Timeout` if wall clock time exceeded the benchmark time limit.
+    * `Error` if the experiment domain considers the output or exit code as error.
+    * `Bug` if the experiment domain considers the output or exit code as bug in the target executable.
+    * `InfrastructureError` if the infrastructure had issues when running the test. 
+* `ExitCode` contains process exit code, if status is neither memory out nor time out;
+otherwise, it is empty.
+* `StdOut` is either standard output of the test process or empty, if the output is too large and is stored in a separate blob.
+* `StdOutExtStorageIdx` is empty, if `StdOut` contains the actual output; otherwise it contains a suffix that should be appended to 
+the standard output blob name for the result, see [Outputs](#outputs) for more details.
+* `StdErr` is either standard error of the test process or empty, if the error is too large and is stored in a separate blob.
+* `StdErrExtStorageIdx` is empty, if `StdErr` contains the actual error; otherwise it contains a suffix that should be appended to 
+the standard error blob name for the result, see [Outputs](#outputs) for more details.
+
+Other columns depend on the experiment domain. The `Domain.Analyze` method applied to results of a benchmark 
+can return custom properties which are included into this table. For the Z3 domain such properties are:
+
+* `SAT`
+* `UNSAT`
+* `UNKNOWN`
+* `TargetSAT`
+* `TargetUNSAT`
+* `TargetUNKNOWN`
+
+
+### Outputs
 
 ### Binaries
 
@@ -201,7 +250,7 @@ you will need to manually update the summary using `Summary.exe` utility
 
 ### How to schedule nightly runs using Azure Batch Schedule
 
-1. Prepare Azure Batch Pool and choose an approptiate certificate to be installed on Batch nodes. This is 
+1. Prepare Azure Batch Pool and choose an appropriate certificate to be installed on Batch nodes. This is 
 required to enable access to the Azure Key Vault.
 
 1. Check `NightlyRunner` tool settings. They are located in the `NightlyRunner.exe.config` file.

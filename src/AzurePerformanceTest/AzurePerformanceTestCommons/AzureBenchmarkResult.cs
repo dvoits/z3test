@@ -125,7 +125,7 @@ namespace AzurePerformanceTest
             List<Column> columns = new List<Column>()
             {
                 Column.Create("BenchmarkFileName", benchmarks.Select(b => b.BenchmarkFileName), length),
-                Column.Create("AcquireTime", benchmarks.Select(b => b.AcquireTime.ToString(System.Globalization.CultureInfo.InvariantCulture)), length),
+                Column.Create("AcquireTime", benchmarks.Select(b => b.AcquireTime.ToUniversalTime().ToString(System.Globalization.CultureInfo.InvariantCulture)), length),
                 Column.Create("NormalizedRuntime", benchmarks.Select(b => b.NormalizedRuntime), length),
                 Column.Create("TotalProcessorTime", benchmarks.Select(b => b.TotalProcessorTime.TotalSeconds), length),
                 Column.Create("WallClockTime", benchmarks.Select(b => b.WallClockTime.TotalSeconds), length),
@@ -206,7 +206,7 @@ namespace AzurePerformanceTest
                 }
 
                 results[i] = new AzureBenchmarkResult();
-                results[i].AcquireTime = DateTime.Parse(acq[i], CultureInfo.InvariantCulture);
+                results[i].AcquireTime = DateTime.Parse(acq[i], CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
                 results[i].BenchmarkFileName = fileName[i];
                 results[i].ExitCode = string.IsNullOrEmpty(exitcode[i]) ? null : (int?)int.Parse(exitcode[i], CultureInfo.InvariantCulture);
                 results[i].ExperimentID = expId;

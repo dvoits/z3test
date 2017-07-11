@@ -50,7 +50,7 @@ namespace AzurePerformanceTest
             if (maxId > nextId)
             {
                 var nextIdEnt = new NextExperimentIDEntity();
-                nextIdEnt.Id = nextId;
+                nextIdEnt.Id = maxId;
                 await experimentsTable.ExecuteAsync(TableOperation.InsertOrReplace(nextIdEnt));
             }
         }
