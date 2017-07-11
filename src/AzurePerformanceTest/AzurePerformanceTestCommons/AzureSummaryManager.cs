@@ -4,6 +4,7 @@ using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.RetryPolicies;
 using PerformanceTest;
+using PerformanceTest.Alerts;
 using PerformanceTest.Records;
 using System;
 using System.Collections.Generic;
@@ -108,7 +109,8 @@ namespace AzurePerformanceTest
             Trace.WriteLine("Updating records...");
             var records = all_summaries.Item2;
             records.Update(results, domain);
-
+            var table = all_summaries.Item1;
+            
             await UploadSummary(timelineName, sumTable, records, all_summaries.Item3);
         }
 
@@ -149,6 +151,119 @@ namespace AzurePerformanceTest
             Trace.WriteLine("Uploading summary...");
             await UploadStatusSummary(summary);
             return summary;
+        }
+
+        public async void SendReport(int expId, int refId, DateTime submissionTime, List<string> recipients, string linkPage)
+        {
+            var summary = await GetStatusSummary(expId, refId); 
+            if (summary != null && (summary.BugsByCategory.Count > 0 || summary.ErrorsByCategory.Count > 0))
+            {
+                //generate new html report 
+                string new_report = "<body>";
+                new_report += "<h1>Z3 Nightly Alert Report</h1>";
+                new_report += "<p>This are alerts for <a href=" + linkPage + "?job=" + expId + " style='text-decoration:none'>job #" + expId + "</a> (submitted " + submissionTime + ").</p>";
+
+                //use ExperimentAlerts
+
+                List<string> bugs;
+                List<string> errors;
+                List<string> dippers;
+                bool hasBugs = summary.BugsByCategory.TryGetValue("", out bugs);
+                bool hasErrors = summary.ErrorsByCategory.TryGetValue("", out errors);
+                bool hasDippers = summary.DippersByCategory.TryGetValue("", out dippers);
+                if (!hasBugs && !hasErrors && !hasDippers)
+                {
+                    new_report += "<p>";
+                    new_report += "<img src='cid:ok'/> ";
+                    new_report += "<font color=Green>All is well everywhere!</font>";
+                    new_report += "</p>";
+                }
+                else
+                {
+                    new_report += "<h2>Alert Summary</h2>";
+                    new_report += createReportTable("", summary);
+
+                    //detailed report
+                    new_report += "<h2>Detailed alerts</h2>";
+                    string[] categories = summary.BugsByCategory.Keys.Concat(summary.ErrorsByCategory.Keys).Concat(summary.DippersByCategory.Keys).Distinct().ToArray();
+                    foreach (string cat in categories)
+                    {
+                        if (cat != "")
+                        {
+                            new_report += "<h3><a href='" + linkPage + "?job=" + expId + "&cat=" + cat + "' style='text-decoration:none'>" + cat + "</a></h3>";
+                            new_report += createReportTable(cat, summary);
+                        }
+                    }
+                    new_report += "<p>For more information please see the <a href='" + linkPage + "' style='text-decoration:none'>Z3 Nightly Webpage</a>.</p>";
+                }
+                new_report += "</body>";
+                //send emails
+                Dictionary<string, string> images = new Dictionary<string, string>();
+                images.Add("ok", "Images/ok.png");
+                images.Add("warning", "Images/warning.png");
+                images.Add("critical", "Images/critical.png");
+                foreach (string recipient in recipients)
+                {
+                    SendMail.Send(recipient, "Z3 Alerts", new_report, null, images, true);
+                }
+            }
+        }
+        private string createReportTable (string category, ExperimentStatusSummary summary)
+        {
+            List<string> bugs;
+            List<string> errors;
+            List<string> dippers;
+            bool hasBugs = summary.BugsByCategory.TryGetValue(category, out bugs);
+            bool hasErrors = summary.ErrorsByCategory.TryGetValue(category, out errors);
+            bool hasDippers = summary.DippersByCategory.TryGetValue(category, out dippers);
+
+            //add table 
+            string new_table = "<table>";
+            new_table += "<tr>";
+            if (hasBugs && bugs.Count > 0)
+            {
+                new_table += "<td align=left valign=top><img src='cid:critical'/></td>";
+                new_table += "<td align=left valign=middle><font color=Red>";
+                new_table += string.Format("There {0} {1} bug{2} in ", bugs.Count == 1 ? "is" : "are", bugs.Count, bugs.Count == 1 ? "" : "s");
+                new_table += "<br/>";
+                foreach (var message in bugs)
+                {
+                    new_table += message + "<br/>";
+                }
+                new_table += "</font></td>";
+                new_table += "<tr>";
+            }
+            if (hasErrors && errors.Count > 0)
+            {
+                new_table += "<td align=left valign=top><img src='cid:warning'/></td>";
+                new_table += "<td align=left valign=middle><font color=Orange>";
+                new_table += string.Format("There {0} {1} error{2} in ", errors.Count == 1 ? "is" : "are", errors.Count, errors.Count == 1 ? "" : "s");
+                new_table += "<br/>";
+                foreach (var message in errors)
+                {
+                    new_table += message + "<br/>";
+                }
+                new_table += "</font></td>";
+                new_table += "<tr>";
+            }
+            if (hasDippers && dippers.Count > 0)
+            {
+                new_table += "<td align=left valign=top><img src='cid:ok'/></td>";
+                new_table += "<td align=left valign=middle><font color=Green>";
+                new_table += string.Format("There {0} {1} benchmark{2} that show{3} a dip in performance: ",
+                        dippers.Count == 1 ? "is" : "are", dippers.Count,
+                        dippers.Count == 1 ? "" : "s",
+                        dippers.Count == 1 ? "s" : "");
+                new_table += "<br/>";
+                foreach (var message in dippers)
+                {
+                    new_table += message + "<br/>";
+                }
+                new_table += "</font></td>";
+                new_table += "<tr>";
+            }
+            new_table += "</table>";
+            return new_table;
         }
 
         private async Task UploadStatusSummary(ExperimentStatusSummary summary)
@@ -310,5 +425,7 @@ namespace AzurePerformanceTest
                     new BlobRequestOptions { RetryPolicy = retryPolicy }, null);
             }
         }
+
+
     }
 }

@@ -64,7 +64,7 @@
     <Compile Include="ExperimentSummary.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Records.cs" />
-    <Compile Include="Sendmail.cs" />
+    <Compile Include="SendMail.cs" />
     <Compile Include="Tags.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -72,6 +72,11 @@
       <Project>{e315bfab-d44b-4a75-82a3-1eeaf33b5717}</Project>
       <Name>Measurement</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Images\critical.png" />
+    <Content Include="Images\ok.png" />
+    <Content Include="Images\warning.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
