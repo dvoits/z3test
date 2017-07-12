@@ -11,9 +11,10 @@ This repository holds test infrastructure and benchmarks used to test Z3.
   - [How to build](#how-to-build)
 - [Architecture](#architecture)
   - [Storage](#storage)
-    - Table of experiments
-    - Experiment results
-    - Configuration
+    - [Configuration](#configuration)
+    - [Table of experiments](#table-of-experiments)
+    - [Experiment results](#experiment-results)
+    - [Outputs](#outputs)
     - Binaries
     - Summaries
     - Running performance tests
@@ -209,9 +210,19 @@ can return custom properties which are included into this table. For the Z3 doma
 
 ### Outputs
 
-As part of an experiment, the target executable runs for each of the benchmarks.
-The standard output and error produced by the process is saved either to the results table in
-columns `StdOut` (`StdErr` for errors) or in a separate blob.
+As a part of an experiment, the target executable runs for each of the benchmarks.
+Standard output and error produced by the process are saved either to the results table in
+columns `StdOut` for standard output and `StdErr` for errors or in a separate blob,
+if the text size exceeds 4KB. 
+
+Blobs with outputs are located in the `output` blob container of the storage account.
+
+Blob name is `E{id}F{benchmark}-stdout{suffix}` for standard output and
+`E{id}F{benchmark}-stderr{suffix}` for standard error, 
+where `{id}` is experiment id, `{benchmark}` is a benchmark file name (as given in the experiment
+results table), `{suffix}` is value of the column `StdOutExtStorageIdx` of the experiment results table for output
+and `StdErrExtStorageIdx` for errors. The suffixes allow the results table to contain duplicated results
+for a benchmark each having different output/errors.
 
 
 
