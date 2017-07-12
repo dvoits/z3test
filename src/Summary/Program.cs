@@ -44,14 +44,12 @@ namespace Summary
         private static async Task Run(int id, string summaryName)
         {
             Console.WriteLine("Connecting to Azure...");
-            string connectionString = await GetConnectionString(); 
+            string connectionString = "DefaultEndpointsProtocol=https;AccountName=cz3test2;AccountKey=ncF/HfD7tMkmHo3xr9+mtlFg8HXPTH90B9RNH2I3Fk6p36AouBYFMbAUonDe8u6vArTq2Lxh88j0kQBKXd18EA==;BatchAccessKey=BwvyPY/PVCS78uADX/egSxOTMuUlFBCSyxGkgjK00A/it8k1+kPg39tNCyq4gJ5POxf71wiWmtlytbjEfKc4KQ==;BatchURL=https://cz3.westeurope.batch.azure.com;BatchAccount=cz3;";//await GetConnectionString(); 
             var manager = new AzureSummaryManager(connectionString, MEFDomainResolver.Instance);
 
             // debug: var stsum = await manager.GetStatusSummary(184, 158);
             var result = await manager.Update(summaryName, id);
-            var refId = result.Item1[1];
-            //string linkPage = "http://Z3-1/Nightly/Default.aspx";
-            //await manager.SendReport(id, refId, DateTime.Now/*result.Item2*/, rec, linkPage);
+            //await manager.SendReport(result[0], result[1], rec, linkPage);
         }
 
         private static async Task<string> GetConnectionString()
