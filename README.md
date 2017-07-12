@@ -15,7 +15,7 @@ This repository holds test infrastructure and benchmarks used to test Z3.
     - [Table of experiments](#table-of-experiments)
     - [Experiment results](#experiment-results)
     - [Outputs](#outputs)
-    - Binaries
+    - [Binaries](#binaries)
     - Summaries
     - Running performance tests
   - [Server-side components](#server-side-components)
@@ -140,7 +140,7 @@ Azure Batch worker as tests complete.
 - `Creator` keeps a custom name of one who have submitted the experiment.
 - `DomainName` allows to identify and construct an instance of a `Domain` class that determines an additional analysis and results interpretation.
 - `Executable` is a blob name in the `bin` container which contains either an executable file or a zip file with a main executable and supporting files. The executable will run for multiple specified benchmark files to measure its performance.
-- `ExperimentTimeout` is a time limit in seconds per experiment. It time passed since the experiment submission exceeds this time span,  the experiment is stopped. 
+- `ExperimentTimeout` is a time limit in seconds per experiment. If time passed since the experiment submission exceeds this time span,  the experiment is stopped. 
 Zero means no limits.
 - `Flag` is either 'false' or 'true' and is switched by a user.
 - `MemoryLimitMB` is the memory limit per benchmark in megabytes. Zero means no limit.
@@ -225,8 +225,40 @@ and `StdErrExtStorageIdx` for errors. The suffixes allow the results table to co
 for a benchmark each having different output/errors.
 
 
-
 ### Binaries
+
+For each experiment, there is a blob in the blob container `bin` which contains
+binaries to be tested. Same blob can be reused by multiple experiments.
+The experiments table contains name of the associated blob in the column `Executable`.
+
+Blob is either an executable file itself or a package containing an executable file and its supporting files.
+Package can be of two kinds:
+1. A zip file containing only one executable file which will run during an experiment and any number of other files.
+2. A package following the 
+[Open Packaging Conventions](https://msdn.microsoft.com/en-us/library/windows/desktop/dd742818(v=vs.85).aspx)
+which can contain multiple files without restrictions on number of executable files
+and has a specific relationship to distinguish the main executable file.
+
+An executable file must have one of following extensions: `exe`, `bat`, `cmd`.
+
+A blob with binaries can have an arbitrary name but PerformanceTest.Management application gives a name using this 
+pattern: `{creator}.{file-name}.{date-time}{file-extension}`, where
+`{creator}` is an escaped name of a user running the application,
+`{file-name}` is name of a file or package without extension,
+`{date-time}` is a moment when the executable was uploaded,
+`{file-extension}` is the extension.
+
+For example, the package `z3.zip` can be uploaded by the application as a blob with name `itis_Dmitry.z3.2017-06-16T12-12-14-1785.zip`.
+
+Binaries for testing the Z3 nightly builds are named in accordance with the given rule where
+the built zip file is used as a package and `Nightly` as creator.
+For example, a nightly build result `z3-4.5.1.02161f2ff743-x86-win.zip` is uploaded as is with name
+`Nightly.z3-4.5.1.02161f2ff743-x86-win.2017-06-16T08-33-02-8352.zip`.
+
+A blob with binaries has two metadata attributes:
+1. An attribute `creator` contains the original unescaped creator name.
+2. An attribute `fileName` contains the original executable or package name.
+
 
 ### Summaries
 
