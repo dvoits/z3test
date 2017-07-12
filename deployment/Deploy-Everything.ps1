@@ -88,7 +88,7 @@ if($certPfxPath) {
     [System.Security.Cryptography.X509Certificates.X509Certificate2]$cert = .\New-Cert.ps1 $name $certPassword $now $yearFromNow
 }
 Write-Host "Registering AAD application..."
-[Microsoft.Azure.Commands.Resources.Models.ActiveDirectory.PSADServicePrincipal]$sp = .\New-AADApp.ps1 $name $cert
+[Microsoft.Azure.Commands.Resources.Models.ActiveDirectory.PSADServicePrincipal]$sp = .\Deploy-AADApp.ps1 $name $cert
 Write-Host "Creating resource group, if needed..."
 [Microsoft.Azure.Commands.ResourceManager.Cmdlets.SdkModels.PSResourceGroup]$rg = .\Deploy-ResourceGroup.ps1 $name $location
 Write-Host "Deploying storage..."
