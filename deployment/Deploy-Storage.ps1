@@ -11,10 +11,10 @@ param(
 $ErrorActionPreference = "Stop"
 
 #Create or check for existing
-$storage = Get-AzureRmStorageAccount -Name $storageName -ResourceGroupName $rg.ResourceGroupName -ErrorAction SilentlyContinue
+$storage = Get-AzureRmStorageAccount -Name $storageName -ResourceGroupName $resourceGroup.ResourceGroupName -ErrorAction SilentlyContinue
 if(!$storage)
 {
-    $storage = New-AzureRmStorageAccount -Name $storageName -ResourceGroupName $rg.ResourceGroupName -Location $rg.Location -SkuName Standard_LRS -Kind Storage
+    $storage = New-AzureRmStorageAccount -Name $storageName -ResourceGroupName $resourceGroup.ResourceGroupName -Location $resourceGroup.Location -SkuName Standard_LRS -Kind Storage
 }
 
 $storage

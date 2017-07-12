@@ -20,17 +20,17 @@ param(
 $ErrorActionPreference = "Stop"
 
 #Create or check for existing
-$batch = Get-AzureRmBatchAccount -AccountName $batchName -ResourceGroupName $rg.ResourceGroupName -ErrorAction SilentlyContinue
+$batch = Get-AzureRmBatchAccount -AccountName $batchName -ResourceGroupName $resourceGroup.ResourceGroupName -ErrorAction SilentlyContinue
 if(!$batch)
 {
     if ($storage) {
-        $batch = New-AzureRmBatchAccount -AccountName $batchName -ResourceGroupName $rg.ResourceGroupName -Location $rg.Location -AutoStorageAccountId $storage.Id
+        $batch = New-AzureRmBatchAccount -AccountName $batchName -ResourceGroupName $resourceGroup.ResourceGroupName -Location $resourceGroup.Location -AutoStorageAccountId $storage.Id
     } else {
-        $batch = New-AzureRmBatchAccount -AccountName $batchName -ResourceGroupName $rg.ResourceGroupName -Location $rg.Location
+        $batch = New-AzureRmBatchAccount -AccountName $batchName -ResourceGroupName $resourceGroup.ResourceGroupName -Location $resourceGroup.Location
     }
 }
 
-$batch = Get-AzureRmBatchAccountKeys -AccountName $batch.AccountName -ResourceGroupName $rg.ResourceGroupName
+$batch = Get-AzureRmBatchAccountKeys -AccountName $batch.AccountName -ResourceGroupName $resourceGroup.ResourceGroupName
 
 $pools = Get-AzureBatchPool -BatchContext $batch
 $conf = [Microsoft.Azure.Commands.Batch.Models.PSCloudServiceConfiguration]::new("3", "*")

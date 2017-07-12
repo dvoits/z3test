@@ -1,8 +1,4 @@
 param([Parameter(Mandatory=$True)]
- [Microsoft.Azure.Commands.ResourceManager.Cmdlets.SdkModels.PSResourceGroup]
- $resourceGroup,
- 
- [Parameter(Mandatory=$True)]
  [Microsoft.Azure.Commands.Management.Storage.Models.PSStorageAccount]
  $storage,
  
