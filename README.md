@@ -16,12 +16,12 @@ This repository holds test infrastructure and benchmarks used to test Z3.
     - [Experiment results](#experiment-results)
     - [Outputs](#outputs)
     - [Binaries](#binaries)
-    - Summaries
-    - Running performance tests
+    - [Summaries](#summaries)
+        - [How to update experiment summary](#how-to-update-experiment-summary)  
+    - [Secrets](#secrets)
   - [Server-side components](#server-side-components)
   - [Client applications](#client-applications)
 - [Run and deploy](#run-and-deploy)
-- [How-to](#how-to)
 
 # Glossary
 
@@ -262,7 +262,55 @@ A blob with binaries has two metadata attributes:
 
 ### Summaries
 
+To facilitate analysis of multiple experiments results, it is possible to build summaries and keep them in the
+blob container `summary`. There are several kinds of summaries:
+
+1. A timeline for series of experiments, which includes:
+    - Summary of different experiment properties (errors, bugs, runtime etc) by experiments and benchmark categories.
+    - Benchmark records: for each of the benchmarks, shows the best runtime and the experiment where it was achieved.
+    - Benchmark records summarized by benchmark categories: shows total runtime and number of benchmarks for each of the categories.
+2. Summary for an experiment statuses with comparison to another experiment. 
+It lists following groups of benchmarks: errors, bugs, underperformers and dippers (compared to another experiment).
+
+
+The timeline is represented as a zip file with 3 text files: `timeline.csv`, `records.csv` and `records_summary.csv`.
+These files contain data described above in item 1.
+
+Data for item 2 is stored in a blob with name `_statuses_{id}.csv.zip` (if has no comparison) or 
+`_statuses_{id}_{refId}.csv.zip` (if experiment id is compared to refId). 
+Such a blob is created on-demand when `AzureSummaryManager.GetStatusSummary()` method is invoked.
+
+
+The Nightly web application uses the summaries to analyze experiments results.
+
+#### How to update experiment summary
+
+The .NET application `/src/Summary` allows to compute summary and records for an experiment and then either append or replace
+corresponding row in a given summary blob. If the given experiment is missing, the program fails.
+
+Settings for the program should be edited in the `Summary.exe.config` file.
+
+For example, following command updates or adds summary for the experiment 100 in a blob `Z3Nightly.zip` of the container `summary`:
+
+```
+> Summary.exe 100 Z3Nightly
+```
+
+
 ### Secrets
+
+Azure Key vault allows to safely keep and get credentials for the storage account.
+It is needed for AzureWorker which runs on Batch nodes and for client applications,
+such as Nightly web application, NightlyRunner and Summary.
+
+Such application require following settings to be provided in their configuration files:
+* `AADApplicationId` is an identified of Azure Active Directory application, which must be created for a deployment of the 
+performance test infrastructure.
+* `AADApplicationCertThumbprint` is a thumbprint of the application certificate.
+* `KeyVaultUrl` is URL of the Azure Key vault.
+* `ConnectionStringSecretId` is name of the secret which contains the connection string for a client application.
+
+The application certificate must be installed on the machine where a client application runs.
 
 ## Server-side components
 
@@ -354,17 +402,3 @@ $BatchContext = Get-AzureRmBatchAccountKeys
 New-AzureBatchJobSchedule -Id "NightlyRunSchedule" -Schedule $Schedule -JobSpecification $JobSpecification -BatchContext $BatchContext
 ```
 
-# How to
-
-## How to update experiment summary
-
-The .NET application `/src/Summary` allows to compute summary and records for an experiment and then either append or replace
-corresponding row in a given summary table. If the given experiment is missing, the program fails.
-
-Summary tables are stored in the `summary` container as CSV files, one row per experiment.
-
-For example, following command updates or adds summary for the experiment 100 in `z3-nightly.csv` table:
-
-```
-> Summary.exe 100 Z3Nightly
-```
