@@ -1,8 +1,4 @@
 param([Parameter(Mandatory=$True)]
- [Microsoft.Azure.Commands.ResourceManager.Cmdlets.SdkModels.PSResourceGroup]
- $resourceGroup,
- 
- [Parameter(Mandatory=$True)]
  [string]
  $connectionStringSecretName,
  
@@ -29,7 +25,7 @@ $cpath = Get-Location
 $cdir = $cpath.Path
 
 Write-Host "Building AzureWorker..."
-.\Build-AzureWorker.ps1
+$null = .\Build-AzureWorker.ps1
 $null = mkdir "AzureWorker" -Force
 Copy-Item ..\src\AzurePerformanceTest\AzureWorker\bin\Release\*.exe .\AzureWorker
 Copy-Item ..\src\AzurePerformanceTest\AzureWorker\bin\Release\*.dll .\AzureWorker

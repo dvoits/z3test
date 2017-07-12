@@ -26,16 +26,16 @@ param(
 $ErrorActionPreference = "Stop"
 
 #Create or check for existing
-$keyVault = Get-AzureRmKeyVault -VaultName $keyVaultName -ResourceGroupName $rg.ResourceGroupName -ErrorAction SilentlyContinue
+$keyVault = Get-AzureRmKeyVault -VaultName $keyVaultName -ResourceGroupName $resourceGroup.ResourceGroupName -ErrorAction SilentlyContinue
 if(!$keyVault)
 {
-    $keyVault = New-AzureRmKeyVault -VaultName $keyVaultName -ResourceGroupName $rg.ResourceGroupName -Location $rg.Location
+    $keyVault = New-AzureRmKeyVault -VaultName $keyVaultName -ResourceGroupName $resourceGroup.ResourceGroupName -Location $resourceGroup.Location
 }
 
-$storageKeys = Get-AzureRmStorageAccountKey -Name $storage.StorageAccountName -ResourceGroupName $rg.ResourceGroupName
+$storageKeys = Get-AzureRmStorageAccountKey -Name $storage.StorageAccountName -ResourceGroupName $resourceGroup.ResourceGroupName
 $stName = $storage.StorageAccountName
 $stKey = $storageKeys[0].Value
-$batchAccount = Get-AzureRmBatchAccountKeys -AccountName $batchAccount.AccountName -ResourceGroupName $rg.ResourceGroupName
+$batchAccount = Get-AzureRmBatchAccountKeys -AccountName $batchAccount.AccountName -ResourceGroupName $resourceGroup.ResourceGroupName
 $batchName = $batchAccount.AccountName
 $batchKey = $batchAccount.PrimaryAccountKey
 $batchAddr = $batchAccount.AccountEndpoint
@@ -45,7 +45,7 @@ $secureConnString = ConvertTo-SecureString -String $connectionString -Force -AsP
 $null = Set-AzureKeyVaultSecret -Name $connectionStringSecretName -SecretValue $secureConnString -VaultName $keyVaultName
 
 if ($AADAppServicePrincipal) {
-    Set-AzureRmKeyVaultAccessPolicy -VaultName $keyVaultName -ObjectId $AADAppServicePrincipal.Id -PermissionsToSecrets all -ResourceGroupName $rg.ResourceGroupName
+    Set-AzureRmKeyVaultAccessPolicy -VaultName $keyVaultName -ObjectId $AADAppServicePrincipal.Id -PermissionsToSecrets all -ResourceGroupName $resourceGroup.ResourceGroupName
 }
 
 $keyVault

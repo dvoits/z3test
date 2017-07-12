@@ -51,15 +51,15 @@ Import-Module $publishModule
 
 #Create or check for existing
 Write-Host "Retrieving WebApp..."
-$app = Get-AzureRmWebApp -Name $appName -ResourceGroupName $rg.ResourceGroupName -ErrorAction SilentlyContinue
+$app = Get-AzureRmWebApp -Name $appName -ResourceGroupName $resourceGroup.ResourceGroupName -ErrorAction SilentlyContinue
 if(!$app)
 {
     Write-Host "Not found, creating a new one..."
-    $plan = Get-AzureRmAppServicePlan -Name $appName -ResourceGroupName $rg.ResourceGroupName -ErrorAction SilentlyContinue
+    $plan = Get-AzureRmAppServicePlan -Name $appName -ResourceGroupName $resourceGroup.ResourceGroupName -ErrorAction SilentlyContinue
     if (!$plan) {
-        $plan = New-AzureRmAppServicePlan -Name $appName -ResourceGroupName $rg.ResourceGroupName -Location $rg.Location -Tier Basic
+        $plan = New-AzureRmAppServicePlan -Name $appName -ResourceGroupName $resourceGroup.ResourceGroupName -Location $resourceGroup.Location -Tier Basic
     }
-    $app = New-AzureRmWebApp -Name $appName -ResourceGroupName $rg.ResourceGroupName -Location $rg.Location -AppServicePlan $plan.Name
+    $app = New-AzureRmWebApp -Name $appName -ResourceGroupName $resourceGroup.ResourceGroupName -Location $resourceGroup.Location -AppServicePlan $plan.Name
 }
 $newSettings = @{}
 ForEach ($kvp in $app.SiteConfig.AppSettings) {
@@ -68,7 +68,7 @@ ForEach ($kvp in $app.SiteConfig.AppSettings) {
 
 $newSettings["WEBSITE_LOAD_CERTIFICATES"] = "*"
 
-Set-AzureRMWebApp -Name $appName -ResourceGroupName $rg.ResourceGroupName -AppSettings $newSettings
+$null = Set-AzureRMWebApp -Name $appName -ResourceGroupName $resourceGroup.ResourceGroupName -AppSettings $newSettings
 
 Write-Host "Uploading certificate..."
 #Dirty hack, because Azure PowerDhell lacks required capablities
@@ -81,11 +81,11 @@ $PropertiesObject = @{
     password = $certPassword
 }
 
-$null = New-AzureRmResource -Name $ResourceName -Location $rg.Location -PropertyObject $PropertiesObject -ResourceGroupName $rg.ResourceGroupName -ResourceType Microsoft.Web/certificates -ApiVersion 2015-08-01 -Force
+$null = New-AzureRmResource -Name $ResourceName -Location $resourceGroup.Location -PropertyObject $PropertiesObject -ResourceGroupName $resourceGroup.ResourceGroupName -ResourceType Microsoft.Web/certificates -ApiVersion 2015-08-01 -Force
 
 
 Write-Host "Retrieving publishing credentials..."
-$siteConf = Invoke-AzureRmResourceAction -ResourceGroupName $rg.ResourceGroupName -ResourceType Microsoft.Web/sites/config -ResourceName $appName/publishingcredentials -Action list -ApiVersion 2015-08-01 -Force
+$siteConf = Invoke-AzureRmResourceAction -ResourceGroupName $resourceGroup.ResourceGroupName -ResourceType Microsoft.Web/sites/config -ResourceName $appName/publishingcredentials -Action list -ApiVersion 2015-08-01 -Force
 
 Write-Host "Building NightlyWebApp..."
 $null = .\Build-NightlyWebApp.ps1
