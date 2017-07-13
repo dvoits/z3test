@@ -1,10 +1,20 @@
+<#
+ .SYNOPSIS
+    Builds and updates Azure worker in an existing deployment.
+
+ .DESCRIPTION
+    Builds and updates Azure worker in an existing deployment. AzureWorker.exe.config file is not updated so, that configuration is preserved.
+
+ .PARAMETER name
+    Name of the deployment.
+
+ .PARAMETER storageName
+    Name of the storage account in the deployment (if differs from default one).
+#>
 param(
  [Parameter(Mandatory=$True)]
  [string]
  $name,
-
- [string]
- $location,
 
  [string]
  $storageName
@@ -19,8 +29,12 @@ if (-not $storageName) {
 $cpath = Get-Location
 $cdir = $cpath.Path
 
-[Microsoft.Azure.Commands.ResourceManager.Cmdlets.SdkModels.PSResourceGroup]$rg = .\Deploy-ResourceGroup.ps1 $name $location
-[Microsoft.Azure.Commands.Management.Storage.Models.PSStorageAccount]$storage = .\Deploy-Storage.ps1 $storageName $rg
+$storage = Get-AzureRmStorageAccount -Name $storageName -ResourceGroupName $name -ErrorAction SilentlyContinue
+if(!$storage)
+{
+    Write-Error "Storage not found, update is impossible. Please, perform a complete deployment."
+    exit 1
+}
 
 Write-Host "Building AzureWorker..."
 $null = .\Build-AzureWorker.ps1

@@ -386,6 +386,44 @@ To submit new experiment from code, use `AzurePerformanceTest.AzureExperimentMan
 
 # Run and deploy
 
+## Deployment scripts
+
+For the sake of convenience, a number of powershell scripts is situated in `/deployment` folder, that allow to streamline deployment processes. Most notable of those are:
+
+1. `Deploy-Everything.ps1` - builds and deploys all the entities required to run performance tests of z3 in Azure. These include:
+    * Resource group that contains everything else (if a resource group with the given name exists already, it will be used instead of creating a new one).
+    * Storage account (if a storage account with the given name exists already, it will be used instead of creating a new one).
+    * Batch account (if a batch account with the given name exists already, it will be used instead of creating a new one).
+    * Key vault where keys to storage and batch are securely kept (if a key vault with the given name exists already, it will be used instead of creating a new one).
+    * Nightly web application  (if a web application with the given name exists already, it will be updated instead of creating a new one).
+    * Reference experiment settings and data (if provided).
+    * Azure worker - application that measures performance in azure batch.
+    * Nightly runner - application that starts nightly performance tests. Is scheduled to run in batch every 24 hours.
+    * Azure Active Directory (AAD) application - an entity required to authenticate azure worker, nightly web app, and nightly runner in azure (if an AAD application with the given name exists already, you will be prompted to use it or create a new one).
+    * A self-signed certificate as credentials for AAD application.
+
+2. `Deploy-ReferenceExperiment.ps1` - deploys reference experiment.
+3. `Update-AzureWorker.ps1` - builds and updates Azure worker in an existing deployment. AzureWorker.exe.config file is not updated so, that configuration is preserved.
+4. `Update-NightlyRunner.ps1` - builds and updates Nightly runner in an existing deployment. NightlyRunner.exe.config file is not updated so, that configuration is preserved.
+5. `Update-NightlyWebApp.ps1` - builds and updates Nightly web app in an existing deployment. Web.config file is not updated so, that configuration is preserved.
+
+Other scripts located there are:
+* `Build-AzureWorker.ps1` - builds AzureWorker.
+* `Build-NightlyRunner.ps1` - builds Nightly runner.
+* `Build-NightlyWebApp.ps1` - builds Nightly web app.
+* `Deploy-AADApp.ps1` - creates a new Azure Active Directory application with certificate credentials. If AAD application with given name exists already, prompts user to either add a certificate credentials to existing application or create a new one.
+* `Deploy-AzureWorker.ps1` - builds, configures, and deploys AzureWorker.
+* `Deploy-Batch.ps1` - retrieves azure batch account with given name. If it doesn't exist, creates a new one. Associates a storage account with it. Adds a provided certificate to the batch account and all of its pools. If batch account has no pools, a new one is created.
+* `Deploy-KeyVault.ps1` - retrieves azure key vault with given name. If it doesn't exist, creates a new one. Puts there a connection string to z3 performance testing environment and gives an AAD app permission to access it.
+* `Deploy-NightlyRunner.ps1` - builds, configures, and deploys Nightly runner. Schedules nightly test runs.
+* `Deploy-ResourceGroup.ps1` - retrieves azure resource group with given name. If it doesn't exist, creates a new one.
+* `Deploy-Storage.ps1` - retrieves azure storage with given name. If it doesn't exist, creates a new one.
+* `Deploy-WebApp.ps1` - builds, configures, and deploys Nightly web app.
+* `New-AADApp.ps1` - creates a new Azure Active Directory application with certificate credentials.
+* `New-Cert.ps1` - creates a new self-signed certificate, which can be used in z3 performance testing environment.
+
+To use these scripts, open powershell console in the `/deployment` folder and log into Azure using `Login-AzureRmAccount` cmdlet. All scripts have complete built-in reference information, parameter specifications included, accessible via `Get-Help` cmdlet.
+
 ## Update Azure Batch worker
 
 ## Setup Nightly performance tests

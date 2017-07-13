@@ -1,3 +1,7 @@
+<#
+ .SYNOPSIS
+    Builds AzureWorker.
+#>
 if ([Environment]::Is64BitOperatingSystem) {
     $pfiles = ${env:PROGRAMFILES(X86)}
 } else {

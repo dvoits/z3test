@@ -1,3 +1,29 @@
+<#
+ .SYNOPSIS
+    Retrieves azure batch account with given name. If it doesn't exist, creates a new one.
+
+ .DESCRIPTION
+    Retrieves azure batch account with given name. If it doesn't exist, creates a new one. Associates a storage account with it. Adds a provided certificate to the batch account and all of its pools. If batch account has no pools, a new one is created.
+
+ .PARAMETER batchName
+    Name of the batch account.
+
+ .PARAMETER resourceGroup
+    Resourse group object.
+
+ .PARAMETER storage
+    Storage to associate with batch account.
+
+ .PARAMETER cert
+    Certificate to deploy in all pools of the batch account.
+
+ .PARAMETER certPassword
+    Password to the certificate's private key.
+
+
+ .OUTPUTS
+    Batch context.
+#>
 param(
  [Parameter(Mandatory=$True)]
  [string]

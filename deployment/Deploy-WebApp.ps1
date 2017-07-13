@@ -1,3 +1,38 @@
+<#
+ .SYNOPSIS
+    Builds, configures, and deploys Nightly web app.
+
+ .DESCRIPTION
+
+
+ .PARAMETER appName
+    Name of the web app.
+
+ .PARAMETER resourceGroup
+    Resourse group object.
+ 
+ .PARAMETER connectionStringSecretName
+    Name of the secret in which connection string to the environment (keys to storage and batch) is kept.
+
+ .PARAMETER storage
+    Storage used in deployment.
+
+ .PARAMETER keyVault
+    Key vault used in deployment.
+
+ .PARAMETER AADAppServicePrincipal
+    AAD app service principal, that havs access to secrets in the vault.
+
+ .PARAMETER cert
+    Certificate used as credentials for AAD application.
+
+ .PARAMETER certPassword
+    Password to the private key of the certificate used as credentials for AAD application.
+
+
+ .OUTPUTS
+    Web app object.
+#>
 param(
  [Parameter(Mandatory=$True)]
  [string]
