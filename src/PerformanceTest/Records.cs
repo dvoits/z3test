@@ -36,7 +36,7 @@ namespace PerformanceTest.Records
             }
         }
 
-        public void Update(IEnumerable<BenchmarkResult> results, Domain domain)
+        public void UpdateWith(IEnumerable<BenchmarkResult> results, Domain domain)
         {
             foreach (var r in results)
             {

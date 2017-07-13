@@ -306,15 +306,69 @@ such as Nightly web application, NightlyRunner and Summary.
 Such application require following settings to be provided in their configuration files:
 * `AADApplicationId` is an identified of Azure Active Directory application, which must be created for a deployment of the 
 performance test infrastructure.
-* `AADApplicationCertThumbprint` is a thumbprint of the application certificate.
+* `AADApplicationCertThumbprint` is a thumbprint of the application certificate. 
+Note that the application certificate must be installed on the machine where the client application runs.
 * `KeyVaultUrl` is URL of the Azure Key vault.
 * `ConnectionStringSecretId` is name of the secret which contains the connection string for a client application.
+The connection string must contain standard storage account connection strings and additionally 
+following properties, required to get an access to the Batch Account:
+    - `BatchAccount`
+    - `BatchURL`
+    - `BatchAccessKey`
 
-The application certificate must be installed on the machine where a client application runs.
+An example of the connection string:
+
+```
+DefaultEndpointsProtocol=https; AccountName=<<storageAccountName>>; AccountKey=<<storageAccountKey>>; BatchAccessKey=<<batchAccessKey>>; BatchURL=https://???.batch.azure.com; BatchAccount=<<batchAccountName>>;
+```
+
 
 ## Server-side components
 
-### Running performance tests
+Performance tests run using Azure Batch. One experiment corresponds to one Azure Batch job.
+
+Job ID is `{storageName}_exp{id}`, where `{storage}` is the storage account name and `{id}` is the experiment id.
+Such naming rule allows same batch account to be shared between multiple storage accounts eliminating duplicate job 
+identifiers.
+
+The experiment definition must be already added to the [experiments table](#table-of-experiments) when the job is starting.
+
+When created, the job has only job preparation and job manager tasks defined.
+First, **job preparation tasks** start on each of the selected batch pool machines and copy required files to 
+that machine. These include the `configuration` blob container files (AzureWorker.exe with supporting files,
+reference experiment definition).
+
+The **job manager** task runs `AzureWorker.exe --manage-tasks` which starts enumerating the input benchmarks and produces series of performance tests tasks, one task per experiment benchmark. 
+
+In parallel, the manager task listens the Azure Storage queue where the performance test tasks put the results.
+The queue is named `exp{id}` where `{id}` is the experiment id.
+The job manager collects packs of results from the queue and updates the 
+[experiment results table](#experiment-results), so it is the only writer to the table blob.
+
+To be fault-tolerant, the manager task supports the case when it fails and restarts.
+So it doesn't create new performance tests tasks for benchmarks that are either
+in the experiment results table (if it is already existing) or associated with the already
+created performance tests tasks.
+
+
+
+The **performance test task** runs `AzureWorker.exe --measure` which does the following:
+1. Finds the performance normalization coefficient for this machine. For each machine it is computed only once
+as ratio of the reference value to the total processor time for runs of a certain executable for the reference benchmarks.
+The executable, the reference value and the reference benchmark files are described in the `reference.json` file of the `config` blob container.
+The coefficient is then saved to a local file `normal.txt`.
+
+2. Measures execution of the target executable for a benchmark file assigned to the task.
+
+3. If the executable output is too large, it is saved to the `output` blob container as described [above](#outputs).
+
+4. Measurements are then queued to the Azure Storage queue.
+
+If the test task fails up to 5 times, it restarts and runs the test again. 
+If it still fails after that, it restarts and queues an infrastructure error as a result for the associated benchmark.
+
+
+To submit new experiment from code, use `AzurePerformanceTest.AzureExperimentManager.StartExperiment()` method.
 
 
 ## Client applications

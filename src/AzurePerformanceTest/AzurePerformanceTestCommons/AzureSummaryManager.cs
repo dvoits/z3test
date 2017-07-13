@@ -76,10 +76,10 @@ namespace AzurePerformanceTest
 
             try
             {
-                using(MemoryStream ms = new MemoryStream())
+                using (MemoryStream ms = new MemoryStream())
                 {
                     await blob.DownloadToStreamAsync(ms, AccessCondition.GenerateEmptyCondition(), new BlobRequestOptions { RetryPolicy = retryPolicy }, null);
-                    
+
                     ms.Position = 0;
                     Tags tags = TagsStorage.Load(ms);
                     return tags;
@@ -91,28 +91,35 @@ namespace AzurePerformanceTest
             }
         }
 
-        public async Task<ExperimentSummary[]> Update(string timelineName, int experimentId)
+        public async Task<ExperimentSummary[]> Update(string timelineName, params int[] experiments)
         {
+            if (experiments == null) throw new ArgumentNullException(nameof(experiments));
+
             Trace.WriteLine("Downloading experiment results...");
             var all_summaries = await DownloadSummary(timelineName);
 
-            var exp = await storage.GetExperiment(experimentId); // fails if not found
-            var domain = resolveDomain.GetDomain(exp.DomainName);
+            Table timeline = all_summaries.Item1;
+            RecordsTable records = all_summaries.Item2;
+            string etag = all_summaries.Item3;
 
-            var results = (await storage.GetResults(experimentId)).Benchmarks;
+            foreach (var experimentId in experiments)
+            {
+                var exp = await storage.GetExperiment(experimentId); // fails if not found
+                var domain = resolveDomain.GetDomain(exp.DomainName);
 
-            Trace.WriteLine("Building summary for the experiment...");
-            var catSummary = ExperimentSummary.Build(results, domain, ExperimentSummary.DuplicateResolution.Ignore);
-            var expSummary = new ExperimentSummary(experimentId, DateTimeOffset.Now, catSummary);
-            var sumTable = ExperimentSummaryStorage.AppendOrReplace(all_summaries.Item1, expSummary);
+                var results = (await storage.GetResults(experimentId)).Benchmarks;
 
-            Trace.WriteLine("Updating records...");
-            var records = all_summaries.Item2;
-            records.Update(results, domain);
-            var table = all_summaries.Item1;
-            
-            await UploadSummary(timelineName, sumTable, records, all_summaries.Item3);
-            var resultfromTable = ExperimentSummaryStorage.LoadFromTable(table);
+                Trace.WriteLine("Building summary for the experiment " + experimentId);
+                var catSummary = ExperimentSummary.Build(results, domain, ExperimentSummary.DuplicateResolution.Ignore);
+                var expSummary = new ExperimentSummary(experimentId, DateTimeOffset.Now, catSummary);
+                timeline = ExperimentSummaryStorage.AppendOrReplace(timeline, expSummary);
+
+                Trace.WriteLine("Updating records...");
+                records.UpdateWith(results, domain);
+            }
+
+            await UploadSummary(timelineName, timeline, records, all_summaries.Item3);
+            var resultfromTable = ExperimentSummaryStorage.LoadFromTable(timeline);
             Array.Sort(resultfromTable, (el1, el2) => DateTimeOffset.Compare(el2.Date, el1.Date));
             return resultfromTable;
         }
@@ -164,8 +171,8 @@ namespace AzurePerformanceTest
             var statusSummary = await GetStatusSummary(expId, refId);
 
             var alerts = new ExperimentAlerts(expSummary, statusSummary, linkPage);
-            
-                
+
+
             if (alerts != null && alerts[""].Count > 0 && alerts[""].Level != AlertLevel.None)
             {
                 //generate new html report 
@@ -198,7 +205,7 @@ namespace AzurePerformanceTest
                     new_report += "<p>For more information please see the <a href='" + linkPage + "' style='text-decoration:none'>Z3 Nightly Webpage</a>.</p>";
                 }
                 new_report += "</body>";
-                
+
                 //send emails
                 Dictionary<string, string> images = new Dictionary<string, string>();
                 images.Add("ok", "ok.png");
@@ -210,7 +217,7 @@ namespace AzurePerformanceTest
                 }
             }
         }
-        private string createReportTable (string category, ExperimentAlerts alerts)
+        private string createReportTable(string category, ExperimentAlerts alerts)
         {
             AlertSet alertSet = alerts[category];
             string new_table = "";
@@ -338,7 +345,7 @@ namespace AzurePerformanceTest
 
                     using (ZipFile zip = ZipFile.Read(ms))
                     {
-                        var zip_summary = zip[fileNameTimeline];                        
+                        var zip_summary = zip[fileNameTimeline];
                         using (MemoryStream mem = new MemoryStream((int)zip_summary.UncompressedSize))
                         {
                             zip_summary.Extract(mem);
