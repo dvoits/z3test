@@ -320,7 +320,16 @@ namespace AzureWorker
         {
             Trace.WriteLine("Building summary...");
             var result = await manager.Update(summaryName, experimentId);
-            await manager.SendReport(result[0], result[1], Settings.Default.ReportRecipients, Settings.Default.LinkPage);
+            try
+            {
+                var sendMail = new SendMail();
+                await sendMail.SendReport(manager, result[0], result[1], Settings.Default.ReportRecipients, Settings.Default.LinkPage);
+            }
+            catch(Exception ex)
+            {
+                Trace.WriteLine("Can't send email: " + ex.Message);
+                return;
+            }
             Trace.WriteLine("Done.");
         }
         private static void MonitorTasksUntilCompletion(int experimentId, string jobId, Task collectionTask, BatchClient batchClient)

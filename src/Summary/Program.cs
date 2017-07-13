@@ -1,4 +1,5 @@
 ﻿using AzurePerformanceTest;
+using AzureWorker;
 using Measurement;
 using PerformanceTest;
 using PerformanceTest.Records;
@@ -49,9 +50,10 @@ namespace Summary
 
             // debug: var stsum = await manager.GetStatusSummary(184, 158);
             var result = await manager.Update(summaryName, id);
-            string rec = Settings.Default.ReportRecipients;
-            string linkPage = Settings.Default.LinkPage;
-            await manager.SendReport(result[0], result[1], rec, linkPage);
+            //string rec = Settings.Default.ReportRecipients;
+            //string linkPage = Settings.Default.LinkPage;
+            //SendMail sendMail = new SendMail();
+            //await sendMail.SendReport(manager, result[0], result[1], rec, linkPage);
         }
 
         private static async Task<string> GetConnectionString()
