@@ -335,7 +335,7 @@ DefaultEndpointsProtocol=https; AccountName=<<storageAccountName>>; AccountKey=<
 
 Performance tests run using Azure Batch. One experiment corresponds to one Azure Batch job.
 
-Job ID is `{storageName}_exp{id}`, where `{storage}` is the storage account name and `{id}` is the experiment id.
+Job ID is `{storage}_exp{id}`, where `{storage}` is the storage account name and `{id}` is the experiment id.
 Such naming rule allows same batch account to be shared between multiple storage accounts eliminating duplicate job 
 identifiers.
 
@@ -343,7 +343,7 @@ The experiment definition must be already added to the [experiments table](#tabl
 
 When created, the job has only job preparation and job manager tasks defined.
 First, **job preparation tasks** start on each of the selected batch pool machines and copy required files to 
-that machine. These include the `configuration` blob container files (AzureWorker.exe with supporting files,
+that machine. These include the [configuration](#configuration) files (AzureWorker.exe with supporting files,
 reference experiment definition).
 
 The **job manager** task runs `AzureWorker.exe --manage-tasks` which starts enumerating the input benchmarks and produces series of performance tests tasks, one task per experiment benchmark. 
