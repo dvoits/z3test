@@ -20,6 +20,7 @@ This repository holds test infrastructure and benchmarks used to test Z3.
         - [How to update experiment summary](#how-to-update-experiment-summary)  
     - [Secrets](#secrets)
   - [Server-side components](#server-side-components)
+    - [Running performance tests](#running-performance-tests)
   - [Client applications](#client-applications)
 - [Run and deploy](#run-and-deploy)
 
@@ -325,6 +326,8 @@ DefaultEndpointsProtocol=https; AccountName=<<storageAccountName>>; AccountKey=<
 
 ## Server-side components
 
+### Running performance tests
+
 Performance tests run using Azure Batch. One experiment corresponds to one Azure Batch job.
 
 Job ID is `{storageName}_exp{id}`, where `{storage}` is the storage account name and `{id}` is the experiment id.
@@ -358,15 +361,21 @@ as ratio of the reference value to the total processor time for runs of a certai
 The executable, the reference value and the reference benchmark files are described in the `reference.json` file of the `config` blob container.
 The coefficient is then saved to a local file `normal.txt`.
 
-2. Measures execution of the target executable for a benchmark file assigned to the task.
+2. Measures execution of the target executable for a benchmark file assigned to the task. If adaptive run is enabled
+in the experiment definition, the test can run multiple times and the results are then aggregated:
+    - if all runs succeeded and all exit codes are same, 
+    it takes median processor and wall clock times and maximum used memory;
+    - otherwise, the first unsuccessful result is returned.
 
 3. If the executable output is too large, it is saved to the `output` blob container as described [above](#outputs).
 
 4. Measurements are then queued to the Azure Storage queue.
 
 If the test task fails up to 5 times, it restarts and runs the test again. 
-If it still fails after that, it restarts and queues an infrastructure error as a result for the associated benchmark.
+If it still fails after that, the job manager will find that and set an infrastructure error as a result for the 
+ benchmark associated with the failed test task.
 
+![Running performance tests using Azure Batch](https://raw.githubusercontent.com/Z3Prover/PerformanceTest/gh-pages/Z3perftest-architecture.png)
 
 To submit new experiment from code, use `AzurePerformanceTest.AzureExperimentManager.StartExperiment()` method.
 
