@@ -75,6 +75,7 @@
                 <TextBox MinWidth="240" x:Name="txtFilter" HorizontalAlignment="Stretch" VerticalAlignment="Center" TabIndex="9" 
                          Text="{Binding FilterKeyword, Mode=TwoWay}" KeyUp="txtFilter_KeyUp"
                          Height="18" Margin="0,10,0,5.333" />
+                <CheckBox Content="My experiments" Margin="15,7,10,0" Height="18" HorizontalAlignment="Stretch" VerticalAlignment="Center" x:Name="myExpFilter" IsChecked="{Binding IsMyExperiments}"></CheckBox>
             </StackPanel>
 
         </Grid>
@@ -104,7 +105,6 @@
                         <DataGridTextColumn Binding="{Binding Path=BenchmarksQueued, Mode=OneWay}" Header="Queued" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
                         <DataGridTextColumn Binding="{Binding Path=BenchmarksTotal, Mode=OneWay}" Header="Total" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
                         <DataGridTextColumn Binding="{Binding Path=JobStatus, Mode=OneWay, Converter={StaticResource executionStatus}, ConverterParameter={}}" Header="Job Status" TextBlock.TextAlignment="Right" Visibility="Hidden"/>
-                        <DataGridTextColumn Binding="{Binding Path=PoolID, Mode=OneWay}" Header="Pool ID" Visibility="Hidden"/>
                     </DataGrid.Columns>
                     <DataGrid.CommandBindings>
                         <CommandBinding Command="Delete" Executed="deleteExperiment" CanExecute="canDeleteExperiment" />

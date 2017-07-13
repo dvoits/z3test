@@ -49,7 +49,9 @@ namespace Summary
 
             // debug: var stsum = await manager.GetStatusSummary(184, 158);
             var result = await manager.Update(summaryName, id);
-            //await manager.SendReport(result[0], result[1], rec, linkPage);
+            string rec = "elenap@itis.cs.msu.ru;b-elpoch@microsoft.com";
+            string linkPage = "http://z3nightlywebapp.azurewebsites.net/";
+            await manager.SendReport(result[0], result[1], rec, linkPage);
         }
 
         private static async Task<string> GetConnectionString()

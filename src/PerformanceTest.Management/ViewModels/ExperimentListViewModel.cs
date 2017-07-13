@@ -15,7 +15,7 @@ namespace PerformanceTest.Management
         private readonly IUIService ui;
         private ExperimentStatusViewModel[] allExperiments;
         private ExperimentStatusViewModel[] filteredExperiments;
-
+        private bool isMyExperiments;
         private string keyword;
         private bool filterPending, isFiltering;
 
@@ -52,7 +52,17 @@ namespace PerformanceTest.Management
                 FilterExperiments(keyword);
             }
         }
-
+        public bool IsMyExperiments
+        {
+            get { return isMyExperiments; }
+            set
+            {
+                if (isMyExperiments == value) return;
+                isMyExperiments = !isMyExperiments;
+                NotifyPropertyChanged();
+                FilterExperiments(keyword);
+            }
+        }
 
         public void Refresh()
         {
@@ -129,21 +139,14 @@ namespace PerformanceTest.Management
                 {
                     if (now.Subtract(vm.Submitted).TotalDays > 7) break; 
                     vm.JobStatus = ExperimentExecutionStateVM.Loading;
-                    vm.PoolID = "(loading...)";
                     items.Add(vm);
                 }
 
                 var states = await Task.Run(() => manager.GetExperimentJobState(items.Select(item => item.ID)));
-                var pools = await Task.Run(() => manager.GetExperimentPoolId(items.Select(item => item.ID)));
                 int n = Math.Min(states.Length, items.Count);
                 for (int i = 0; i < n; i++)
                 {
                     items[i].JobStatus = (ExperimentExecutionStateVM)states[i];
-                }
-                int m = Math.Min(pools.Length, items.Count);
-                for (int i = 0; i < n; i++)
-                {
-                    items[i].PoolID = pools[i];
                 }
             }
             catch (Exception ex)
@@ -174,8 +177,16 @@ namespace PerformanceTest.Management
                     filterPending = false;
 
                     var old = allExperiments;
-                    var filtered = await Task.Run(() => FilterExperiments(old, keyword).ToArray());
-
+                    ExperimentStatusViewModel[] prefiltered, filtered;
+                    if (IsMyExperiments)
+                    {
+                        prefiltered = await Task.Run(() => FindCurrentUserExperiments(old, System.Security.Principal.WindowsIdentity.GetCurrent().Name).ToArray());
+                        filtered = await Task.Run(() => FilterExperiments(prefiltered, keyword).ToArray());
+                    }
+                    else
+                    {
+                        filtered = await Task.Run(() => FilterExperiments(old, keyword).ToArray());
+                    }
                     if (allExperiments == old)
                         Items = filtered;
                 } while (filterPending);
@@ -207,7 +218,19 @@ namespace PerformanceTest.Management
             }
             return dest.ToArray();
         }
+        private static ExperimentStatusViewModel[] FindCurrentUserExperiments(ExperimentStatusViewModel[] source, string name)
+        {
+            if (String.IsNullOrEmpty(name)) return source;
 
+            List<ExperimentStatusViewModel> dest = new List<ExperimentStatusViewModel>(source.Length);
+            for (int i = 0; i < source.Length; i++)
+            {
+                var e = source[i];
+                if (Contains(e.Creator, name))
+                    dest.Add(e);
+            }
+            return dest.ToArray();
+        }
         private static bool Contains(string str, string keyword)
         {
             if (str == null) return String.IsNullOrEmpty(keyword);
@@ -238,7 +261,6 @@ namespace PerformanceTest.Management
 
         private bool flag;
         private ExperimentExecutionStateVM? jobStatus;
-        private string poolId;
         public event PropertyChangedEventHandler PropertyChanged;
 
         public ExperimentStatusViewModel(Experiment exp, ExperimentManager manager, IUIService message)
@@ -305,16 +327,6 @@ namespace PerformanceTest.Management
             {
                 if (jobStatus == value) return;
                 jobStatus = value;
-                NotifyPropertyChanged();
-            }
-        }
-        public string PoolID
-        {
-            get { return poolId; }
-            set
-            {
-                if (poolId == value) return;
-                poolId = value;
                 NotifyPropertyChanged();
             }
         }

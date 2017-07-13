@@ -58,5 +58,27 @@ namespace AzureWorker.Properties {
                 return ((string)(this["ConnectionStringSecretId"]));
             }
         }
+
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://z3nightlywebapp.azurewebsites.net/")]
+        public string LinkPage
+        {
+            get
+            {
+                return ((string)(this["LinkPage"]));
+            }
+        }
+
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("b-elpoch@microsoft.com")]
+        public string ReportRecipients
+        {
+            get
+            {
+                return ((string)(this["ReportRecipients"]));
+            }
+        }
     }
 }

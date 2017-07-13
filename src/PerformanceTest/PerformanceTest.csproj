@@ -74,9 +74,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Images\critical.png" />
-    <Content Include="Images\ok.png" />
-    <Content Include="Images\warning.png" />
+    <Resource Include="Resources\critical.png" />
+    <Resource Include="Resources\ok.png" />
+    <Resource Include="Resources\warning.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -332,7 +332,12 @@ namespace PerformanceTest.Management
                 bool ckerror = ckERROR.Checked;
                 bool cktime = ckTIME.Checked;
                 bool ckmemory = ckMEMORY.Checked;
-
+                if (vm.CompareItems != null)
+                {
+                    vm.CheckIgnorePrefix = ckIgnorePrefix.Checked;
+                    vm.CheckIgnorePostfix = ckIgnorePostfix.Checked;
+                    vm.CheckIgnoreCategory = ckIgnoreCategory.Checked;
+                }
                 if (vm.CompareItems != null && vm.CompareItems.Length > 0)
                 {
                     foreach (var item in vm.CompareItems)
