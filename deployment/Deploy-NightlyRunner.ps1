@@ -1,3 +1,40 @@
+<#
+ .SYNOPSIS
+    Builds, configures, and deploys Nightly runner. Schedules nightly test runs.
+
+ .DESCRIPTION
+
+
+ .PARAMETER resourceGroup
+    Resourse group object.
+ 
+ .PARAMETER connectionStringSecretName
+    Name of the secret in which connection string to the environment (keys to storage and batch) is kept.
+
+ .PARAMETER storage
+    Storage used in deployment.
+
+ .PARAMETER batchAccount
+    Batch account used in deployment.
+
+ .PARAMETER keyVault
+    Key vault used in deployment.
+
+ .PARAMETER AADAppServicePrincipal
+    AAD app service principal, that havs access to secrets in the vault.
+
+ .PARAMETER certThumbprint
+    Thumbprint of the certificate used as credentials for AAD application.
+
+ .PARAMETER poolNameForRuns
+    Name of the batch pool on which nightly runs should be scheduled. By default first pool on the account will be used.
+
+ .PARAMETER poolNameForRunner
+    Name of the batch pool on which nightly runner application (the one that schedules nightly tests) will run. By default first pool on the account will be used.
+
+
+ .OUTPUTS
+#>
 param([Parameter(Mandatory=$True)]
  [Microsoft.Azure.Commands.ResourceManager.Cmdlets.SdkModels.PSResourceGroup]
  $resourceGroup,

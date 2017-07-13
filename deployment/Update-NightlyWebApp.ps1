@@ -1,3 +1,16 @@
+<#
+ .SYNOPSIS
+    Builds and updates Nightly web app in an existing deployment.
+
+ .DESCRIPTION
+    Builds and updates Nightly web app in an existing deployment. Web.config file is not updated so, that configuration is preserved.
+
+ .PARAMETER name
+    Name of the appName.
+
+ .PARAMETER storageName
+    Name of the web app in the deployment (if differs from default one).
+#>
 param(
  [Parameter(Mandatory=$True)]
  [string]

@@ -1,3 +1,20 @@
+<#
+ .SYNOPSIS
+    Creates a new Azure Active Directory application with certificate credentials. If AAD application with given name exists already, prompts user to either add a certificate credentials to existing application or create a new one.
+
+ .DESCRIPTION
+
+
+ .PARAMETER name
+    Name of the application.
+
+ .PARAMETER cert
+    X509Certificate2 certificate.
+
+
+ .OUTPUTS
+    Service principal of the application.
+#>
 param(
  [Parameter(Mandatory=$True)]
  [string]

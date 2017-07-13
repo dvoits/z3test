@@ -1,3 +1,32 @@
+<#
+ .SYNOPSIS
+    Retrieves azure key vault with given name. If it doesn't exist, creates a new one. Puts there a connection string to z3 performance testing environment and gives an AAD app permission to access it.
+
+ .DESCRIPTION
+
+
+ .PARAMETER keyVaultName
+    Name of the key vault.
+
+ .PARAMETER resourceGroup
+    Resourse group object.
+
+ .PARAMETER connectionStringSecretName
+    Name of the secret in which connection string to the environment (keys to storage and batch) is kept.
+
+ .PARAMETER storage
+    Storage account object to which connection string in the vault should point.
+
+ .PARAMETER batchAccount
+    Batch account object to which connection string in the vault should point.
+
+ .PARAMETER AADAppServicePrincipal
+    AAD app service principal, that should have access to secrets in the vault.
+
+
+ .OUTPUTS
+    Key vault object.
+#>
 param(
  [Parameter(Mandatory=$True)]
  [string]

@@ -1,3 +1,20 @@
+<#
+ .SYNOPSIS
+    Creates a new Azure Active Directory application with certificate credentials.
+
+ .DESCRIPTION
+
+
+ .PARAMETER name
+    Name of the application.
+
+ .PARAMETER cert
+    X509Certificate2 certificate.
+
+
+ .OUTPUTS
+    Service principal of the application.
+#>
 param(
  [Parameter(Mandatory=$True)]
  [string]

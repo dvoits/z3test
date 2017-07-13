@@ -1,3 +1,20 @@
+<#
+ .SYNOPSIS
+    Retrieves azure storage with given name. If it doesn't exist, creates a new one.
+
+ .DESCRIPTION
+
+
+ .PARAMETER storageName
+    Name of the storage.
+
+ .PARAMETER resourceGroup
+    Resourse group object.
+
+
+ .OUTPUTS
+    Storage object.
+#>
 param(
  [Parameter(Mandatory=$True)]
  [string]

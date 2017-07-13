@@ -1,4 +1,30 @@
-param([Parameter(Mandatory=$True)]
+<#
+ .SYNOPSIS
+    Builds, configures, and deploys AzureWorker.
+
+ .DESCRIPTION
+
+ 
+ .PARAMETER connectionStringSecretName
+    Name of the secret in which connection string to the environment (keys to storage and batch) is kept.
+
+ .PARAMETER storage
+    Storage used in deployment.
+
+ .PARAMETER keyVault
+    Key vault used in deployment.
+
+ .PARAMETER AADAppServicePrincipal
+    AAD app service principal, that havs access to secrets in the vault.
+
+ .PARAMETER certThumbprint
+    Thumbprint of the certificate used as credentials for AAD application.
+
+
+ .OUTPUTS
+#>
+param(
+ [Parameter(Mandatory=$True)]
  [string]
  $connectionStringSecretName,
  

@@ -1,3 +1,16 @@
+<#
+ .SYNOPSIS
+    Builds and updates Nightly runner in an existing deployment.
+
+ .DESCRIPTION
+    Builds and updates Nightly runner in an existing deployment. AzureWorker.exe.config file is not updated so, that configuration is preserved.
+
+ .PARAMETER name
+    Name of the deployment.
+
+ .PARAMETER batchName
+    Name of the batch account in the deployment (if differs from default one).
+#>
 param(
  [Parameter(Mandatory=$True)]
  [string]

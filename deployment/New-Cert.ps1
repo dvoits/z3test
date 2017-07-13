@@ -1,3 +1,26 @@
+<#
+ .SYNOPSIS
+    Creates a new self-signed certificate, which can be used in z3 performance testing environment.
+
+ .DESCRIPTION
+
+
+ .PARAMETER name
+    Name of the certificate.
+
+ .PARAMETER password
+    Password for the private key of the certificate.
+
+ .PARAMETER startDate
+    Start date of the validity of the certificate. Defaults to time of the creation of the certificate.
+
+ .PARAMETER startDate
+    End date of the validity of the certificate. Defaults to startDate + 1 year.
+
+
+ .OUTPUTS
+    X509Certificate2 certificate object.
+#>
 param(
  [Parameter(Mandatory=$True)]
  [string]

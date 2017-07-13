@@ -1,3 +1,16 @@
+<#
+ .SYNOPSIS
+    Builds and updates Azure worker in an existing deployment.
+
+ .DESCRIPTION
+    Builds and updates Azure worker in an existing deployment. AzureWorker.exe.config file is not updated so, that configuration is preserved.
+
+ .PARAMETER name
+    Name of the deployment.
+
+ .PARAMETER storageName
+    Name of the storage account in the deployment (if differs from default one).
+#>
 param(
  [Parameter(Mandatory=$True)]
  [string]

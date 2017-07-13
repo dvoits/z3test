@@ -1,4 +1,27 @@
-param([Parameter(Mandatory=$True)]
+<#
+ .SYNOPSIS
+    Deploys reference experiment.
+
+ .DESCRIPTION
+
+
+ .PARAMETER storage
+    Azure storage object. Can be obtained via Get-AzureRmStorageAccount cmdlet.
+
+ .PARAMETER jsonPath
+    Path to json describing reference experiment. If not provided, reference experiment will not be deployed.
+
+ .PARAMETER executablePath
+    Path to executable (or zip) which should be used in reference experiment. If not provided, reference experiment will not be deployed.
+
+ .PARAMETER inputPath
+    Path to input file for the reference experiment. If not provided, reference experiment will still be deployed, but required input files should be uploaded separately.
+
+
+ .OUTPUTS
+#>
+param(
+ [Parameter(Mandatory=$True)]
  [Microsoft.Azure.Commands.Management.Storage.Models.PSStorageAccount]
  $storage,
  

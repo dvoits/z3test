@@ -1,3 +1,7 @@
+<#
+ .SYNOPSIS
+    Builds Nightly web app.
+#>
 if ([Environment]::Is64BitOperatingSystem) {
     $pfiles = ${env:PROGRAMFILES(X86)}
 } else {
