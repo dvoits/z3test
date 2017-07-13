@@ -17,7 +17,6 @@ This repository holds test infrastructure and benchmarks used to test Z3.
     - [Outputs](#outputs)
     - [Binaries](#binaries)
     - [Summaries](#summaries)
-        - [How to update experiment summary](#how-to-update-experiment-summary)  
     - [Secrets](#secrets)
   - [Server-side components](#server-side-components)
     - [Running performance tests](#running-performance-tests)
@@ -25,6 +24,10 @@ This repository holds test infrastructure and benchmarks used to test Z3.
     - [Nightly Z3 performance tests](#nightly-z3-performance-tests)
         - [How to schedule nightly runs using Azure Batch Schedule](#how-to-schedule-nightly-runs-using-azure-batch-schedule)
   - [Client applications](#client-applications)
+    - [PerformanceTest.Management](#performancetestmanagement)
+    - [Z3 Nightly Web Application](#z3-nightly-web-application)
+    - [Timeline and records builder](#timeline-and-records-builder)
+    - [Import experiment from an obsolete data formats](#import-experiment-from-an-obsolete-data-formats)
 - [Run and deploy](#run-and-deploy)
 
 # Glossary
@@ -79,8 +82,10 @@ If you don't have Visual Studio 2015, you can install the free [Visual Studio 20
 
 ## How to build
 
+Use Visual Studio or msbuild to build solutions `PerformanceTests.sln` and `ImportData.sln`.
 
-
+Also there are helpful PowerShell scripts that build and deploy certain projects; 
+see [Deployment scripts](#deployment-scripts).
 
 # Architecture
 
@@ -289,18 +294,7 @@ Such a blob is created on-demand when `AzureSummaryManager.GetStatusSummary()` m
 
 The Nightly web application uses the summaries to analyze experiments results.
 
-#### How to update experiment summary
-
-The .NET application `/src/Summary` allows to compute summary and records for an experiment and then either append or replace
-corresponding row in a given summary blob. If the given experiment is missing, the program fails.
-
-Settings for the program should be edited in the `Summary.exe.config` file.
-
-For example, following command updates or adds summary for the experiment 100 in a blob `Z3Nightly.zip` of the container `summary`:
-
-```
-> Summary.exe 100 Z3Nightly
-```
+[Timeline and records builder](#timeline-and-records-builder) allows to update summaries using the experiment results.
 
 
 ### Secrets
@@ -419,7 +413,7 @@ parameter `SummaryName` in `NightlyRunner` configuration file (default name is `
 
 Note that if afterwards you manually change the experiment results (for example, resolve duplicates using UI application), 
 you will need to manually update the summary using `Summary.exe` utility 
-(see [How to update experiment summary](#how-to-update-experiment-summary)).
+(see [Timeline and records builder](#timeline-and-records-builder)).
 
 
 ### How to schedule nightly runs using Azure Batch Schedule
@@ -480,6 +474,51 @@ New-AzureBatchJobSchedule -Id "NightlyRunSchedule" -Schedule $Schedule -JobSpeci
 
 
 ## Client applications
+
+### PerformanceTest.Management
+
+Windows application PerformanceTest.Management shows a list of experiments and results for each of the experiments, compares two experiments and exposes set of features to manage experiments.
+
+It also allows to resolve duplicated benchmarks in experiment results, resubmit experiments, requeue some benchmarks of a completed
+experiment.
+
+### Z3 Nightly Web Application
+
+Web application NightlyWebApp is intended to show history of experiments for Z3 nightly builds and perform statistical analysis of results.
+
+The web application uses the Azure Key Vault to access storage account. The machine running the web application must have 
+the appropriate certificate installed.
+
+The web application can be configured using Web.config file. In Visual Studio, you can open Settings window for the project to change the 
+configuration. 
+
+The `SummaryName` property determines which timeline and records are downloaded from the `summary` blob container.
+Default is `Z3Nightly`. Then the application filters only those experiments of the `experiments` table that
+are listed in the timeline.
+
+
+### Timeline and records builder
+
+The .NET application `/src/Summary` allows to compute timeline entry and records for an experiment and then either append or replace
+corresponding row in a given [summary blob](#summaries). If the given experiment is missing, the program fails.
+
+Settings for the program should be edited in the `Summary.exe.config` file.
+
+For example, following command updates or adds summary for the experiment 100 in a blob `Z3Nightly.zip` of the container `summary`:
+
+```
+> Summary.exe 100 Z3Nightly
+```
+
+### Import experiment from an obsolete data formats
+
+The `ImportTimelime.exe` command line application allows to import experiment list and results from 
+local files collected when the performance tests were running on HPC.
+
+1. Uploads experiment results to the `results` blob container.
+2. Updates the experiments table so it contains the imported experiments definitions using same IDs.
+Note that it silently replaces the existing experiments with same ID in the target storage account.
+3. Updates timeline and records of `Z3Nightly.zip` in the `summary` blob container. 
 
 # Run and deploy
 
