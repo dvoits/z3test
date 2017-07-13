@@ -330,7 +330,7 @@ namespace AzurePerformanceTest
             using (var bc = BatchClient.Open(batchCreds))
             {
                 var pool = await bc.PoolOperations.GetPoolAsync(poolId);
-                id = await storage.AddExperiment(definition, DateTime.Now, creator, note, pool.VirtualMachineSize);
+                id = await storage.AddExperiment(definition, DateTime.Now, creator, note, string.Format("{0} (pool: {1})", pool.VirtualMachineSize, poolId));
                 CloudJob job = bc.JobOperations.CreateJob();
                 job.Id = BuildJobId(id);
                 job.OnAllTasksComplete = OnAllTasksComplete.TerminateJob;
