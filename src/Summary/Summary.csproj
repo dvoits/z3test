@@ -85,9 +85,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="critical.png" />
-    <Content Include="ok.png" />
-    <Content Include="warning.png" />
+    <Resource Include="Images\critical.png" />
+    <Resource Include="Images\ok.png" />
+    <Resource Include="Images\warning.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

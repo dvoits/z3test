@@ -307,7 +307,7 @@ namespace AzureWorker
                 {
                     Trace.WriteLine(string.Format("Building summary for experiment {0} and summary name {1}...", experimentId, summaryName));
                     AzureSummaryManager manager = new AzureSummaryManager(credentials.WithoutBatchData().ToString(), MEFDomainResolver.Instance);
-                    await AppendSummary(summaryName, experimentId, domain, manager); //?? LinkPage, Credentials, list of recipients
+                    await AppendSummary(summaryName, experimentId, domain, manager);
                 }
                 else
                 {

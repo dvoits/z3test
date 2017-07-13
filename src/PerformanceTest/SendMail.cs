@@ -18,42 +18,34 @@ namespace PerformanceTest
         public static void Send(string tot, string subject, string msg, string file, Dictionary<string, string> images = null, bool html = false)
         {
             MailAddress to = new MailAddress(tot);
-            string fromt = "lenka.pochernina@gmail.com";//Environment.UserName + domain;
-            string password = "nordpuzzle";
+            string fromt = Environment.UserName + domain;
+            //string password = "";
             MailAddress from = new MailAddress(fromt);
             MailMessage mail = new MailMessage(from, to);
             mail.Subject = subject;
             mail.Body = msg;
-            SmtpClient client = new SmtpClient("smtp.gmail.com");
+            SmtpClient client = new SmtpClient("smtphost");//smtp.gmail.com
             client.EnableSsl = true;
-            client.UseDefaultCredentials = false;
-            client.Credentials = new NetworkCredential(fromt, password);
+            client.UseDefaultCredentials = true;
+            //client.UseDefaultCredentials = false;
+            //client.Credentials = new NetworkCredential(fromt, password);
             mail.IsBodyHtml = html;
 
-            //MailAddress to = new MailAddress("b-elpoch@microsoft.com");
-            //MailAddress from = new MailAddress("lenka.pochernina@gmail.com");
-            //MailMessage mail = new MailMessage(from, to); //, subject, msg);//Environment.UserName
-            //mail.Subject = subject;
-            //mail.Body = msg;
-            //SmtpClient client = new SmtpClient("smtp.gmail.com", 587);
-            //client.EnableSsl = true;
-            //client.UseDefaultCredentials = false;
-            //client.Credentials = new NetworkCredential("lenka.pochernina@gmail.com", "nordpuzzle");
-            //mail.IsBodyHtml = html;
-            if (images != null)
-            {
-                foreach (KeyValuePair<string, string> kvp in images)
-                {
-                    Uri imageUri = new Uri("pack://application:,,,/PerformanceTestManagement;component/Images/" + kvp.Value);
-                    Attachment a = new Attachment(imageUri.LocalPath); 
-                    a.ContentDisposition.Inline = true;
-                    a.ContentDisposition.DispositionType = DispositionTypeNames.Inline;
-                    a.ContentId = kvp.Key;
-                    a.ContentType.MediaType = "image/" + Path.GetExtension(kvp.Value);
-                    a.ContentType.Name = Path.GetFileName(kvp.Value);
-                    mail.Attachments.Add(a);
-                }
-            }
+            //if (images != null)
+            //{
+            //    foreach (KeyValuePair<string, string> kvp in images)
+            //    {
+
+            //        var imageUri = new Uri("pack://application:,,,/Images/" + kvp.Value);
+            //        Attachment a = new Attachment(imageUri.LocalPath);
+            //        a.ContentDisposition.Inline = true;
+            //        a.ContentDisposition.DispositionType = DispositionTypeNames.Inline;
+            //        a.ContentId = kvp.Key;
+            //        a.ContentType.MediaType = "image/" + Path.GetExtension(kvp.Value);
+            //        a.ContentType.Name = Path.GetFileName(kvp.Value);
+            //        mail.Attachments.Add(a);
+            //    }
+            //}
 
             if (file != null)
             {
