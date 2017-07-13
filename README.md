@@ -21,6 +21,7 @@ This repository holds test infrastructure and benchmarks used to test Z3.
     - [Secrets](#secrets)
   - [Server-side components](#server-side-components)
     - [Running performance tests](#running-performance-tests)
+    - [Requeueing benchmarks](#requeueing-benchmarks)
   - [Client applications](#client-applications)
 - [Run and deploy](#run-and-deploy)
 
@@ -371,7 +372,7 @@ in the experiment definition, the test can run multiple times and the results ar
 
 4. Measurements are then queued to the Azure Storage queue.
 
-If the test task fails up to 5 times, it restarts and runs the test again. 
+If the test task fails, it restarts and runs the test again up to 5 times. 
 If it still fails after that, the job manager will find that and set an infrastructure error as a result for the 
  benchmark associated with the failed test task.
 
@@ -379,10 +380,23 @@ If it still fails after that, the job manager will find that and set an infrastr
 
 To submit new experiment from code, use `AzurePerformanceTest.AzureExperimentManager.StartExperiment()` method.
 
+### Requeueing benchmarks
+
+When an experiment is complete, it is possible to run tests again for selected benchmarks of that experiment.
+Existing results for those benchmarks remain in the experiment results table 
+so there will appear duplicates when the tests complete.
+
+In the `temp` container, a new blob is created containing list of requeued benchmarks. 
+
+If the Batch job for the experiment exists, it is removed and new job is created with same name.
+The job manager task for the new job is `AzureWorker.exe --manage-retry`.
+The algorithm is as when running an experiment but the difference here is that it runs tests for the given benchmarks though they are in the results table.
+
+To resubmit some benchmarks of an existing experiment from code, use `AzurePerformanceTest.AzureExperimentManager.RestartBenchmarks()` method.
+
+
 
 ## Client applications
-
-
 
 # Run and deploy
 
@@ -401,6 +415,8 @@ For the sake of convenience, a number of powershell scripts is situated in `/dep
     * Nightly runner - application that starts nightly performance tests. Is scheduled to run in batch every 24 hours.
     * Azure Active Directory (AAD) application - an entity required to authenticate azure worker, nightly web app, and nightly runner in azure (if an AAD application with the given name exists already, you will be prompted to use it or create a new one).
     * A self-signed certificate as credentials for AAD application.
+
+    You should also use this script to update the certificate credentials for AAD application.
 
 2. `Deploy-ReferenceExperiment.ps1` - deploys reference experiment.
 3. `Update-AzureWorker.ps1` - builds and updates Azure worker in an existing deployment. AzureWorker.exe.config file is not updated so, that configuration is preserved.
