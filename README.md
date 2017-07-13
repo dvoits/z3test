@@ -53,9 +53,8 @@ how to analyse and aggregate multiple runs.
   experiments.
   * `NightlyWebApp` is ASP.NET web application that shows history of performance tests runs.
   * `NightlyRunner` is a command line application that submits performance tests when new Z3 nightly build is available on the github.
-  See details [here](#setup-nightly-performance-tests).
-  * `Summary` is a command line application that computes summary and records for specified experiment and then updates corresponding data in the Azure Storage.
-  It is executed automatically for nightly Z3 experiments. See details [here](#how-to-update-experiment-summary).
+  See details [here](#nightly-z3-performance-tests).
+  * `Summary` is a command line application that computes summary and records for specified experiment and then updates corresponding data in the Azure Storage. See details [here](#timeline-and-records-builder).
   * `AzurePerformanceTest` is a .NET class library holding the `AzureExperimentManager` class which exposes API to manage experiments based on Microsoft Azure.
   * `PerformanceTest` is a .NET class library containing abstract types for experiments management.
   * `Measurement` is a .NET class library allowing to measure process run time and memory usage.
