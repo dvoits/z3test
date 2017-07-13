@@ -53,9 +53,20 @@ namespace ImportTimeline
             Console.Write("\nUploading experiments table from... ");
             UploadExperiments(experiments, experimentInfo, storage);
 
+
+            Console.WriteLine("\nUpdating timeline...");
+            UpdateTimeline(new AzureSummaryManager(connectionString, new PerformanceTest.MEFDomainResolver()),
+                experiments.Select(e => e.Key).ToArray()).Wait();
+
             sw.Stop();
 
             Console.WriteLine("Done, total time is {0}", sw.Elapsed);
+        }
+
+        private static async Task UpdateTimeline(AzureSummaryManager azureSummaryManager, int[] experiments)
+        {
+            await azureSummaryManager.Update("Z3Nightly", experiments);
+            Console.WriteLine("Done");
         }
 
         private static void UploadExperiments(ConcurrentDictionary<int, ExperimentEntity> experiments, IDictionary<int, TimeSpan> experimentInfo, AzureExperimentStorage storage)
@@ -211,7 +222,7 @@ namespace ImportTimeline
             var b = new AzureBenchmarkResult
             {
                 AcquireTime = submittedTime,
-                BenchmarkFileName = r.Filename.Replace('\\','/'),
+                BenchmarkFileName = r.Filename.Replace('\\', '/'),
                 ExitCode = r.ReturnValue,
                 ExperimentID = expId,
                 NormalizedRuntime = r.Runtime,
