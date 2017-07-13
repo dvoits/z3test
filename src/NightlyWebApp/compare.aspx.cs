@@ -539,8 +539,12 @@ namespace Nightly
         {
             ComparisonStatistics a = cmp.Statistics.postfixes[x];
             ComparisonStatistics b = cmp.Statistics.postfixes[y];
-            if (Math.Abs(a.DeltaSTD) > Math.Abs(b.DeltaSTD))
+            double absA = Math.Abs(a.DeltaSTD);
+            double absB = Math.Abs(b.DeltaSTD);
+            if (absA > absB)
                 return -1;
+            if (absA < absB)
+                return 1;
             return 0;
         }
 
