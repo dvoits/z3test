@@ -81,25 +81,28 @@ $zipPath = (Join-Path $cdir "\NightlyRunner.zip")
 $null = New-AzureRmBatchApplicationPackage -AccountName $batchAccount.AccountName -ResourceGroupName $resourceGroup.ResourceGroupName -ApplicationId "NightlyRunner" -ApplicationVersion $version -FilePath $zipPath -Format "zip"
 $null = Set-AzureRmBatchApplication -AccountName $batchAccount.AccountName -ResourceGroupName $resourceGroup.ResourceGroupName -ApplicationId "NightlyRunner" -DefaultVersion $version
 
-Write-Host "Scheduling daily execution..."
-$NightlyApp = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSApplicationPackageReference"
-$NightlyApp.ApplicationId = "NightlyRunner" # <-- check application id
-[Microsoft.Azure.Commands.Batch.Models.PSApplicationPackageReference[]] $AppRefs = @($NightlyApp)
+$schedule = Get-AzureBatchJobSchedule -Id "NightlyRunSchedule" -BatchContext $batchAccount
+if (-not $schedule) {
+    Write-Host "Scheduling daily execution..."
+    $NightlyApp = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSApplicationPackageReference"
+    $NightlyApp.ApplicationId = "NightlyRunner" # <-- check application id
+    [Microsoft.Azure.Commands.Batch.Models.PSApplicationPackageReference[]] $AppRefs = @($NightlyApp)
 
-$ManagerTask = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSJobManagerTask"
-$ManagerTask.ApplicationPackageReferences = $AppRefs
-$ManagerTask.Id = "NightlyRunTask"
-$ManagerTask.CommandLine = "cmd /c %AZ_BATCH_APP_PACKAGE_NIGHTLYRUNNER%\NightlyRunner.exe"
+    $ManagerTask = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSJobManagerTask"
+    $ManagerTask.ApplicationPackageReferences = $AppRefs
+    $ManagerTask.Id = "NightlyRunTask"
+    $ManagerTask.CommandLine = "cmd /c %AZ_BATCH_APP_PACKAGE_NIGHTLYRUNNER%\NightlyRunner.exe"
 
-$JobSpecification = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSJobSpecification"
-$JobSpecification.JobManagerTask = $ManagerTask
-$JobSpecification.PoolInformation = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSPoolInformation"
-$JobSpecification.PoolInformation.PoolId = $poolNameForRunner
+    $JobSpecification = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSJobSpecification"
+    $JobSpecification.JobManagerTask = $ManagerTask
+    $JobSpecification.PoolInformation = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSPoolInformation"
+    $JobSpecification.PoolInformation.PoolId = $poolNameForRunner
 
-$Schedule = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSSchedule"
-$Schedule.RecurrenceInterval = [TimeSpan]::FromDays(1)
+    $Schedule = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSSchedule"
+    $Schedule.RecurrenceInterval = [TimeSpan]::FromDays(1)
 
-$null = New-AzureBatchJobSchedule -Id "NightlyRunSchedule" -Schedule $Schedule -JobSpecification $JobSpecification -BatchContext $batchAccount
+    $null = New-AzureBatchJobSchedule -Id "NightlyRunSchedule" -Schedule $Schedule -JobSpecification $JobSpecification -BatchContext $batchAccount
+}
 
 Write-Host "Deleting Temporary Files"
 Remove-Item (Join-Path $cdir "\NightlyRunner") -Recurse
