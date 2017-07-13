@@ -4,9 +4,6 @@ param(
  $name,
 
  [string]
- $location,
-
- [string]
  $storageName
 )
 
@@ -19,8 +16,12 @@ if (-not $storageName) {
 $cpath = Get-Location
 $cdir = $cpath.Path
 
-[Microsoft.Azure.Commands.ResourceManager.Cmdlets.SdkModels.PSResourceGroup]$rg = .\Deploy-ResourceGroup.ps1 $name $location
-[Microsoft.Azure.Commands.Management.Storage.Models.PSStorageAccount]$storage = .\Deploy-Storage.ps1 $storageName $rg
+$storage = Get-AzureRmStorageAccount -Name $storageName -ResourceGroupName $name -ErrorAction SilentlyContinue
+if(!$storage)
+{
+    Write-Error "Storage not found, update is impossible. Please, perform a complete deployment."
+    exit 1
+}
 
 Write-Host "Building AzureWorker..."
 $null = .\Build-AzureWorker.ps1
