@@ -3,7 +3,7 @@
     Builds and updates Nightly runner in an existing deployment.
 
  .DESCRIPTION
-    Builds and updates Nightly runner in an existing deployment. AzureWorker.exe.config file is not updated so, that configuration is preserved.
+    Builds and updates Nightly runner in an existing deployment. NightlyRunner.exe.config file is not updated so, that configuration is preserved.
 
  .PARAMETER name
     Name of the deployment.
