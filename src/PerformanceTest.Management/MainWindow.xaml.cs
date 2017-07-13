@@ -121,7 +121,6 @@ namespace PerformanceTest.Management
             dataGrid.Columns[c - 3].Visibility = Visibility.Visible;
             dataGrid.Columns[c - 4].Visibility = Visibility.Visible;
             dataGrid.Columns[c - 5].Visibility = Visibility.Visible;
-            dataGrid.Columns[c - 6].Visibility = Visibility.Visible;
         }
 
         private void OptShowProgress_Unchecked(object sender, RoutedEventArgs e)
@@ -132,7 +131,6 @@ namespace PerformanceTest.Management
             dataGrid.Columns[c - 3].Visibility = Visibility.Hidden;
             dataGrid.Columns[c - 4].Visibility = Visibility.Hidden;
             dataGrid.Columns[c - 5].Visibility = Visibility.Hidden;
-            dataGrid.Columns[c - 6].Visibility = Visibility.Hidden;
         }
 
         private void canDeleteExperiment(object sender, CanExecuteRoutedEventArgs e)

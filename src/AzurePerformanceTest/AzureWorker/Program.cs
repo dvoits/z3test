@@ -186,7 +186,7 @@ namespace AzureWorker
             var storage = new AzureExperimentStorage(credentials.WithoutBatchData().ToString());
 
             var expInfo = await storage.GetExperiment(experimentId);
-
+            
             string benchmarkContainerUri = expInfo.BenchmarkContainerUri;// args[1];
             string benchmarkDirectory = expInfo.BenchmarkDirectory;// args[2];
             string benchmarkCategory = expInfo.Category;// args[3];
@@ -319,7 +319,8 @@ namespace AzureWorker
         private static async Task AppendSummary(string summaryName, int experimentId, Domain domain, AzureSummaryManager manager)
         {
             Trace.WriteLine("Building summary...");
-            await manager.Update(summaryName, experimentId);
+            var result = await manager.Update(summaryName, experimentId);
+            await manager.SendReport(result[0], result[1], Settings.Default.ReportRecipients, Settings.Default.LinkPage);
             Trace.WriteLine("Done.");
         }
         private static void MonitorTasksUntilCompletion(int experimentId, string jobId, Task collectionTask, BatchClient batchClient)

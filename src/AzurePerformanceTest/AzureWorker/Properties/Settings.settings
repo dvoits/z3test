@@ -14,5 +14,11 @@
     <Setting Name="ConnectionStringSecretId" Type="System.String" Scope="Application">
       <Value Profile="(Default)">z3PerfConnectionString</Value>
     </Setting>
+    <Setting Name="LinkPage" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">http://z3nightlywebapp.azurewebsites.net/</Value>
+    </Setting>
+    <Setting Name="ReportRecipients" Type="System.String" Scope="Application">
+      <Value Profile="(Default)" />
+    </Setting>
   </Settings>
 </SettingsFile>

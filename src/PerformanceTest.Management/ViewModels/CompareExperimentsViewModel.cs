@@ -94,8 +94,10 @@ namespace PerformanceTest.Management
             get { return checkIgnorePostfix; }
             set
             {
-                checkIgnorePostfix = !checkIgnorePostfix;
+                if (checkIgnorePostfix == value) return;
+                checkIgnorePostfix = value;
                 JoinResults();
+                NotifyPropertyChanged();
                 NotifyPropertyChanged("EnableFirstExtension");
                 NotifyPropertyChanged("EnableSecondExtension");
             }
@@ -105,8 +107,10 @@ namespace PerformanceTest.Management
             get { return checkIgnorePrefix; }
             set
             {
-                checkIgnorePrefix = !checkIgnorePrefix;
+                if (checkIgnorePrefix == value) return;
+                checkIgnorePrefix = value;
                 JoinResults();
+                NotifyPropertyChanged();
             }
         }
         public bool CheckIgnoreCategory
@@ -114,8 +118,10 @@ namespace PerformanceTest.Management
             get { return checkIgnoreCategory; }
             set
             {
-                checkIgnoreCategory = !checkIgnoreCategory;
+                if (checkIgnoreCategory == value) return;
+                checkIgnoreCategory = value;
                 JoinResults();
+                NotifyPropertyChanged();
             }
         }
         public bool EnableFirstExtension

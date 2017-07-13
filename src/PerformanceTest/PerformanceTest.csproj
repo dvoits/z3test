@@ -73,10 +73,5 @@
       <Name>Measurement</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="Images\critical.png" />
-    <Content Include="Images\ok.png" />
-    <Content Include="Images\warning.png" />
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

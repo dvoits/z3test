@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Mail;
 using System.Net.Mime;
 using System.Text;
@@ -14,26 +15,37 @@ namespace PerformanceTest
         static string domain = "@microsoft.com";
         static uint retryCount = 3;
 
-        public static void Send(string to, string subject, string msg, string file, Dictionary<string, string> images = null, bool html = false)
+        public static void Send(string tot, string subject, string msg, string file, Dictionary<string, string> images = null, bool html = false)
         {
-            MailMessage mail = new MailMessage(Environment.UserName + domain, to, subject, msg);
-            SmtpClient client = new SmtpClient("smtphost");
+            MailAddress to = new MailAddress(tot);
+            string fromt = Environment.UserName + domain;
+            //string password = "";
+            MailAddress from = new MailAddress(fromt);
+            MailMessage mail = new MailMessage(from, to);
+            mail.Subject = subject;
+            mail.Body = msg;
+            SmtpClient client = new SmtpClient("smtphost");//smtp.gmail.com
+            client.EnableSsl = true;
             client.UseDefaultCredentials = true;
+            //client.UseDefaultCredentials = false;
+            //client.Credentials = new NetworkCredential(fromt, password);
             mail.IsBodyHtml = html;
 
-            if (images != null)
-            {
-                foreach (KeyValuePair<string, string> kvp in images)
-                {
-                    Attachment a = new Attachment(kvp.Value);
-                    a.ContentDisposition.Inline = true;
-                    a.ContentDisposition.DispositionType = DispositionTypeNames.Inline;
-                    a.ContentId = kvp.Key;
-                    a.ContentType.MediaType = "image/" + Path.GetExtension(kvp.Value);
-                    a.ContentType.Name = Path.GetFileName(kvp.Value);
-                    mail.Attachments.Add(a);
-                }
-            }
+            //if (images != null)
+            //{
+            //    foreach (KeyValuePair<string, string> kvp in images)
+            //    {
+
+            //        var imageUri = new Uri("pack://application:,,,/Images/" + kvp.Value);
+            //        Attachment a = new Attachment(imageUri.LocalPath);
+            //        a.ContentDisposition.Inline = true;
+            //        a.ContentDisposition.DispositionType = DispositionTypeNames.Inline;
+            //        a.ContentId = kvp.Key;
+            //        a.ContentType.MediaType = "image/" + Path.GetExtension(kvp.Value);
+            //        a.ContentType.Name = Path.GetFileName(kvp.Value);
+            //        mail.Attachments.Add(a);
+            //    }
+            //}
 
             if (file != null)
             {

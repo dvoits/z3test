@@ -163,7 +163,7 @@ namespace AzurePerformanceTest
             return summary;
         }
 
-        public async Task SendReport(ExperimentSummary expSummary, ExperimentSummary refSummary, List<string> recipients, string linkPage)
+        public async Task SendReport(ExperimentSummary expSummary, ExperimentSummary refSummary, string recipientsStr, string linkPage)
         {
             var expId = expSummary.Id;
             var refId = refSummary.Id;
@@ -175,7 +175,7 @@ namespace AzurePerformanceTest
 
             if (alerts != null && alerts[""].Count > 0 && alerts[""].Level != AlertLevel.None)
             {
-                //generate new html report 
+                Trace.WriteLine("Building summary HTML report...");
                 string new_report = "<body>";
                 new_report += "<h1>Z3 Nightly Alert Report</h1>";
                 new_report += "<p>This are alerts for <a href=" + linkPage + "?job=" + expId + " style='text-decoration:none'>job #" + expId + "</a> (submitted " + submissionTime + ").</p>";
@@ -206,11 +206,12 @@ namespace AzurePerformanceTest
                 }
                 new_report += "</body>";
 
-                //send emails
+                Trace.WriteLine("Send emails with report...");
                 Dictionary<string, string> images = new Dictionary<string, string>();
                 images.Add("ok", "ok.png");
                 images.Add("warning", "warning.png");
                 images.Add("critical", "critical.png");
+                var recipients = recipientsStr.Split(';');
                 foreach (string recipient in recipients)
                 {
                     SendMail.Send(recipient, "Z3 Alerts", new_report, null, images, true);
