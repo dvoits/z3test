@@ -67,6 +67,10 @@
       <Project>{f7988676-db1b-49e3-8821-edb017290120}</Project>
       <Name>AzurePerformanceTest</Name>
     </ProjectReference>
+    <ProjectReference Include="..\AzurePerformanceTest\AzureWorker\AzureWorker.csproj">
+      <Project>{89dbb143-52e0-4c0a-a637-911fe977161a}</Project>
+      <Name>AzureWorker</Name>
+    </ProjectReference>
     <ProjectReference Include="..\LocalPerformanceTest\LocalPerformanceTest.csproj">
       <Project>{879E906F-D5A6-4332-97A7-6952F3C00ABC}</Project>
       <Name>LocalPerformanceTest</Name>

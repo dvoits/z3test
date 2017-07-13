@@ -64,7 +64,6 @@
     <Compile Include="ExperimentSummary.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Records.cs" />
-    <Compile Include="SendMail.cs" />
     <Compile Include="Tags.cs" />
   </ItemGroup>
   <ItemGroup>
