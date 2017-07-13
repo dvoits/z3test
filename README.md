@@ -22,6 +22,8 @@ This repository holds test infrastructure and benchmarks used to test Z3.
   - [Server-side components](#server-side-components)
     - [Running performance tests](#running-performance-tests)
     - [Requeueing benchmarks](#requeueing-benchmarks)
+    - [Nightly Z3 performance tests](#nightly-z3-performance-tests)
+        - [How to schedule nightly runs using Azure Batch Schedule](#how-to-schedule-nightly-runs-using-azure-batch-schedule)
   - [Client applications](#client-applications)
 - [Run and deploy](#run-and-deploy)
 
@@ -84,7 +86,7 @@ If you don't have Visual Studio 2015, you can install the free [Visual Studio 20
 
 The performance test infrastructure has Microsoft Azure-based client-server architecture which consists of following components:
 
-1. Storage is based on Azure Storage Account and Key Vault and keeps following data:
+1. [Storage](#storage) is based on Azure Storage Account and Key Vault and keeps following data:
     * Configuration and system files.
     * Table of completed and running experiments.
     * Results for each of the experiments.
@@ -93,12 +95,14 @@ The performance test infrastructure has Microsoft Azure-based client-server arch
     * Benchmark files.
     * Secrets.
 
-2. Server-side components use storage to prepare and run experiments, save results and build summary. 
+2. [Server-side components](#server-side-components) 
+use storage to prepare and run experiments, save results and build summary. 
 These components run on Azure Batch and include:
-    * [AzureWorker](#) runs an experiment and saves results.
-    * [NightlyRunner](#) checks if there is new Z3 nightly build available and schedules an experiment for it.
+    * *AzureWorker* runs an experiment and saves results.
+    * *NightlyRunner* checks if there is new Z3 nightly build available and schedules an experiment for it.
 
-3. Client applications allow a user to manage experiments and analyze results. Two main applications are:
+3. [Client applications](#client-applications)
+allow a user to manage experiments and analyze results. Two main applications are:
     * Windows application *PerformanceTest.Management* shows a list of experiments and results for each of the experiments,
     compares two experiments and exposes set of features to manage experiments.
     * Web application *NightlyWebApp* is intended to show history of experiments for Z3 nightly builds and perform statistical analysis of results.
@@ -354,6 +358,9 @@ So it doesn't create new performance tests tasks for benchmarks that are either
 in the experiment results table (if it is already existing) or associated with the already
 created performance tests tasks.
 
+For [nightly Z3 performance tests](#nightly-z3-performance-tests), the job manager makes additional steps when all benchmarks are tested:
+1. Extends the [timeline and records](#summaries) to account the experiment results.
+2. If needed, sends the report to e-mails listed in the AzureWorker.exe.config.
 
 
 The **performance test task** runs `AzureWorker.exe --measure` which does the following:
@@ -390,9 +397,85 @@ In the `temp` container, a new blob is created containing list of requeued bench
 
 If the Batch job for the experiment exists, it is removed and new job is created with same name.
 The job manager task for the new job is `AzureWorker.exe --manage-retry`.
-The algorithm is as when running an experiment but the difference here is that it runs tests for the given benchmarks though they are in the results table.
+The algorithm is same as when running new experiment but the difference here is that it runs tests for the given benchmarks though they are in the results table.
 
 To resubmit some benchmarks of an existing experiment from code, use `AzurePerformanceTest.AzureExperimentManager.RestartBenchmarks()` method.
+
+### Nightly Z3 performance tests
+
+The .NET application `/src/NightlyRunner` allows to submit performance tests for the latest nightly build of Z3. 
+It does the following:
+
+1. Finds most recent x86 binary package at [https://github.com/Z3Prover/bin/tree/master/nightly](https://github.com/Z3Prover/bin/tree/master/nightly). 
+If there are multiple files found, takes commit sha from the file names and looks to the commit history of the Z3 repository to determine which is most recent.
+2. Finds the last nightly performance experiment.
+3. If the most recent build differs from the last experiment executable, does the following:
+  
+    1. Uploads new x86 z3 binary package to the blob container `bin` and sets its metadata attribute to the original file name of the package.
+    2. Submits [new performance experiment](#running-performance-tests).
+
+When all benchmarks of the experiment complete, the [summary](#summaries) determined by the
+parameter `SummaryName` in `NightlyRunner` configuration file (default name is `Z3Nightly`) is updated.
+
+Note that if afterwards you manually change the experiment results (for example, resolve duplicates using UI application), 
+you will need to manually update the summary using `Summary.exe` utility 
+(see [How to update experiment summary](#how-to-update-experiment-summary)).
+
+
+### How to schedule nightly runs using Azure Batch Schedule
+
+1. Prepare Azure Batch Pool and choose an appropriate certificate to be installed on Batch nodes. This is 
+required to enable access to the Azure Key Vault.
+
+1. Check `NightlyRunner` tool settings. They are located in the `NightlyRunner.exe.config` file.
+
+    * Parameters `Creator`, `BenchmarkDirectory`, `BenchmarkCategory`, `BenchmarkFileExtension`, `Parameters`, `Domain`, `ExperimentNote`, 
+    `BenchmarkTimeoutSeconds`, `MemoryLimitMegabytes` define properties of the nightly performance test experiment
+    to be submitted.
+    * `AzureBatchPoolId` defines which Azure Batch pool to be used to run the experiment.
+    * Parameters `GitHubOwner`, `GitHubZ3Repository`, `GitHubBinariesRepository`, `GitHubBinariesNightlyFolder`, `RegexExecutableFileName`, `RegexExecutableFileName_CommitGroup` define origin of the nightly build results and regular expression pattern for the built binary file name.
+    * Parameters `ConnectionString`, `ConnectionStringSecretId`, `AADApplicationId`, `AADApplicationCertThumbprint`, `KeyVaultUrl` allow to connect to Azure Performance test infrastructure. 
+        * If the `ConnectionString` is not empty, it must contain both storage account and batch account connection strings. In this case, all other parameters of this group are ignored. **Configuration file having the connection string must not be publicly available.**
+        * Otherwise, other parameters must be provided so the program could access the Azure Key Vault to take the specified connection string. The machine must have the appropriate certificate installed.
+
+
+1. Create Azure Batch Application package for `NightlyRunner`. 
+
+    1. Open Batch account page at the Azure portal.
+    1. Click `Features/Applications` and then click `Add`.
+    1. Enter application id, for instance, `NightlyRunner`.
+    1. Enter any version identifier.
+    1. Compress NightlyRunner.exe, NightlyRunner.exe.config and all its \*.dll files to a zip file and select it as the Application package.
+    1. Click `OK` to create the application.
+    1. When the application created, open its properties and select the uploaded package as default version for the application.
+  
+1. Schedule execution of the application. Open PowerShell and use the following commands to create new schedule:
+
+```powershell
+Login-AzureRmAccount
+
+$NightlyApp = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSApplicationPackageReference"
+$NightlyApp.ApplicationId = "NightlyRunner" # <-- check application id
+# $NightlyApp.Version = "..."  # <-- uncomment to select specific application version
+[Microsoft.Azure.Commands.Batch.Models.PSApplicationPackageReference[]] $AppRefs = @($NightlyApp)
+
+$ManagerTask = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSJobManagerTask"
+$ManagerTask.ApplicationPackageReferences = $AppRefs
+$ManagerTask.Id = "NightlyRunTask"
+# Following line depends on application id and version, check documentation for details.
+$ManagerTask.CommandLine = "cmd /c %AZ_BATCH_APP_PACKAGE_NIGHTLYRUNNER%\NightlyRunner.exe"
+
+$JobSpecification = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSJobSpecification"
+$JobSpecification.JobManagerTask = $ManagerTask
+$JobSpecification.PoolInformation = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSPoolInformation"
+$JobSpecification.PoolInformation.PoolId = ...pool id... # <-- enter pool id here
+
+$Schedule = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSSchedule"
+$Schedule.RecurrenceInterval = [TimeSpan]::FromDays(1)
+
+$BatchContext = Get-AzureRmBatchAccountKeys 
+New-AzureBatchJobSchedule -Id "NightlyRunSchedule" -Schedule $Schedule -JobSpecification $JobSpecification -BatchContext $BatchContext
+```
 
 
 
@@ -440,82 +523,4 @@ Other scripts located there are:
 
 To use these scripts, open powershell console in the `/deployment` folder and log into Azure using `Login-AzureRmAccount` cmdlet. All scripts have complete built-in reference information, parameter specifications included, accessible via `Get-Help` cmdlet.
 
-## Update Azure Batch worker
-
-## Setup Nightly performance tests
-
-The .NET application `/src/NightlyRunner` allows to submit performance tests for the latest nightly build of Z3. 
-It does the following:
-
-1. Finds most recent x86 binary package at [https://github.com/Z3Prover/bin/tree/master/nightly](https://github.com/Z3Prover/bin/tree/master/nightly). 
-If there are multiple files found, takes commit sha from the file names and looks to the commit history of the Z3 repository to determine which is most recent.
-2. Finds the last nightly performance experiment.
-3. If the most recent build differs from the last experiment executable, does the following:
-  
-    1. Uploads new x86 z3 binary package to the blob container `bin` and sets its metadata attribute to the original file name of the package.
-    2. Submits new performance experiment.
-
-When the experiment completes, it updates the summary table name in accordance with value of the
-parameter `SummaryName` in `NightlyRunner` configuration file (default name is `z3nightly`).
-
-Note that if afterwards you manually change the experiment results (for example, resolve duplicates using UI application), 
-you will need to manually update the summary using `Summary.exe` utility 
-(see [How to update experiment summary](#how-to-update-experiment-summary)).
-
-
-### How to schedule nightly runs using Azure Batch Schedule
-
-1. Prepare Azure Batch Pool and choose an appropriate certificate to be installed on Batch nodes. This is 
-required to enable access to the Azure Key Vault.
-
-1. Check `NightlyRunner` tool settings. They are located in the `NightlyRunner.exe.config` file.
-
-    * Parameters `Creator`, `BenchmarkDirectory`, `BenchmarkCategory`, `BenchmarkFileExtension`, `Parameters`, `Domain`, `ExperimentNote`, 
-    `BenchmarkTimeoutSeconds`, `MemoryLimitMegabytes` define properties of the nightly performance test experiment
-    to be submitted.
-    * `AzureBatchPoolId` defines which Azure Batch pool to be used to run the experiment.
-    * Parameters `GitHubOwner`, `GitHubZ3Repository`, `GitHubBinariesRepository`, `GitHubBinariesNightlyFolder`, `RegexExecutableFileName`, `RegexExecutableFileName_CommitGroup` define origin of the nightly build results and regular expression pattern for the built binary file name.
-    * Parameters `ConnectionString`, `ConnectionStringSecretId`, `AADApplicationId`, `AADApplicationCertThumbprint`, `KeyVaultUrl` allow to connect to Azure Performance test infrastructure. 
-        * If the `ConnectionString` is not empty, it must contain both storage account and batch account connection strings. In this case, all other parameters of this group are ignored. **Configuration file having the connection string must not be publicly available.**
-        * Otherwise, other parameters must be provided so the program could access the Azure Key Vault to take the specified connection string. The machine must have the appropriate certificate installed.
-
-
-1. Create Azure Batch Application package for `NightlyRunner`. 
-
-    1. Open Batch account page at the Azure portal.
-    1. Click `Features/Applications` and then click `Add`.
-    1. Enter application id, for instance, `NightlyRunner`.
-    1. Enter any version identifier.
-    1. Compress NightlyRunner.exe, NightlyRunner.exe.config and all its \*.dll files to a zip file and select it as the Application package.
-    1. Click `OK` to create the application.
-    1. When the application created, open its properties and select the uploaded package as default version for the application.
-  
-1. Schedule execution of the application. Open PowerShell and use the following commands to create new schedule:
-
-```powershell
-
-Login-AzureRmAccount
-
-$NightlyApp = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSApplicationPackageReference"
-$NightlyApp.ApplicationId = "NightlyRunner" # <-- check application id
-# $NightlyApp.Version = "..."  # <-- uncomment to select specific application version
-[Microsoft.Azure.Commands.Batch.Models.PSApplicationPackageReference[]] $AppRefs = @($NightlyApp)
-
-$ManagerTask = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSJobManagerTask"
-$ManagerTask.ApplicationPackageReferences = $AppRefs
-$ManagerTask.Id = "NightlyRunTask"
-# Following line depends on application id and version, check documentation for details.
-$ManagerTask.CommandLine = "cmd /c %AZ_BATCH_APP_PACKAGE_NIGHTLYRUNNER%\NightlyRunner.exe"
-
-$JobSpecification = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSJobSpecification"
-$JobSpecification.JobManagerTask = $ManagerTask
-$JobSpecification.PoolInformation = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSPoolInformation"
-$JobSpecification.PoolInformation.PoolId = ...pool id... # <-- enter pool id here
-
-$Schedule = New-Object -TypeName "Microsoft.Azure.Commands.Batch.Models.PSSchedule"
-$Schedule.RecurrenceInterval = [TimeSpan]::FromDays(1)
-
-$BatchContext = Get-AzureRmBatchAccountKeys 
-New-AzureBatchJobSchedule -Id "NightlyRunSchedule" -Schedule $Schedule -JobSpecification $JobSpecification -BatchContext $BatchContext
-```
 
